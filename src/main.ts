@@ -1,185 +1,250 @@
-import { layoutSVG } from "./domain/render/layout-svg";
-import { charSrcPreview, outputPreview } from "./domain/render/preview";
-import { mixSeed, PRNG32 } from "./helpers/prng";
-import { computeSeed32 } from "./helpers/seed";
-import AnalyzeForWFC from "./domain/sample/analyze-for-wfc";
-import type { ThoughtData } from "./domain/sample/analyze-for-wfc";
-import { DownloadSVG } from "./helpers/download-svg";
-import { patternPreview } from "./domain/render/preview";
-import type { WFCCfgProps } from "./domain/wfc/wfc-algorithm";
+import "@fontsource/source-code-pro/200.css";
+import "@fontsource/source-code-pro/400.css";
+import "@fontsource/source-code-pro/600.css";
 
-// --- augment your storage for previous state
-const storage = {
-  account_address: "",
-  index: "0",
-  thoughtStr: "",
-  length: 0,
-  model: null,
-  cfg: {} as WFCCfgProps,
-  wfcOutput: new Uint8ClampedArray(0),
-  svg: "",
+const COLOR_FONT = {
+  A: "#ff6b6b",
+  B: "#ff8e3c",
+  C: "#ffd93d",
+  D: "#8bd450",
+  E: "#32d1a0",
+  F: "#1db7b7",
+  G: "#45aaf2",
+  H: "#4d7cff",
+  I: "#6c5ce7",
+  J: "#8b5cf6",
+  K: "#c061ff",
+  L: "#ff66c4",
+  M: "#ff7aa2",
+  N: "#f97373",
+  O: "#fb923c",
+  P: "#facc15",
+  Q: "#a3e635",
+  R: "#4ade80",
+  S: "#2dd4bf",
+  T: "#22d3ee",
+  U: "#38bdf8",
+  V: "#60a5fa",
+  W: "#818cf8",
+  X: "#a78bfa",
+  Y: "#f472b6",
+  Z: "#fb7185",
+} as const;
+
+type ColorFontLetter = keyof typeof COLOR_FONT;
+
+const MAX_CHARS = 120;
+const CANVAS_WIDTH = 960;
+const CELL_SIZE = 29;
+const CELL_GAP = 6;
+const CANVAS_PADDING = 28;
+const CELL_RADIUS = 0;
+const PLACEHOLDER = "TOM";
+const SPACE_FILL = "#151515";
+const SPACE_STROKE = "#2f2f2f";
+const BACKGROUND_FILL = "#050505";
+
+const inputBox = document.getElementById("input-box") as HTMLInputElement | null;
+const warningBox = document.getElementById("input-warning") as HTMLElement | null;
+const canvas = document.getElementById("thought-grid") as HTMLCanvasElement | null;
+const colorFontLegend = document.getElementById("color-font-legend") as HTMLElement | null;
+
+if (!inputBox || !warningBox || !canvas || !colorFontLegend) {
+  throw new Error("Front page elements are missing.");
+}
+
+const context = canvas.getContext("2d");
+
+if (!context) {
+  throw new Error("Canvas 2D context is unavailable.");
+}
+
+type DrawCell = {
+  char: string;
+  fill: string;
 };
 
-const inputBox = document.getElementById("input-box") as HTMLInputElement;
-const accountBox = document.getElementById("account-address") as HTMLInputElement;
-const indexBox = document.getElementById("index-id") as HTMLInputElement;
-const generateButton = document.getElementById("btn-generate") as HTMLButtonElement;
-const warningBox = document.getElementById("input-warning") as HTMLElement;
-const indexUpButton = document.getElementById("btn-index-up") as HTMLButtonElement;
-const indexDownButton = document.getElementById("btn-index-down") as HTMLButtonElement;
-
-accountBox.value = storage.account_address;
-indexBox.value = storage.index;
-warningBox.textContent = "";
-
-const MAX_TEXT_LEN = 23;
-const SEED_TAG_SAMPLE = 0x53414d50;
-const SEED_TAG_WFC = 0x57464330;
-const SEED_TAG_VISUAL = 0x56495330;
-
-// save the svg as local file
-document.getElementById("btn-save-svg")!.addEventListener("click", () => DownloadSVG(storage.svg));
-
-const copyButton = document.getElementById("btn-copy-svg");
-copyButton?.addEventListener("click", async () => {
-  const text = storage.svg || (document.getElementById("svg-code") as HTMLElement)?.textContent || "";
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    textarea.setAttribute("readonly", "true");
-    textarea.style.position = "absolute";
-    textarea.style.left = "-9999px";
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand("copy");
-    textarea.remove();
-  }
-});
-
-// 1) Explicit trigger (Enter only)
-inputBox.addEventListener("keydown", (event: KeyboardEvent) => {
-  if (event.key === "Enter") {
-    void triggerFromInput();
-  }
-});
-
-generateButton?.addEventListener("click", () => {
-  void triggerFromInput();
-});
-
-const normalizeInput = (text: string): string => {
-  return text
-    .replace(/\t/g, " ")
-    .split("\n")
-    .map((line) => {
-      const noLeading = line.replace(/^ +/g, "");
-      const collapsed = noLeading.replace(/(\S) +(?=\S)/g, "$1 ");
-      return collapsed.replace(/ +$/g, "");
-    })
-    .join("\n");
-};
-
-const normalizeAccountAddress = (text: string): string => {
-  return text.trim().replace(/\s+/g, "").toLowerCase();
-};
-
-const setInputWarning = (message: string) => {
+const setWarning = (message: string) => {
   warningBox.textContent = message;
 };
 
-const clampIndex = (value: number) => Math.max(0, value);
-
-const setIndexValue = (value: number) => {
-  const clamped = clampIndex(value);
-  indexBox.value = String(clamped);
-  storage.index = String(clamped);
+type NormalizedInput = {
+  value: string;
+  hadInvalidChars: boolean;
+  hitLimit: boolean;
 };
 
-accountBox.addEventListener("input", () => {
-  const normalized = normalizeAccountAddress(accountBox.value);
-  if (normalized !== accountBox.value) {
-    accountBox.value = normalized;
+const normalizeEnglishInput = (value: string): NormalizedInput => {
+  const upper = value.toUpperCase();
+  let result = "";
+  let hadInvalidChars = false;
+  let hitLimit = false;
+
+  for (const char of upper) {
+    if ((char >= "A" && char <= "Z") || char === " ") {
+      if (result.length >= MAX_CHARS) {
+        hitLimit = true;
+        continue;
+      }
+      result += char;
+    } else {
+      hadInvalidChars = true;
+    }
   }
-  storage.account_address = normalized || "0";
+
+  return { value: result, hadInvalidChars, hitLimit };
+};
+
+const colorForCharacter = (char: string): string => {
+  if (char < "A" || char > "Z") {
+    return SPACE_FILL;
+  }
+  return COLOR_FONT[char as ColorFontLetter] ?? "#ffffff";
+};
+
+const getDisplayWidth = () => {
+  const frame = canvas.parentElement;
+
+  if (!frame) {
+    return CANVAS_WIDTH;
+  }
+
+  const frameStyles = window.getComputedStyle(frame);
+  const horizontalPadding =
+    Number.parseFloat(frameStyles.paddingLeft) + Number.parseFloat(frameStyles.paddingRight);
+  const innerWidth = Math.max(320, frame.clientWidth - horizontalPadding);
+  return Math.min(CANVAS_WIDTH, innerWidth);
+};
+
+const getMinimumHeight = (displayWidth: number) => {
+  return Math.max(320, displayWidth);
+};
+
+const fitCellsToRow = (count: number, displayWidth: number) => {
+  const availableWidth = displayWidth - 2 * CANVAS_PADDING;
+  const itemCount = Math.max(1, count);
+  const naturalWidth = itemCount * CELL_SIZE + Math.max(0, itemCount - 1) * CELL_GAP;
+  const scale = Math.min(1, availableWidth / naturalWidth);
+  const cellSize = CELL_SIZE * scale;
+  const gap = itemCount > 1 ? CELL_GAP * scale : 0;
+  const rowWidth = itemCount * cellSize + Math.max(0, itemCount - 1) * gap;
+  const strokeWidth = Math.max(0.75, Math.min(2, cellSize * 0.08));
+
+  return { cellSize, gap, rowWidth, strokeWidth };
+};
+
+const resizeCanvas = (displayWidth: number, height: number) => {
+  const deviceScale = window.devicePixelRatio || 1;
+
+  canvas.width = Math.round(displayWidth * deviceScale);
+  canvas.height = Math.round(height * deviceScale);
+  canvas.style.width = "100%";
+  canvas.style.height = `${height}px`;
+
+  context.setTransform(1, 0, 0, 1, 0, 0);
+  context.scale(deviceScale, deviceScale);
+};
+
+const drawRoundedRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) => {
+  ctx.beginPath();
+  ctx.roundRect(x, y, width, height, radius);
+  ctx.closePath();
+};
+
+const renderColorFontLegend = () => {
+  const legendItems = Object.entries(COLOR_FONT)
+    .map(([letter, color]) => {
+      return `
+        <div class="color-font-chip">
+          <span class="color-font-chip__swatch" style="--chip-color: ${color};"></span>
+          <span class="color-font-chip__label">${letter}</span>
+          <code class="color-font-chip__value">${color}</code>
+        </div>
+      `;
+    })
+    .join("");
+
+  colorFontLegend.innerHTML = legendItems;
+};
+
+const renderCanvas = (value: string) => {
+  const previewText = value.length > 0 ? value : PLACEHOLDER;
+  const cells: DrawCell[] = Array.from(previewText, (char) => {
+    const fill = colorForCharacter(char);
+    return {
+      char,
+      fill,
+    };
+  });
+
+  const displayWidth = getDisplayWidth();
+  const height = getMinimumHeight(displayWidth);
+  const { cellSize, gap, rowWidth, strokeWidth } = fitCellsToRow(cells.length, displayWidth);
+  resizeCanvas(displayWidth, height);
+
+  context.clearRect(0, 0, displayWidth, height);
+  context.fillStyle = BACKGROUND_FILL;
+  context.fillRect(0, 0, displayWidth, height);
+
+  const xStart = (displayWidth - rowWidth) / 2;
+  const yStart = (height - cellSize) / 2;
+
+  cells.forEach((cell, index) => {
+    const x = xStart + index * (cellSize + gap);
+    const y = yStart;
+
+    if (cell.char === " ") {
+      drawRoundedRect(context, x, y, cellSize, cellSize, CELL_RADIUS);
+      context.fillStyle = SPACE_FILL;
+      context.fill();
+      context.strokeStyle = SPACE_STROKE;
+      context.lineWidth = strokeWidth;
+      context.stroke();
+      return;
+    }
+
+    drawRoundedRect(context, x, y, cellSize, cellSize, CELL_RADIUS);
+    context.fillStyle = cell.fill;
+    context.fill();
+
+    context.strokeStyle = "rgba(255, 255, 255, 0.14)";
+    context.lineWidth = strokeWidth;
+    context.stroke();
+  });
+};
+
+const syncFromInput = () => {
+  const raw = inputBox.value;
+  const normalized = normalizeEnglishInput(raw);
+
+  if (normalized.value !== raw) {
+    inputBox.value = normalized.value;
+  }
+
+  if (normalized.hadInvalidChars) {
+    setWarning("Only English letters A-Z and spaces are allowed.");
+  } else if (normalized.hitLimit) {
+    setWarning(`Input is limited to ${MAX_CHARS} characters.`);
+  } else {
+    setWarning("");
+  }
+
+  renderCanvas(normalized.value);
+};
+
+inputBox.addEventListener("input", syncFromInput);
+
+window.addEventListener("resize", () => {
+  renderCanvas(normalizeEnglishInput(inputBox.value).value);
 });
 
-indexBox.addEventListener("input", () => {
-  const digitsOnly = indexBox.value.replace(/\D+/g, "");
-  if (digitsOnly !== indexBox.value) {
-    indexBox.value = digitsOnly;
-  }
-  storage.index = digitsOnly || "0";
-});
-
-indexUpButton?.addEventListener("click", () => {
-  const current = Number.parseInt(indexBox.value || "0", 10);
-  setIndexValue(Number.isFinite(current) ? current + 1 : 1);
-});
-
-indexDownButton?.addEventListener("click", () => {
-  const current = Number.parseInt(indexBox.value || "0", 10);
-  setIndexValue(Number.isFinite(current) ? current - 1 : 0);
-});
-
-// helper to update storage + run your existing pipeline
-function triggerFromInput() {
-  setInputWarning("");
-
-  const normalizedAccount = normalizeAccountAddress(accountBox.value);
-  if (normalizedAccount !== accountBox.value) {
-    accountBox.value = normalizedAccount;
-  }
-  storage.account_address = normalizedAccount || "0";
-
-  const indexDigits = indexBox.value.replace(/\D+/g, "");
-  if (indexDigits !== indexBox.value) {
-    indexBox.value = indexDigits;
-  }
-  storage.index = indexDigits || "0";
-
-  const normalizedText = normalizeInput(inputBox.value);
-  if (normalizedText !== inputBox.value) {
-    inputBox.value = normalizedText;
-  }
-  if (normalizedText.length > MAX_TEXT_LEN) {
-    setInputWarning(`Max ${MAX_TEXT_LEN} characters after trimming/collapsing spaces.`);
-    return;
-  }
-
-  storage.thoughtStr = normalizedText;
-  storage.length = storage.thoughtStr.length;
-  const baseSeed = computeSeed32(storage.account_address, storage.index, storage.thoughtStr);
-  const trnd = PRNG32(mixSeed(baseSeed, SEED_TAG_SAMPLE));
-  const thoughtData: ThoughtData = AnalyzeForWFC(storage.thoughtStr, trnd);
-
-  render(thoughtData);
-  previewPanel(thoughtData);
-
-}
-
-function render(thoughtData: ThoughtData) {
-  const baseSeed = computeSeed32(storage.account_address, storage.index, storage.thoughtStr);
-  const wfcRnd = PRNG32(mixSeed(baseSeed, SEED_TAG_WFC));
-  const visualRnd = PRNG32(mixSeed(baseSeed, SEED_TAG_VISUAL));
-  const svg = layoutSVG(storage, thoughtData, wfcRnd, visualRnd);
-  (document.getElementById("THOUGHT-canvas") as HTMLElement).innerHTML = svg;
-  storage.svg = svg;
-}
-
-function previewPanel(thoughtData: ThoughtData) {
-  if (storage.model && storage.cfg) {
-    outputPreview(
-      storage.wfcOutput,
-      storage.cfg.outputWidth,
-      storage.cfg.outputHeight,
-      10,
-      "wfc-output-preview"
-    );
-    document.getElementById("source-preview")!.innerHTML = charSrcPreview(thoughtData);
-    document.getElementById("pattern-preview")!.innerHTML = patternPreview(storage.model);
-    (document.getElementById("svg-code") as HTMLElement).textContent = storage.svg;
-  }
-}
+inputBox.value = PLACEHOLDER;
+renderColorFontLegend();
+syncFromInput();
