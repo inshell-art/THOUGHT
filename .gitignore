@@ -13,6 +13,9 @@ dist-ssr
 *.local
 contracts/target
 contracts/sncast_accounts.json
+evm/cache
+evm/out
+evm/broadcast
 
 # Editor directories and files
 .vscode/*
