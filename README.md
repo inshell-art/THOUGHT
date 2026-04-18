@@ -1,4 +1,4 @@
-# Thought Prototype
+# THOUGHT
 
 ## Notice: SVG text uses system monospace
 - Title glyphs are emitted as `<text font-family="monospace">` in the SVG.

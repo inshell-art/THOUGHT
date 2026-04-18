@@ -1,4 +1,4 @@
-# EVM Contracts
+# THOUGHT EVM Contracts
 
 This port is a transitional checkpoint. Keep it runnable, but treat it as deprecated once the planned near-greenfield refactor begins.
 
