@@ -7,9 +7,12 @@ import "@fontsource/source-code-pro/700.css";
 import "@fontsource/source-code-pro/800.css";
 import "@fontsource/source-code-pro/900.css";
 import "@fontsource-variable/roboto-mono/wght.css";
+import { BrowserProvider, Contract, JsonRpcProvider } from "ethers";
+
 import thoughtInstructions from "../THOUGHT.md?raw";
 import thoughtInstructionsUrl from "../THOUGHT.md?url";
 import colorFontRaw from "../colorFontJSON/colorfont.byToolv2.json?raw";
+import addresses from "../evm/addresses.anvil.json";
 
 type ColorFontFile = {
   colors: Array<{
@@ -75,6 +78,47 @@ type ThoughtSessionState = {
   };
 };
 
+type EvmAddresses = {
+  rpcUrl?: string;
+  chainId?: number;
+  thoughtToken?: {
+    address?: string;
+  };
+};
+
+type EthereumProvider = {
+  request(args: { method: string; params?: unknown[] | object }): Promise<unknown>;
+  on?(event: string, listener: (...args: unknown[]) => void): void;
+  removeListener?(event: string, listener: (...args: unknown[]) => void): void;
+};
+
+type MintTxState = "idle" | "awaiting_signature" | "submitted" | "failed";
+
+type MintAction = "connect" | "switch" | "mint" | "pending" | "retry" | "none";
+
+type MintCtaState = {
+  label: string;
+  disabled: boolean;
+  action: MintAction;
+};
+
+type WalletDotState = "off" | "on" | "pending" | "error";
+
+type ThoughtWalletState = {
+  detected: boolean;
+  address: string;
+  chainId: number | null;
+  txState: MintTxState;
+  txHash: string;
+  txError: string;
+  mintPrice: bigint | null;
+  balance: bigint | null;
+  preflightLoading: boolean;
+  preflightError: string;
+  mintedTokenId: number | null;
+  menuOpen: boolean;
+};
+
 const MAX_CHARS = 120;
 const CANVAS_WIDTH = 960;
 const MIN_CANVAS_SIZE = 180;
@@ -108,6 +152,21 @@ const OPENROUTER_PREFERRED_MODELS = [
   "mistralai/mistral-small-2603",
   "openai/gpt-5.4-mini",
 ];
+const EVM_ADDRESSES = addresses as EvmAddresses;
+const THOUGHT_RPC_URL = EVM_ADDRESSES.rpcUrl?.trim() ?? "";
+const THOUGHT_CHAIN_ID = EVM_ADDRESSES.chainId ?? 31337;
+const THOUGHT_CHAIN_ID_HEX = `0x${THOUGHT_CHAIN_ID.toString(16)}`;
+const THOUGHT_TOKEN_ADDRESS = EVM_ADDRESSES.thoughtToken?.address?.trim() ?? "";
+const THOUGHT_CHAIN_NAME = THOUGHT_CHAIN_ID === 31337 ? "Anvil Local" : THOUGHT_CHAIN_ID === 11155111 ? "Sepolia" : "THOUGHT";
+const THOUGHT_EXPLORER_BASE_URL = THOUGHT_CHAIN_ID === 11155111 ? "https://sepolia.etherscan.io" : "";
+const THOUGHT_TOKEN_ABI = [
+  "function mint(string rawText) payable returns (uint256)",
+  "function mintPrice() view returns (uint256)",
+  "function totalSupply() view returns (uint256)",
+  "function thoughtText(uint256 tokenId) view returns (string)",
+  "function authorOf(uint256 tokenId) view returns (address)",
+  "event ThoughtMinted(uint256 indexed tokenId, address indexed author, string text)",
+] as const;
 
 const DIRECT_PROVIDERS: Record<DirectProviderId, ProviderConfig> = {
   openai: {
@@ -178,6 +237,16 @@ const modelBox = document.getElementById("model-box") as HTMLSelectElement | nul
 const modelManualBox = document.getElementById("model-manual-box") as HTMLInputElement | null;
 const promptBox = document.getElementById("prompt-box") as HTMLInputElement | null;
 const runAgentButton = document.getElementById("run-agent") as HTMLButtonElement | null;
+const mintWalletToggle = document.getElementById("mint-wallet-toggle") as HTMLButtonElement | null;
+const mintWalletDot = document.getElementById("mint-wallet-dot") as HTMLElement | null;
+const mintWalletMenu = document.getElementById("mint-wallet-menu") as HTMLElement | null;
+const mintWalletAddress = document.getElementById("mint-wallet-address") as HTMLElement | null;
+const mintWalletNetwork = document.getElementById("mint-wallet-network") as HTMLElement | null;
+const mintWalletTokenRow = document.getElementById("mint-wallet-token-row") as HTMLElement | null;
+const mintWalletToken = document.getElementById("mint-wallet-token") as HTMLElement | null;
+const mintWalletCopyAddress = document.getElementById("mint-wallet-copy-address") as HTMLButtonElement | null;
+const mintWalletCopyTx = document.getElementById("mint-wallet-copy-tx") as HTMLButtonElement | null;
+const mintWalletRefresh = document.getElementById("mint-wallet-refresh") as HTMLButtonElement | null;
 const resetThoughtButton = document.getElementById("reset-thought") as HTMLButtonElement | null;
 const runStatus = document.getElementById("run-status") as HTMLElement | null;
 const warningBox = document.getElementById("input-warning") as HTMLElement | null;
@@ -211,6 +280,16 @@ if (
   !modelManualBox ||
   !promptBox ||
   !runAgentButton ||
+  !mintWalletToggle ||
+  !mintWalletDot ||
+  !mintWalletMenu ||
+  !mintWalletAddress ||
+  !mintWalletNetwork ||
+  !mintWalletTokenRow ||
+  !mintWalletToken ||
+  !mintWalletCopyAddress ||
+  !mintWalletCopyTx ||
+  !mintWalletRefresh ||
   !resetThoughtButton ||
   !runStatus ||
   !warningBox ||
@@ -236,6 +315,23 @@ let currentOutputText = "";
 let runInFlight = false;
 const modelOptionsCache = new Map<ModelSourceId, ModelOption[]>();
 const modelOptionsLoading = new Set<ModelSourceId>();
+const walletState: ThoughtWalletState = {
+  detected: false,
+  address: "",
+  chainId: null,
+  txState: "idle",
+  txHash: "",
+  txError: "",
+  mintPrice: null,
+  balance: null,
+  preflightLoading: false,
+  preflightError: "",
+  mintedTokenId: null,
+  menuOpen: false,
+};
+let readProvider: JsonRpcProvider | null = null;
+let readThoughtToken: Contract | null = null;
+let walletListenersBound = false;
 
 const getDefaultSessionState = (): ThoughtSessionState => ({
   mode: "connect",
@@ -366,6 +462,141 @@ const writeSessionState = () => {
   sessionStorage.setItem(THOUGHT_SESSION_STORAGE_KEY, JSON.stringify(sessionState));
 };
 
+const getEthereumProvider = () =>
+  (window as Window & { ethereum?: EthereumProvider }).ethereum ?? null;
+
+const getReadProvider = () => {
+  if (!THOUGHT_RPC_URL) {
+    return null;
+  }
+
+  if (!readProvider) {
+    readProvider = new JsonRpcProvider(THOUGHT_RPC_URL);
+  }
+
+  return readProvider;
+};
+
+const getReadThoughtToken = () => {
+  const provider = getReadProvider();
+  if (!provider || !THOUGHT_TOKEN_ADDRESS) {
+    return null;
+  }
+
+  if (!readThoughtToken) {
+    readThoughtToken = new Contract(THOUGHT_TOKEN_ADDRESS, THOUGHT_TOKEN_ABI, provider);
+  }
+
+  return readThoughtToken;
+};
+
+const copyToClipboard = async (value: string) => {
+  if (!value) {
+    return false;
+  }
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // fall through
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "true");
+  textarea.style.position = "absolute";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } catch {
+    copied = false;
+  }
+  textarea.remove();
+  return copied;
+};
+
+const getWalletNetworkLabel = () => {
+  if (walletState.chainId === null) {
+    return "not connected";
+  }
+
+  if (walletState.chainId === THOUGHT_CHAIN_ID) {
+    return THOUGHT_CHAIN_NAME;
+  }
+
+  return `chain ${walletState.chainId}`;
+};
+
+const getWalletDotState = (): WalletDotState => {
+  if (walletState.txState === "awaiting_signature" || walletState.txState === "submitted") {
+    return "pending";
+  }
+
+  if (
+    walletState.txState === "failed" ||
+    (walletState.address && walletState.chainId !== null && walletState.chainId !== THOUGHT_CHAIN_ID) ||
+    (!!walletState.preflightError && !!walletState.address && walletState.chainId === THOUGHT_CHAIN_ID)
+  ) {
+    return "error";
+  }
+
+  if (walletState.address && walletState.chainId === THOUGHT_CHAIN_ID) {
+    return "on";
+  }
+
+  return "off";
+};
+
+const getMintCtaState = (): MintCtaState => {
+  if (walletState.txState === "submitted") {
+    return { label: "pending", disabled: false, action: "pending" };
+  }
+
+  if (walletState.txState === "awaiting_signature") {
+    return { label: "sign", disabled: true, action: "none" };
+  }
+
+  if (walletState.txState === "failed") {
+    return { label: "retry", disabled: false, action: "retry" };
+  }
+
+  if (!THOUGHT_RPC_URL || !THOUGHT_TOKEN_ADDRESS) {
+    return { label: "mint", disabled: true, action: "none" };
+  }
+
+  if (!walletState.detected || !walletState.address) {
+    return { label: "connect", disabled: false, action: "connect" };
+  }
+
+  if (walletState.chainId !== THOUGHT_CHAIN_ID) {
+    return { label: "switch", disabled: false, action: "switch" };
+  }
+
+  if (walletState.preflightLoading) {
+    return { label: "mint", disabled: true, action: "none" };
+  }
+
+  if (walletState.preflightError) {
+    return { label: "mint", disabled: true, action: "none" };
+  }
+
+  if (
+    walletState.mintPrice !== null &&
+    walletState.balance !== null &&
+    walletState.balance < walletState.mintPrice
+  ) {
+    return { label: "mint", disabled: true, action: "none" };
+  }
+
+  return { label: "mint", disabled: currentOutputText.length === 0, action: "mint" };
+};
+
 const clearNoticeTimer = (timer: number | null) => {
   if (timer !== null) {
     window.clearTimeout(timer);
@@ -403,14 +634,316 @@ const setStatus = (message: string, options?: { flashMs?: number }) => {
   }
 };
 
+const syncWalletMenu = () => {
+  mintWalletAddress.textContent = walletState.address || "-";
+  mintWalletNetwork.textContent = getWalletNetworkLabel();
+  mintWalletToken.textContent =
+    walletState.mintedTokenId === null ? "-" : `#${walletState.mintedTokenId}`;
+  mintWalletTokenRow.classList.toggle("is-hidden", walletState.mintedTokenId === null);
+  mintWalletCopyAddress.disabled = walletState.address.length === 0;
+  mintWalletCopyTx.classList.toggle("is-hidden", walletState.txHash.length === 0);
+  mintWalletToggle.setAttribute("aria-expanded", walletState.menuOpen ? "true" : "false");
+  mintWalletMenu.classList.toggle("is-hidden", !walletState.menuOpen);
+
+  mintWalletDot.classList.remove("is-on", "is-pending", "is-error", "is-off");
+  mintWalletDot.classList.add(`is-${getWalletDotState()}`);
+};
+
+const syncPrimaryCtaAvailability = () => {
+  if (ctaMode === "mint") {
+    const mintCta = getMintCtaState();
+    runAgentButton.disabled = runInFlight || mintCta.disabled;
+    return;
+  }
+
+  const blockedByLocal = sessionState.mode === "local" && sessionState.local.available === false;
+  runAgentButton.disabled = runInFlight || blockedByLocal;
+};
+
+const refreshMintPreflight = async () => {
+  walletState.preflightLoading = true;
+  walletState.preflightError = "";
+  syncPrimaryCtaAvailability();
+
+  const token = getReadThoughtToken();
+  const provider = getReadProvider();
+
+  if (!token || !provider) {
+    walletState.mintPrice = null;
+    walletState.balance = null;
+    walletState.preflightLoading = false;
+    walletState.preflightError = "mint contract not configured.";
+    syncPrimaryCtaAvailability();
+    syncWalletMenu();
+    return;
+  }
+
+  try {
+    walletState.mintPrice = (await token.mintPrice()) as bigint;
+    walletState.balance = walletState.address ? await provider.getBalance(walletState.address) : null;
+    walletState.preflightError = "";
+  } catch (error) {
+    walletState.mintPrice = null;
+    walletState.balance = null;
+    walletState.preflightError =
+      error instanceof Error ? error.message : "mint preflight failed.";
+  } finally {
+    walletState.preflightLoading = false;
+    syncPrimaryCtaAvailability();
+    syncWalletMenu();
+  }
+};
+
+const refreshWalletState = async () => {
+  const ethereum = getEthereumProvider();
+  walletState.detected = ethereum !== null;
+
+  if (!ethereum) {
+    walletState.address = "";
+    walletState.chainId = null;
+    await refreshMintPreflight();
+    return;
+  }
+
+  try {
+    const [accounts, chainHex] = await Promise.all([
+      ethereum.request({ method: "eth_accounts" }),
+      ethereum.request({ method: "eth_chainId" }),
+    ]);
+
+    walletState.address =
+      Array.isArray(accounts) && typeof accounts[0] === "string" ? accounts[0] : "";
+    walletState.chainId =
+      typeof chainHex === "string" && chainHex.length > 0 ? Number(BigInt(chainHex)) : null;
+  } catch {
+    walletState.address = "";
+    walletState.chainId = null;
+  }
+
+  await refreshMintPreflight();
+};
+
+const bindWalletProviderEvents = () => {
+  if (walletListenersBound) {
+    return;
+  }
+
+  const ethereum = getEthereumProvider();
+  if (!ethereum?.on) {
+    return;
+  }
+
+  const handleWalletChange = () => {
+    void refreshWalletState().then(() => {
+      syncInterface();
+    });
+  };
+
+  ethereum.on("accountsChanged", handleWalletChange);
+  ethereum.on("chainChanged", handleWalletChange);
+  walletListenersBound = true;
+};
+
+const requestWalletConnect = async () => {
+  const ethereum = getEthereumProvider();
+  if (!ethereum) {
+    setWarning("No supported wallet found.");
+    setStatus("");
+    return;
+  }
+
+  setWarning("");
+  setStatus("open wallet...");
+
+  try {
+    await ethereum.request({ method: "eth_requestAccounts" });
+    await refreshWalletState();
+    syncInterface();
+    setStatus("wallet connected.", { flashMs: NOTICE_FLASH_MS });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "wallet connect failed.";
+    setWarning(message);
+    setStatus("failed.");
+  }
+};
+
+const switchWalletChain = async () => {
+  const ethereum = getEthereumProvider();
+  if (!ethereum) {
+    setWarning("No supported wallet found.");
+    setStatus("");
+    return;
+  }
+
+  setWarning("");
+  setStatus("switching chain...");
+
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: THOUGHT_CHAIN_ID_HEX }],
+    });
+  } catch (error) {
+    const errorCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? Number((error as { code?: unknown }).code)
+        : null;
+
+    if (errorCode === 4902) {
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: THOUGHT_CHAIN_ID_HEX,
+            chainName: THOUGHT_CHAIN_NAME,
+            nativeCurrency: {
+              name: "Ether",
+              symbol: "ETH",
+              decimals: 18,
+            },
+            rpcUrls: THOUGHT_RPC_URL ? [THOUGHT_RPC_URL] : [],
+            blockExplorerUrls: THOUGHT_EXPLORER_BASE_URL ? [THOUGHT_EXPLORER_BASE_URL] : [],
+          },
+        ],
+      });
+    } else {
+      const message = error instanceof Error ? error.message : "wallet switch failed.";
+      setWarning(message);
+      setStatus("failed.");
+      return;
+    }
+  }
+
+  await refreshWalletState();
+  syncInterface();
+  setStatus("chain ready.", { flashMs: NOTICE_FLASH_MS });
+};
+
+const extractMintedTokenId = (receipt: { logs?: Array<{ topics: string[]; data: string }> }) => {
+  const contract = getReadThoughtToken();
+  if (!contract) {
+    return null;
+  }
+
+  for (const log of receipt.logs ?? []) {
+    try {
+      const parsed = contract.interface.parseLog(log);
+      if (parsed?.name === "ThoughtMinted") {
+        return Number(parsed.args[0]);
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+};
+
+const handlePendingTx = async () => {
+  if (!walletState.txHash) {
+    return;
+  }
+
+  const copied = await copyToClipboard(walletState.txHash);
+  if (copied) {
+    setStatus("tx hash copied.", { flashMs: NOTICE_FLASH_MS });
+  }
+};
+
+const handleMint = async () => {
+  const ethereum = getEthereumProvider();
+  if (!ethereum) {
+    setWarning("No supported wallet found.");
+    setStatus("");
+    return;
+  }
+
+  if (!THOUGHT_TOKEN_ADDRESS) {
+    setWarning("thought token is not deployed.");
+    setStatus("failed.");
+    return;
+  }
+
+  try {
+    const browserProvider = new BrowserProvider(ethereum);
+    const signer = await browserProvider.getSigner();
+    const mintPrice =
+      walletState.mintPrice ?? ((await getReadThoughtToken()?.mintPrice()) as bigint | undefined) ?? 0n;
+    const writableToken = new Contract(THOUGHT_TOKEN_ADDRESS, THOUGHT_TOKEN_ABI, signer);
+
+    walletState.txState = "awaiting_signature";
+    walletState.txError = "";
+    syncInterface();
+    setWarning("");
+    setStatus("Wallet open: Sign mint...");
+
+    const tx = await writableToken.mint(currentOutputText, { value: mintPrice });
+    walletState.txState = "submitted";
+    walletState.txHash = tx.hash;
+    syncInterface();
+    setStatus("Minting pending...");
+
+    const receipt = await tx.wait();
+    const mintedTokenId = extractMintedTokenId(receipt ?? { logs: [] });
+
+    walletState.txState = "idle";
+    walletState.txError = "";
+    walletState.mintedTokenId = mintedTokenId;
+    walletState.txHash = tx.hash;
+    await refreshMintPreflight();
+    syncInterface();
+    setStatus(
+      mintedTokenId === null ? "minted." : `minted #${mintedTokenId}.`,
+      { flashMs: NOTICE_FLASH_MS },
+    );
+  } catch (error) {
+    walletState.txState = "failed";
+    walletState.txError = error instanceof Error ? error.message : "mint failed.";
+    syncInterface();
+    setWarning(walletState.txError);
+    setStatus("failed.");
+  }
+};
+
+const handleMintAction = async () => {
+  const cta = getMintCtaState();
+
+  if (cta.action === "connect") {
+    await requestWalletConnect();
+    return;
+  }
+
+  if (cta.action === "switch") {
+    await switchWalletChain();
+    return;
+  }
+
+  if (cta.action === "pending") {
+    await handlePendingTx();
+    return;
+  }
+
+  if (cta.action === "mint" || cta.action === "retry") {
+    await handleMint();
+  }
+};
+
 const syncCtaState = () => {
   if (ctaMode === "mint") {
-    runAgentButton.textContent = "[ mint ]";
+    const mintCta = getMintCtaState();
+    runAgentButton.textContent = `[ ${mintCta.label} ]`;
+    mintWalletToggle.classList.remove("is-hidden");
     resetThoughtButton.classList.remove("is-hidden");
+    syncWalletMenu();
   } else {
     runAgentButton.textContent = "[ run ]";
+    walletState.menuOpen = false;
+    mintWalletToggle.classList.add("is-hidden");
+    mintWalletMenu.classList.add("is-hidden");
     resetThoughtButton.classList.add("is-hidden");
   }
+
+  syncPrimaryCtaAvailability();
 };
 
 const readPx = (value: string) => Number.parseFloat(value) || 0;
@@ -611,11 +1144,16 @@ const recordThoughtRun = (
 const resetThought = () => {
   ctaMode = "run";
   currentOutputText = "";
+  walletState.txState = "idle";
+  walletState.txError = "";
+  walletState.txHash = "";
+  walletState.mintedTokenId = null;
+  walletState.menuOpen = false;
   syncOutputToCanvas("", { suppressWarning: true });
   setWarning("");
   setStatus("");
   syncCtaState();
-  syncRunAvailability();
+  syncPrimaryCtaAvailability();
 };
 
 const base64UrlEncode = (bytes: Uint8Array) => {
@@ -1271,8 +1809,7 @@ const syncModelControls = () => {
 };
 
 const syncRunAvailability = () => {
-  const blockedByLocal = sessionState.mode === "local" && sessionState.local.available === false;
-  runAgentButton.disabled = runInFlight || blockedByLocal;
+  syncPrimaryCtaAvailability();
 };
 
 const syncInterface = () => {
@@ -1358,7 +1895,7 @@ const setMode = (mode: Mode) => {
 
 const runAgent = async () => {
   if (ctaMode === "mint") {
-    setStatus("mint is not wired yet.", { flashMs: NOTICE_FLASH_MS });
+    await handleMintAction();
     return;
   }
 
@@ -1432,7 +1969,14 @@ const runAgent = async () => {
     recordThoughtRun(sessionState.mode, provider, model, prompt, text, normalizedText);
     setAgentOutput(text);
     ctaMode = "mint";
+    walletState.txState = "idle";
+    walletState.txError = "";
+    walletState.txHash = "";
+    walletState.mintedTokenId = null;
     syncCtaState();
+    void refreshWalletState().then(() => {
+      syncInterface();
+    });
     setStatus("done.", { flashMs: NOTICE_FLASH_MS });
   } catch (error) {
     const message = error instanceof Error ? error.message : "agent request failed.";
@@ -1525,6 +2069,39 @@ disconnectOpenRouterButton.addEventListener("click", () => {
   disconnectOpenRouter();
 });
 
+mintWalletToggle.addEventListener("click", () => {
+  if (ctaMode !== "mint") {
+    return;
+  }
+
+  walletState.menuOpen = !walletState.menuOpen;
+  syncWalletMenu();
+});
+
+mintWalletCopyAddress.addEventListener("click", () => {
+  void copyToClipboard(walletState.address).then((copied) => {
+    if (copied) {
+      walletState.menuOpen = false;
+      syncWalletMenu();
+      setStatus("address copied.", { flashMs: NOTICE_FLASH_MS });
+    }
+  });
+});
+
+mintWalletCopyTx.addEventListener("click", () => {
+  void handlePendingTx().then(() => {
+    walletState.menuOpen = false;
+    syncWalletMenu();
+  });
+});
+
+mintWalletRefresh.addEventListener("click", () => {
+  void refreshWalletState().then(() => {
+    syncInterface();
+    setStatus("wallet refreshed.", { flashMs: NOTICE_FLASH_MS });
+  });
+});
+
 runAgentButton.addEventListener("click", () => {
   void runAgent();
 });
@@ -1539,6 +2116,23 @@ const handleViewportResize = () => {
 
 window.addEventListener("resize", handleViewportResize);
 window.visualViewport?.addEventListener("resize", handleViewportResize);
+document.addEventListener("mousedown", (event) => {
+  if (!walletState.menuOpen) {
+    return;
+  }
+
+  const target = event.target;
+  if (!(target instanceof Node)) {
+    return;
+  }
+
+  if (mintWalletToggle.contains(target) || mintWalletMenu.contains(target)) {
+    return;
+  }
+
+  walletState.menuOpen = false;
+  syncWalletMenu();
+});
 
 const initFrontpage = async () => {
   syncInterface();
@@ -1553,6 +2147,10 @@ const initFrontpage = async () => {
     setWarning(message);
     setStatus("failed.");
   }
+
+  bindWalletProviderEvents();
+  await refreshWalletState();
+  syncInterface();
 
   void document.fonts.load(`100 12px ${CANVAS_TEXT_FAMILY}`).then(() => {
     syncOutputToCanvas(currentOutputText, { suppressWarning: true });

@@ -26,3 +26,10 @@
 - `direct`: advanced browser-side provider key path for OpenAI, OpenRouter, and Anthropic only.
 - `local`: Ollama on `localhost`, no cloud call and no key field.
 - No THOUGHT backend receives or stores provider keys in any mode.
+
+## Mint
+- Start a local chain with `anvil`.
+- Deploy the local contracts and refresh frontend addresses with `npm run deploy:evm-local`.
+- After a successful run, the main CTA cascades into wallet mint states: `connect`, `switch`, `mint`, `sign`, `pending`, `retry`.
+- Mint uses the local `ThoughtToken` ERC-721 contract and stores the normalized returned text on-chain.
+- The NFT metadata is a data URI. The image is an on-chain SVG built from the same letter-to-color mapping used by the front page.
