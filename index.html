@@ -127,19 +127,31 @@
                 placeholder="author a one-round thought agent with your prompt"
               />
             </div>
+            <div class="frontpage-field">
+              <span class="frontpage-label">thought.md</span>
+              <div class="frontpage-upload">
+                <button id="upload-thought-file" class="frontpage-upload-button" type="button">
+                  [ upload THOUGHT.md ]
+                </button>
+                <button
+                  id="clear-thought-file"
+                  class="frontpage-upload-clear is-hidden"
+                  type="button"
+                >
+                  use bundled
+                </button>
+              </div>
+              <input
+                id="thought-file-input"
+                class="frontpage-file-input"
+                type="file"
+                accept=".md,text/markdown,text/plain"
+              />
+              <p id="thought-file-status" class="frontpage-meta">using bundled THOUGHT.md.</p>
+            </div>
             <div class="frontpage-actions">
               <div class="frontpage-cta">
                 <button id="run-agent" class="frontpage-button" type="button">[ run ]</button>
-                <button
-                  id="mint-wallet-toggle"
-                  class="frontpage-wallet-toggle is-hidden"
-                  type="button"
-                  aria-label="Wallet status"
-                  aria-expanded="false"
-                  aria-haspopup="menu"
-                >
-                  <span id="mint-wallet-dot" class="frontpage-wallet-dot is-off" aria-hidden="true"></span>
-                </button>
                 <button
                   id="reset-thought"
                   class="frontpage-reset is-hidden"
@@ -148,33 +160,6 @@
                 >
                   x
                 </button>
-                <div id="mint-wallet-menu" class="frontpage-wallet-menu is-hidden" role="menu">
-                  <div class="frontpage-wallet-meta">
-                    <span class="frontpage-wallet-label">address</span>
-                    <span id="mint-wallet-address" class="frontpage-wallet-value">-</span>
-                  </div>
-                  <div class="frontpage-wallet-meta">
-                    <span class="frontpage-wallet-label">network</span>
-                    <span id="mint-wallet-network" class="frontpage-wallet-value">-</span>
-                  </div>
-                  <div id="mint-wallet-token-row" class="frontpage-wallet-meta is-hidden">
-                    <span class="frontpage-wallet-label">token</span>
-                    <span id="mint-wallet-token" class="frontpage-wallet-value">-</span>
-                  </div>
-                  <button id="mint-wallet-copy-address" class="frontpage-wallet-action" type="button">
-                    copy address
-                  </button>
-                  <button
-                    id="mint-wallet-copy-tx"
-                    class="frontpage-wallet-action is-hidden"
-                    type="button"
-                  >
-                    copy tx hash
-                  </button>
-                  <button id="mint-wallet-refresh" class="frontpage-wallet-action" type="button">
-                    refresh
-                  </button>
-                </div>
               </div>
               <div class="frontpage-notices">
                 <span id="run-status" class="frontpage-status is-hidden" aria-live="polite"></span>
@@ -186,15 +171,14 @@
           <div class="color-font-footer">
             <p class="frontpage-note">
               one round only.<br />
-              prompt + bundled
+              prompt +
               <a
                 id="thought-instructions-link"
                 class="frontpage-note__link"
                 href="#"
                 target="_blank"
                 rel="noopener noreferrer"
-              >THOUGHT.md</a>
-              in.<br />
+              >THOUGHT.md</a> in.<br />
               canvas out.
             </p>
             <a

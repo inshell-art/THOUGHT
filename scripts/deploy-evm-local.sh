@@ -26,8 +26,7 @@ fi
 
 tmp_seed="$(mktemp)"
 tmp_previewer="$(mktemp)"
-tmp_token="$(mktemp)"
-trap 'rm -f "$tmp_seed" "$tmp_previewer" "$tmp_token"' EXIT
+trap 'rm -f "$tmp_seed" "$tmp_previewer"' EXIT
 
 (
   cd "$EVM_DIR"
@@ -42,12 +41,6 @@ trap 'rm -f "$tmp_seed" "$tmp_previewer" "$tmp_token"' EXIT
     --private-key "$PRIVATE_KEY" \
     --broadcast \
     --json >"$tmp_previewer"
-
-  forge create src/ThoughtToken.sol:ThoughtToken \
-    --rpc-url "$RPC_URL" \
-    --private-key "$PRIVATE_KEY" \
-    --broadcast \
-    --json >"$tmp_token"
 )
 
 SEED_ADDRESS="$(python3 - "$tmp_seed" <<'PY'
@@ -64,25 +57,17 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
 
-TOKEN_ADDRESS="$(python3 - "$tmp_token" <<'PY'
-import json, sys
-with open(sys.argv[1], "r", encoding="utf-8") as f:
-    print(json.load(f)["deployedTo"])
-PY
-)"
-
 CHAIN_ID="$(cast chain-id --rpc-url "$RPC_URL")"
 
-python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$PREVIEWER_ADDRESS" "$TOKEN_ADDRESS" <<'PY'
+python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$PREVIEWER_ADDRESS" <<'PY'
 import json, sys
 
-out_path, rpc_url, chain_id, seed_address, previewer_address, token_address = sys.argv[1:]
+out_path, rpc_url, chain_id, seed_address, previewer_address = sys.argv[1:]
 payload = {
     "rpcUrl": rpc_url,
     "chainId": int(chain_id),
     "seedGenerator": {"address": seed_address},
     "thoughtPreviewer": {"address": previewer_address},
-    "thoughtToken": {"address": token_address},
 }
 with open(out_path, "w", encoding="utf-8") as f:
     json.dump(payload, f, indent=2)
@@ -91,5 +76,4 @@ PY
 
 echo "SeedGenerator:   $SEED_ADDRESS"
 echo "ThoughtPreviewer: $PREVIEWER_ADDRESS"
-echo "ThoughtToken:    $TOKEN_ADDRESS"
 echo "Wrote $ADDRESSES_FILE"
