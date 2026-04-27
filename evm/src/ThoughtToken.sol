@@ -9,54 +9,120 @@ interface IERC721Receiver {
         returns (bytes4);
 }
 
+interface IPathNFT {
+    function consumeUnit(
+        uint256 pathId,
+        bytes32 movement,
+        address claimer,
+        uint256 deadline,
+        bytes calldata signature
+    ) external returns (uint32);
+}
+
+interface IThoughtSpecRegistry {
+    function specMeta(bytes32 specId)
+        external
+        view
+        returns (
+            bytes32 specHash,
+            string memory ref,
+            address pointer,
+            uint32 byteLength,
+            uint64 registeredAt,
+            bool exists
+        );
+}
+
 contract ThoughtToken {
     error ApprovalCallerNotOwnerNorApproved();
     error ApprovalToCurrentOwner();
     error BalanceQueryForZeroAddress();
-    error EmptyThought();
+    error EmptyProvenance();
+    error EmptyThoughtText();
+    error InvalidPathNft();
     error InvalidReceiver();
     error InvalidRecipient();
     error InvalidSender();
+    error InvalidThoughtSpecRegistry();
     error NonexistentToken();
     error NotAuthorized();
     error NotOwner();
+    error ProvenanceTooLarge(uint256 actual, uint256 max);
+    error RawTextTooLarge(uint256 actual, uint256 max);
+    error ReentrantCall();
+    error ThoughtAlreadyMinted(bytes32 textHash, uint256 tokenId);
+    error ThoughtTextTooLarge(uint256 actual, uint256 max);
+    error UnknownThoughtSpec(bytes32 thoughtSpecId);
     error TransferToNonReceiverImplementer();
     error TransferToZeroAddress();
     error WrongPayment();
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+    event PathThoughtConsumed(uint256 indexed pathId, address indexed claimer, uint32 serial);
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
-    event ThoughtMinted(uint256 indexed tokenId, address indexed author, string text);
+    event ThoughtMinted(
+        uint256 indexed tokenId,
+        address indexed minter,
+        uint256 indexed pathId,
+        bytes32 textHash,
+        bytes32 provenanceHash,
+        bytes32 thoughtSpecId,
+        uint64 mintedAt
+    );
 
-    struct ThoughtData {
-        address author;
-        string text;
+    struct ThoughtRecord {
+        string rawText;
+        string provenanceJson;
+        bytes32 textHash;
+        bytes32 provenanceHash;
+        bytes32 thoughtSpecId;
+        uint256 pathId;
+        uint32 pathSerial;
+        address minter;
+        uint64 mintedAt;
     }
 
     string public constant name = "THOUGHT";
     string public constant symbol = "THOUGHT";
 
-    uint256 public constant MAX_TEXT_LEN = 120;
+    uint256 public constant MAX_RAW_TEXT_BYTES = 4096;
+    uint256 public constant MAX_PROVENANCE_BYTES = 1024;
+    bytes32 public constant PATH_MOVEMENT_THOUGHT = bytes32("THOUGHT");
+    bytes32 public constant DEFAULT_THOUGHT_SPEC_ID = keccak256("thought.md.v1");
     uint256 private constant CANVAS_SIZE = 960;
     uint256 private constant CANVAS_PADDING = 28;
     uint256 private constant IMAGE_SIZE = 29;
     uint256 private constant IMAGE_GAP = 6;
     uint256 private constant TEXT_Y = 932;
     uint256 private constant SCALE_BPS = 10_000;
+    bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
     address public immutable owner;
+    address public immutable pathNft;
+    address public immutable thoughtSpecRegistry;
     uint256 public mintPrice;
     uint256 public totalSupply;
+    mapping(bytes32 textHash => uint256 tokenId) public tokenOfTextHash;
 
     mapping(uint256 tokenId => address owner) private _ownerOf;
     mapping(address owner => uint256 balance) private _balanceOf;
     mapping(uint256 tokenId => address approved) public getApproved;
     mapping(address owner => mapping(address operator => bool approved)) public isApprovedForAll;
-    mapping(uint256 tokenId => ThoughtData data) private _thoughts;
+    mapping(uint256 tokenId => ThoughtRecord record) private _thoughts;
+    uint256 private _mintLocked;
 
-    constructor() {
+    constructor(address pathNft_, address thoughtSpecRegistry_) {
+        if (pathNft_ == address(0) || pathNft_.code.length == 0) {
+            revert InvalidPathNft();
+        }
+        if (thoughtSpecRegistry_ == address(0) || thoughtSpecRegistry_.code.length == 0) {
+            revert InvalidThoughtSpecRegistry();
+        }
+
         owner = msg.sender;
+        pathNft = pathNft_;
+        thoughtSpecRegistry = thoughtSpecRegistry_;
     }
 
     modifier onlyOwner() {
@@ -64,6 +130,15 @@ contract ThoughtToken {
             revert NotOwner();
         }
         _;
+    }
+
+    modifier nonReentrant() {
+        if (_mintLocked == 1) {
+            revert ReentrantCall();
+        }
+        _mintLocked = 1;
+        _;
+        _mintLocked = 0;
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
@@ -87,25 +162,73 @@ contract ThoughtToken {
 
     function authorOf(uint256 tokenId) external view returns (address) {
         _requireMinted(tokenId);
-        return _thoughts[tokenId].author;
+        return _thoughts[tokenId].minter;
     }
 
     function thoughtText(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
-        return _thoughts[tokenId].text;
+        return _thoughts[tokenId].rawText;
+    }
+
+    function pathIdOf(uint256 tokenId) external view returns (uint256) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].pathId;
+    }
+
+    function pathSerialOf(uint256 tokenId) external view returns (uint32) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].pathSerial;
+    }
+
+    function isThoughtMinted(bytes32 textHash) external view returns (bool) {
+        return tokenOfTextHash[textHash] != 0;
+    }
+
+    function tokenOfThought(bytes32 textHash) external view returns (uint256) {
+        return tokenOfTextHash[textHash];
+    }
+
+    function getThought(uint256 tokenId) external view returns (ThoughtRecord memory) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId];
+    }
+
+    function rawTextOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].rawText;
+    }
+
+    function provenanceOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].provenanceJson;
+    }
+
+    function textHashOf(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].textHash;
+    }
+
+    function provenanceHashOf(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].provenanceHash;
+    }
+
+    function recordOf(uint256 tokenId) external view returns (ThoughtRecord memory) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId];
     }
 
     function normalizeThought(string calldata rawText) external pure returns (string memory) {
-        return _normalizeThought(rawText);
+        return _canonicalizeThought(rawText);
     }
 
     function renderThoughtSvg(string calldata rawText) external pure returns (string memory) {
-        return _buildSvg(_normalizeThought(rawText));
+        return _buildSvg(_canonicalizeThought(rawText));
     }
 
     function renderTokenSvg(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
-        return _buildSvg(_thoughts[tokenId].text);
+        return _buildSvg(_thoughts[tokenId].rawText);
     }
 
     function setMintPrice(uint256 newMintPrice) external onlyOwner {
@@ -152,42 +275,155 @@ contract ThoughtToken {
         }
     }
 
-    function mint(string calldata rawText) external payable returns (uint256 tokenId) {
+    function mint(
+        string calldata rawText,
+        uint256 pathId,
+        bytes32 thoughtSpecId,
+        string calldata provenanceJson,
+        uint256 deadline,
+        bytes calldata pathSignature
+    ) external payable nonReentrant returns (uint256 tokenId) {
         if (msg.value != mintPrice) {
             revert WrongPayment();
         }
-
-        string memory normalized = _normalizeThought(rawText);
-        if (bytes(normalized).length == 0) {
-            revert EmptyThought();
+        if (!_isThoughtSpecRegistered(thoughtSpecId)) {
+            revert UnknownThoughtSpec(thoughtSpecId);
         }
 
+        string memory canonicalText = _canonicalizeThought(rawText);
+        bytes memory rawBytes = bytes(canonicalText);
+        bytes memory provenanceBytes = bytes(provenanceJson);
+
+        if (rawBytes.length == 0) {
+            revert EmptyThoughtText();
+        }
+        if (provenanceBytes.length == 0) {
+            revert EmptyProvenance();
+        }
+        if (rawBytes.length > MAX_RAW_TEXT_BYTES) {
+            revert RawTextTooLarge(rawBytes.length, MAX_RAW_TEXT_BYTES);
+        }
+        if (provenanceBytes.length > MAX_PROVENANCE_BYTES) {
+            revert ProvenanceTooLarge(provenanceBytes.length, MAX_PROVENANCE_BYTES);
+        }
+
+        bytes32 textHash = keccak256(rawBytes);
+        uint256 existingTokenId = tokenOfTextHash[textHash];
+        if (existingTokenId != 0) {
+            revert ThoughtAlreadyMinted(textHash, existingTokenId);
+        }
+        bytes32 provenanceHash = keccak256(provenanceBytes);
+
+        uint32 pathSerial = IPathNFT(pathNft).consumeUnit(
+            pathId,
+            PATH_MOVEMENT_THOUGHT,
+            msg.sender,
+            deadline,
+            pathSignature
+        );
+
+        uint64 mintedAt = uint64(block.timestamp);
         tokenId = totalSupply + 1;
         totalSupply = tokenId;
-        _thoughts[tokenId] = ThoughtData({author: msg.sender, text: normalized});
+        tokenOfTextHash[textHash] = tokenId;
+        _thoughts[tokenId] = ThoughtRecord({
+            rawText: canonicalText,
+            provenanceJson: provenanceJson,
+            textHash: textHash,
+            provenanceHash: provenanceHash,
+            thoughtSpecId: thoughtSpecId,
+            pathId: pathId,
+            pathSerial: pathSerial,
+            minter: msg.sender,
+            mintedAt: mintedAt
+        });
         _mint(msg.sender, tokenId);
-        emit ThoughtMinted(tokenId, msg.sender, normalized);
+        emit PathThoughtConsumed(pathId, msg.sender, pathSerial);
+        emit ThoughtMinted(tokenId, msg.sender, pathId, textHash, provenanceHash, thoughtSpecId, mintedAt);
     }
 
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
 
-        string memory text = _thoughts[tokenId].text;
-        string memory svg = _buildSvg(text);
+        ThoughtRecord storage record = _thoughts[tokenId];
+        string memory textHash = _bytes32ToHex(record.textHash);
+        string memory provenanceHash = _bytes32ToHex(record.provenanceHash);
+        string memory thoughtSpecId = _bytes32ToHex(record.thoughtSpecId);
+        string memory svg = _buildSvg(record.rawText);
         string memory image = string.concat("data:image/svg+xml;base64,", Base64.encode(bytes(svg)));
         string memory json = string.concat(
             '{"name":"THOUGHT #',
             _toString(tokenId),
-            '","description":"One round in. canvas out.","attributes":[{"trait_type":"text","value":"',
-            text,
-            '"},{"trait_type":"chars","display_type":"number","value":"',
-            _toString(bytes(text).length),
-            '"}],"image":"',
+            '","description":',
+            _jsonString(record.rawText),
+            ',"attributes":',
+            _tokenAttributes(record, textHash, provenanceHash, thoughtSpecId),
+            ',"thought":',
+            _tokenThought(record.rawText, record.provenanceJson),
+            ',"properties":',
+            _tokenProperties(record, textHash, provenanceHash, thoughtSpecId),
+            ',"image":"',
             image,
             '"}'
         );
 
         return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
+    }
+
+    function _tokenAttributes(
+        ThoughtRecord storage record,
+        string memory textHash,
+        string memory provenanceHash,
+        string memory thoughtSpecId
+    ) private view returns (string memory) {
+        return string.concat(
+            '[{"trait_type":"path","value":"',
+            _toString(record.pathId),
+            '"},{"trait_type":"schema","value":"thought.provenance.v1',
+            '"},{"trait_type":"textHash","value":"',
+            textHash,
+            '"},{"trait_type":"provenanceHash","value":"',
+            provenanceHash,
+            '"},{"trait_type":"thoughtSpec","value":"',
+            thoughtSpecId,
+            '"}]'
+        );
+    }
+
+    function _tokenThought(string memory rawText, string memory provenanceJson) private pure returns (string memory) {
+        return string.concat('{"text":', _jsonString(rawText), ',"provenance":', _jsonString(provenanceJson), "}");
+    }
+
+    function _tokenProperties(
+        ThoughtRecord storage record,
+        string memory textHash,
+        string memory provenanceHash,
+        string memory thoughtSpecId
+    ) private view returns (string memory) {
+        return string.concat(
+            '{"rawText":',
+            _jsonString(record.rawText),
+            ',"provenanceJson":',
+            _jsonString(record.provenanceJson),
+            ',"textHash":"',
+            textHash,
+            '","provenanceHash":"',
+            provenanceHash,
+            '","thoughtSpecId":"',
+            thoughtSpecId,
+            '","pathId":"',
+            _toString(record.pathId),
+            '","minter":"',
+            _addressToHex(record.minter),
+            '","mintedAt":',
+            _toString(record.mintedAt),
+            "}"
+        );
+    }
+
+    function _isThoughtSpecRegistered(bytes32 thoughtSpecId) private view returns (bool) {
+        (,,,,, bool exists) = IThoughtSpecRegistry(thoughtSpecRegistry).specMeta(thoughtSpecId);
+        return exists;
     }
 
     function _mint(address to, uint256 tokenId) private {
@@ -252,46 +488,27 @@ contract ThoughtToken {
         }
     }
 
-    function _normalizeThought(string memory rawText) private pure returns (string memory) {
+    function _canonicalizeThought(string memory rawText) private pure returns (string memory) {
         bytes memory input = bytes(rawText);
-        bytes memory output = new bytes(MAX_TEXT_LEN);
         uint256 outputLen = 0;
-        bool pendingSpace = false;
 
         for (uint256 i = 0; i < input.length; i++) {
             uint8 code = uint8(input[i]);
-            if (code >= 97 && code <= 122) {
-                code -= 32;
-            }
-
-            bool isLetter = code >= 65 && code <= 90;
-
-            if (!isLetter) {
-                if (outputLen > 0) {
-                    pendingSpace = true;
-                }
-                continue;
-            }
-
-            if (pendingSpace) {
-                if (outputLen >= MAX_TEXT_LEN) {
-                    break;
-                }
-                output[outputLen] = bytes1(uint8(32));
+            if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
                 outputLen += 1;
-                pendingSpace = false;
             }
-
-            if (outputLen >= MAX_TEXT_LEN) {
-                break;
-            }
-
-            output[outputLen] = bytes1(code);
-            outputLen += 1;
         }
 
-        assembly {
-            mstore(output, outputLen)
+        bytes memory output = new bytes(outputLen);
+        uint256 cursor = 0;
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 code = uint8(input[i]);
+            if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+                if (code >= 97) {
+                    code -= 32;
+                }
+                output[cursor++] = bytes1(code);
+            }
         }
 
         return string(output);
@@ -348,7 +565,7 @@ contract ThoughtToken {
                 "' font-family='monospace' font-size='",
                 _toString(_textSize(chars.length)),
                 "' font-weight='100' text-anchor='middle' fill='#E8EDF7' fill-opacity='0.72'>",
-                text,
+                _xmlEscape(text),
                 "</text>"
             );
         }
@@ -373,6 +590,11 @@ contract ThoughtToken {
     }
 
     function _colorHex(bytes1 char_) private pure returns (string memory) {
+        uint8 code = uint8(char_);
+        if (code >= 97 && code <= 122) {
+            char_ = bytes1(uint8(code - 32));
+        }
+
         if (char_ == "A") return "00ffff";
         if (char_ == "B") return "0000ff";
         if (char_ == "C") return "6f4e37";
@@ -399,6 +621,150 @@ contract ThoughtToken {
         if (char_ == "X") return "bbcccc";
         if (char_ == "Y") return "ffff00";
         return "778877";
+    }
+
+    function _xmlEscape(string memory value) private pure returns (string memory) {
+        bytes memory input = bytes(value);
+        uint256 outputLen = 0;
+
+        for (uint256 i = 0; i < input.length; i++) {
+            if (input[i] == "&") {
+                outputLen += 5;
+            } else if (input[i] == "<" || input[i] == ">") {
+                outputLen += 4;
+            } else if (input[i] == '"' || input[i] == "'") {
+                outputLen += 6;
+            } else {
+                outputLen += 1;
+            }
+        }
+
+        bytes memory output = new bytes(outputLen);
+        uint256 cursor = 0;
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 charCode = uint8(input[i]);
+            if (input[i] == "&") {
+                output[cursor++] = "&";
+                output[cursor++] = "a";
+                output[cursor++] = "m";
+                output[cursor++] = "p";
+                output[cursor++] = ";";
+            } else if (input[i] == "<") {
+                output[cursor++] = "&";
+                output[cursor++] = "l";
+                output[cursor++] = "t";
+                output[cursor++] = ";";
+            } else if (input[i] == ">") {
+                output[cursor++] = "&";
+                output[cursor++] = "g";
+                output[cursor++] = "t";
+                output[cursor++] = ";";
+            } else if (input[i] == '"') {
+                output[cursor++] = "&";
+                output[cursor++] = "q";
+                output[cursor++] = "u";
+                output[cursor++] = "o";
+                output[cursor++] = "t";
+                output[cursor++] = ";";
+            } else if (input[i] == "'") {
+                output[cursor++] = "&";
+                output[cursor++] = "a";
+                output[cursor++] = "p";
+                output[cursor++] = "o";
+                output[cursor++] = "s";
+                output[cursor++] = ";";
+            } else if (charCode < 0x20 && charCode != 0x09 && charCode != 0x0a && charCode != 0x0d) {
+                output[cursor++] = " ";
+            } else {
+                output[cursor++] = input[i];
+            }
+        }
+
+        return string(output);
+    }
+
+    function _jsonString(string memory value) private pure returns (string memory) {
+        return string.concat('"', _jsonEscape(value), '"');
+    }
+
+    function _jsonEscape(string memory value) private pure returns (string memory) {
+        bytes memory input = bytes(value);
+        uint256 outputLen = 0;
+
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 charCode = uint8(input[i]);
+            if (
+                input[i] == '"' ||
+                input[i] == "\\" ||
+                input[i] == "\n" ||
+                input[i] == "\r" ||
+                input[i] == "\t"
+            ) {
+                outputLen += 2;
+            } else if (charCode < 0x20) {
+                outputLen += 6;
+            } else {
+                outputLen += 1;
+            }
+        }
+
+        bytes memory output = new bytes(outputLen);
+        uint256 cursor = 0;
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 charCode = uint8(input[i]);
+            if (input[i] == '"') {
+                output[cursor++] = "\\";
+                output[cursor++] = '"';
+            } else if (input[i] == "\\") {
+                output[cursor++] = "\\";
+                output[cursor++] = "\\";
+            } else if (input[i] == "\n") {
+                output[cursor++] = "\\";
+                output[cursor++] = "n";
+            } else if (input[i] == "\r") {
+                output[cursor++] = "\\";
+                output[cursor++] = "r";
+            } else if (input[i] == "\t") {
+                output[cursor++] = "\\";
+                output[cursor++] = "t";
+            } else if (charCode < 0x20) {
+                output[cursor++] = "\\";
+                output[cursor++] = "u";
+                output[cursor++] = "0";
+                output[cursor++] = "0";
+                output[cursor++] = HEX_DIGITS[charCode >> 4];
+                output[cursor++] = HEX_DIGITS[charCode & 0x0f];
+            } else {
+                output[cursor++] = input[i];
+            }
+        }
+
+        return string(output);
+    }
+
+    function _bytes32ToHex(bytes32 value) private pure returns (string memory) {
+        bytes memory output = new bytes(66);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < 32; i++) {
+            uint8 charCode = uint8(value[i]);
+            output[2 + i * 2] = HEX_DIGITS[charCode >> 4];
+            output[3 + i * 2] = HEX_DIGITS[charCode & 0x0f];
+        }
+        return string(output);
+    }
+
+    function _addressToHex(address value) private pure returns (string memory) {
+        bytes20 account = bytes20(value);
+        bytes memory output = new bytes(42);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < 20; i++) {
+            uint8 charCode = uint8(account[i]);
+            output[2 + i * 2] = HEX_DIGITS[charCode >> 4];
+            output[3 + i * 2] = HEX_DIGITS[charCode & 0x0f];
+        }
+        return string(output);
     }
 
     function _toString(uint256 value) private pure returns (string memory) {

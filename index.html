@@ -5,6 +5,16 @@
   <meta charset="UTF-8" />
   <link rel="icon" type="image/svg+xml" href="/inshell.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("gallery") === "1" || window.location.hash === "#gallery") {
+        document.documentElement.classList.add("gallery-route");
+      } else if (/^[1-9]\d*$/.test(params.get("thought") || "")) {
+        document.documentElement.classList.add("thought-route");
+      }
+    })();
+  </script>
   <title>THOUGHT</title>
 </head>
 
@@ -89,7 +99,7 @@
                 type="password"
                 autocomplete="off"
                 spellcheck="false"
-                placeholder="session only. never stored by thought."
+                placeholder="session only. never stored by THOUGHT."
               />
             </div>
             <div id="local-engine-field" class="frontpage-field is-hidden">
@@ -124,7 +134,7 @@
                 type="text"
                 autocomplete="off"
                 spellcheck="false"
-                placeholder="author a one-round thought agent with your prompt"
+                placeholder="author a one-round THOUGHT agent with your prompt"
               />
             </div>
             <div id="thought-file-field" class="frontpage-field">
@@ -152,7 +162,6 @@
             <div class="frontpage-actions">
               <div class="frontpage-cta">
                 <button id="run-agent" class="frontpage-button" type="button">[ run ]</button>
-                <span id="action-status-copy" class="frontpage-action-status is-hidden"></span>
                 <button
                   id="mint-wallet-toggle"
                   class="frontpage-wallet-toggle is-hidden"
@@ -167,7 +176,7 @@
                   id="reset-thought"
                   class="frontpage-secondary-action is-hidden"
                   type="button"
-                  aria-label="Secondary thought action"
+                  aria-label="Secondary THOUGHT action"
                 >
                   [ reset ]
                 </button>
@@ -199,9 +208,67 @@
                   </button>
                 </div>
               </div>
+              <span id="action-status-copy" class="frontpage-action-status is-hidden" aria-live="polite"></span>
               <div class="frontpage-notices">
                 <span id="run-status" class="frontpage-status is-hidden" aria-live="polite"></span>
                 <div id="input-warning" class="frontpage-warning is-hidden" role="alert" aria-live="polite"></div>
+              </div>
+              <div id="thought-debug" class="thought-debug is-hidden">
+                <button id="thought-debug-toggle" class="thought-debug-toggle" type="button">debug</button>
+                <div id="thought-debug-panel" class="thought-debug-panel is-hidden">
+                  <div class="thought-debug-row thought-debug-row--split">
+                    <span>override</span>
+                    <input id="thought-debug-enabled" type="checkbox" />
+                    <button id="thought-debug-reset" type="button">reset</button>
+                  </div>
+                  <div class="thought-debug-row">
+                    <span>cta</span>
+                    <select id="thought-debug-cta">
+	                      <option value="auto">auto</option>
+	                      <option value="run">run</option>
+	                      <option value="running">running</option>
+	                      <option value="retry">retry</option>
+	                      <option value="mint">mint</option>
+	                      <option value="view_thought">view THOUGHT</option>
+                    </select>
+                  </div>
+                  <div class="thought-debug-row">
+                    <span>cta status</span>
+                    <select id="thought-debug-cta-status">
+                      <option value="auto">auto</option>
+                      <option value="none">none</option>
+                      <option value="ready">ready</option>
+                      <option value="minted">minted</option>
+                      <option value="model_needed">model access needed</option>
+                      <option value="generation_failed">generation failed</option>
+                      <option value="mint_unavailable">mint unavailable</option>
+                    </select>
+                  </div>
+                  <div class="thought-debug-row">
+                    <span>warning</span>
+                    <select id="thought-debug-warning">
+                      <option value="auto">auto</option>
+                      <option value="none">none</option>
+                      <option value="prompt_required">prompt required</option>
+                      <option value="model_required">model required</option>
+                      <option value="openrouter_required">openrouter required</option>
+                      <option value="api_key_required">api key required</option>
+                      <option value="ollama_not_found">ollama not found</option>
+                      <option value="spec_unavailable">spec unavailable</option>
+                      <option value="provider_error">provider error</option>
+                      <option value="external_service">external service</option>
+                      <option value="openrouter_connect_constraint">openrouter constraint</option>
+                      <option value="wallet_missing">wallet missing</option>
+                      <option value="wallet_connect_failed">wallet connect failed</option>
+                      <option value="wallet_switch_failed">wallet switch failed</option>
+                      <option value="thought_too_large">THOUGHT too large</option>
+                      <option value="mint_contract_unavailable">mint contract unavailable</option>
+                    </select>
+                  </div>
+                  <div class="thought-debug-note">
+                    Overrides affect UI state only. Auto returns to live data.
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -219,21 +286,148 @@
               >THOUGHT.md</a> in.<br />
               canvas out.
             </p>
-            <a
-              class="color-font-footer__link"
-              href="https://github.com/inshell-art/THOUGHT/blob/main/colorFontJSON/colorfont.byToolv2.json"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-label="color font"
-              aria-label="Open the color font JSON in the THOUGHT GitHub repository"
-            >
-              ■■■■■■■■■■
-            </a>
+            <nav class="color-font-footer__nav" aria-label="THOUGHT links">
+              <a
+                class="color-font-footer__link"
+                href="https://github.com/inshell-art/THOUGHT/blob/main/colorFontJSON/colorfont.byToolv2.json"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-label="color font"
+                aria-label="Open the color font JSON in the THOUGHT GitHub repository"
+              >
+                ■■■■■■■■■■
+              </a>
+              <a
+                id="thought-gallery-link"
+                class="color-font-footer__link"
+                href="?gallery=1"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-label="gallery"
+                aria-label="Open the THOUGHT gallery"
+              >■■■■■■■</a>
+            </nav>
           </div>
         </div>
       </div>
     </section>
+
+    <section id="gallery-page" class="thought-gallery is-hidden" aria-labelledby="gallery-title">
+      <header class="thought-gallery__header">
+        <div>
+          <h1 id="gallery-title" class="thought-gallery__title">Gallery</h1>
+        </div>
+      </header>
+      <div class="thought-gallery__status-row">
+        <p id="gallery-status" class="thought-gallery__status" aria-live="polite">loading minted THOUGHTs...</p>
+        <a class="thought-gallery__create" href="./">create yours.</a>
+      </div>
+      <div id="gallery-grid" class="thought-gallery__grid"></div>
+      <footer class="thought-gallery__footer">
+        <a
+          class="color-font-footer__link"
+          href="https://github.com/inshell-art/THOUGHT/blob/main/colorFontJSON/colorfont.byToolv2.json"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-label="color font"
+          aria-label="Open the color font JSON in the THOUGHT GitHub repository"
+        >
+          ■■■■■■■■■■
+        </a>
+      </footer>
+    </section>
+
+    <section id="thought-page" class="thought-detail is-hidden" aria-labelledby="thought-detail-title">
+      <header class="thought-detail__header">
+        <h1 id="thought-detail-title" class="thought-detail__title">THOUGHT #<span id="thought-detail-token-id">-</span></h1>
+        <a id="thought-detail-gallery-link" class="thought-detail__link" href="./?gallery=1">gallery</a>
+      </header>
+      <p id="thought-detail-status" class="thought-detail__status" aria-live="polite">loading THOUGHT...</p>
+      <div id="thought-detail-body" class="thought-detail__body is-hidden">
+        <div class="thought-detail__canvas-frame">
+          <img id="thought-detail-image" class="thought-detail__image" alt="Selected THOUGHT canvas" />
+        </div>
+        <aside class="thought-detail__provenance" aria-label="THOUGHT provenance">
+          <dl class="thought-detail__fields">
+            <div>
+              <dt>title</dt>
+              <dd id="thought-detail-canonical-title">-</dd>
+            </div>
+            <div>
+              <dt>$PATH</dt>
+              <dd id="thought-detail-path">-</dd>
+            </div>
+            <div>
+              <dt>minter</dt>
+              <dd id="thought-detail-minter">-</dd>
+            </div>
+            <div>
+              <dt>minted</dt>
+              <dd id="thought-detail-minted">-</dd>
+            </div>
+            <div>
+              <dt>text hash</dt>
+              <dd id="thought-detail-text-hash">-</dd>
+            </div>
+            <div>
+              <dt>provenance hash</dt>
+              <dd id="thought-detail-provenance-hash">-</dd>
+            </div>
+            <div>
+              <dt>spec</dt>
+              <dd id="thought-detail-spec">-</dd>
+            </div>
+            <div>
+              <dt>tx</dt>
+              <dd id="thought-detail-tx">-</dd>
+            </div>
+          </dl>
+          <pre id="thought-detail-provenance-json" class="thought-detail__json"></pre>
+        </aside>
+      </div>
+    </section>
   </main>
+
+  <div id="mint-sheet-backdrop" class="mint-sheet-backdrop is-hidden"></div>
+  <section
+    id="mint-sheet"
+    class="mint-sheet is-hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="mint-sheet-title"
+  >
+    <div class="mint-sheet-header">
+      <h2 id="mint-sheet-title" class="mint-sheet-title">mint THOUGHT</h2>
+      <button id="mint-sheet-close" class="mint-sheet-close" type="button">[ close ]</button>
+    </div>
+    <p id="mint-sheet-copy" class="mint-sheet-copy">one THOUGHT needs one $PATH.</p>
+    <div id="mint-sheet-path-field" class="mint-sheet-field">
+      <label class="mint-sheet-label" for="mint-sheet-path-box">$PATH #</label>
+      <input
+        id="mint-sheet-path-box"
+        class="mint-sheet-input"
+        type="text"
+        inputmode="numeric"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+    <p id="mint-sheet-provenance" class="mint-sheet-provenance is-hidden"></p>
+    <p id="mint-sheet-status" class="mint-sheet-status" aria-live="polite"></p>
+    <p id="mint-sheet-context" class="mint-sheet-context is-hidden"></p>
+    <div class="mint-sheet-actions">
+      <button id="mint-sheet-primary" class="mint-sheet-primary" type="button">[ continue ]</button>
+      <button id="mint-sheet-secondary" class="mint-sheet-primary is-hidden" type="button">[ view THOUGHT ]</button>
+      <button id="mint-sheet-tertiary" class="mint-sheet-primary is-hidden" type="button">[ refresh ]</button>
+    </div>
+    <div id="mint-sheet-flow" class="mint-sheet-flow" aria-label="mint flow">
+      <span data-step="select">select $PATH</span>
+      <span aria-hidden="true">·</span>
+      <span data-step="authorize">authorize</span>
+      <span aria-hidden="true">·</span>
+      <span data-step="confirm">confirm</span>
+    </div>
+  </section>
 
   <script type="module" src="/src/main.ts"></script>
 </body>
