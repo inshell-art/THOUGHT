@@ -177,6 +177,7 @@ body {
   --weight-thin: 200;
   --weight-mid: 400;
   --main-area-width: 1120px;
+  --thought-canvas-outer-height: 620px;
 }
 
 body.frontpage {
@@ -341,6 +342,7 @@ html.thought-route .frontpage-stage {
   align-self: stretch;
   max-width: 360px;
   min-width: 300px;
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -355,6 +357,160 @@ html.thought-route .frontpage-stage {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.frontpage-input-panel.is-cli > :not(.thought-cli) {
+  display: none;
+}
+
+.thought-cli {
+  width: 100%;
+  height: calc(var(--thought-canvas-outer-height) + 8px);
+  min-height: calc(var(--thought-canvas-outer-height) + 8px);
+  max-height: calc(var(--thought-canvas-outer-height) + 8px);
+  display: grid;
+  grid-template-rows: minmax(260px, 1fr) auto;
+  gap: 16px;
+  box-sizing: border-box;
+  padding: 16px;
+  background: #050505;
+  color: #aab2c2;
+}
+
+.thought-cli__transcript {
+  min-height: 260px;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  margin-right: -14px;
+  padding: 2px 16px 8px 2px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent #050505;
+}
+
+.thought-cli__transcript.is-scrolling {
+  scrollbar-color: rgba(170, 178, 194, 0.75) #050505;
+}
+
+.thought-cli__transcript::-webkit-scrollbar {
+  width: 12px;
+  background: #050505;
+}
+
+.thought-cli__transcript::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+.thought-cli__transcript::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 2px solid #050505;
+  border-radius: 999px;
+}
+
+.thought-cli__transcript.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(170, 178, 194, 0.75);
+}
+
+.thought-cli-entry {
+  margin: 0;
+  margin-bottom: 14px;
+  color: #aab2c2;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.thought-cli-entry--command {
+  margin-bottom: 3px;
+  color: var(--accent);
+  font-weight: var(--weight-mid, 400);
+}
+
+.thought-cli-entry:last-child {
+  margin-bottom: 0;
+}
+
+.thought-cli-entry--error {
+  color: #b91c1c;
+}
+
+.thought-cli__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #aab2c2;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+.thought-cli__input:focus {
+  outline: none;
+  color: #aab2c2;
+}
+
+.thought-cli__suggestions {
+  display: none;
+}
+
+.thought-cli__suggestion-label {
+  color: #aab2c2;
+  font-size: 12px;
+  font-weight: 300;
+}
+
+.thought-cli__suggestion {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: var(--weight-mid, 400);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.thought-cli__suggestion:hover,
+.thought-cli__suggestion:focus-visible {
+  outline: none;
+  color: var(--accent-strong);
+}
+
+.thought-cli__form {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.thought-cli__prompt {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: var(--weight-mid, 400);
+  line-height: 1.4;
+}
+
+.thought-cli__input:disabled {
+  color: #aab2c2;
+  opacity: 0.55;
+}
+
+.thought-cli .thought-cli__input {
+  caret-color: var(--accent);
 }
 
 .frontpage-field {
@@ -1288,14 +1444,27 @@ html.thought-route .frontpage-stage {
   outline: none;
 }
 
+.frontpage-note__link--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .color-font-footer {
+  position: static;
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
-  padding-top: 22px;
-  margin-top: auto;
+  padding: 8px 0 0;
+  margin: 0;
 }
 
 .color-font-footer .frontpage-note {
@@ -1707,6 +1876,7 @@ html.thought-route .thought-detail.is-hidden {
   }
 
   .frontpage-side {
+    position: relative;
     grid-area: auto;
     flex: 0 0 auto;
     max-width: none;
@@ -1737,6 +1907,7 @@ html.thought-route .thought-detail.is-hidden {
   }
 
   .color-font-footer {
+    position: static;
     display: flex;
     flex-direction: column;
     align-items: center;

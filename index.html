@@ -41,7 +41,22 @@
         </div>
 
         <div class="frontpage-side">
-          <div class="frontpage-input-panel">
+          <div class="frontpage-input-panel is-cli">
+            <section class="thought-cli" aria-label="THOUGHT operator panel">
+              <div id="thought-cli-transcript" class="thought-cli__transcript" aria-live="polite"></div>
+              <div id="thought-cli-suggestions" class="thought-cli__suggestions" aria-label="Suggested commands"></div>
+              <form id="thought-cli-form" class="thought-cli__form">
+                <label class="thought-cli__prompt" for="thought-cli-input">thought&gt;</label>
+                <input
+                  id="thought-cli-input"
+                  class="thought-cli__input"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="THOUGHT command"
+                />
+              </form>
+            </section>
             <div class="frontpage-field">
               <span class="frontpage-label">mode</span>
               <div class="frontpage-mode" role="group" aria-label="Mode">
@@ -274,18 +289,14 @@
           </div>
 
           <div class="color-font-footer">
-            <p class="frontpage-note">
-              one round only.<br />
-              prompt +
-              <a
-                id="thought-instructions-link"
-                class="frontpage-note__link"
-                href="#"
-                target="_blank"
-                rel="noopener noreferrer"
-              >THOUGHT.md</a> in.<br />
-              canvas out.
-            </p>
+            <a
+              id="thought-instructions-link"
+              class="frontpage-note__link frontpage-note__link--hidden"
+              href="#"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open active THOUGHT.md"
+            >THOUGHT.md</a>
             <nav class="color-font-footer__nav" aria-label="THOUGHT links">
               <a
                 class="color-font-footer__link"
@@ -301,8 +312,6 @@
                 id="thought-gallery-link"
                 class="color-font-footer__link"
                 href="?gallery=1"
-                target="_blank"
-                rel="noopener noreferrer"
                 data-label="gallery"
                 aria-label="Open the THOUGHT gallery"
               >■■■■■■■</a>

@@ -225,6 +225,20 @@ type MintSheetActionConfig = {
   label: string;
 };
 
+type MintFlowUiMode = "sheet" | "cli";
+
+type CliEntryKind = "intro" | "command" | "output" | "error";
+
+type CliEntry = {
+  kind: CliEntryKind;
+  lines: string[];
+};
+
+type CliSuggestion = {
+  label: string;
+  command: string;
+};
+
 type WalletDotState = "off" | "on" | "pending" | "error";
 
 type ThoughtWalletState = {
@@ -318,6 +332,7 @@ const CANVAS_PADDING = 28;
 const IMAGE_RADIUS = 0;
 const BACKGROUND_FILL = "#050505";
 const THOUGHT_SESSION_STORAGE_KEY = "thought-provider-session";
+const THOUGHT_CLI_HISTORY_STORAGE_KEY = "thought-cli-command-history";
 const THOUGHT_INSTRUCTIONS_OVERRIDE_KEY = "thought-instructions-override";
 const ENABLE_THOUGHT_UPLOAD = window.location.port === "5188";
 const OPENROUTER_PKCE_VERIFIER_KEY = "thought-openrouter-pkce-verifier";
@@ -332,6 +347,7 @@ const LOCAL_ENGINE_ID = "ollama";
 const LOCAL_ENGINE_LABEL = "ollama";
 const LOCAL_DEFAULT_MODEL = "llama3.2:1b";
 const NOTICE_FLASH_MS = 2400;
+const CLI_COMMAND_HISTORY_LIMIT = 80;
 const APP_VERSION = "0.0.2";
 const APP_BUILD = typeof import.meta.env.VITE_APP_BUILD === "string" && import.meta.env.VITE_APP_BUILD
   ? import.meta.env.VITE_APP_BUILD
@@ -470,6 +486,10 @@ const frontpageTitle = document.getElementById("frontpage-title") as HTMLElement
 const modeConnectButton = document.getElementById("mode-connect") as HTMLButtonElement | null;
 const modeDirectButton = document.getElementById("mode-direct") as HTMLButtonElement | null;
 const modeLocalButton = document.getElementById("mode-local") as HTMLButtonElement | null;
+const thoughtCliTranscript = document.getElementById("thought-cli-transcript") as HTMLElement | null;
+const thoughtCliSuggestions = document.getElementById("thought-cli-suggestions") as HTMLElement | null;
+const thoughtCliForm = document.getElementById("thought-cli-form") as HTMLFormElement | null;
+const thoughtCliInput = document.getElementById("thought-cli-input") as HTMLInputElement | null;
 const connectPanel = document.getElementById("connect-panel") as HTMLElement | null;
 const connectOpenRouterButton = document.getElementById("connect-openrouter") as HTMLButtonElement | null;
 const connectStatusRow = document.getElementById("connect-status-row") as HTMLElement | null;
@@ -561,6 +581,10 @@ if (
   !modeConnectButton ||
   !modeDirectButton ||
   !modeLocalButton ||
+  !thoughtCliTranscript ||
+  !thoughtCliSuggestions ||
+  !thoughtCliForm ||
+  !thoughtCliInput ||
   !connectPanel ||
   !connectOpenRouterButton ||
   !connectStatusRow ||
@@ -662,6 +686,7 @@ let panelWarningLevel: PanelWarningLevel = "error";
 let currentOutputText = "";
 let runInFlight = false;
 let runState: ThoughtRunState = "idle";
+let cliSuggestionContext: "auto" | "help" | "current" | "config" = "auto";
 let walletConnectInFlight = false;
 let primaryActionState: PrimaryActionState = "run";
 let secondaryActionState: SecondaryActionState = "none";
@@ -830,6 +855,7 @@ const walletState: ThoughtWalletState = {
   menuOpen: false,
 };
 let mintFlowState: MintFlowState = "closed";
+let mintFlowUiMode: MintFlowUiMode = "sheet";
 const mintFlowData: MintFlowData = {
   rawText: "",
   textHash: "",
@@ -856,6 +882,11 @@ let mintSheetPrimaryAction: MintSheetAction = "none";
 let mintSheetSecondaryAction: MintSheetAction = "none";
 let mintSheetTertiaryAction: MintSheetAction = "none";
 let lastMintSheetFocusRefreshAt = 0;
+const cliEntries: CliEntry[] = [];
+const cliCommandHistory: string[] = [];
+let cliCommandInFlight = false;
+let cliHistoryIndex: number | null = null;
+let cliHistoryDraft = "";
 
 const getDefaultSessionState = (): ThoughtSessionState => ({
   mode: "connect",
@@ -1060,7 +1091,7 @@ const isOpenRouterConnectSupported = () => {
 };
 
 const getOpenRouterConnectConstraintMessage = () =>
-  "openrouter connect needs localhost or https on port 443 or 3000. use direct mode on LAN http.";
+  "openrouter connect needs localhost or https on port 443 or 3000. use config direct on LAN http.";
 
 const revokeThoughtInstructionsObjectUrl = () => {
   if (thoughtInstructionsObjectUrl) {
@@ -1355,6 +1386,23 @@ const ensureActiveThoughtSpec = async () => {
   return activeThoughtSpecPromise;
 };
 
+const formatThoughtSpecError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : "";
+  if (/failed to fetch|network|connection refused|could not connect|econnrefused/i.test(message)) {
+    return "Failed to fetch THOUGHT.md.";
+  }
+
+  if (!message || message === "spec unavailable.") {
+    return "THOUGHT.md unavailable.";
+  }
+
+  if (message === "spec mismatch.") {
+    return "THOUGHT.md spec mismatch.";
+  }
+
+  return message.includes("THOUGHT.md") ? message : `THOUGHT.md ${message}`;
+};
+
 type StableJsonValue =
   | string
   | number
@@ -1475,6 +1523,7 @@ const clearMintAuthorization = () => {
 
 const resetMintFlow = () => {
   mintFlowState = "closed";
+  mintFlowUiMode = "sheet";
   mintFlowData.rawText = "";
   mintFlowData.textHash = "";
   mintFlowData.thoughtSpecId = "";
@@ -2115,7 +2164,7 @@ const syncMintSheetButton = (
 };
 
 const syncMintSheet = () => {
-  const isOpen = mintFlowState !== "closed";
+  const isOpen = mintFlowUiMode === "sheet" && mintFlowState !== "closed";
   mintSheetBackdrop.classList.toggle("is-hidden", !isOpen);
   mintSheet.classList.toggle("is-hidden", !isOpen);
 
@@ -2430,12 +2479,13 @@ const handlePendingTx = async () => {
   }
 };
 
-const openMintSheet = async () => {
+const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
   if (!currentOutputText) {
     return;
   }
 
   resetMintFlow();
+  mintFlowUiMode = uiMode;
   mintFlowData.rawText = currentOutputText;
   mintFlowData.textHash = hashText(currentOutputText);
   mintFlowData.error = "";
@@ -2457,8 +2507,8 @@ const openMintSheet = async () => {
     spec = await ensureActiveThoughtSpec();
     syncThoughtInstructionsControls();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "spec unavailable.";
-    setMintFlowError(message, message.startsWith("spec ") ? "spec" : "thought");
+    const message = formatThoughtSpecError(error);
+    setMintFlowError(message, message.includes("THOUGHT.md") ? "spec" : "thought");
     syncInterface();
     return;
   }
@@ -3272,6 +3322,7 @@ const resizeCanvas = (displayWidth: number, height: number) => {
   canvas.height = Math.round(height * deviceScale);
   canvas.style.width = `${displayWidth}px`;
   canvas.style.height = `${height}px`;
+  document.documentElement.style.setProperty("--thought-canvas-outer-height", `${height}px`);
 
   context.setTransform(1, 0, 0, 1, 0, 0);
   context.scale(deviceScale, deviceScale);
@@ -3591,22 +3642,78 @@ const extractResponseText = (payload: unknown): string => {
   return parts.join(" ").trim();
 };
 
+const normalizeErrorMessage = (message: string) => message.trim().replace(/\s+/g, " ");
+
+const readErrorString = (value: unknown) =>
+  typeof value === "string" && value.trim() ? normalizeErrorMessage(value) : "";
+
+const readNestedProviderErrorMessage = (value: unknown): string => {
+  if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) {
+      return "";
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return readNestedProviderErrorMessage(parsed) || normalizeErrorMessage(raw);
+    } catch {
+      return normalizeErrorMessage(raw);
+    }
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return "";
+  }
+
+  const payload = value as {
+    error?: unknown;
+    message?: unknown;
+    detail?: unknown;
+    details?: unknown;
+    metadata?: { raw?: unknown };
+  };
+  if (typeof payload.error === "object" && payload.error !== null) {
+    const nested = readNestedProviderErrorMessage(payload.error);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return (
+    readErrorString(payload.message) ||
+    readErrorString(payload.detail) ||
+    readErrorString(payload.details) ||
+    readNestedProviderErrorMessage(payload.metadata?.raw)
+  );
+};
+
 const readErrorMessage = (payload: unknown, fallback: string): string => {
   if (typeof payload !== "object" || payload === null) {
     return fallback;
   }
 
-  const error = (payload as { error?: { message?: unknown } }).error;
-  if (error && typeof error.message === "string" && error.message.trim()) {
-    return error.message;
+  const error = (payload as { error?: { message?: unknown; metadata?: { raw?: unknown } } }).error;
+  if (error && typeof error === "object") {
+    const message = readErrorString(error.message);
+    const providerMessage = readNestedProviderErrorMessage(error.metadata?.raw);
+    if (providerMessage && (!message || message.toLowerCase() === "provider returned error")) {
+      return providerMessage;
+    }
+
+    if (message) {
+      return message;
+    }
   }
 
-  if (typeof (payload as { error?: unknown }).error === "string") {
-    return (payload as { error: string }).error;
+  const errorString = readErrorString((payload as { error?: unknown }).error);
+  if (errorString) {
+    return errorString;
   }
 
-  if (typeof (payload as { message?: unknown }).message === "string") {
-    return (payload as { message: string }).message;
+  const message = readErrorString((payload as { message?: unknown }).message);
+  if (message) {
+    return message;
   }
 
   return fallback;
@@ -4263,6 +4370,7 @@ const syncInterface = () => {
   syncRunAvailability();
   syncDebugPanel();
   syncWarningBox();
+  syncCliPanel();
 };
 
 const loadModelOptionsForSource = async (
@@ -4438,9 +4546,11 @@ const runAgent = async () => {
     await ensureActiveThoughtSpec();
     syncThoughtInstructionsControls();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "spec unavailable.";
+    const message = formatThoughtSpecError(error);
+    runState = "run_failed";
     setWarning(message);
     setStatus("");
+    syncInterface();
     return;
   }
 
@@ -4501,6 +4611,1739 @@ const runAgent = async () => {
     syncInterface();
   }
 };
+
+const trimCliEntries = () => {
+  if (cliEntries.length > 80) {
+    cliEntries.splice(0, cliEntries.length - 80);
+  }
+};
+
+const appendCliEntry = (kind: CliEntryKind, lines: string | string[]) => {
+  const normalizedLines = Array.isArray(lines) ? lines : [lines];
+  if (!normalizedLines.some((line) => line.length > 0)) {
+    return;
+  }
+
+  cliEntries.push({ kind, lines: normalizedLines });
+  trimCliEntries();
+  syncCliPanel();
+};
+
+const displayCliCommand = (command: string) => {
+  const [head = "", second = ""] = command.split(/\s+/, 2);
+  const lowerHead = head.toLowerCase();
+  const lowerSecond = second.toLowerCase();
+  const isKeyCommand = lowerHead === "key" || (lowerHead === "config" && lowerSecond === "key");
+
+  if (!isKeyCommand) {
+    return command;
+  }
+
+  const prefix = lowerHead === "config" ? "config key" : "key";
+  const rest = command.slice(prefix.length).trim();
+  if (!rest || rest.toLowerCase() === "clear" || rest.toLowerCase() === "help") {
+    return command;
+  }
+
+  return `${prefix} ********`;
+};
+
+const shouldRecordCliCommand = (command: string) => {
+  const [head = "", second = ""] = command.split(/\s+/, 2);
+  const lowerHead = head.toLowerCase();
+  const lowerSecond = second.toLowerCase();
+  const isKeyCommand = lowerHead === "key" || (lowerHead === "config" && lowerSecond === "key");
+
+  if (!isKeyCommand) {
+    return true;
+  }
+
+  const prefix = lowerHead === "config" ? "config key" : "key";
+  const rest = command.slice(prefix.length).trim().toLowerCase();
+  return !rest || rest === "clear" || rest === "help";
+};
+
+const readStoredCliCommandHistory = () => {
+  const raw = sessionStorage.getItem(THOUGHT_CLI_HISTORY_STORAGE_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((entry): entry is string => typeof entry === "string")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0 && shouldRecordCliCommand(entry))
+      .slice(-CLI_COMMAND_HISTORY_LIMIT);
+  } catch {
+    return [];
+  }
+};
+
+const writeCliCommandHistory = () => {
+  sessionStorage.setItem(
+    THOUGHT_CLI_HISTORY_STORAGE_KEY,
+    JSON.stringify(cliCommandHistory.slice(-CLI_COMMAND_HISTORY_LIMIT)),
+  );
+};
+
+const loadCliCommandHistory = () => {
+  cliCommandHistory.splice(0, cliCommandHistory.length, ...readStoredCliCommandHistory());
+};
+
+const resetCliHistoryCursor = () => {
+  cliHistoryIndex = null;
+  cliHistoryDraft = "";
+};
+
+const recordCliCommandHistory = (command: string) => {
+  if (!shouldRecordCliCommand(command)) {
+    resetCliHistoryCursor();
+    return;
+  }
+
+  const previous = cliCommandHistory[cliCommandHistory.length - 1];
+  if (previous !== command) {
+    cliCommandHistory.push(command);
+  }
+
+  if (cliCommandHistory.length > CLI_COMMAND_HISTORY_LIMIT) {
+    cliCommandHistory.splice(0, cliCommandHistory.length - CLI_COMMAND_HISTORY_LIMIT);
+  }
+  writeCliCommandHistory();
+  resetCliHistoryCursor();
+};
+
+const setCliInputCommand = (command: string) => {
+  thoughtCliInput.value = command;
+  requestAnimationFrame(() => {
+    thoughtCliInput.setSelectionRange(command.length, command.length);
+  });
+};
+
+const showPreviousCliCommand = () => {
+  if (!cliCommandHistory.length) {
+    return;
+  }
+
+  if (cliHistoryIndex === null) {
+    cliHistoryDraft = thoughtCliInput.value;
+    cliHistoryIndex = cliCommandHistory.length - 1;
+  } else {
+    cliHistoryIndex = Math.max(0, cliHistoryIndex - 1);
+  }
+
+  setCliInputCommand(cliCommandHistory[cliHistoryIndex]);
+};
+
+const showNextCliCommand = () => {
+  if (cliHistoryIndex === null) {
+    return;
+  }
+
+  if (cliHistoryIndex < cliCommandHistory.length - 1) {
+    cliHistoryIndex += 1;
+    setCliInputCommand(cliCommandHistory[cliHistoryIndex]);
+    return;
+  }
+
+  setCliInputCommand(cliHistoryDraft);
+  resetCliHistoryCursor();
+};
+
+const appendCliCommand = (command: string) => {
+  appendCliEntry("command", displayCliCommand(command));
+};
+
+const appendCliOutput = (lines: string | string[]) => {
+  appendCliEntry("output", lines);
+};
+
+const appendCliError = (lines: string | string[]) => {
+  appendCliEntry("error", lines);
+};
+
+let cliScrollHideTimer = 0;
+let cliScrollFrame = 0;
+
+const revealCliScrollbar = () => {
+  window.clearTimeout(cliScrollHideTimer);
+  thoughtCliTranscript.classList.add("is-scrolling");
+  cliScrollHideTimer = window.setTimeout(() => {
+    thoughtCliTranscript.classList.remove("is-scrolling");
+  }, 800);
+};
+
+const scrollCliTranscriptToBottom = () => {
+  thoughtCliTranscript.scrollTop = thoughtCliTranscript.scrollHeight;
+};
+
+const scheduleCliTranscriptScrollToBottom = () => {
+  window.cancelAnimationFrame(cliScrollFrame);
+  revealCliScrollbar();
+  scrollCliTranscriptToBottom();
+  cliScrollFrame = window.requestAnimationFrame(() => {
+    scrollCliTranscriptToBottom();
+    cliScrollFrame = window.requestAnimationFrame(() => {
+      scrollCliTranscriptToBottom();
+      cliScrollFrame = 0;
+    });
+  });
+};
+
+const renderCliTranscript = () => {
+  const nodes = cliEntries.map((entry) => {
+    const block = document.createElement("div");
+    block.className = `thought-cli-entry thought-cli-entry--${entry.kind}`;
+    entry.lines.forEach((line, index) => {
+      const row = document.createElement("div");
+      const displayLine = entry.kind === "command" && index === 0 ? `> ${line}` : line;
+      row.textContent = displayLine || " ";
+      block.append(row);
+    });
+    return block;
+  });
+
+  thoughtCliTranscript.replaceChildren(...nodes);
+};
+
+const getProvenanceSummary = () => {
+  if (!currentOutputText) {
+    return null;
+  }
+
+  try {
+    const provenanceJson = buildProvenanceJson(hashText(currentOutputText));
+    return {
+      bytes: byteLength(provenanceJson),
+      json: provenanceJson,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const getCliSuggestions = (): CliSuggestion[] => {
+  if (cliCommandInFlight) {
+    return [
+      { label: "current", command: "current" },
+      { label: "help", command: "help" },
+    ];
+  }
+
+  if (cliSuggestionContext === "help") {
+    return [
+      { label: "config", command: "config" },
+      { label: "prompt <text>", command: "prompt " },
+      { label: "run", command: "run" },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  if (cliSuggestionContext === "config") {
+    if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+      return [
+        { label: "config connect openrouter", command: "config connect openrouter" },
+        { label: "config engine list", command: "config engine list" },
+        { label: "current", command: "current" },
+      ];
+    }
+
+    if (sessionState.mode === "connect" && sessionState.connect.apiKey.trim()) {
+      return [
+        { label: "run", command: "run" },
+        { label: "config disconnect openrouter", command: "config disconnect openrouter" },
+        { label: "config engine list", command: "config engine list" },
+      ];
+    }
+
+    if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+      return [
+        { label: `config provider ${sessionState.direct.provider}`, command: `config provider ${sessionState.direct.provider}` },
+        { label: "config key <api-key>", command: "config key " },
+        { label: "current", command: "current" },
+      ];
+    }
+
+    if (sessionState.mode === "local") {
+      return [
+        { label: "config engine list", command: "config engine list" },
+        { label: "prompt <text>", command: "prompt " },
+        { label: "run", command: "run" },
+      ];
+    }
+
+    return [
+      { label: "prompt <text>", command: "prompt " },
+      { label: "run", command: "run" },
+      { label: "config engine list", command: "config engine list" },
+    ];
+  }
+
+  if (mintFlowState === "wallet_required") {
+    return [
+      { label: "wallet connect", command: "wallet connect" },
+      { label: "mint-path", command: "mint-path" },
+      { label: "help mint", command: "help mint" },
+    ];
+  }
+
+  if (mintFlowState === "path_required" || isPathRecoveryError()) {
+    return [
+      { label: "path <id>", command: "path " },
+      { label: "mint-path", command: "mint-path" },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  if (mintFlowState === "path_ready" || mintFlowState === "authorizing") {
+    return [
+      { label: "authorize", command: "authorize" },
+      { label: "path <id>", command: "path " },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  if (mintFlowState === "authorized" || mintFlowState === "minting") {
+    return [
+      { label: "confirm", command: "confirm" },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  if (mintFlowState === "minted") {
+    return [
+      { label: "view tx", command: "view tx" },
+      { label: "view THOUGHT", command: "view THOUGHT" },
+      { label: "gallery", command: "gallery" },
+    ];
+  }
+
+  if (runState === "output_ready") {
+    return [
+      { label: "mint", command: "mint" },
+      { label: "rerun", command: "rerun" },
+      { label: "provenance", command: "provenance" },
+      { label: "reset", command: "reset" },
+    ];
+  }
+
+  if (runState === "run_failed") {
+    return [
+      { label: "retry run", command: "retry run" },
+      { label: "current", command: "current" },
+      { label: "help", command: "help" },
+    ];
+  }
+
+  if (!sessionState.prompt.trim()) {
+    return [
+      { label: "config", command: "config" },
+      { label: "prompt <text>", command: "prompt " },
+      { label: "run", command: "run" },
+      { label: "mint", command: "mint" },
+    ];
+  }
+
+  if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+    return [
+      { label: "config connect openrouter", command: "config connect openrouter" },
+      { label: "config engine list", command: "config engine list" },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+    return [
+      { label: `config provider ${sessionState.direct.provider}`, command: `config provider ${sessionState.direct.provider}` },
+      { label: "config key <api-key>", command: "config key " },
+      { label: "current", command: "current" },
+    ];
+  }
+
+  return [
+    { label: "run", command: "run" },
+    { label: "config engine list", command: "config engine list" },
+    { label: "current", command: "current" },
+    { label: "help", command: "help" },
+  ];
+};
+
+const renderCliSuggestions = () => {
+  const label = document.createElement("span");
+  label.className = "thought-cli__suggestion-label";
+  label.textContent = "next:";
+
+  const buttons = getCliSuggestions().map((suggestion) => {
+    const button = document.createElement("button");
+    button.className = "thought-cli__suggestion";
+    button.type = "button";
+    button.textContent = `[ ${suggestion.label} ]`;
+    button.title = suggestion.command;
+    button.addEventListener("click", () => {
+      if (suggestion.command.endsWith(" ")) {
+        thoughtCliInput.value = suggestion.command;
+        thoughtCliInput.focus();
+        return;
+      }
+      void executeCliCommand(suggestion.command);
+    });
+    return button;
+  });
+
+  thoughtCliSuggestions.replaceChildren(label, ...buttons);
+};
+
+function syncCliPanel() {
+  renderCliTranscript();
+  renderCliSuggestions();
+  if (thoughtCliInput) {
+    thoughtCliInput.disabled = cliCommandInFlight;
+  }
+  scheduleCliTranscriptScrollToBottom();
+}
+
+const initializeCliTranscript = () => {
+  if (cliEntries.length) {
+    return;
+  }
+
+  const intro = [
+    "THOUGHT operator.",
+    "",
+    "one round on a model.",
+    "prompt + THOUGHT.md in.",
+    "canvas out.",
+    "",
+    "quick start:",
+    "config",
+    "prompt <text>",
+    "run",
+    "mint",
+  ];
+
+  appendCliEntry("intro", intro);
+};
+
+const focusCliInput = () => {
+  if (document.activeElement === thoughtCliInput || thoughtCliInput.disabled) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    thoughtCliInput.focus();
+  });
+};
+
+const shouldRefocusCliFromClick = (target: EventTarget | null) => {
+  if (frontpageStage.classList.contains("is-hidden") || !(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  const editableTarget = target.closest("input, textarea, select, [contenteditable='true']");
+  return !editableTarget || editableTarget === thoughtCliInput;
+};
+
+const shouldRefocusCliFromKeyboard = (event: KeyboardEvent) => {
+  if (
+    frontpageStage.classList.contains("is-hidden") ||
+    thoughtCliInput.disabled ||
+    event.isComposing ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey
+  ) {
+    return false;
+  }
+
+  if (document.activeElement === thoughtCliInput) {
+    return false;
+  }
+
+  const target = event.target;
+  if (target instanceof HTMLElement) {
+    const editableTarget = target.closest("input, textarea, select, [contenteditable='true']");
+    if (editableTarget && editableTarget !== thoughtCliInput) {
+      return false;
+    }
+  }
+
+  if (mintFlowUiMode === "sheet" && mintFlowState !== "closed") {
+    return false;
+  }
+
+  return event.key.length === 1 || event.key === "Backspace" || event.key === "ArrowUp" || event.key === "ArrowDown";
+};
+
+const focusCliInputFromKeyboard = (event: KeyboardEvent) => {
+  thoughtCliInput.focus();
+
+  if (event.key.length === 1) {
+    event.preventDefault();
+    setCliInputCommand(`${thoughtCliInput.value}${event.key}`);
+    resetCliHistoryCursor();
+    return;
+  }
+
+  if (event.key === "Backspace") {
+    event.preventDefault();
+    setCliInputCommand(thoughtCliInput.value.slice(0, -1));
+    resetCliHistoryCursor();
+    return;
+  }
+
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    showPreviousCliCommand();
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    showNextCliCommand();
+  }
+};
+
+const currentSpecLabel = () => activeThoughtSpec?.ref || getActiveThoughtInstructionsLabel();
+
+const cliRouteLabel = (mode: Mode) => mode;
+
+const cliProviderLabel = () => {
+  if (sessionState.mode === "local") {
+    return "ollama";
+  }
+
+  if (sessionState.mode === "connect") {
+    return "openrouter";
+  }
+
+  return sessionState.direct.provider;
+};
+
+const cliAuthorizationState = () =>
+  sessionState.connect.apiKey.trim() ? "linked" : "empty";
+
+const cliApiKeyState = () =>
+  sessionState.direct.apiKey.trim() ? "set" : "not set";
+
+const formatCliAddress = (address: string) => shortHex(address, 6, 4);
+
+const cliSpecStatus = () => {
+  if (!activeThoughtSpec) {
+    return {
+      state: "missing",
+      hint: "run blocked",
+      ref: "n/a",
+      hash: "n/a",
+      shortHash: "n/a",
+    };
+  }
+
+  return {
+    state: "ready",
+    hint: `spec ${activeThoughtSpec.ref}`,
+    ref: activeThoughtSpec.ref,
+    hash: activeThoughtSpec.specHash,
+    shortHash: shortHex(activeThoughtSpec.specHash, 10, 8),
+  };
+};
+
+const cliOutputStatus = () => {
+  if (mintFlowState === "minted") {
+    return {
+      state: "minted",
+      hint: "use: view THOUGHT",
+    };
+  }
+
+  if (runState === "output_ready") {
+    return {
+      state: "ready",
+      hint: "use: mint",
+    };
+  }
+
+  if (runState === "running") {
+    return {
+      state: "running",
+      hint: "",
+    };
+  }
+
+  if (runState === "run_failed") {
+    return {
+      state: "failed",
+      hint: "",
+    };
+  }
+
+  return {
+    state: "empty",
+    hint: "",
+  };
+};
+
+const cliCurrentMintState = () => {
+  if (mintFlowState === "closed") {
+    return runState === "output_ready" ? "ready" : "idle";
+  }
+  if (mintFlowState === "wallet_required") {
+    return "needs wallet";
+  }
+  if (mintFlowState === "path_required" || mintFlowState === "path_checking") {
+    return "needs $PATH";
+  }
+  if (mintFlowState === "path_ready" || mintFlowState === "authorizing") {
+    return "needs authorization";
+  }
+  if (mintFlowState === "authorized") {
+    return "authorized";
+  }
+  if (mintFlowState === "minting") {
+    return "confirming";
+  }
+  if (mintFlowState === "minted") {
+    return "minted";
+  }
+  if (mintFlowState === "text_taken") {
+    return "already minted";
+  }
+  if (mintFlowState === "error") {
+    return "failed";
+  }
+  return "idle";
+};
+
+const cliPromptState = () => sessionState.prompt.trim() ? "set" : "empty";
+
+const cliPathState = () => {
+  const path = mintFlowData.pathId?.toString() ?? mintFlowData.pathIdInput.trim();
+  return path || "empty";
+};
+
+const buildCliCurrentLines = () => {
+  const provenance = getProvenanceSummary();
+  const output = cliOutputStatus();
+  const spec = cliSpecStatus();
+  const tokenId = walletState.mintedTokenId ?? mintFlowData.existingTokenId;
+
+  const lines = [
+    "current:",
+    `route: ${cliRouteLabel(sessionState.mode)}`,
+    `provider: ${cliProviderLabel()}`,
+  ];
+
+  if (sessionState.mode === "connect") {
+    lines.push(`authorization: ${cliAuthorizationState()}`);
+  }
+  if (sessionState.mode === "direct") {
+    lines.push(`api key: ${cliApiKeyState()}`);
+  }
+  if (sessionState.mode === "local") {
+    lines.push(`status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`);
+  }
+
+  lines.push(
+    `engine: ${getCurrentModelValue().trim() || "empty"}`,
+    `prompt: ${cliPromptState()}`,
+    `THOUGHT.md: ${spec.state}`,
+    `wallet: ${walletState.address ? "connected" : "disconnected"}`,
+    `output: ${output.state}`,
+    `provenance: ${provenance ? `${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.` : "empty"}`,
+  );
+
+  if (output.state !== "empty" || mintFlowState !== "closed") {
+    lines.push(`$PATH: ${cliPathState()}`, `mint: ${cliCurrentMintState()}`);
+  }
+  if (output.state === "minted" && tokenId !== null) {
+    lines.push(`THOUGHT #${tokenId}`);
+  }
+  if (walletState.txHash) {
+    lines.push(`tx: ${walletState.txHash}`);
+  }
+
+  return lines;
+};
+
+const listModelsForCli = () => {
+  const options = getModelOptions(getCurrentModelSourceId());
+  if (!options.length) {
+    return ["engine list unavailable."];
+  }
+
+  return [
+    "engines:",
+    ...options.slice(0, 8).map((option) => option.id),
+    "",
+    "use: config engine <id>",
+  ];
+};
+
+const setCliModel = (modelId: string) => {
+  const options = getModelOptions(getCurrentModelSourceId());
+  if (!modelId || modelId.toLowerCase() === "help") {
+    appendCliOutput([
+      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      `route: ${sessionState.mode}`,
+      "use: config engine list",
+      "use: config engine <id>",
+      "alias: model -> config engine",
+    ]);
+    return;
+  }
+
+  if (!options.some((option) => option.id === modelId)) {
+    appendCliError(["engine not found.", "use: config engine list"]);
+    return;
+  }
+
+  resetMintRuntimeState();
+  setCurrentModelValue(modelId);
+  writeSessionState();
+  syncInterface();
+  appendCliOutput(["engine set.", `engine: ${modelId}`, "use: run"]);
+};
+
+const setCliProvider = (providerId: string) => {
+  if (!providerId || providerId.toLowerCase() === "help") {
+    const lines = [
+      `provider: ${sessionState.direct.provider}`,
+      "route: direct",
+      "use: config provider <openai|openrouter|anthropic>",
+    ];
+    if (sessionState.mode !== "direct") {
+      lines.push("note: provider is used by config direct.");
+    }
+    appendCliOutput(lines);
+    return;
+  }
+
+  if (!isDirectProviderId(providerId)) {
+    appendCliError(["provider not found.", "use: config provider <openai|openrouter|anthropic>"]);
+    return;
+  }
+
+  resetMintRuntimeState();
+  sessionState.mode = "direct";
+  sessionState.direct.provider = providerId;
+  sessionState.direct.apiKey = "";
+  sessionState.direct.model = DIRECT_PROVIDERS[providerId].defaultModel;
+  writeSessionState();
+  syncInterface();
+  void refreshCurrentModels({ silent: true });
+  appendCliOutput(["provider set.", `provider: ${providerId}`, "route: direct", "use: config key <api-key>"]);
+};
+
+const setCliApiKey = (keyInput: string) => {
+  const key = keyInput.trim();
+  if (!key || key.toLowerCase() === "help") {
+    const lines = [
+      `api key: ${cliApiKeyState()}`,
+      "policy: session only.",
+      "use: config key <api-key>",
+    ];
+    if (sessionState.direct.apiKey.trim()) {
+      lines.push("clear: config key clear");
+    }
+    appendCliOutput(lines);
+    return;
+  }
+
+  if (key.toLowerCase() === "clear") {
+    sessionState.direct.apiKey = "";
+    writeSessionState();
+    syncInterface();
+    appendCliOutput(["api key cleared.", "use: config key <api-key>"]);
+    return;
+  }
+
+  resetMintRuntimeState();
+  sessionState.mode = "direct";
+  sessionState.direct.apiKey = key;
+  writeSessionState();
+  syncInterface();
+  appendCliOutput(["api key set.", "policy: session only.", "use: run"]);
+};
+
+const formatCliTextValue = (value: string) => JSON.stringify(value);
+
+const setCliPrompt = (promptInput: string) => {
+  const prompt = promptInput.trim();
+  if (!prompt || prompt.toLowerCase() === "help") {
+    const currentPrompt = sessionState.prompt.trim();
+    appendCliOutput([
+      `prompt: ${currentPrompt ? formatCliTextValue(currentPrompt) : "empty"}`,
+      "use: prompt <text>",
+      "clear: prompt clear",
+    ]);
+    return;
+  }
+
+  if (prompt.toLowerCase() === "clear") {
+    resetMintRuntimeState();
+    sessionState.prompt = "";
+    writeSessionState();
+    syncInterface();
+    appendCliOutput(["prompt cleared.", "next: prompt <text>"]);
+    return;
+  }
+
+  resetMintRuntimeState();
+  sessionState.prompt = promptInput.trim();
+  writeSessionState();
+  syncInterface();
+  appendCliOutput(["prompt set.", "next: run"]);
+};
+
+const outputCliMode = async (mode: Mode | "") => {
+  if (!mode) {
+    appendCliOutput(["use: config", "alias: mode -> config route"]);
+    return;
+  }
+
+  setMode(mode);
+  await refreshCurrentModels({ silent: true });
+  const lines =
+    mode === "local"
+      ? [
+          "route: local",
+          "runs on this machine.",
+          `status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`,
+          "use:",
+          "config engine list",
+          "config engine <id>",
+          "run",
+          "config connect",
+          "config direct",
+        ]
+      : mode === "connect"
+        ? [
+            "route: connect",
+            "delegated cloud access.",
+            "provider: openrouter",
+            `authorization: ${sessionState.connect.apiKey.trim() ? "linked" : "empty"}`,
+            "use:",
+            "config connect openrouter",
+            "config disconnect openrouter",
+            "config engine list",
+            "config engine <id>",
+            "run",
+          ]
+        : [
+            "route: direct",
+            "raw provider key. session only.",
+            `provider: ${sessionState.direct.provider}`,
+            `api key: ${cliApiKeyState()}`,
+            "use:",
+            "config provider <id>",
+            "config key <api-key>",
+            "config key clear",
+            "config engine list",
+            "config engine <id>",
+            "run",
+          ];
+  appendCliOutput(lines.filter(Boolean));
+};
+
+const outputCliConfigSummary = () => {
+  const lines = [
+    "config sets the route and engine for one round.",
+    "",
+    `route: ${sessionState.mode}`,
+  ];
+
+  if (sessionState.mode === "local") {
+    lines.push(
+      "provider: ollama",
+      `status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`,
+      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+    );
+  } else if (sessionState.mode === "connect") {
+    lines.push(
+      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      "provider: openrouter",
+      `authorization: ${cliAuthorizationState()}`,
+    );
+  } else {
+    lines.push(
+      `provider: ${sessionState.direct.provider}`,
+      `api key: ${cliApiKeyState()}`,
+      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+    );
+  }
+
+  lines.push(
+    "",
+    "routes:",
+    "local     runs on this machine.",
+    "connect   delegated cloud access.",
+    "direct    raw provider key. session only.",
+    "",
+    "use:",
+    "config local",
+    "config connect",
+    "config direct",
+    "config engine list",
+    "config engine <id>",
+  );
+
+  if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+    lines.push("config connect openrouter");
+  }
+  if (sessionState.mode === "connect" && sessionState.connect.apiKey.trim()) {
+    lines.push("config disconnect openrouter");
+  }
+  if (sessionState.mode === "direct") {
+    lines.push("config provider <id>");
+    if (!sessionState.direct.apiKey.trim()) {
+      lines.push("config key <api-key>");
+    } else {
+      lines.push("config key clear");
+    }
+  }
+
+  appendCliOutput(lines);
+};
+
+const startOpenRouterConnectFromCli = async () => {
+  if (sessionState.mode !== "connect") {
+    setMode("connect");
+  }
+  if (sessionState.connect.apiKey.trim()) {
+    appendCliOutput(["openrouter linked.", "route: connect", "use: run"]);
+    return;
+  }
+  if (!isOpenRouterConnectSupported()) {
+    appendCliError([getOpenRouterConnectConstraintMessage(), "use: config direct"]);
+    return;
+  }
+
+  appendCliOutput("opening openrouter...");
+  await startOpenRouterConnect();
+};
+
+const outputCliConfig = async (configInput: string) => {
+  const [head = ""] = configInput.trim().split(/\s+/, 1);
+  const rest = configInput.trim().slice(head.length).trim();
+  const lowerHead = head.toLowerCase();
+  const lowerRest = rest.toLowerCase();
+
+  if (!lowerHead || lowerHead === "help") {
+    outputCliConfigSummary();
+    return;
+  }
+
+  if (lowerHead === "local" || lowerHead === "direct") {
+    await outputCliMode(lowerHead);
+    return;
+  }
+
+  if (lowerHead === "connect") {
+    if (!lowerRest) {
+      await outputCliMode("connect");
+      return;
+    }
+    if (lowerRest === "openrouter") {
+      await startOpenRouterConnectFromCli();
+      return;
+    }
+  }
+
+  if (lowerHead === "disconnect" && lowerRest === "openrouter") {
+    disconnectOpenRouter();
+    appendCliOutput(["openrouter unlinked.", "use: config connect openrouter"]);
+    return;
+  }
+
+  if (lowerHead === "engine") {
+    if (!lowerRest || lowerRest === "help") {
+      setCliModel("");
+      return;
+    }
+    if (lowerRest === "list") {
+      await refreshCurrentModels({ silent: true });
+      appendCliOutput(listModelsForCli());
+      return;
+    }
+    setCliModel(rest);
+    return;
+  }
+
+  if (lowerHead === "provider") {
+    setCliProvider(lowerRest);
+    return;
+  }
+
+  if (lowerHead === "key") {
+    setCliApiKey(rest);
+    return;
+  }
+
+  appendCliError(["config option not found.", "use: config"]);
+};
+
+const outputCliProvenance = async (json = false) => {
+  if (!currentOutputText) {
+    appendCliError(["no THOUGHT ready.", "next: run"]);
+    return;
+  }
+
+  try {
+    await ensureActiveThoughtSpec();
+    const provenance = getProvenanceSummary();
+    if (!provenance) {
+      throw new Error("provenance unavailable.");
+    }
+
+    if (json && IS_DEV_MODE) {
+      appendCliOutput(["provenance --json", formatProvenanceJson(provenance.json)]);
+      return;
+    }
+
+    appendCliOutput([
+      "provenance",
+      "schema: thought.provenance.v1",
+      `spec: ${currentSpecLabel()}`,
+      `bytes: ${provenance.bytes}/${MAX_PROVENANCE_BYTES}`,
+      `gas: ~${formatCount(MINT_GAS_ESTIMATE)}`,
+    ]);
+  } catch (error) {
+    appendCliError([formatThoughtSpecError(error), "next: current"]);
+  }
+};
+
+const isThoughtInstructionsCommand = (commandHead: string) =>
+  commandHead === "thought" || commandHead === "thought.md";
+
+const thoughtInstructionsUsageLines = (
+  state: "available" | "unavailable",
+  errorMessage = "",
+) => [
+  `THOUGHT.md ${state === "available" ? "ready." : "unavailable."}`,
+  ...(state === "available" && activeThoughtSpec ? [`spec: ${activeThoughtSpec.ref}`] : []),
+  ...(errorMessage ? [`error: ${errorMessage}`] : []),
+  "use: THOUGHT.md text",
+];
+
+const outputCliThoughtInstructions = async (topic: string) => {
+  try {
+    await ensureActiveThoughtSpec();
+    syncThoughtInstructionsControls();
+  } catch (error) {
+    appendCliOutput(
+      thoughtInstructionsUsageLines(
+        "unavailable",
+        formatThoughtSpecError(error),
+      ),
+    );
+    return;
+  }
+
+  const normalizedTopic = topic.trim().toLowerCase();
+  const text = getActiveThoughtInstructions().trim();
+  const label = getActiveThoughtInstructionsLabel();
+
+  if (normalizedTopic === "text" || normalizedTopic === "show" || normalizedTopic === "cat") {
+    appendCliOutput([`THOUGHT.md: ${label}`, ...text.split(/\r?\n/)]);
+    return;
+  }
+
+  appendCliOutput(thoughtInstructionsUsageLines("available"));
+};
+
+const runFromCli = async () => {
+  if (!sessionState.prompt.trim()) {
+    appendCliError(["run failed.", "prompt empty.", "next: prompt <text>"]);
+    return;
+  }
+
+  if (!getCurrentModelValue().trim()) {
+    appendCliError(["run failed.", "engine empty.", "use: config engine list"]);
+    return;
+  }
+
+  if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+    appendCliError(["run failed.", "openrouter not linked.", "use: config connect openrouter"]);
+    return;
+  }
+
+  if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+    appendCliError(["run failed.", "api key not set.", "use: config key <api-key>"]);
+    return;
+  }
+
+  if (sessionState.mode === "local") {
+    await refreshCurrentModels({ silent: true });
+    if (sessionState.local.available === false) {
+      appendCliError(["run failed.", "ollama not detected.", "use: config connect"]);
+      return;
+    }
+  }
+
+  appendCliOutput([
+    "running...",
+    "one round on a model.",
+    "prompt + THOUGHT.md in.",
+    "canvas out.",
+  ]);
+  await runAgent();
+
+  if (runState === "output_ready") {
+    const provenance = getProvenanceSummary();
+    appendCliOutput([
+      "canvas ready.",
+      provenance
+        ? `provenance ${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.`
+        : "provenance ready.",
+      "use: mint",
+    ]);
+    return;
+  }
+
+  appendCliError(panelWarningMessage ? ["run failed.", panelWarningMessage] : ["run failed."]);
+};
+
+const switchMintFlowToCli = () => {
+  if (mintFlowUiMode === "cli") {
+    return;
+  }
+
+  mintFlowUiMode = "cli";
+  syncInterface();
+};
+
+const selectedCliPathId = () =>
+  mintFlowData.pathId?.toString() ?? mintFlowData.pathIdInput.trim();
+
+const buildCliMintStateLines = () => {
+  const pathId = selectedCliPathId();
+
+  if (mintFlowState === "thought_checking") {
+    return ["checking THOUGHT..."];
+  }
+  if (mintFlowState === "wallet_required") {
+    return ["wallet disconnected.", "use: wallet connect"];
+  }
+  if (mintFlowState === "path_required") {
+    return [
+      walletState.address ? `wallet linked: ${formatCliAddress(walletState.address)}` : "wallet linked.",
+      "select $PATH.",
+      "use: path <id>",
+      "use: mint-path",
+    ];
+  }
+  if (mintFlowState === "path_checking") {
+    return [`checking $PATH #${pathId || "?"}...`];
+  }
+  if (mintFlowState === "path_ready") {
+    return [`$PATH #${pathId || "?"} ready.`, "use: authorize"];
+  }
+  if (mintFlowState === "authorizing") {
+    return ["signing authorization..."];
+  }
+  if (mintFlowState === "authorized") {
+    return [`$PATH #${pathId || "?"} authorized.`, "use: confirm"];
+  }
+  if (mintFlowState === "minting") {
+    return ["confirming mint..."];
+  }
+  if (mintFlowState === "minted") {
+    return ["minted.", "use: view tx", "use: view THOUGHT"];
+  }
+  if (mintFlowState === "text_taken") {
+    const token = mintFlowData.existingTokenId;
+    return [token ? `THOUGHT #${token} already minted.` : "THOUGHT already minted.", "use: view THOUGHT"];
+  }
+  if (mintFlowState === "error") {
+    return [mintFlowData.error || "mint unavailable.", "use: current"];
+  }
+
+  return [];
+};
+
+const appendCliMintState = () => {
+  const lines = buildCliMintStateLines();
+  if (!lines.length) {
+    return;
+  }
+
+  if (mintFlowState === "error") {
+    appendCliError(lines);
+    return;
+  }
+
+  appendCliOutput(lines);
+};
+
+const startCliMint = async () => {
+  if (!currentOutputText) {
+    appendCliError(["nothing to mint.", "use: run"]);
+    return;
+  }
+
+  appendCliOutput([
+    "mint THOUGHT.",
+    "one THOUGHT needs one $PATH.",
+    "select $PATH · authorize · confirm.",
+  ]);
+  await openMintSheet("cli");
+  appendCliMintState();
+};
+
+const ensureCliMintFlow = async () => {
+  if (mintFlowState !== "closed") {
+    switchMintFlowToCli();
+    return true;
+  }
+
+  if (!currentOutputText) {
+    appendCliError(["nothing to mint.", "use: run"]);
+    return false;
+  }
+
+  await openMintSheet("cli");
+  return mintFlowState !== "closed";
+};
+
+const checkCliPath = async (pathInput: string) => {
+  if (!await ensureCliMintFlow()) {
+    return;
+  }
+
+  if (!pathInput.trim()) {
+    appendCliError(["enter a $PATH #.", "use: path <id>", "use: mint-path"]);
+    return;
+  }
+
+  mintFlowData.pathIdInput = pathInput.trim();
+  mintFlowData.pathId = parsePathTokenId(pathInput);
+  appendCliOutput(`checking $PATH #${pathInput.trim()}...`);
+  await checkPathEligibility();
+
+  if (mintFlowState === "path_ready") {
+    appendCliOutput([`$PATH #${mintFlowData.pathId?.toString() ?? pathInput.trim()} ready.`, "use: authorize"]);
+  } else if (mintFlowState === "wallet_required") {
+    appendCliError(["wallet disconnected.", "use: wallet connect"]);
+  } else if (mintFlowState === "error") {
+    appendCliError([mintFlowData.error || `$PATH #${pathInput.trim()} not available.`, "use: path <id>", "use: mint-path"]);
+  }
+};
+
+const authorizeFromCli = async () => {
+  if (!await ensureCliMintFlow()) {
+    return;
+  }
+
+  if (mintFlowState !== "path_ready") {
+    appendCliError(mintFlowState === "authorized" ? ["authorized.", "use: confirm"] : ["not ready.", "use: path <id>"]);
+    return;
+  }
+
+  appendCliOutput("sign in wallet...");
+  await authorizeMint();
+  const state = mintFlowState as MintFlowState;
+  if (state === "authorized") {
+    appendCliOutput(["authorized.", "use: confirm"]);
+  } else if (state === "error") {
+    appendCliError([mintFlowData.error || "authorization failed.", "use: path <id>"]);
+  }
+};
+
+const confirmFromCli = async () => {
+  if (!await ensureCliMintFlow()) {
+    return;
+  }
+
+  if (mintFlowState !== "authorized") {
+    appendCliError(["not authorized.", "use: authorize"]);
+    return;
+  }
+
+  appendCliOutput("confirm in wallet...");
+  await confirmMint();
+  const state = mintFlowState as MintFlowState;
+  if (state === "minted") {
+    appendCliOutput(["minted.", "use: view tx", "use: view THOUGHT"]);
+  } else if (state === "error") {
+    appendCliError([mintFlowData.error || "mint failed.", "use: current"]);
+  }
+};
+
+const connectWalletFromCli = async () => {
+  const mintFlowWasActive = mintFlowState !== "closed";
+  if (mintFlowWasActive) {
+    switchMintFlowToCli();
+  }
+
+  appendCliOutput("connecting wallet...");
+  await requestWalletConnect();
+
+  if (mintFlowWasActive && walletState.address && mintFlowState === "wallet_required") {
+    mintFlowState = "path_required";
+    mintFlowData.error = "";
+    mintFlowData.errorKind = "none";
+  }
+
+  if (mintFlowState !== "closed") {
+    switchMintFlowToCli();
+    syncInterface();
+    appendCliMintState();
+    return;
+  }
+
+  appendCliOutput(walletState.address ? ["wallet linked.", "use: mint"] : ["wallet disconnected.", "use: wallet connect"]);
+};
+
+const outputCliWalletUsage = () => {
+  appendCliOutput([
+    "wallet is used for $PATH and minting.",
+    `wallet: ${walletState.address ? `linked ${formatCliAddress(walletState.address)}` : "disconnected"}`,
+    "use: wallet connect",
+    "clear: wallet disconnect",
+  ]);
+};
+
+const disconnectWalletFromCli = () => {
+  walletState.address = "";
+  walletState.chainId = null;
+  walletState.menuOpen = false;
+  resetMintRuntimeState();
+  syncInterface();
+  appendCliOutput(["wallet unlinked.", "use: wallet connect"]);
+};
+
+const cliCommandsHelpLines = () => [
+  "commands:",
+  "config",
+  "config local | connect | direct",
+  "config connect openrouter",
+  "config disconnect openrouter",
+  "config provider <id>",
+  "config key <api-key>",
+  "config key clear",
+  "config engine list",
+  "config engine <id>",
+  "",
+  "prompt <text>",
+  "prompt clear",
+  "THOUGHT.md",
+  "THOUGHT.md text",
+  "",
+  "run",
+  "rerun",
+  "retry run",
+  "",
+  "mint",
+  "path <id>",
+  "authorize",
+  "confirm",
+  "wallet connect",
+  "wallet disconnect",
+  "mint-path",
+  "",
+  "current",
+  "provenance",
+  "provenance --json",
+  "gallery",
+  "view tx",
+  "view THOUGHT",
+  "clear",
+  "reset",
+  "help",
+  "commands",
+];
+
+const cliHelpLines = (topic = "") => {
+  const normalizedTopic = topic.trim().toLowerCase();
+
+  if (!normalizedTopic) {
+    return [
+      "THOUGHT takes a prompt and THOUGHT.md,",
+      "runs one round on the selected engine,",
+      "then renders the returned text to canvas.",
+      "",
+      "flow:",
+      "config    choose route + engine",
+      "prompt    write intention",
+      "run       make canvas",
+      "mint      keep it onchain",
+      "",
+      "try:",
+      "config",
+      "prompt <text>",
+      "run",
+      "",
+      "more:",
+      "help config",
+      "help prompt",
+      "help run",
+      "help mint",
+      "commands",
+      "current",
+    ];
+  }
+
+  if (normalizedTopic === "commands") {
+    return cliCommandsHelpLines();
+  }
+
+  if (normalizedTopic === "flow") {
+    return [
+      "flow:",
+      "1 config",
+      "  choose how THOUGHT reaches a model.",
+      "",
+      "2 prompt",
+      "  set the user intention.",
+      "",
+      "3 run",
+      "  one round only.",
+      "  prompt + THOUGHT.md in.",
+      "  canvas out.",
+      "",
+      "4 mint",
+      "  one THOUGHT needs one $PATH.",
+      "  select $PATH · authorize · confirm",
+    ];
+  }
+
+  if (normalizedTopic === "config") {
+    return [
+      "config sets the route and engine for one round.",
+      "",
+      "route is how THOUGHT reaches the engine.",
+      "engine is the selected model/runtime.",
+      "",
+      "use:",
+      "config",
+      "config local",
+      "config connect",
+      "config direct",
+      "config engine list",
+      "config engine <id>",
+      "current",
+    ];
+  }
+
+  if (normalizedTopic === "mode") {
+    return ["use: config", "alias: mode -> config route"];
+  }
+
+  if (normalizedTopic === "model") {
+    return [
+      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      "use: config engine list",
+      "use: config engine <id>",
+      "alias: model -> config engine",
+    ];
+  }
+
+  if (normalizedTopic === "prompt") {
+    return [
+      "prompt sets the user intention for one round.",
+      "",
+      "use:",
+      "prompt <text>",
+      "prompt clear",
+      "",
+      "flow:",
+      "config",
+      "prompt <text>",
+      "run",
+      "mint",
+    ];
+  }
+
+  if (normalizedTopic === "thought.md" || normalizedTopic === "thought") {
+    return [
+      "THOUGHT.md is the generation spec.",
+      "",
+      "prompt + THOUGHT.md in.",
+      "canvas out.",
+      "",
+      "use:",
+      "THOUGHT.md",
+      "THOUGHT.md text",
+    ];
+  }
+
+  if (normalizedTopic === "run") {
+    return [
+      "run sends prompt + THOUGHT.md to the selected engine.",
+      "",
+      "one round only.",
+      "canvas out.",
+      "",
+      "use:",
+      "run",
+      "rerun",
+      "retry run",
+    ];
+  }
+
+  if (normalizedTopic === "provenance") {
+    return [
+      "provenance records the run context.",
+      "",
+      "prompt, engine, THOUGHT.md,",
+      "route, hashes, and mint context.",
+      "",
+      "it is a record, not proof.",
+      "",
+      "use:",
+      "provenance",
+      "provenance --json",
+    ];
+  }
+
+  if (normalizedTopic === "mint") {
+    return [
+      "mint keeps the current THOUGHT.",
+      "",
+      "one THOUGHT needs one $PATH.",
+      "select $PATH · authorize · confirm",
+      "",
+      "use:",
+      "mint",
+      "path <id>",
+      "authorize",
+      "confirm",
+      "",
+      "need $PATH:",
+      "mint-path",
+    ];
+  }
+
+  if (normalizedTopic === "wallet") {
+    return [
+      "wallet is used for minting.",
+      "",
+      "connect it when you keep a THOUGHT.",
+      "",
+      "use:",
+      "wallet connect",
+      "wallet disconnect",
+      "mint",
+    ];
+  }
+
+  if (normalizedTopic === "direct") {
+    return [
+      "direct uses a raw provider key.",
+      "",
+      "session only.",
+      "never printed.",
+      "not stored by THOUGHT.",
+      "",
+      "use:",
+      "config direct",
+      "config provider <id>",
+      "config key <api-key>",
+      "config key clear",
+    ];
+  }
+
+  if (normalizedTopic === "connect") {
+    return [
+      "connect uses openrouter authorization.",
+      "",
+      "no raw key paste.",
+      "revocable.",
+      "cloud engine route.",
+      "",
+      "use:",
+      "config connect",
+      "config connect openrouter",
+      "config disconnect openrouter",
+    ];
+  }
+
+  if (normalizedTopic === "local") {
+    return [
+      "local uses ollama on this machine.",
+      "",
+      "no cloud call.",
+      "no api key.",
+      "",
+      "use:",
+      "config local",
+      "config engine list",
+      "run",
+    ];
+  }
+
+  return ["unknown help topic.", "use: help", "use: commands"];
+};
+
+const executeCliCommand = async (rawCommand: string) => {
+  const command = rawCommand.trim();
+  if (!command || cliCommandInFlight) {
+    return;
+  }
+
+  recordCliCommandHistory(command);
+  appendCliCommand(command);
+  cliCommandInFlight = true;
+  syncCliPanel();
+
+  try {
+    const [head = "", second = ""] = command.split(/\s+/, 2);
+    const rest = command.slice(head.length).trim();
+    const lowerHead = head.toLowerCase();
+    const lowerRest = rest.toLowerCase();
+    cliSuggestionContext = "auto";
+
+    if (command === "?" || command === "--help" || lowerHead === "help") {
+      appendCliOutput(cliHelpLines(lowerRest));
+      cliSuggestionContext = "help";
+    } else if (lowerHead === "commands") {
+      appendCliOutput(cliCommandsHelpLines());
+      cliSuggestionContext = "help";
+    } else if (lowerHead === "current" || lowerHead === "status") {
+      appendCliOutput(buildCliCurrentLines());
+      cliSuggestionContext = "current";
+    } else if (lowerHead === "clear") {
+      cliEntries.length = 0;
+      initializeCliTranscript();
+    } else if (lowerHead === "reset") {
+      resetThought();
+      appendCliOutput(["reset.", "next: prompt <text>"]);
+    } else if (lowerHead === "gallery") {
+      appendCliOutput("opening gallery...");
+      window.location.href = galleryUrl();
+    } else if (lowerHead === "config") {
+      await outputCliConfig(rest);
+      cliSuggestionContext = "config";
+    } else if (lowerHead === "mode") {
+      const mode = lowerRest as Mode | "";
+      if (!lowerRest || lowerRest === "help") {
+        await outputCliMode("");
+      } else if (mode && !isMode(mode)) {
+        appendCliError(["route not found.", "use: config local | connect | direct"]);
+      } else {
+        await outputCliMode(mode);
+      }
+    } else if (lowerHead === "connect" && (!rest || lowerRest === "openrouter")) {
+      await startOpenRouterConnectFromCli();
+    } else if (lowerHead === "disconnect" && (!rest || lowerRest === "openrouter")) {
+      disconnectOpenRouter();
+      appendCliOutput("openrouter unlinked.");
+    } else if (lowerHead === "provider") {
+      setCliProvider(lowerRest);
+    } else if (lowerHead === "key") {
+      setCliApiKey(rest);
+    } else if (lowerHead === "models") {
+      await refreshCurrentModels({ silent: true });
+      appendCliOutput(listModelsForCli());
+    } else if (lowerHead === "model") {
+      if (lowerRest === "list") {
+        await refreshCurrentModels({ silent: true });
+        appendCliOutput(listModelsForCli());
+      } else {
+        setCliModel(rest);
+      }
+    } else if (lowerHead === "prompt") {
+      setCliPrompt(rest);
+    } else if (isThoughtInstructionsCommand(lowerHead)) {
+      await outputCliThoughtInstructions(lowerRest);
+    } else if (lowerHead === "run" || lowerHead === "rerun" || command.toLowerCase() === "retry run") {
+      await runFromCli();
+    } else if (lowerHead === "provenance") {
+      await outputCliProvenance(lowerRest === "--json");
+    } else if (lowerHead === "wallet") {
+      if (lowerRest === "connect") {
+        await connectWalletFromCli();
+      } else if (lowerRest === "disconnect") {
+        disconnectWalletFromCli();
+      } else {
+        outputCliWalletUsage();
+      }
+    } else if (lowerHead === "mint") {
+      await startCliMint();
+    } else if (lowerHead === "mint-path") {
+      appendCliOutput("opening $PATH...");
+      handleMintPath();
+    } else if (lowerHead === "path") {
+      await checkCliPath(rest);
+    } else if (lowerHead === "authorize") {
+      await authorizeFromCli();
+    } else if (lowerHead === "confirm") {
+      await confirmFromCli();
+    } else if (lowerHead === "view" && second.toLowerCase() === "tx") {
+      appendCliOutput("opening tx...");
+      await handleViewTx();
+    } else if (lowerHead === "view" && second.toLowerCase() === "thought") {
+      appendCliOutput("opening THOUGHT...");
+      await handleViewThought(walletState.mintedTokenId ?? mintFlowData.existingTokenId);
+    } else {
+      appendCliError(["unknown command.", "use: help"]);
+    }
+  } finally {
+    cliCommandInFlight = false;
+    syncInterface();
+    focusCliInput();
+  }
+};
+
+thoughtCliForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const command = thoughtCliInput.value;
+  thoughtCliInput.value = "";
+  void executeCliCommand(command);
+  focusCliInput();
+});
+
+thoughtCliInput.addEventListener("keydown", (event) => {
+  if (
+    event.ctrlKey &&
+    !event.altKey &&
+    !event.metaKey &&
+    !event.shiftKey &&
+    event.key.toLowerCase() === "c" &&
+    thoughtCliInput.value
+  ) {
+    event.preventDefault();
+    thoughtCliInput.value = "";
+    resetCliHistoryCursor();
+    return;
+  }
+
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+    return;
+  }
+
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    showPreviousCliCommand();
+  } else if (event.key === "ArrowDown") {
+    event.preventDefault();
+    showNextCliCommand();
+  }
+});
+
+thoughtCliInput.addEventListener("input", () => {
+  if (cliHistoryIndex !== null) {
+    resetCliHistoryCursor();
+  }
+});
+
+thoughtCliTranscript.addEventListener("scroll", () => {
+  revealCliScrollbar();
+});
+
+frontpageShell.addEventListener("click", (event) => {
+  if (shouldRefocusCliFromClick(event.target)) {
+    focusCliInput();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (shouldRefocusCliFromKeyboard(event)) {
+    focusCliInputFromKeyboard(event);
+  }
+});
 
 modeConnectButton.addEventListener("click", () => {
   setMode("connect");
@@ -4805,17 +6648,26 @@ const initFrontpage = async () => {
   frontpageStage.classList.remove("is-hidden");
   galleryPage.classList.add("is-hidden");
   thoughtPage.classList.add("is-hidden");
+  loadCliCommandHistory();
   syncInterface();
   resetThought();
+  initializeCliTranscript();
+  syncInterface();
 
   try {
-    await handleOpenRouterCallback();
+    const handledOpenRouterCallback = await handleOpenRouterCallback();
+    if (handledOpenRouterCallback) {
+      appendCliOutput(["openrouter linked.", "route: connect", "use: run"]);
+    }
     void refreshCurrentModels({ silent: true });
   } catch (error) {
     cleanOpenRouterCallbackUrl();
     const message = error instanceof Error ? error.message : "openrouter connect failed.";
     setWarning(message);
     setStatus("failed.");
+    appendCliError(
+      message === "openrouter connect failed." ? message : ["openrouter connect failed.", message],
+    );
   }
 
   bindWalletProviderEvents();
