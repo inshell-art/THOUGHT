@@ -374,7 +374,7 @@ html.thought-route .frontpage-stage {
   box-sizing: border-box;
   padding: 16px;
   background: #050505;
-  color: #aab2c2;
+  color: #c8ceda;
 }
 
 .thought-cli__transcript {
@@ -394,7 +394,7 @@ html.thought-route .frontpage-stage {
 }
 
 .thought-cli__transcript.is-scrolling {
-  scrollbar-color: rgba(170, 178, 194, 0.75) #050505;
+  scrollbar-color: rgba(200, 206, 218, 0.75) #050505;
 }
 
 .thought-cli__transcript::-webkit-scrollbar {
@@ -413,13 +413,13 @@ html.thought-route .frontpage-stage {
 }
 
 .thought-cli__transcript.is-scrolling::-webkit-scrollbar-thumb {
-  background: rgba(170, 178, 194, 0.75);
+  background: rgba(200, 206, 218, 0.75);
 }
 
 .thought-cli-entry {
   margin: 0;
   margin-bottom: 14px;
-  color: #aab2c2;
+  color: #c8ceda;
   font-size: 12px;
   font-weight: 300;
   line-height: 1.45;
@@ -447,7 +447,7 @@ html.thought-route .frontpage-stage {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #aab2c2;
+  color: #c8ceda;
   font-family: inherit;
   font-size: 13px;
   font-weight: 300;
@@ -456,7 +456,7 @@ html.thought-route .frontpage-stage {
 
 .thought-cli__input:focus {
   outline: none;
-  color: #aab2c2;
+  color: #c8ceda;
 }
 
 .thought-cli__suggestions {
@@ -464,7 +464,7 @@ html.thought-route .frontpage-stage {
 }
 
 .thought-cli__suggestion-label {
-  color: #aab2c2;
+  color: #c8ceda;
   font-size: 12px;
   font-weight: 300;
 }
@@ -505,7 +505,7 @@ html.thought-route .frontpage-stage {
 }
 
 .thought-cli__input:disabled {
-  color: #aab2c2;
+  color: #c8ceda;
   opacity: 0.55;
 }
 

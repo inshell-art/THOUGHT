@@ -23,6 +23,15 @@ import thoughtInstructions from "../THOUGHT.md?raw";
 import thoughtInstructionsUrl from "../THOUGHT.md?url";
 import colorFontRaw from "../colorFontJSON/colorfont.byToolv2.json?raw";
 import addresses from "../evm/addresses.anvil.json";
+import {
+  appendThoughtWork,
+  getPreviousWork,
+  getWorkById,
+  parseWorkId,
+  readThoughtWorks,
+  writeThoughtWorks,
+  type ThoughtWorkRecord,
+} from "./works";
 
 type ColorFontFile = {
   colors: Array<{
@@ -78,11 +87,12 @@ type ThoughtSessionState = {
   };
   direct: {
     provider: DirectProviderId;
-    apiKey: string;
+    apiKeys: Record<DirectProviderId, string>;
     model: string;
   };
   local: {
     available: boolean | null;
+    endpoint: string;
     model: string;
   };
 };
@@ -333,20 +343,24 @@ const IMAGE_RADIUS = 0;
 const BACKGROUND_FILL = "#050505";
 const THOUGHT_SESSION_STORAGE_KEY = "thought-provider-session";
 const THOUGHT_CLI_HISTORY_STORAGE_KEY = "thought-cli-command-history";
+const THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY = "thought-cli-transcript";
+const THOUGHT_OUTPUT_STORAGE_KEY = "thought-current-output";
 const THOUGHT_INSTRUCTIONS_OVERRIDE_KEY = "thought-instructions-override";
 const ENABLE_THOUGHT_UPLOAD = window.location.port === "5188";
 const OPENROUTER_PKCE_VERIFIER_KEY = "thought-openrouter-pkce-verifier";
 const OPENROUTER_AUTH_URL = "https://openrouter.ai/auth";
 const OPENROUTER_KEY_URL = "https://openrouter.ai/api/v1/auth/keys";
 const OPENROUTER_MODEL_URL = "https://openrouter.ai/api/v1/models";
-const OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags";
+const DEFAULT_OLLAMA_ENDPOINT = "http://127.0.0.1:11434";
 const MANUAL_MODEL_VALUE = "__manual__";
 const LEGACY_OPENROUTER_DEFAULT_MODEL = "openai/gpt-4o-mini";
 const OPENROUTER_DEFAULT_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
-const LOCAL_ENGINE_ID = "ollama";
-const LOCAL_ENGINE_LABEL = "ollama";
+const LOCAL_MODEL_SOURCE_ID = "ollama";
+const LOCAL_MODEL_LABEL = "ollama";
 const LOCAL_DEFAULT_MODEL = "llama3.2:1b";
 const NOTICE_FLASH_MS = 2400;
+const AGENT_REQUEST_TIMEOUT_MS = 45000;
+const PREFLIGHT_REQUEST_TIMEOUT_MS = 15000;
 const CLI_COMMAND_HISTORY_LIMIT = 80;
 const APP_VERSION = "0.0.2";
 const APP_BUILD = typeof import.meta.env.VITE_APP_BUILD === "string" && import.meta.env.VITE_APP_BUILD
@@ -500,8 +514,8 @@ const providerBox = document.getElementById("provider-box") as HTMLSelectElement
 const apiKeyField = document.getElementById("api-key-field") as HTMLElement | null;
 const apiKeyLabel = document.querySelector('label[for="api-key-box"]') as HTMLLabelElement | null;
 const apiKeyBox = document.getElementById("api-key-box") as HTMLInputElement | null;
-const localEngineField = document.getElementById("local-engine-field") as HTMLElement | null;
-const localEngineValue = document.getElementById("local-engine-value") as HTMLElement | null;
+const localModelField = document.getElementById("local-model-field") as HTMLElement | null;
+const localModelValue = document.getElementById("local-model-value") as HTMLElement | null;
 const localStatus = document.getElementById("local-status") as HTMLElement | null;
 const localHelper = document.getElementById("local-helper") as HTMLElement | null;
 const thoughtCanvasPanel = document.querySelector(".thought-canvas-panel") as HTMLElement | null;
@@ -595,8 +609,8 @@ if (
   !apiKeyField ||
   !apiKeyLabel ||
   !apiKeyBox ||
-  !localEngineField ||
-  !localEngineValue ||
+  !localModelField ||
+  !localModelValue ||
   !localStatus ||
   !localHelper ||
   !thoughtCanvasPanel ||
@@ -671,7 +685,7 @@ if (
   throw new Error("Front page elements are missing.");
 }
 
-localEngineValue.textContent = LOCAL_ENGINE_LABEL;
+localModelValue.textContent = LOCAL_MODEL_LABEL;
 
 const context = canvas.getContext("2d");
 
@@ -686,7 +700,9 @@ let panelWarningLevel: PanelWarningLevel = "error";
 let currentOutputText = "";
 let runInFlight = false;
 let runState: ThoughtRunState = "idle";
+let currentWorkId: number | null = null;
 let cliSuggestionContext: "auto" | "help" | "current" | "config" = "auto";
+let pageUnloading = false;
 let walletConnectInFlight = false;
 let primaryActionState: PrimaryActionState = "run";
 let secondaryActionState: SecondaryActionState = "none";
@@ -887,6 +903,11 @@ const cliCommandHistory: string[] = [];
 let cliCommandInFlight = false;
 let cliHistoryIndex: number | null = null;
 let cliHistoryDraft = "";
+let cliProgressEntry: CliEntry | null = null;
+let cliProgressBaseLines: string[] = [];
+let cliProgressTimer = 0;
+let cliProgressTick = 0;
+let activeRunId = 0;
 
 const getDefaultSessionState = (): ThoughtSessionState => ({
   mode: "connect",
@@ -897,11 +918,16 @@ const getDefaultSessionState = (): ThoughtSessionState => ({
   },
   direct: {
     provider: "openai",
-    apiKey: "",
+    apiKeys: {
+      openai: "",
+      openrouter: "",
+      anthropic: "",
+    },
     model: DIRECT_PROVIDERS.openai.defaultModel,
   },
   local: {
     available: null,
+    endpoint: DEFAULT_OLLAMA_ENDPOINT,
     model: LOCAL_DEFAULT_MODEL,
   },
 });
@@ -912,9 +938,29 @@ const normalizeStoredModel = (sourceId: ModelSourceId, model: string | undefined
   }
 
   const fallback =
-    sourceId === LOCAL_ENGINE_ID ? LOCAL_DEFAULT_MODEL : DIRECT_PROVIDERS[sourceId].defaultModel;
+    sourceId === LOCAL_MODEL_SOURCE_ID ? LOCAL_DEFAULT_MODEL : DIRECT_PROVIDERS[sourceId].defaultModel;
 
   return model?.trim() || fallback;
+};
+
+const normalizeStoredDirectApiKeys = (
+  apiKeys: unknown,
+  activeProvider: DirectProviderId,
+  legacyApiKey?: string,
+) => {
+  const record = typeof apiKeys === "object" && apiKeys !== null
+    ? apiKeys as Partial<Record<DirectProviderId, unknown>>
+    : {};
+  return {
+    openai: typeof record.openai === "string" ? record.openai.trim() : "",
+    openrouter: typeof record.openrouter === "string" ? record.openrouter.trim() : "",
+    anthropic: typeof record.anthropic === "string" ? record.anthropic.trim() : "",
+    [activeProvider]: typeof legacyApiKey === "string" && legacyApiKey.trim()
+      ? legacyApiKey.trim()
+      : typeof record[activeProvider] === "string"
+        ? record[activeProvider].trim()
+        : "",
+  };
 };
 
 const isMode = (value: unknown): value is Mode =>
@@ -922,6 +968,37 @@ const isMode = (value: unknown): value is Mode =>
 
 const isDirectProviderId = (value: unknown): value is DirectProviderId =>
   value === "openai" || value === "openrouter" || value === "anthropic";
+
+function normalizeOllamaEndpoint(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error("endpoint empty.");
+  }
+
+  const url = new URL(trimmed);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("endpoint must start with http:// or https://");
+  }
+
+  url.hash = "";
+  url.search = "";
+  url.pathname = url.pathname.replace(/\/api\/(?:tags|generate)\/?$/i, "").replace(/\/+$/g, "");
+  return url.toString().replace(/\/+$/g, "");
+}
+
+const safeNormalizeOllamaEndpoint = (value: string | undefined, fallback = DEFAULT_OLLAMA_ENDPOINT) => {
+  try {
+    return normalizeOllamaEndpoint(value ?? "");
+  } catch {
+    return fallback;
+  }
+};
+
+const getOllamaEndpoint = () =>
+  safeNormalizeOllamaEndpoint(sessionState.local.endpoint);
+
+const buildOllamaApiUrl = (path: "tags" | "generate") =>
+  `${getOllamaEndpoint()}/api/${path}`;
 
 const migrateLegacyState = (
   parsed: LegacySessionState,
@@ -932,7 +1009,6 @@ const migrateLegacyState = (
   const connectApiKey = legacyProviders.openrouter?.apiKey?.trim() ?? "";
   const directProvider = isDirectProviderId(parsed.activeProvider) ? parsed.activeProvider : "openai";
   const directModel = normalizeStoredModel(directProvider, legacyProviders[directProvider]?.model);
-  const directApiKey = legacyProviders[directProvider]?.apiKey?.trim() ?? "";
   const legacyLocalModel =
     legacyProviders.ollama?.model ?? legacyProviders.harness?.model ?? fallback.local.model;
 
@@ -950,11 +1026,16 @@ const migrateLegacyState = (
     },
     direct: {
       provider: directProvider,
-      apiKey: directApiKey,
+      apiKeys: {
+        openai: legacyProviders.openai?.apiKey?.trim() ?? "",
+        openrouter: legacyProviders.openrouter?.apiKey?.trim() ?? "",
+        anthropic: legacyProviders.anthropic?.apiKey?.trim() ?? "",
+      },
       model: directModel,
     },
     local: {
       available: null,
+      endpoint: fallback.local.endpoint,
       model: normalizeStoredModel("ollama", legacyLocalModel),
     },
   };
@@ -976,8 +1057,11 @@ const readSessionState = (): ThoughtSessionState => {
     }
 
     const connect = (parsed.connect ?? {}) as Partial<ThoughtSessionState["connect"]>;
-    const direct = (parsed.direct ?? {}) as Partial<ThoughtSessionState["direct"]>;
+    const direct = (parsed.direct ?? {}) as Partial<ThoughtSessionState["direct"]> & {
+      apiKey?: unknown;
+    };
     const local = (parsed.local ?? {}) as Partial<ThoughtSessionState["local"]>;
+    const directProvider = isDirectProviderId(direct.provider) ? direct.provider : fallback.direct.provider;
 
     return {
       mode: isMode(parsed.mode) ? parsed.mode : fallback.mode,
@@ -990,16 +1074,24 @@ const readSessionState = (): ThoughtSessionState => {
         ),
       },
       direct: {
-        provider: isDirectProviderId(direct.provider) ? direct.provider : fallback.direct.provider,
-        apiKey: typeof direct.apiKey === "string" ? direct.apiKey : "",
+        provider: directProvider,
+        apiKeys: normalizeStoredDirectApiKeys(
+          direct.apiKeys,
+          directProvider,
+          typeof direct.apiKey === "string" ? direct.apiKey : undefined,
+        ),
         model: normalizeStoredModel(
-          isDirectProviderId(direct.provider) ? direct.provider : fallback.direct.provider,
+          directProvider,
           typeof direct.model === "string" ? direct.model : undefined,
         ),
       },
       local: {
         available:
           typeof local.available === "boolean" ? local.available : fallback.local.available,
+        endpoint:
+          typeof local.endpoint === "string" && local.endpoint.trim()
+            ? safeNormalizeOllamaEndpoint(local.endpoint, fallback.local.endpoint)
+            : fallback.local.endpoint,
         model: normalizeStoredModel(
           "ollama",
           typeof local.model === "string" ? local.model : undefined,
@@ -1321,7 +1413,11 @@ const loadActiveThoughtSpec = async () => {
     throw new Error("spec unavailable.");
   }
 
-  const [specId, specHash, ref, pointer, byteLength_,, exists] = (await registry.activeSpecMeta()) as [
+  const [specId, specHash, ref, pointer, byteLength_,, exists] = (await withTimeout(
+    registry.activeSpecMeta() as Promise<unknown>,
+    PREFLIGHT_REQUEST_TIMEOUT_MS,
+    "THOUGHT.md request timed out.",
+  )) as [
     string,
     string,
     string,
@@ -1343,13 +1439,28 @@ const loadActiveThoughtSpec = async () => {
   }
 
   const cached = readCachedThoughtSpec(meta);
-  if (cached && await registry.validateSpec(specId)) {
+  if (
+    cached &&
+    await withTimeout(
+      registry.validateSpec(specId) as Promise<boolean>,
+      PREFLIGHT_REQUEST_TIMEOUT_MS,
+      "THOUGHT.md request timed out.",
+    )
+  ) {
     return cached;
   }
 
   const [validSpec, text] = await Promise.all([
-    registry.validateSpec(specId) as Promise<boolean>,
-    registry.activeSpecText() as Promise<string>,
+    withTimeout(
+      registry.validateSpec(specId) as Promise<boolean>,
+      PREFLIGHT_REQUEST_TIMEOUT_MS,
+      "THOUGHT.md request timed out.",
+    ),
+    withTimeout(
+      registry.activeSpecText() as Promise<string>,
+      PREFLIGHT_REQUEST_TIMEOUT_MS,
+      "THOUGHT.md request timed out.",
+    ),
   ]);
   if (!validSpec) {
     throw new Error("spec mismatch.");
@@ -1435,7 +1546,7 @@ const getCurrentProviderForProvenance = () => {
     return sessionState.direct.provider;
   }
 
-  return LOCAL_ENGINE_ID;
+  return LOCAL_MODEL_SOURCE_ID;
 };
 
 const buildProvenanceJson = (textHash: string) => {
@@ -1657,7 +1768,7 @@ const hasModelAccess = () => {
   }
 
   if (sessionState.mode === "direct") {
-    return sessionState.direct.apiKey.trim().length > 0;
+    return getDirectApiKey().length > 0;
   }
 
   return sessionState.local.available === true;
@@ -3438,6 +3549,112 @@ const setAgentOutput = (text: string) => {
   resetMintRuntimeState();
   currentOutputText = canonicalThoughtTitle(text);
   syncOutputToCanvas(currentOutputText);
+  currentWorkId = recordCurrentWork(text);
+  writeCurrentOutputSession();
+};
+
+const workRunContextToThoughtRunContext = (work: ThoughtWorkRecord) =>
+  isThoughtRunContext(work.runContext) ? work.runContext : null;
+
+const recordCurrentWork = (rawOutput: string) => {
+  if (!currentOutputText || !currentRunContext) {
+    return currentWorkId;
+  }
+
+  const existingWorks = readThoughtWorks(sessionStorage);
+  const result = appendThoughtWork(existingWorks, {
+    title: currentOutputText,
+    rawOutput,
+    image: galleryThumbnailUri(currentOutputText),
+    runContext: currentRunContext,
+  });
+  writeThoughtWorks(sessionStorage, result.works);
+  return result.work.id;
+};
+
+const loadWorkRecord = (work: ThoughtWorkRecord) => {
+  resetMintRuntimeState();
+  currentOutputText = canonicalThoughtTitle(work.title);
+  currentRunContext = workRunContextToThoughtRunContext(work);
+  currentWorkId = work.id;
+  runState = "output_ready";
+  syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+  writeCurrentOutputSession();
+  syncInterface();
+};
+
+const isThoughtRunContext = (value: unknown): value is ThoughtRunContext => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Partial<ThoughtRunContext>;
+  return (
+    isMode(candidate.mode) &&
+    typeof candidate.provider === "string" &&
+    typeof candidate.model === "string" &&
+    typeof candidate.prompt === "string" &&
+    typeof candidate.clientGeneratedAt === "string"
+  );
+};
+
+const readCurrentOutputSession = () => {
+  const raw = sessionStorage.getItem(THOUGHT_OUTPUT_STORAGE_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== "object" || parsed === null) {
+      return null;
+    }
+
+    const candidate = parsed as { output?: unknown; runContext?: unknown; workId?: unknown };
+    const output = typeof candidate.output === "string" ? canonicalThoughtTitle(candidate.output) : "";
+    if (!output) {
+      return null;
+    }
+
+    return {
+      output,
+      runContext: isThoughtRunContext(candidate.runContext) ? candidate.runContext : null,
+      workId: Number.isSafeInteger(candidate.workId) && Number(candidate.workId) > 0
+        ? Number(candidate.workId)
+        : null,
+    };
+  } catch {
+    return null;
+  }
+};
+
+const writeCurrentOutputSession = () => {
+  if (!currentOutputText) {
+    sessionStorage.removeItem(THOUGHT_OUTPUT_STORAGE_KEY);
+    return;
+  }
+
+  sessionStorage.setItem(
+    THOUGHT_OUTPUT_STORAGE_KEY,
+    JSON.stringify({
+      output: currentOutputText,
+      runContext: currentRunContext,
+      workId: currentWorkId,
+    }),
+  );
+};
+
+const restoreCurrentOutputSession = () => {
+  const stored = readCurrentOutputSession();
+  if (!stored) {
+    return;
+  }
+
+  currentOutputText = stored.output;
+  currentRunContext = stored.runContext;
+  currentWorkId = stored.workId;
+  runState = "output_ready";
+  syncOutputToCanvas(currentOutputText, { suppressWarning: true });
 };
 
 const recordThoughtRun = (
@@ -3476,11 +3693,15 @@ const recordThoughtRun = (
   console.info("[thought] provider output", run);
 };
 
-const resetThought = () => {
+const resetThought = (options?: { preserveStoredOutput?: boolean }) => {
   runState = "idle";
   walletConnectInFlight = false;
   currentOutputText = "";
   currentRunContext = null;
+  currentWorkId = null;
+  if (!options?.preserveStoredOutput) {
+    writeCurrentOutputSession();
+  }
   resetMintRuntimeState();
   walletState.menuOpen = false;
   syncOutputToCanvas("", { suppressWarning: true });
@@ -3719,6 +3940,68 @@ const readErrorMessage = (payload: unknown, fallback: string): string => {
   return fallback;
 };
 
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  message: string,
+) => {
+  let timeout = 0;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timeout = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) {
+      window.clearTimeout(timeout);
+    }
+  }
+};
+
+const fetchPreflightRequest = async (url: string, init?: RequestInit) => {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, PREFLIGHT_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (pageUnloading) {
+      throw new Error("refresh stopped the request.");
+    }
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("preflight request timed out.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+};
+
+const fetchAgentRequest = async (url: string, init: RequestInit) => {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => {
+    controller.abort();
+  }, AGENT_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (pageUnloading) {
+      throw new Error("refresh stopped the request.");
+    }
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("agent request timed out.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+};
+
 const buildOllamaPrompt = (prompt: string) =>
   [getActiveThoughtInstructions(), "", "User prompt:", prompt.trim(), "", "Response:"].join("\n");
 
@@ -3727,7 +4010,7 @@ const requestOllama = async (model: string, prompt: string) => {
   const ollamaModel = model.replace(/^ollama:/, "").trim();
 
   try {
-    response = await fetch("http://127.0.0.1:11434/api/generate", {
+    response = await fetchAgentRequest(buildOllamaApiUrl("generate"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -3742,8 +4025,15 @@ const requestOllama = async (model: string, prompt: string) => {
         },
       }),
     });
-  } catch {
-    throw new Error("ollama not found.");
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (error.message === "refresh stopped the request." ||
+        error.message === "agent request timed out.")
+    ) {
+      throw error;
+    }
+    throw new Error("ollama not detected.");
   }
 
   const payload = (await response.json().catch(() => null)) as unknown;
@@ -3765,7 +4055,7 @@ const requestOllama = async (model: string, prompt: string) => {
 };
 
 const requestOpenAIResponses = async (apiKey: string, model: string, prompt: string) => {
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetchAgentRequest("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -3790,7 +4080,7 @@ const requestOpenAIResponses = async (apiKey: string, model: string, prompt: str
 };
 
 const requestAnthropicMessages = async (apiKey: string, model: string, prompt: string) => {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetchAgentRequest("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -3826,7 +4116,7 @@ const requestAnthropicMessages = async (apiKey: string, model: string, prompt: s
 };
 
 const requestOpenRouterChat = async (apiKey: string, model: string, prompt: string) => {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetchAgentRequest("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -3916,7 +4206,7 @@ const exchangeOpenRouterCode = async (code: string) => {
     throw new Error("openrouter verifier is missing. authorize again.");
   }
 
-  const response = await fetch(OPENROUTER_KEY_URL, {
+  const response = await fetchPreflightRequest(OPENROUTER_KEY_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -3996,6 +4286,7 @@ const startOpenRouterConnect = async () => {
 
 const disconnectOpenRouter = () => {
   sessionState.connect.apiKey = "";
+  modelOptionsCache.delete("openrouter");
   sessionStorage.removeItem(OPENROUTER_PKCE_VERIFIER_KEY);
   writeSessionState();
   syncInterface();
@@ -4020,7 +4311,7 @@ const dedupeModelOptions = (options: ModelOption[]) => {
 const hasTextModality = (value: unknown) => Array.isArray(value) && value.includes("text");
 
 const fetchOpenRouterModels = async (): Promise<ModelOption[]> => {
-  const response = await fetch(OPENROUTER_MODEL_URL);
+  const response = await fetchPreflightRequest(OPENROUTER_MODEL_URL);
   const payload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
@@ -4102,7 +4393,7 @@ const fetchOpenRouterModels = async (): Promise<ModelOption[]> => {
 };
 
 const fetchOllamaModels = async (): Promise<ModelOption[]> => {
-  const response = await fetch(OLLAMA_TAGS_URL);
+  const response = await fetchPreflightRequest(buildOllamaApiUrl("tags"));
   const payload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
@@ -4167,6 +4458,17 @@ const setCurrentModelValue = (value: string) => {
   }
 };
 
+const getDirectApiKey = (provider = sessionState.direct.provider) =>
+  sessionState.direct.apiKeys[provider].trim();
+
+const setDirectApiKey = (value: string, provider = sessionState.direct.provider) => {
+  sessionState.direct.apiKeys[provider] = value.trim();
+};
+
+const clearDirectApiKey = (provider = sessionState.direct.provider) => {
+  sessionState.direct.apiKeys[provider] = "";
+};
+
 const getModelOptions = (sourceId: ModelSourceId) =>
   modelOptionsCache.get(sourceId) ?? STATIC_MODEL_OPTIONS[sourceId];
 
@@ -4188,10 +4490,10 @@ const setModelOptions = (
   options: ModelOption[],
   selectedModel: string,
 ) => {
-  const allowManual = sourceId !== LOCAL_ENGINE_ID;
+  const allowManual = sourceId !== LOCAL_MODEL_SOURCE_ID;
   const modelOptions = dedupeModelOptions(options.length ? options : STATIC_MODEL_OPTIONS[sourceId]);
   const defaultModel =
-    sourceId === LOCAL_ENGINE_ID ? LOCAL_DEFAULT_MODEL : DIRECT_PROVIDERS[sourceId].defaultModel;
+    sourceId === LOCAL_MODEL_SOURCE_ID ? LOCAL_DEFAULT_MODEL : DIRECT_PROVIDERS[sourceId].defaultModel;
   const optionIds = new Set(modelOptions.map((option) => option.id));
   const selected = selectedModel.trim();
   const resolvedModel =
@@ -4280,7 +4582,7 @@ const syncModeControls = () => {
   modeLocalButton.classList.toggle("is-active", isLocalMode);
   providerField.classList.toggle("is-hidden", !isDirectMode);
   apiKeyField.classList.toggle("is-hidden", !isDirectMode);
-  localEngineField.classList.toggle("is-hidden", !isLocalMode);
+  localModelField.classList.toggle("is-hidden", !isLocalMode);
   localStatus.classList.toggle("is-hidden", !isLocalMode);
   localHelper.classList.add("is-hidden");
   syncConnectControls();
@@ -4290,14 +4592,14 @@ const syncDirectControls = () => {
   providerBox.value = sessionState.direct.provider;
   apiKeyLabel.textContent = "api key";
   apiKeyBox.placeholder = "session only. never stored by THOUGHT.";
-  apiKeyBox.value = sessionState.direct.apiKey;
+  apiKeyBox.value = getDirectApiKey();
 };
 
 const syncLocalControls = () => {
   if (sessionState.local.available === true) {
-    localStatus.innerHTML = "ollama detected.<br />runs on this machine.<br />no cloud call.";
+    localStatus.innerHTML = `ollama detected.<br />endpoint ${getOllamaEndpoint()}.<br />runs on this machine.`;
   } else if (sessionState.local.available === false) {
-    localStatus.innerHTML = "ollama not found.<br />start ollama, then retry.";
+    localStatus.innerHTML = `ollama not detected.<br />start ollama, then retry.<br />endpoint ${getOllamaEndpoint()}.`;
   } else {
     localStatus.innerHTML = "checking ollama...";
   }
@@ -4313,7 +4615,7 @@ const syncModelControls = () => {
   const sourceId = getCurrentModelSourceId();
 
   if (sourceId === "ollama" && sessionState.local.available === false) {
-    disableModelControls("ollama not found");
+    disableModelControls("ollama not detected");
     return;
   }
 
@@ -4377,6 +4679,14 @@ const loadModelOptionsForSource = async (
   sourceId: ModelSourceId,
   options?: { silent?: boolean },
 ) => {
+  if (sourceId === "openrouter" && !sessionState.connect.apiKey.trim()) {
+    modelOptionsCache.delete(sourceId);
+    if (getCurrentModelSourceId() === sourceId) {
+      syncInterface();
+    }
+    return;
+  }
+
   if (modelOptionsLoading.has(sourceId)) {
     return;
   }
@@ -4388,7 +4698,7 @@ const loadModelOptionsForSource = async (
 
     if (sourceId === "openrouter") {
       modelOptions = await fetchOpenRouterModels();
-    } else if (sourceId === LOCAL_ENGINE_ID) {
+    } else if (sourceId === LOCAL_MODEL_SOURCE_ID) {
       modelOptions = await fetchOllamaModels();
       sessionState.local.available = true;
     }
@@ -4400,7 +4710,7 @@ const loadModelOptionsForSource = async (
       syncInterface();
     }
   } catch (error) {
-    if (sourceId === LOCAL_ENGINE_ID) {
+    if (sourceId === LOCAL_MODEL_SOURCE_ID) {
       sessionState.local.available = false;
       modelOptionsCache.delete(sourceId);
       writeSessionState();
@@ -4484,29 +4794,31 @@ const handleThoughtFileSelection = async () => {
   }
 };
 
-const runAgent = async () => {
-  if (isDebugCtaOverrideActive()) {
-    setStatus("debug CTA only.", { flashMs: NOTICE_FLASH_MS });
-    return;
-  }
+const runAgent = async (options?: { forceGenerate?: boolean }) => {
+  if (!options?.forceGenerate) {
+    if (isDebugCtaOverrideActive()) {
+      setStatus("debug CTA only.", { flashMs: NOTICE_FLASH_MS });
+      return;
+    }
 
-  if (primaryActionState === "connect_wallet") {
-    await requestWalletConnect();
-    return;
-  }
+    if (primaryActionState === "connect_wallet") {
+      await requestWalletConnect();
+      return;
+    }
 
-  if (primaryActionState === "switch_wallet") {
-    await switchWalletChain();
-    return;
-  }
+    if (primaryActionState === "switch_wallet") {
+      await switchWalletChain();
+      return;
+    }
 
-  if (primaryActionState === "mint" || primaryActionState === "retry_mint") {
-    await openMintSheet();
-    return;
-  }
+    if (primaryActionState === "mint" || primaryActionState === "retry_mint") {
+      await openMintSheet();
+      return;
+    }
 
-  if (primaryActionState === "none") {
-    return;
+    if (primaryActionState === "none") {
+      return;
+    }
   }
 
   const prompt = sessionState.prompt.trim();
@@ -4530,22 +4842,30 @@ const runAgent = async () => {
     return;
   }
 
-  if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+  if (sessionState.mode === "direct" && !getDirectApiKey()) {
     setWarning("api key is required.", { level: "warn" });
     setStatus("");
     return;
   }
 
   if (sessionState.mode === "local" && sessionState.local.available === false) {
-    setWarning("ollama not found.");
+    setWarning("ollama not detected.");
     setStatus("");
     return;
   }
 
+  const runId = startRunSession();
+
   try {
     await ensureActiveThoughtSpec();
+    if (!isCurrentRunSession(runId)) {
+      return;
+    }
     syncThoughtInstructionsControls();
   } catch (error) {
+    if (!isCurrentRunSession(runId)) {
+      return;
+    }
     const message = formatThoughtSpecError(error);
     runState = "run_failed";
     setWarning(message);
@@ -4568,8 +4888,9 @@ const runAgent = async () => {
       provider = "openrouter";
       text = await requestOpenRouterChat(sessionState.connect.apiKey.trim(), model, prompt);
     } else if (sessionState.mode === "direct") {
-      provider = sessionState.direct.provider;
-      const apiKey = sessionState.direct.apiKey.trim();
+      const directProvider = sessionState.direct.provider;
+      provider = directProvider;
+      const apiKey = getDirectApiKey(directProvider);
 
       if (provider === "openai") {
         text = await requestOpenAIResponses(apiKey, model, prompt);
@@ -4579,14 +4900,18 @@ const runAgent = async () => {
         text = await requestAnthropicMessages(apiKey, model, prompt);
       }
     } else {
-      provider = LOCAL_ENGINE_ID;
+      provider = LOCAL_MODEL_SOURCE_ID;
       text = await requestOllama(model, prompt);
+    }
+
+    if (!isCurrentRunSession(runId)) {
+      return;
     }
 
     const thoughtTitle = canonicalThoughtTitle(text);
 
     if (!thoughtTitle) {
-      throw new Error("agent returned no text.");
+      throw new Error("provider returned empty text.");
     }
 
     recordThoughtRun(sessionState.mode, provider, model, prompt, text, thoughtTitle);
@@ -4602,13 +4927,18 @@ const runAgent = async () => {
     });
     setStatus("");
   } catch (error) {
+    if (!isCurrentRunSession(runId)) {
+      return;
+    }
     runState = "run_failed";
     const message = error instanceof Error ? error.message : "agent request failed.";
     setWarning(message);
     setStatus("");
   } finally {
-    runInFlight = false;
-    syncInterface();
+    if (isCurrentRunSession(runId)) {
+      runInFlight = false;
+      syncInterface();
+    }
   }
 };
 
@@ -4618,28 +4948,112 @@ const trimCliEntries = () => {
   }
 };
 
-const appendCliEntry = (kind: CliEntryKind, lines: string | string[]) => {
-  const normalizedLines = Array.isArray(lines) ? lines : [lines];
-  if (!normalizedLines.some((line) => line.length > 0)) {
+const isCliEntryKind = (value: unknown): value is CliEntryKind =>
+  value === "intro" || value === "command" || value === "output" || value === "error";
+
+const readStoredCliTranscript = () => {
+  const raw = sessionStorage.getItem(THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((entry): CliEntry[] => {
+      if (typeof entry !== "object" || entry === null) {
+        return [];
+      }
+
+      const candidate = entry as { kind?: unknown; lines?: unknown };
+      if (!isCliEntryKind(candidate.kind) || !Array.isArray(candidate.lines)) {
+        return [];
+      }
+
+      const lines = candidate.lines
+        .filter((line): line is string => typeof line === "string")
+        .slice(0, 48);
+      if (!lines.some((line) => line.length > 0)) {
+        return [];
+      }
+
+      return [{ kind: candidate.kind, lines }];
+    }).slice(-80);
+  } catch {
+    return [];
+  }
+};
+
+const writeCliTranscript = () => {
+  sessionStorage.setItem(
+    THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY,
+    JSON.stringify(cliEntries.slice(-80)),
+  );
+};
+
+const loadCliTranscript = () => {
+  cliEntries.splice(0, cliEntries.length, ...readStoredCliTranscript());
+};
+
+const isCliRunningEntry = (entry: CliEntry | undefined) =>
+  entry?.kind === "output" && /^running/.test(entry.lines[0] ?? "");
+
+const markInterruptedCliRun = () => {
+  const lastEntry = cliEntries[cliEntries.length - 1];
+  if (!isCliRunningEntry(lastEntry)) {
     return;
   }
 
-  cliEntries.push({ kind, lines: normalizedLines });
+  appendCliError(["run interrupted.", "refresh stopped the request.", "use: retry run"]);
+};
+
+const startRunSession = () => {
+  activeRunId += 1;
+  return activeRunId;
+};
+
+const invalidateRunSession = () => {
+  activeRunId += 1;
+};
+
+const isCurrentRunSession = (runId: number) => runId === activeRunId;
+
+const appendCliEntry = (kind: CliEntryKind, lines: string | string[]) => {
+  const normalizedLines = Array.isArray(lines) ? lines : [lines];
+  if (!normalizedLines.some((line) => line.length > 0)) {
+    return null;
+  }
+
+  const entry = { kind, lines: normalizedLines };
+  cliEntries.push(entry);
   trimCliEntries();
+  writeCliTranscript();
   syncCliPanel();
+  return entry;
 };
 
 const displayCliCommand = (command: string) => {
-  const [head = "", second = ""] = command.split(/\s+/, 2);
+  const parts = command.split(/\s+/);
+  const [head = "", second = "", third = ""] = parts;
   const lowerHead = head.toLowerCase();
   const lowerSecond = second.toLowerCase();
-  const isKeyCommand = lowerHead === "key" || (lowerHead === "config" && lowerSecond === "key");
+  const lowerThird = third.toLowerCase();
+  const prefix =
+    lowerHead === "key"
+      ? "key"
+      : lowerHead === "config" && lowerSecond === "key"
+        ? "config key"
+        : lowerHead === "config" && lowerSecond === "direct" && lowerThird === "key"
+          ? "config direct key"
+          : "";
 
-  if (!isKeyCommand) {
+  if (!prefix) {
     return command;
   }
 
-  const prefix = lowerHead === "config" ? "config key" : "key";
   const rest = command.slice(prefix.length).trim();
   if (!rest || rest.toLowerCase() === "clear" || rest.toLowerCase() === "help") {
     return command;
@@ -4649,16 +5063,24 @@ const displayCliCommand = (command: string) => {
 };
 
 const shouldRecordCliCommand = (command: string) => {
-  const [head = "", second = ""] = command.split(/\s+/, 2);
+  const parts = command.split(/\s+/);
+  const [head = "", second = "", third = ""] = parts;
   const lowerHead = head.toLowerCase();
   const lowerSecond = second.toLowerCase();
-  const isKeyCommand = lowerHead === "key" || (lowerHead === "config" && lowerSecond === "key");
+  const lowerThird = third.toLowerCase();
+  const prefix =
+    lowerHead === "key"
+      ? "key"
+      : lowerHead === "config" && lowerSecond === "key"
+        ? "config key"
+        : lowerHead === "config" && lowerSecond === "direct" && lowerThird === "key"
+          ? "config direct key"
+          : "";
 
-  if (!isKeyCommand) {
+  if (!prefix) {
     return true;
   }
 
-  const prefix = lowerHead === "config" ? "config key" : "key";
   const rest = command.slice(prefix.length).trim().toLowerCase();
   return !rest || rest === "clear" || rest === "help";
 };
@@ -4757,19 +5179,78 @@ const showNextCliCommand = () => {
 };
 
 const appendCliCommand = (command: string) => {
-  appendCliEntry("command", displayCliCommand(command));
+  return appendCliEntry("command", displayCliCommand(command));
 };
 
 const appendCliOutput = (lines: string | string[]) => {
-  appendCliEntry("output", lines);
+  return appendCliEntry("output", lines);
 };
 
 const appendCliError = (lines: string | string[]) => {
-  appendCliEntry("error", lines);
+  return appendCliEntry("error", lines);
 };
 
 let cliScrollHideTimer = 0;
 let cliScrollFrame = 0;
+
+const hasRunningProgressLine = (lines: string[]) =>
+  /^running\.{1,3}$/.test(lines[0] ?? "");
+
+const animateRunningProgressLine = (line: string, index: number) => {
+  if (index !== 0 || !/^running\.{1,3}$/.test(line)) {
+    return line;
+  }
+
+  const dots = ".".repeat((cliProgressTick % 3) + 1);
+  return line.replace(/\.{1,3}$/, dots);
+};
+
+const stopCliProgress = () => {
+  if (cliProgressTimer) {
+    window.clearInterval(cliProgressTimer);
+    cliProgressTimer = 0;
+  }
+  cliProgressEntry = null;
+  cliProgressBaseLines = [];
+};
+
+const updateCliProgress = () => {
+  if (!cliProgressEntry) {
+    return;
+  }
+
+  cliProgressTick += 1;
+  cliProgressEntry.lines = cliProgressBaseLines.map(animateRunningProgressLine);
+  writeCliTranscript();
+  syncCliPanel();
+};
+
+const startCliProgress = (entry: CliEntry | null) => {
+  stopCliProgress();
+  if (!entry || !hasRunningProgressLine(entry.lines)) {
+    return;
+  }
+
+  cliProgressEntry = entry;
+  cliProgressBaseLines = [...entry.lines];
+  cliProgressTick = 2;
+  cliProgressTimer = window.setInterval(updateCliProgress, 600);
+};
+
+const appendCliProgressOutput = (lines: string | string[]) => {
+  const entry = appendCliOutput(lines);
+  startCliProgress(entry);
+  return entry;
+};
+
+const startCliRunProgress = () => {
+  appendCliProgressOutput([
+    "running...",
+    "one round on a model.",
+    "prompt + THOUGHT.md in.",
+    "canvas out.",
+  ]);
+};
 
 const revealCliScrollbar = () => {
   window.clearTimeout(cliScrollHideTimer);
@@ -4848,8 +5329,8 @@ const getCliSuggestions = (): CliSuggestion[] => {
   if (cliSuggestionContext === "config") {
     if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
       return [
-        { label: "config connect openrouter", command: "config connect openrouter" },
-        { label: "config engine list", command: "config engine list" },
+        { label: "config connect authorize", command: "config connect authorize" },
+        { label: "config connect model list", command: "config connect model list" },
         { label: "current", command: "current" },
       ];
     }
@@ -4857,31 +5338,38 @@ const getCliSuggestions = (): CliSuggestion[] => {
     if (sessionState.mode === "connect" && sessionState.connect.apiKey.trim()) {
       return [
         { label: "run", command: "run" },
-        { label: "config disconnect openrouter", command: "config disconnect openrouter" },
-        { label: "config engine list", command: "config engine list" },
+        { label: "config connect disconnect", command: "config connect disconnect" },
+        { label: "config connect model list", command: "config connect model list" },
       ];
     }
 
-    if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+    if (sessionState.mode === "direct" && !getDirectApiKey()) {
       return [
-        { label: `config provider ${sessionState.direct.provider}`, command: `config provider ${sessionState.direct.provider}` },
-        { label: "config key <api-key>", command: "config key " },
+        { label: "config direct provider list", command: "config direct provider list" },
+        { label: `config direct provider ${sessionState.direct.provider}`, command: `config direct provider ${sessionState.direct.provider}` },
+        { label: "config direct key <api-key>", command: "config direct key " },
         { label: "current", command: "current" },
       ];
     }
 
     if (sessionState.mode === "local") {
-      return [
-        { label: "config engine list", command: "config engine list" },
-        { label: "prompt <text>", command: "prompt " },
-        { label: "run", command: "run" },
-      ];
+      return sessionState.local.available === true
+        ? [
+            { label: "config local model list", command: "config local model list" },
+            { label: "prompt <text>", command: "prompt " },
+            { label: "run", command: "run" },
+          ]
+        : [
+            { label: "config local detect", command: "config local detect" },
+            { label: "config local endpoint", command: "config local endpoint " },
+            { label: "config connect", command: "config connect" },
+          ];
     }
 
     return [
       { label: "prompt <text>", command: "prompt " },
       { label: "run", command: "run" },
-      { label: "config engine list", command: "config engine list" },
+      { label: `config ${sessionState.mode} model list`, command: `config ${sessionState.mode} model list` },
     ];
   }
 
@@ -4929,7 +5417,7 @@ const getCliSuggestions = (): CliSuggestion[] => {
       { label: "mint", command: "mint" },
       { label: "rerun", command: "rerun" },
       { label: "provenance", command: "provenance" },
-      { label: "reset", command: "reset" },
+      { label: "work list", command: "work list" },
     ];
   }
 
@@ -4952,23 +5440,32 @@ const getCliSuggestions = (): CliSuggestion[] => {
 
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
     return [
-      { label: "config connect openrouter", command: "config connect openrouter" },
-      { label: "config engine list", command: "config engine list" },
+      { label: "config connect authorize", command: "config connect authorize" },
+      { label: "config connect model list", command: "config connect model list" },
       { label: "current", command: "current" },
     ];
   }
 
-  if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
+  if (sessionState.mode === "direct" && !getDirectApiKey()) {
     return [
-      { label: `config provider ${sessionState.direct.provider}`, command: `config provider ${sessionState.direct.provider}` },
-      { label: "config key <api-key>", command: "config key " },
+      { label: "config direct provider list", command: "config direct provider list" },
+      { label: `config direct provider ${sessionState.direct.provider}`, command: `config direct provider ${sessionState.direct.provider}` },
+      { label: "config direct key <api-key>", command: "config direct key " },
       { label: "current", command: "current" },
+    ];
+  }
+
+  if (sessionState.mode === "local" && sessionState.local.available !== true) {
+    return [
+      { label: "config local detect", command: "config local detect" },
+      { label: "config local endpoint", command: "config local endpoint " },
+      { label: "config connect", command: "config connect" },
     ];
   }
 
   return [
     { label: "run", command: "run" },
-    { label: "config engine list", command: "config engine list" },
+    { label: `config ${sessionState.mode} model list`, command: `config ${sessionState.mode} model list` },
     { label: "current", command: "current" },
     { label: "help", command: "help" },
   ];
@@ -5045,6 +5542,15 @@ const shouldRefocusCliFromClick = (target: EventTarget | null) => {
     return false;
   }
 
+  const selection = window.getSelection();
+  if (selection && !selection.isCollapsed && selection.toString().trim()) {
+    return false;
+  }
+
+  if (target.closest(".thought-cli__transcript")) {
+    return false;
+  }
+
   const editableTarget = target.closest("input, textarea, select, [contenteditable='true']");
   return !editableTarget || editableTarget === thoughtCliInput;
 };
@@ -5110,23 +5616,50 @@ const currentSpecLabel = () => activeThoughtSpec?.ref || getActiveThoughtInstruc
 
 const cliRouteLabel = (mode: Mode) => mode;
 
-const cliProviderLabel = () => {
-  if (sessionState.mode === "local") {
-    return "ollama";
-  }
+const configModelCommandPrefix = (mode: Mode = sessionState.mode) => `config ${mode} model`;
 
-  if (sessionState.mode === "connect") {
-    return "openrouter";
-  }
+const directProviderIds = () => Object.keys(DIRECT_PROVIDERS) as DirectProviderId[];
 
-  return sessionState.direct.provider;
-};
+const directProviderListLines = () => [
+  "providers:",
+  ...directProviderIds().map((providerId) => {
+    const current = providerId === sessionState.direct.provider ? " current" : "";
+    const keyState = sessionState.direct.apiKeys[providerId].trim() ? " key set" : " key not set";
+    return `${providerId}${current}${keyState}`;
+  }),
+  "",
+  "use: config direct provider <id>",
+];
 
 const cliAuthorizationState = () =>
-  sessionState.connect.apiKey.trim() ? "linked" : "empty";
+  sessionState.connect.apiKey.trim() ? "linked" : "not linked";
 
 const cliApiKeyState = () =>
-  sessionState.direct.apiKey.trim() ? "set" : "not set";
+  getDirectApiKey() ? "set" : "not set";
+
+const cliLocalStatus = () => {
+  if (sessionState.local.available === true) {
+    return "ollama detected";
+  }
+  if (sessionState.local.available === false) {
+    return "ollama not detected";
+  }
+  return "not checked";
+};
+
+const localSetupUsageLines = () => [
+  `endpoint: ${getOllamaEndpoint()}`,
+  "first: start ollama on this machine.",
+  "use:",
+  "config local detect",
+  "config local endpoint <url>",
+  "config local model list",
+  "run",
+  "",
+  "or use another route:",
+  "config connect",
+  "config direct",
+];
 
 const formatCliAddress = (address: string) => shortHex(address, 6, 4);
 
@@ -5232,25 +5765,27 @@ const buildCliCurrentLines = () => {
   const lines = [
     "current:",
     `route: ${cliRouteLabel(sessionState.mode)}`,
-    `provider: ${cliProviderLabel()}`,
   ];
 
   if (sessionState.mode === "connect") {
+    lines.push("service: openrouter");
     lines.push(`authorization: ${cliAuthorizationState()}`);
   }
   if (sessionState.mode === "direct") {
+    lines.push(`provider: ${sessionState.direct.provider}`);
     lines.push(`api key: ${cliApiKeyState()}`);
   }
   if (sessionState.mode === "local") {
-    lines.push(`status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`);
+    lines.push("runtime: ollama", `status: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
   }
 
   lines.push(
-    `engine: ${getCurrentModelValue().trim() || "empty"}`,
+    `model: ${getCurrentModelValue().trim() || "empty"}`,
     `prompt: ${cliPromptState()}`,
     `THOUGHT.md: ${spec.state}`,
     `wallet: ${walletState.address ? "connected" : "disconnected"}`,
     `output: ${output.state}`,
+    `work: ${currentWorkId ? `#${currentWorkId}` : "empty"}`,
     `provenance: ${provenance ? `${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.` : "empty"}`,
   );
 
@@ -5268,34 +5803,46 @@ const buildCliCurrentLines = () => {
 };
 
 const listModelsForCli = () => {
+  if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+    return [
+      "model list unavailable.",
+      "authorization: not linked",
+      "use: config connect authorize",
+    ];
+  }
+
   const options = getModelOptions(getCurrentModelSourceId());
   if (!options.length) {
-    return ["engine list unavailable."];
+    return ["model list unavailable."];
   }
 
   return [
-    "engines:",
-    ...options.slice(0, 8).map((option) => option.id),
+    "models:",
+    ...options.map((option) => option.id),
     "",
-    "use: config engine <id>",
+    `use: ${configModelCommandPrefix()} <id>`,
   ];
 };
 
 const setCliModel = (modelId: string) => {
+  if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
+    appendCliError(["model unavailable.", "authorization: not linked", "use: config connect authorize"]);
+    return;
+  }
+
   const options = getModelOptions(getCurrentModelSourceId());
   if (!modelId || modelId.toLowerCase() === "help") {
     appendCliOutput([
-      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
       `route: ${sessionState.mode}`,
-      "use: config engine list",
-      "use: config engine <id>",
-      "alias: model -> config engine",
+      `use: ${configModelCommandPrefix()} list`,
+      `use: ${configModelCommandPrefix()} <id>`,
     ]);
     return;
   }
 
   if (!options.some((option) => option.id === modelId)) {
-    appendCliError(["engine not found.", "use: config engine list"]);
+    appendCliError(["model not found.", `use: ${configModelCommandPrefix()} list`]);
     return;
   }
 
@@ -5303,15 +5850,25 @@ const setCliModel = (modelId: string) => {
   setCurrentModelValue(modelId);
   writeSessionState();
   syncInterface();
-  appendCliOutput(["engine set.", `engine: ${modelId}`, "use: run"]);
+  appendCliOutput(["model set.", `model: ${modelId}`, "use: run"]);
 };
 
 const setCliProvider = (providerId: string) => {
-  if (!providerId || providerId.toLowerCase() === "help") {
+  const normalizedProviderId = providerId.trim().toLowerCase();
+
+  if (normalizedProviderId === "list") {
+    appendCliOutput(directProviderListLines());
+    return;
+  }
+
+  if (!normalizedProviderId || normalizedProviderId === "help") {
     const lines = [
+      "provider selects the direct API provider.",
+      "",
       `provider: ${sessionState.direct.provider}`,
       "route: direct",
-      "use: config provider <openai|openrouter|anthropic>",
+      "",
+      ...directProviderListLines(),
     ];
     if (sessionState.mode !== "direct") {
       lines.push("note: provider is used by config direct.");
@@ -5320,20 +5877,26 @@ const setCliProvider = (providerId: string) => {
     return;
   }
 
-  if (!isDirectProviderId(providerId)) {
-    appendCliError(["provider not found.", "use: config provider <openai|openrouter|anthropic>"]);
+  if (!isDirectProviderId(normalizedProviderId)) {
+    appendCliError(["provider not found.", "use: config direct provider list"]);
     return;
   }
 
   resetMintRuntimeState();
   sessionState.mode = "direct";
-  sessionState.direct.provider = providerId;
-  sessionState.direct.apiKey = "";
-  sessionState.direct.model = DIRECT_PROVIDERS[providerId].defaultModel;
+  sessionState.direct.provider = normalizedProviderId;
+  sessionState.direct.model = DIRECT_PROVIDERS[normalizedProviderId].defaultModel;
   writeSessionState();
   syncInterface();
   void refreshCurrentModels({ silent: true });
-  appendCliOutput(["provider set.", `provider: ${providerId}`, "route: direct", "use: config key <api-key>"]);
+  appendCliOutput([
+    "provider set.",
+    `provider: ${normalizedProviderId}`,
+    `api key: ${cliApiKeyState()}`,
+    "route: direct",
+    getDirectApiKey() ? "use: run" : "use: config direct key <api-key>",
+    "use: config direct model list",
+  ]);
 };
 
 const setCliApiKey = (keyInput: string) => {
@@ -5341,30 +5904,30 @@ const setCliApiKey = (keyInput: string) => {
   if (!key || key.toLowerCase() === "help") {
     const lines = [
       `api key: ${cliApiKeyState()}`,
-      "policy: session only.",
-      "use: config key <api-key>",
+      "policy: session only. per provider.",
+      "use: config direct key <api-key>",
     ];
-    if (sessionState.direct.apiKey.trim()) {
-      lines.push("clear: config key clear");
+    if (getDirectApiKey()) {
+      lines.push("clear: config direct key clear");
     }
     appendCliOutput(lines);
     return;
   }
 
   if (key.toLowerCase() === "clear") {
-    sessionState.direct.apiKey = "";
+    clearDirectApiKey();
     writeSessionState();
     syncInterface();
-    appendCliOutput(["api key cleared.", "use: config key <api-key>"]);
+    appendCliOutput(["api key cleared.", "use: config direct key <api-key>"]);
     return;
   }
 
   resetMintRuntimeState();
   sessionState.mode = "direct";
-  sessionState.direct.apiKey = key;
+  setDirectApiKey(key);
   writeSessionState();
   syncInterface();
-  appendCliOutput(["api key set.", "policy: session only.", "use: run"]);
+  appendCliOutput(["api key set.", `provider: ${sessionState.direct.provider}`, "policy: session only. per provider.", "use: run"]);
 };
 
 const formatCliTextValue = (value: string) => JSON.stringify(value);
@@ -5410,25 +5973,31 @@ const outputCliMode = async (mode: Mode | "") => {
       ? [
           "route: local",
           "runs on this machine.",
-          `status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`,
-          "use:",
-          "config engine list",
-          "config engine <id>",
-          "run",
-          "config connect",
-          "config direct",
+          `status: ${cliLocalStatus()}`,
+          ...(
+            sessionState.local.available === true
+              ? [
+                  `endpoint: ${getOllamaEndpoint()}`,
+                  "use:",
+                  "config local model list",
+                  "config local model <id>",
+                  "run",
+                  "config local endpoint <url>",
+                ]
+              : localSetupUsageLines()
+          ),
         ]
       : mode === "connect"
         ? [
             "route: connect",
             "delegated cloud access.",
-            "provider: openrouter",
-            `authorization: ${sessionState.connect.apiKey.trim() ? "linked" : "empty"}`,
+            "service: openrouter",
+            `authorization: ${cliAuthorizationState()}`,
             "use:",
-            "config connect openrouter",
-            "config disconnect openrouter",
-            "config engine list",
-            "config engine <id>",
+            "config connect authorize",
+            "config connect disconnect",
+            "config connect model list",
+            "config connect model <id>",
             "run",
           ]
         : [
@@ -5437,11 +6006,12 @@ const outputCliMode = async (mode: Mode | "") => {
             `provider: ${sessionState.direct.provider}`,
             `api key: ${cliApiKeyState()}`,
             "use:",
-            "config provider <id>",
-            "config key <api-key>",
-            "config key clear",
-            "config engine list",
-            "config engine <id>",
+            "config direct provider list",
+            "config direct provider <id>",
+            "config direct key <api-key>",
+            "config direct key clear",
+            "config direct model list",
+            "config direct model <id>",
             "run",
           ];
   appendCliOutput(lines.filter(Boolean));
@@ -5449,7 +6019,7 @@ const outputCliMode = async (mode: Mode | "") => {
 
 const outputCliConfigSummary = () => {
   const lines = [
-    "config sets the route and engine for one round.",
+    "config sets the route and model for one round.",
     "",
     `route: ${sessionState.mode}`,
   ];
@@ -5457,20 +6027,21 @@ const outputCliConfigSummary = () => {
   if (sessionState.mode === "local") {
     lines.push(
       "provider: ollama",
-      `status: ${sessionState.local.available === false ? "ollama not detected" : "ollama detected"}`,
-      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      `status: ${cliLocalStatus()}`,
+      `endpoint: ${getOllamaEndpoint()}`,
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
     );
   } else if (sessionState.mode === "connect") {
     lines.push(
-      `engine: ${getCurrentModelValue().trim() || "empty"}`,
-      "provider: openrouter",
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
+      "service: openrouter",
       `authorization: ${cliAuthorizationState()}`,
     );
   } else {
     lines.push(
       `provider: ${sessionState.direct.provider}`,
       `api key: ${cliApiKeyState()}`,
-      `engine: ${getCurrentModelValue().trim() || "empty"}`,
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
     );
   }
 
@@ -5485,22 +6056,25 @@ const outputCliConfigSummary = () => {
     "config local",
     "config connect",
     "config direct",
-    "config engine list",
-    "config engine <id>",
+    `config ${sessionState.mode} model list`,
+    `config ${sessionState.mode} model <id>`,
   );
 
+  if (sessionState.mode === "local") {
+    lines.push("config local detect", "config local endpoint <url>");
+  }
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
-    lines.push("config connect openrouter");
+    lines.push("config connect authorize");
   }
   if (sessionState.mode === "connect" && sessionState.connect.apiKey.trim()) {
-    lines.push("config disconnect openrouter");
+    lines.push("config connect disconnect");
   }
   if (sessionState.mode === "direct") {
-    lines.push("config provider <id>");
-    if (!sessionState.direct.apiKey.trim()) {
-      lines.push("config key <api-key>");
+    lines.push("config direct provider list", "config direct provider <id>");
+    if (!getDirectApiKey()) {
+      lines.push("config direct key <api-key>");
     } else {
-      lines.push("config key clear");
+      lines.push("config direct key clear");
     }
   }
 
@@ -5524,6 +6098,163 @@ const startOpenRouterConnectFromCli = async () => {
   await startOpenRouterConnect();
 };
 
+const outputCliLocalDetectionResult = () => {
+  if (sessionState.local.available === true) {
+    appendCliOutput([
+      "ollama detected.",
+      `endpoint: ${getOllamaEndpoint()}`,
+      "use: config local model list",
+      "use: run",
+    ]);
+    return;
+  }
+
+  appendCliOutput([
+    "ollama not detected.",
+    ...localSetupUsageLines(),
+  ]);
+};
+
+const outputCliRouteModel = async (mode: Mode, modelInput: string) => {
+  if (sessionState.mode !== mode) {
+    setMode(mode);
+  }
+
+  const normalizedInput = modelInput.trim().toLowerCase();
+  if (!normalizedInput || normalizedInput === "help") {
+    setCliModel("");
+    return;
+  }
+
+  if (normalizedInput === "list") {
+    await refreshCurrentModels({ silent: true });
+    appendCliOutput(listModelsForCli());
+    return;
+  }
+
+  setCliModel(modelInput.trim());
+};
+
+const outputCliLocalConfig = async (localInput: string) => {
+  const [head = ""] = localInput.trim().split(/\s+/, 1);
+  const rest = localInput.trim().slice(head.length).trim();
+  const lowerHead = head.toLowerCase();
+
+  if (!lowerHead || lowerHead === "help") {
+    await outputCliMode("local");
+    return;
+  }
+
+  if (lowerHead === "model" || lowerHead === "engine") {
+    await outputCliRouteModel("local", rest);
+    return;
+  }
+
+  if (lowerHead === "detect" || lowerHead === "retry") {
+    sessionState.mode = "local";
+    sessionState.local.available = null;
+    writeSessionState();
+    syncInterface();
+    appendCliOutput(["detecting ollama...", `endpoint: ${getOllamaEndpoint()}`]);
+    await refreshCurrentModels({ silent: true });
+    stopCliProgress();
+    outputCliLocalDetectionResult();
+    return;
+  }
+
+  if (lowerHead === "endpoint") {
+    if (!rest || rest.toLowerCase() === "help") {
+      appendCliOutput([
+        `endpoint: ${getOllamaEndpoint()}`,
+        "use: config local endpoint <url>",
+        `default: ${DEFAULT_OLLAMA_ENDPOINT}`,
+        "detect: config local detect",
+      ]);
+      return;
+    }
+
+    try {
+      sessionState.mode = "local";
+      sessionState.local.endpoint = normalizeOllamaEndpoint(rest);
+      sessionState.local.available = null;
+      modelOptionsCache.delete(LOCAL_MODEL_SOURCE_ID);
+      writeSessionState();
+      syncInterface();
+      appendCliOutput(["endpoint set.", `endpoint: ${getOllamaEndpoint()}`, "detecting ollama..."]);
+      await refreshCurrentModels({ silent: true });
+      stopCliProgress();
+      outputCliLocalDetectionResult();
+    } catch (error) {
+      stopCliProgress();
+      appendCliError([
+        "endpoint invalid.",
+        error instanceof Error ? error.message : "use an http(s) endpoint.",
+        "use: config local endpoint <url>",
+      ]);
+    }
+    return;
+  }
+
+  appendCliError(["local config option not found.", "use: config local"]);
+};
+
+const outputCliDirectConfig = async (directInput: string) => {
+  const [head = ""] = directInput.trim().split(/\s+/, 1);
+  const rest = directInput.trim().slice(head.length).trim();
+  const lowerHead = head.toLowerCase();
+
+  if (!lowerHead || lowerHead === "help") {
+    await outputCliMode("direct");
+    return;
+  }
+
+  if (lowerHead === "provider") {
+    setCliProvider(rest);
+    return;
+  }
+
+  if (lowerHead === "key") {
+    setCliApiKey(rest);
+    return;
+  }
+
+  if (lowerHead === "model" || lowerHead === "engine") {
+    await outputCliRouteModel("direct", rest);
+    return;
+  }
+
+  appendCliError(["direct config option not found.", "use: config direct"]);
+};
+
+const outputCliConnectConfig = async (connectInput: string) => {
+  const [head = ""] = connectInput.trim().split(/\s+/, 1);
+  const rest = connectInput.trim().slice(head.length).trim();
+  const lowerHead = head.toLowerCase();
+
+  if (!lowerHead || lowerHead === "help") {
+    await outputCliMode("connect");
+    return;
+  }
+
+  if (lowerHead === "authorize" || lowerHead === "openrouter") {
+    await startOpenRouterConnectFromCli();
+    return;
+  }
+
+  if (lowerHead === "disconnect") {
+    disconnectOpenRouter();
+    appendCliOutput(["openrouter unlinked.", "use: config connect authorize"]);
+    return;
+  }
+
+  if (lowerHead === "model" || lowerHead === "engine") {
+    await outputCliRouteModel("connect", rest);
+    return;
+  }
+
+  appendCliError(["connect config option not found.", "use: config connect"]);
+};
+
 const outputCliConfig = async (configInput: string) => {
   const [head = ""] = configInput.trim().split(/\s+/, 1);
   const rest = configInput.trim().slice(head.length).trim();
@@ -5535,29 +6266,28 @@ const outputCliConfig = async (configInput: string) => {
     return;
   }
 
-  if (lowerHead === "local" || lowerHead === "direct") {
-    await outputCliMode(lowerHead);
+  if (lowerHead === "local") {
+    await outputCliLocalConfig(rest);
+    return;
+  }
+
+  if (lowerHead === "direct") {
+    await outputCliDirectConfig(rest);
     return;
   }
 
   if (lowerHead === "connect") {
-    if (!lowerRest) {
-      await outputCliMode("connect");
-      return;
-    }
-    if (lowerRest === "openrouter") {
-      await startOpenRouterConnectFromCli();
-      return;
-    }
+    await outputCliConnectConfig(rest);
+    return;
   }
 
   if (lowerHead === "disconnect" && lowerRest === "openrouter") {
     disconnectOpenRouter();
-    appendCliOutput(["openrouter unlinked.", "use: config connect openrouter"]);
+    appendCliOutput(["openrouter unlinked.", "use: config connect authorize"]);
     return;
   }
 
-  if (lowerHead === "engine") {
+  if (lowerHead === "model" || lowerHead === "engine") {
     if (!lowerRest || lowerRest === "help") {
       setCliModel("");
       return;
@@ -5597,17 +6327,19 @@ const outputCliProvenance = async (json = false) => {
       throw new Error("provenance unavailable.");
     }
 
-    if (json && IS_DEV_MODE) {
+    if (json) {
       appendCliOutput(["provenance --json", formatProvenanceJson(provenance.json)]);
       return;
     }
 
     appendCliOutput([
       "provenance",
+      "records the run context for mint.",
       "schema: thought.provenance.v1",
       `spec: ${currentSpecLabel()}`,
       `bytes: ${provenance.bytes}/${MAX_PROVENANCE_BYTES}`,
       `gas: ~${formatCount(MINT_GAS_ESTIMATE)}`,
+      "run: provenance --json",
     ]);
   } catch (error) {
     appendCliError([formatThoughtSpecError(error), "next: current"]);
@@ -5653,6 +6385,85 @@ const outputCliThoughtInstructions = async (topic: string) => {
   appendCliOutput(thoughtInstructionsUsageLines("available"));
 };
 
+const formatWorkLine = (work: ThoughtWorkRecord) =>
+  `#${work.id} "${formatModelLabel(work.title, 48)}"`;
+
+const workLoadedLines = (work: ThoughtWorkRecord) => [
+  `work #${work.id} loaded.`,
+  `text: "${work.title}"`,
+  "use: mint",
+  "use: provenance",
+];
+
+const outputCliWorkList = () => {
+  const works = readThoughtWorks(sessionStorage);
+  if (!works.length) {
+    appendCliOutput(["work list", "session results from run.", "empty.", "next: run"]);
+    return;
+  }
+
+  appendCliOutput([
+    "work list",
+    "session results from run.",
+    ...works.map(formatWorkLine),
+    "",
+    "use: work <id>",
+    "use: last work",
+  ]);
+};
+
+const outputCliWorkUsage = () => {
+  const currentWork = currentWorkId === null
+    ? null
+    : getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+  appendCliOutput([
+    "work",
+    currentWork ? `current: #${currentWork.id} "${formatModelLabel(currentWork.title, 48)}"` : "current: empty",
+    "use: work list",
+    "use: work <id>",
+    "use: last work",
+  ]);
+};
+
+const loadWorkFromCli = (input: string) => {
+  const normalized = input.trim();
+  if (!normalized || normalized.toLowerCase() === "help") {
+    outputCliWorkUsage();
+    return;
+  }
+
+  if (normalized.toLowerCase() === "last") {
+    loadLastWorkFromCli();
+    return;
+  }
+
+  const id = parseWorkId(normalized);
+  if (id === null) {
+    appendCliError(["work id invalid.", "use: work <id>", "use: work list"]);
+    return;
+  }
+
+  const work = getWorkById(readThoughtWorks(sessionStorage), id);
+  if (!work) {
+    appendCliError([`work #${id} not found.`, "use: work list"]);
+    return;
+  }
+
+  loadWorkRecord(work);
+  appendCliOutput(workLoadedLines(work));
+};
+
+const loadLastWorkFromCli = () => {
+  const work = getPreviousWork(readThoughtWorks(sessionStorage), currentWorkId);
+  if (!work) {
+    appendCliError(currentWorkId ? ["no previous work.", "use: work list"] : ["no work found.", "next: run"]);
+    return;
+  }
+
+  loadWorkRecord(work);
+  appendCliOutput(workLoadedLines(work));
+};
+
 const runFromCli = async () => {
   if (!sessionState.prompt.trim()) {
     appendCliError(["run failed.", "prompt empty.", "next: prompt <text>"]);
@@ -5660,44 +6471,55 @@ const runFromCli = async () => {
   }
 
   if (!getCurrentModelValue().trim()) {
-    appendCliError(["run failed.", "engine empty.", "use: config engine list"]);
+    appendCliError(["run failed.", "model empty.", `use: ${configModelCommandPrefix()} list`]);
     return;
   }
 
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
-    appendCliError(["run failed.", "openrouter not linked.", "use: config connect openrouter"]);
+    appendCliError(["run failed.", "openrouter not linked.", "use: config connect authorize"]);
     return;
   }
 
-  if (sessionState.mode === "direct" && !sessionState.direct.apiKey.trim()) {
-    appendCliError(["run failed.", "api key not set.", "use: config key <api-key>"]);
+  if (sessionState.mode === "direct" && !getDirectApiKey()) {
+    appendCliError(["run failed.", "api key not set.", "use: config direct key <api-key>"]);
     return;
   }
 
   if (sessionState.mode === "local") {
     await refreshCurrentModels({ silent: true });
     if (sessionState.local.available === false) {
-      appendCliError(["run failed.", "ollama not detected.", "use: config connect"]);
+      appendCliError(["run failed.", "ollama not detected."]);
+      appendCliOutput(localSetupUsageLines());
       return;
     }
   }
 
-  appendCliOutput([
-    "running...",
-    "one round on a model.",
-    "prompt + THOUGHT.md in.",
-    "canvas out.",
-  ]);
-  await runAgent();
+  if (mintFlowState !== "closed") {
+    resetMintRuntimeState();
+    syncInterface();
+  }
+
+  startCliRunProgress();
+  try {
+    await runAgent({ forceGenerate: true });
+  } finally {
+    stopCliProgress();
+  }
+
+  if (pageUnloading) {
+    return;
+  }
 
   if (runState === "output_ready") {
     const provenance = getProvenanceSummary();
     appendCliOutput([
-      "canvas ready.",
+      currentWorkId ? `work #${currentWorkId} is done.` : "work is done.",
       provenance
         ? `provenance ${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.`
         : "provenance ready.",
       "use: mint",
+      "use: provenance",
+      "use: work list",
     ]);
     return;
   }
@@ -5821,6 +6643,7 @@ const checkCliPath = async (pathInput: string) => {
   mintFlowData.pathId = parsePathTokenId(pathInput);
   appendCliOutput(`checking $PATH #${pathInput.trim()}...`);
   await checkPathEligibility();
+  stopCliProgress();
 
   if (mintFlowState === "path_ready") {
     appendCliOutput([`$PATH #${mintFlowData.pathId?.toString() ?? pathInput.trim()} ready.`, "use: authorize"]);
@@ -5843,6 +6666,7 @@ const authorizeFromCli = async () => {
 
   appendCliOutput("sign in wallet...");
   await authorizeMint();
+  stopCliProgress();
   const state = mintFlowState as MintFlowState;
   if (state === "authorized") {
     appendCliOutput(["authorized.", "use: confirm"]);
@@ -5863,6 +6687,7 @@ const confirmFromCli = async () => {
 
   appendCliOutput("confirm in wallet...");
   await confirmMint();
+  stopCliProgress();
   const state = mintFlowState as MintFlowState;
   if (state === "minted") {
     appendCliOutput(["minted.", "use: view tx", "use: view THOUGHT"]);
@@ -5879,6 +6704,7 @@ const connectWalletFromCli = async () => {
 
   appendCliOutput("connecting wallet...");
   await requestWalletConnect();
+  stopCliProgress();
 
   if (mintFlowWasActive && walletState.address && mintFlowState === "wallet_required") {
     mintFlowState = "path_required";
@@ -5918,13 +6744,20 @@ const cliCommandsHelpLines = () => [
   "commands:",
   "config",
   "config local | connect | direct",
-  "config connect openrouter",
-  "config disconnect openrouter",
-  "config provider <id>",
-  "config key <api-key>",
-  "config key clear",
-  "config engine list",
-  "config engine <id>",
+  "config local detect",
+  "config local endpoint <url>",
+  "config local model list",
+  "config local model <id>",
+  "config connect authorize",
+  "config connect disconnect",
+  "config connect model list",
+  "config connect model <id>",
+  "config direct provider list",
+  "config direct provider <id>",
+  "config direct key <api-key>",
+  "config direct key clear",
+  "config direct model list",
+  "config direct model <id>",
   "",
   "prompt <text>",
   "prompt clear",
@@ -5934,6 +6767,9 @@ const cliCommandsHelpLines = () => [
   "run",
   "rerun",
   "retry run",
+  "work list",
+  "work <id>",
+  "last work",
   "",
   "mint",
   "path <id>",
@@ -5961,13 +6797,14 @@ const cliHelpLines = (topic = "") => {
   if (!normalizedTopic) {
     return [
       "THOUGHT takes a prompt and THOUGHT.md,",
-      "runs one round on the selected engine,",
+      "runs one round on the selected model,",
       "then renders the returned text to canvas.",
       "",
       "flow:",
-      "config    choose route + engine",
+      "config    choose route + model",
       "prompt    write intention",
       "run       make canvas",
+      "work list  show session works",
       "mint      keep it onchain",
       "",
       "try:",
@@ -5979,6 +6816,7 @@ const cliHelpLines = (topic = "") => {
       "help config",
       "help prompt",
       "help run",
+      "help work",
       "help mint",
       "commands",
       "current",
@@ -6011,18 +6849,19 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "config") {
     return [
-      "config sets the route and engine for one round.",
+      "config sets the route and model for one round.",
       "",
-      "route is how THOUGHT reaches the engine.",
-      "engine is the selected model/runtime.",
+      "route is how THOUGHT reaches the model.",
+      "model is the selected AI model.",
       "",
       "use:",
       "config",
       "config local",
       "config connect",
       "config direct",
-      "config engine list",
-      "config engine <id>",
+      "config local model list",
+      "config connect model list",
+      "config direct model list",
       "current",
     ];
   }
@@ -6033,10 +6872,20 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "model") {
     return [
-      `engine: ${getCurrentModelValue().trim() || "empty"}`,
-      "use: config engine list",
-      "use: config engine <id>",
-      "alias: model -> config engine",
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
+      `use: ${configModelCommandPrefix()} list`,
+      `use: ${configModelCommandPrefix()} <id>`,
+    ];
+  }
+
+  if (normalizedTopic === "provider") {
+    return [
+      "provider selects the direct API provider.",
+      "",
+      `provider: ${sessionState.direct.provider}`,
+      "route: direct",
+      "",
+      ...directProviderListLines(),
     ];
   }
 
@@ -6071,7 +6920,7 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "run") {
     return [
-      "run sends prompt + THOUGHT.md to the selected engine.",
+      "run sends prompt + THOUGHT.md to the selected model.",
       "",
       "one round only.",
       "canvas out.",
@@ -6083,11 +6932,25 @@ const cliHelpLines = (topic = "") => {
     ];
   }
 
+  if (normalizedTopic === "works" || normalizedTopic === "work") {
+    return [
+      "works are session results from run.",
+      "",
+      "each work stores the canvas text,",
+      "image thumbnail, and run context.",
+      "",
+      "use:",
+      "work list",
+      "work <id>",
+      "last work",
+    ];
+  }
+
   if (normalizedTopic === "provenance") {
     return [
       "provenance records the run context.",
       "",
-      "prompt, engine, THOUGHT.md,",
+      "prompt, model, THOUGHT.md,",
       "route, hashes, and mint context.",
       "",
       "it is a record, not proof.",
@@ -6139,9 +7002,12 @@ const cliHelpLines = (topic = "") => {
       "",
       "use:",
       "config direct",
-      "config provider <id>",
-      "config key <api-key>",
-      "config key clear",
+      "config direct provider list",
+      "config direct provider <id>",
+      "config direct key <api-key>",
+      "config direct key clear",
+      "config direct model list",
+      "config direct model <id>",
     ];
   }
 
@@ -6151,12 +7017,14 @@ const cliHelpLines = (topic = "") => {
       "",
       "no raw key paste.",
       "revocable.",
-      "cloud engine route.",
+      "cloud model route.",
       "",
       "use:",
       "config connect",
-      "config connect openrouter",
-      "config disconnect openrouter",
+      "config connect authorize",
+      "config connect disconnect",
+      "config connect model list",
+      "config connect model <id>",
     ];
   }
 
@@ -6164,13 +7032,20 @@ const cliHelpLines = (topic = "") => {
     return [
       "local uses ollama on this machine.",
       "",
-      "no cloud call.",
-      "no api key.",
+      "detected from this browser.",
+      `endpoint: ${getOllamaEndpoint()}`,
       "",
       "use:",
       "config local",
-      "config engine list",
+      "config local detect",
+      "config local endpoint <url>",
+      "config local model list",
+      "config local model <id>",
       "run",
+      "",
+      "alternatives:",
+      "config connect",
+      "config direct",
     ];
   }
 
@@ -6206,10 +7081,11 @@ const executeCliCommand = async (rawCommand: string) => {
       cliSuggestionContext = "current";
     } else if (lowerHead === "clear") {
       cliEntries.length = 0;
+      writeCliTranscript();
       initializeCliTranscript();
     } else if (lowerHead === "reset") {
       resetThought();
-      appendCliOutput(["reset.", "next: prompt <text>"]);
+      appendCliOutput(["reset current work, canvas, and mint state.", "next: prompt <text>"]);
     } else if (lowerHead === "gallery") {
       appendCliOutput("opening gallery...");
       window.location.href = galleryUrl();
@@ -6229,7 +7105,7 @@ const executeCliCommand = async (rawCommand: string) => {
       await startOpenRouterConnectFromCli();
     } else if (lowerHead === "disconnect" && (!rest || lowerRest === "openrouter")) {
       disconnectOpenRouter();
-      appendCliOutput("openrouter unlinked.");
+      appendCliOutput(["openrouter unlinked.", "use: config connect authorize"]);
     } else if (lowerHead === "provider") {
       setCliProvider(lowerRest);
     } else if (lowerHead === "key") {
@@ -6248,6 +7124,16 @@ const executeCliCommand = async (rawCommand: string) => {
       setCliPrompt(rest);
     } else if (isThoughtInstructionsCommand(lowerHead)) {
       await outputCliThoughtInstructions(lowerRest);
+    } else if (lowerHead === "works") {
+      outputCliWorkList();
+    } else if (lowerHead === "work") {
+      if (lowerRest === "list") {
+        outputCliWorkList();
+      } else {
+        loadWorkFromCli(rest);
+      }
+    } else if (lowerHead === "last" && second.toLowerCase() === "work") {
+      loadLastWorkFromCli();
     } else if (lowerHead === "run" || lowerHead === "rerun" || command.toLowerCase() === "retry run") {
       await runFromCli();
     } else if (lowerHead === "provenance") {
@@ -6277,10 +7163,11 @@ const executeCliCommand = async (rawCommand: string) => {
     } else if (lowerHead === "view" && second.toLowerCase() === "thought") {
       appendCliOutput("opening THOUGHT...");
       await handleViewThought(walletState.mintedTokenId ?? mintFlowData.existingTokenId);
-    } else {
+  } else {
       appendCliError(["unknown command.", "use: help"]);
     }
   } finally {
+    stopCliProgress();
     cliCommandInFlight = false;
     syncInterface();
     focusCliInput();
@@ -6364,7 +7251,6 @@ providerBox.addEventListener("change", () => {
 
   resetMintRuntimeState();
   sessionState.direct.provider = providerBox.value;
-  sessionState.direct.apiKey = "";
   sessionState.direct.model = DIRECT_PROVIDERS[providerBox.value].defaultModel;
   writeSessionState();
   syncInterface();
@@ -6374,7 +7260,7 @@ providerBox.addEventListener("change", () => {
 });
 
 apiKeyBox.addEventListener("input", () => {
-  sessionState.direct.apiKey = apiKeyBox.value.trim();
+  setDirectApiKey(apiKeyBox.value);
   writeSessionState();
   setWarning("");
 });
@@ -6583,7 +7469,15 @@ const handleViewportResize = () => {
 
 window.addEventListener("resize", handleViewportResize);
 window.visualViewport?.addEventListener("resize", handleViewportResize);
-window.addEventListener("beforeunload", revokeThoughtInstructionsObjectUrl);
+window.addEventListener("beforeunload", () => {
+  pageUnloading = true;
+  invalidateRunSession();
+  if (runInFlight || runState === "running") {
+    stopCliProgress();
+    markInterruptedCliRun();
+  }
+  revokeThoughtInstructionsObjectUrl();
+});
 window.addEventListener("focus", () => {
   const canSoftRefresh =
     mintFlowState === "path_required" ||
@@ -6648,9 +7542,12 @@ const initFrontpage = async () => {
   frontpageStage.classList.remove("is-hidden");
   galleryPage.classList.add("is-hidden");
   thoughtPage.classList.add("is-hidden");
+  loadCliTranscript();
+  markInterruptedCliRun();
   loadCliCommandHistory();
   syncInterface();
-  resetThought();
+  resetThought({ preserveStoredOutput: true });
+  restoreCurrentOutputSession();
   initializeCliTranscript();
   syncInterface();
 

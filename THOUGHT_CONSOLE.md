@@ -1,6 +1,6 @@
 # THOUGHT Console
 
-The THOUGHT page uses a CLI-style operator console. The console is command-only; route, engine, prompt, provider, key, wallet, run, and mint operations are all driven through `thought>`.
+The THOUGHT page uses a CLI-style operator console. The console is command-only; route, model, prompt, provider, key, wallet, run, and mint operations are all driven through `thought>`.
 
 ## Opening
 
@@ -27,7 +27,7 @@ mint
 - Enter runs the command currently typed after `thought>`.
 - Up and Down walk command history stored in `sessionStorage`.
 - Ctrl+C clears the current prompt input.
-- Secret-bearing `key <api-key>` and `config key <api-key>` commands are masked and excluded from command history.
+- Secret-bearing `key <api-key>`, `config key <api-key>`, and `config direct key <api-key>` commands are masked and excluded from command history.
 - The transcript scrolls to the bottom after each command.
 - Commands print in green as `> command`; normal output is grey; errors are red.
 
@@ -43,11 +43,21 @@ thought> authorize
 thought> confirm
 ```
 
-`run` sends prompt + THOUGHT.md to the selected engine and renders the returned text to canvas. `mint` starts the $PATH-gated THOUGHT mint flow.
+`run` sends prompt + THOUGHT.md to the selected model and renders the returned text to canvas. `mint` starts the $PATH-gated THOUGHT mint flow.
+
+Each successful `run` records a session work. A work is the returned THOUGHT text, its canvas thumbnail, and the run context needed to reload it.
+
+```text
+thought> work list
+thought> work <id>
+thought> last work
+```
+
+`work list` lists session works. `work <id>` loads a specific work back into the canvas. `last work` loads the previous work relative to the current work, or the newest work when no work is active.
 
 ## Config
 
-`config` sets the route and engine for one round.
+`config` sets the route and model for one round.
 
 Routes:
 
@@ -62,18 +72,25 @@ Usage:
 ```text
 config
 config local
+config local detect
+config local endpoint <url>
+config local model list
+config local model <id>
 config connect
+config connect authorize
+config connect disconnect
+config connect model list
+config connect model <id>
 config direct
-config engine list
-config engine <id>
-config connect openrouter
-config disconnect openrouter
-config provider <id>
-config key <api-key>
-config key clear
+config direct provider list
+config direct provider <id>
+config direct key <api-key>
+config direct key clear
+config direct model list
+config direct model <id>
 ```
 
-Aliases still work for older muscle memory: `mode`, `model`, `model list`, `provider`, `key`, `connect openrouter`, and `disconnect openrouter`.
+Aliases still work for older muscle memory: `mode`, `model`, `model list`, `provider`, `key`, `connect openrouter`, `disconnect openrouter`, `config model`, `config provider`, `config key`, `config connect openrouter`, and `config disconnect openrouter`.
 
 ## Command Usage
 
@@ -87,26 +104,47 @@ use: prompt <text>
 clear: prompt clear
 ```
 
-`config key` never prints the key:
+`config direct key` never prints the key:
 
 ```text
 api key: not set
-policy: session only.
-use: config key <api-key>
+policy: session only. per provider.
+use: config direct key <api-key>
 ```
+
+`config local` detects Ollama from the user's browser machine. The default endpoint is `http://127.0.0.1:11434`.
+
+```text
+route: local
+runs on this machine.
+status: ollama not detected
+endpoint: http://127.0.0.1:11434
+first: start ollama on this machine.
+use:
+config local detect
+config local endpoint <url>
+config local model list
+run
+
+or use another route:
+config connect
+config direct
+```
+
+Use `config local endpoint <url>` when Ollama is exposed somewhere other than the default local endpoint.
 
 `config connect` includes both OpenRouter authorization and disconnect commands:
 
 ```text
 route: connect
 delegated cloud access.
-provider: openrouter
+service: openrouter
 authorization: linked
 use:
-config connect openrouter
-config disconnect openrouter
-config engine list
-config engine <id>
+config connect authorize
+config connect disconnect
+config connect model list
+config connect model <id>
 run
 ```
 
@@ -118,11 +156,12 @@ raw provider key. session only.
 provider: openai
 api key: not set
 use:
-config provider <id>
-config key <api-key>
-config key clear
-config engine list
-config engine <id>
+config direct provider list
+config direct provider <id>
+config direct key <api-key>
+config direct key clear
+config direct model list
+config direct model <id>
 run
 ```
 
@@ -171,8 +210,11 @@ thought> view THOUGHT
 
 ## Storage
 
-- Console transcript is in memory and resets on page refresh.
+- Console transcript is stored in `sessionStorage` and survives page refresh.
+- `clear` resets the visible transcript and starts a fresh intro.
+- The current generated THOUGHT output and run context are stored in `sessionStorage` so the canvas can be restored after refresh.
+- Session works are stored in `sessionStorage`; they survive refresh but not browser-session clearing.
 - Command history is stored in `sessionStorage`.
-- Prompt, route, engine, provider, and OpenRouter connect credential are session-scoped browser state.
-- Direct API keys are session-only and never shown by usage output.
+- Prompt, route, model, provider, and OpenRouter connect credential are session-scoped browser state.
+- Direct API keys are session-only, stored per direct provider, and never shown by usage output.
 - No backend receives provider keys from this app path.
