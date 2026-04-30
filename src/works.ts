@@ -4,6 +4,23 @@ export type WorkRunContext = {
   model: string;
   prompt: string;
   clientGeneratedAt: string;
+  capabilities?: {
+    webSearch: boolean;
+    structuredOutput: boolean;
+    stream: boolean;
+  };
+  request?: {
+    maxOutputTokens: 128;
+    temperature: number;
+    topP: number;
+    topK: number | null;
+    seed: number | null;
+  };
+  thoughtSpec?: {
+    id: string;
+    ref: string;
+    hash: string;
+  };
 };
 
 export type ThoughtWorkRecord = {
@@ -169,3 +186,26 @@ export const getPreviousWork = (
 
   return null;
 };
+
+export const getNextWork = (
+  works: ThoughtWorkRecord[],
+  currentWorkId: number | null,
+) => {
+  if (!works.length) {
+    return null;
+  }
+
+  if (currentWorkId === null) {
+    return works[0] ?? null;
+  }
+
+  const currentIndex = works.findIndex((work) => work.id === currentWorkId);
+  if (currentIndex >= 0 && currentIndex < works.length - 1) {
+    return works[currentIndex + 1] ?? null;
+  }
+
+  return null;
+};
+
+export const getLatestWork = (works: ThoughtWorkRecord[]) =>
+  works[works.length - 1] ?? null;

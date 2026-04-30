@@ -12,6 +12,7 @@ import {
   BrowserProvider,
   Contract,
   JsonRpcProvider,
+  formatEther,
   getBytes,
   id,
   keccak256,
@@ -25,6 +26,8 @@ import colorFontRaw from "../colorFontJSON/colorfont.byToolv2.json?raw";
 import addresses from "../evm/addresses.anvil.json";
 import {
   appendThoughtWork,
+  getLatestWork,
+  getNextWork,
   getPreviousWork,
   getWorkById,
   parseWorkId,
@@ -32,6 +35,18 @@ import {
   writeThoughtWorks,
   type ThoughtWorkRecord,
 } from "./works";
+import {
+  buildThoughtRunPayload,
+  thoughtRunProvenanceConfig,
+  toAnthropicMessagesPayload,
+  toOllamaGeneratePayload,
+  toOpenAIResponsesPayload,
+  toOpenRouterChatPayload,
+  type ThoughtRunCapabilities,
+  type ThoughtRunPayload,
+  type ThoughtRunProvider,
+  type ThoughtRunRequestConfig,
+} from "./thought-run-payload";
 
 type ColorFontFile = {
   colors: Array<{
@@ -283,10 +298,17 @@ type MintFlowData = {
 
 type ThoughtRunContext = {
   mode: Mode;
-  provider: string;
+  provider: ThoughtRunProvider;
   model: string;
   prompt: string;
   clientGeneratedAt: string;
+  capabilities?: ThoughtRunCapabilities;
+  request?: ThoughtRunRequestConfig;
+  thoughtSpec?: {
+    id: string;
+    ref: string;
+    hash: string;
+  };
 };
 
 type ThoughtTokenMetadata = {
@@ -361,6 +383,7 @@ const LOCAL_DEFAULT_MODEL = "llama3.2:1b";
 const NOTICE_FLASH_MS = 2400;
 const AGENT_REQUEST_TIMEOUT_MS = 45000;
 const PREFLIGHT_REQUEST_TIMEOUT_MS = 15000;
+const WALLET_TX_SUBMIT_TIMEOUT_MS = 60000;
 const CLI_COMMAND_HISTORY_LIMIT = 80;
 const APP_VERSION = "0.0.2";
 const APP_BUILD = typeof import.meta.env.VITE_APP_BUILD === "string" && import.meta.env.VITE_APP_BUILD
@@ -404,6 +427,7 @@ const THOUGHT_EXPLORER_BASE_URL =
       ? "https://sepolia.etherscan.io"
       : "";
 const PATH_MOVEMENT_THOUGHT = "0x54484f5547485400000000000000000000000000000000000000000000000000";
+const ERC721_TRANSFER_TOPIC = id("Transfer(address,address,uint256)");
 const CONSUME_AUTHORIZATION_TYPEHASH = id(
   "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 nonce,uint256 deadline)",
 );
@@ -704,6 +728,7 @@ let currentWorkId: number | null = null;
 let cliSuggestionContext: "auto" | "help" | "current" | "config" = "auto";
 let pageUnloading = false;
 let walletConnectInFlight = false;
+let walletDisconnectedByUser = false;
 let primaryActionState: PrimaryActionState = "run";
 let secondaryActionState: SecondaryActionState = "none";
 let thoughtInstructionsObjectUrl: string | null = null;
@@ -903,6 +928,9 @@ const cliCommandHistory: string[] = [];
 let cliCommandInFlight = false;
 let cliHistoryIndex: number | null = null;
 let cliHistoryDraft = "";
+let cliCompletionPrefix = "";
+let cliCompletionMatches: string[] = [];
+let cliCompletionIndex: number | null = null;
 let cliProgressEntry: CliEntry | null = null;
 let cliProgressBaseLines: string[] = [];
 let cliProgressTimer = 0;
@@ -1537,7 +1565,7 @@ const stableStringify = (value: StableJsonValue): string => {
     .join(",")}}`;
 };
 
-const getCurrentProviderForProvenance = () => {
+const getCurrentProviderForProvenance = (): ThoughtRunProvider => {
   if (sessionState.mode === "connect") {
     return "openrouter";
   }
@@ -1547,6 +1575,49 @@ const getCurrentProviderForProvenance = () => {
   }
 
   return LOCAL_MODEL_SOURCE_ID;
+};
+
+const isThoughtRunProvider = (value: string): value is ThoughtRunProvider =>
+  value === "openrouter" || value === "openai" || value === "anthropic" || value === "ollama";
+
+const buildCurrentThoughtRunPayload = (prompt: string, model: string) => {
+  const spec = activeThoughtSpec;
+  if (!spec) {
+    throw new Error("spec unavailable.");
+  }
+
+  return buildThoughtRunPayload({
+    route: sessionState.mode,
+    provider: getCurrentProviderForProvenance(),
+    model,
+    prompt,
+    thoughtSpec: {
+      id: spec.specId,
+      ref: spec.ref,
+      hash: spec.specHash,
+      text: getActiveThoughtInstructions(),
+    },
+  });
+};
+
+const buildThoughtRunPayloadFromContext = (context: ThoughtRunContext) => {
+  const spec = activeThoughtSpec;
+  if (!spec) {
+    throw new Error("spec unavailable.");
+  }
+
+  return buildThoughtRunPayload({
+    route: context.mode,
+    provider: isThoughtRunProvider(context.provider) ? context.provider : getCurrentProviderForProvenance(),
+    model: context.model,
+    prompt: context.prompt,
+    thoughtSpec: {
+      id: spec.specId,
+      ref: spec.ref,
+      hash: spec.specHash,
+      text: getActiveThoughtInstructions(),
+    },
+  });
 };
 
 const buildProvenanceJson = (textHash: string) => {
@@ -1562,6 +1633,14 @@ const buildProvenanceJson = (textHash: string) => {
     prompt: sessionState.prompt,
     clientGeneratedAt: new Date().toISOString(),
   };
+  const fallbackPayload = buildThoughtRunPayloadFromContext(context);
+  const request = context.request ?? fallbackPayload.config.request;
+  const capabilities = context.capabilities ?? fallbackPayload.config.capabilities;
+  const thoughtSpec = context.thoughtSpec ?? {
+    hash: spec.specHash,
+    id: spec.specId,
+    ref: spec.ref,
+  };
 
   return stableStringify({
     app: "THOUGHT",
@@ -1574,18 +1653,12 @@ const buildProvenanceJson = (textHash: string) => {
       promptHash: hashText(context.prompt),
       textHash,
     },
-    mode: context.mode,
+    route: context.mode,
     model: context.model,
     prompt: context.prompt,
     provider: context.provider,
-    request: {
-      maxTokens: "160",
-      seed: null,
-      stop: [],
-      temperature: context.mode === "local" ? "0" : null,
-      topK: null,
-      topP: null,
-    },
+    capabilities,
+    request,
     response: {
       finishReason: null,
       providerResponseId: null,
@@ -1594,11 +1667,7 @@ const buildProvenanceJson = (textHash: string) => {
       usage: null,
     },
     schema: "thought.provenance.v1",
-    thoughtSpec: {
-      hash: spec.specHash,
-      id: spec.specId,
-      ref: spec.ref,
-    },
+    thoughtSpec,
   });
 };
 
@@ -1608,6 +1677,22 @@ const parsePathTokenId = (value: string) => {
     return null;
   }
   return BigInt(trimmed);
+};
+
+const indexedAddressTopic = (address: string) =>
+  `0x${address.toLowerCase().replace(/^0x/, "").padStart(64, "0")}`;
+
+const transferLogTokenId = (topics: readonly string[]) => {
+  const tokenIdTopic = topics[3];
+  if (!tokenIdTopic) {
+    return null;
+  }
+
+  try {
+    return BigInt(tokenIdTopic);
+  } catch {
+    return null;
+  }
 };
 
 const verifyThoughtSpecAnchor = async () => {
@@ -2006,7 +2091,7 @@ const getDebugWarningPresentation = () => {
     wallet_switch_failed: { level: "error", text: "wallet switch failed." },
     thought_too_large: {
       level: "warn",
-      text: `agent output exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`,
+      text: `work exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`,
     },
     mint_contract_unavailable: { level: "error", text: "mint contract not configured." },
   };
@@ -2225,7 +2310,7 @@ const getMintSheetStatusCopy = () => {
     return `checking $PATH #${selectedPathId}.`;
   }
   if (mintFlowState === "path_ready") {
-    return `$PATH #${selectedPathId} ready.`;
+    return `$PATH #${selectedPathId} selected.`;
   }
   if (mintFlowState === "authorizing") {
     return "sign in wallet.";
@@ -2394,6 +2479,13 @@ const refreshWalletState = async () => {
   const previousChainId = walletState.chainId;
   walletState.detected = ethereum !== null;
 
+  if (walletDisconnectedByUser) {
+    walletState.address = "";
+    walletState.chainId = null;
+    await refreshMintPreflight();
+    return;
+  }
+
   if (!ethereum) {
     walletState.address = "";
     walletState.chainId = null;
@@ -2459,6 +2551,7 @@ const requestWalletConnect = async () => {
     return;
   }
 
+  walletDisconnectedByUser = false;
   setWarning("");
   walletConnectInFlight = true;
   syncInterface();
@@ -2825,6 +2918,123 @@ const authorizeMint = async () => {
   }
 };
 
+type MintTransactionResponse = {
+  hash: string;
+  nonce?: number;
+  from?: string;
+  wait: () => Promise<{ logs?: Array<{ topics: string[]; data: string }> } | null>;
+};
+
+const mintErrorMessage = (error: unknown) => {
+  const shortMessage =
+    typeof error === "object" && error !== null && "shortMessage" in error
+      ? String((error as { shortMessage?: unknown }).shortMessage ?? "")
+      : "";
+  const message = error instanceof Error ? error.message : shortMessage;
+
+  if (/expired/i.test(message)) {
+    return "authorization expired.";
+  }
+  if (/rejected|denied|cancel/i.test(message)) {
+    return "transaction rejected.";
+  }
+  if (/not submitted|timed out|timeout/i.test(message)) {
+    return "wallet transaction not submitted.";
+  }
+  return shortMessage || message || "mint failed.";
+};
+
+const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliResult: boolean) => {
+  try {
+    const receipt = await tx.wait();
+    const mintedTokenId = extractMintedTokenId(receipt ?? { logs: [] });
+
+    walletState.txState = "idle";
+    walletState.txError = "";
+    walletState.mintedTokenId = mintedTokenId;
+    walletState.txHash = tx.hash;
+    mintFlowData.txHash = tx.hash;
+    mintFlowState = "minted";
+    await refreshMintPreflight();
+    syncInterface();
+
+    if (shouldAppendCliResult) {
+      appendCliOutput(["minted.", "use: view tx", viewThoughtUseLine(mintedTokenId)]);
+    }
+  } catch (error) {
+    const message = mintErrorMessage(error);
+    setMintFlowError(message, message.includes("expired") ? "signature" : "mint");
+    syncInterface();
+    setStatus("");
+
+    if (shouldAppendCliResult) {
+      appendCliError([message, "use: current"]);
+    }
+  }
+};
+
+const detectSubmittedTxNonceGap = async (
+  tx: MintTransactionResponse,
+  fallbackAddress: string,
+  provider: JsonRpcProvider | BrowserProvider | null,
+) => {
+  if (typeof tx.nonce !== "number" || !provider) {
+    return null;
+  }
+
+  const from = tx.from || fallbackAddress || walletState.address;
+  if (!from) {
+    return null;
+  }
+
+  try {
+    const expectedNonce = await provider.getTransactionCount(from, "pending");
+    return tx.nonce > expectedNonce ? { actual: tx.nonce, expected: expectedNonce } : null;
+  } catch {
+    return null;
+  }
+};
+
+const registerSubmittedMintTx = async (
+  tx: MintTransactionResponse,
+  shouldAppendCliResult: boolean,
+  fallbackAddress: string,
+  provider: JsonRpcProvider | BrowserProvider | null,
+) => {
+  const nonceGap = await detectSubmittedTxNonceGap(tx, fallbackAddress, provider);
+  walletState.txState = "submitted";
+  walletState.txHash = tx.hash;
+  mintFlowData.txHash = tx.hash;
+  setStatus("");
+
+  if (nonceGap) {
+    const message = `transaction queued with nonce ${nonceGap.actual}; chain expects ${nonceGap.expected}.`;
+    setMintFlowError(message, "mint");
+    syncInterface();
+
+    if (shouldAppendCliResult) {
+      appendCliError([
+        "transaction queued.",
+        `tx: ${shortHex(tx.hash, 10, 8)}`,
+        `wallet nonce: ${nonceGap.actual}`,
+        `chain expects: ${nonceGap.expected}`,
+        "mint is not pending onchain yet.",
+        "reset Rabby nonce/activity, then retry confirm.",
+        "use: current",
+      ]);
+    }
+    return;
+  }
+
+  syncInterface();
+
+  if (shouldAppendCliResult) {
+    appendCliOutput(["transaction submitted.", `tx: ${shortHex(tx.hash, 10, 8)}`, "waiting for mint...", "use: view tx"]);
+  }
+
+  void waitForMintReceipt(tx, shouldAppendCliResult);
+};
+
 const confirmMint = async () => {
   const ethereum = getEthereumProvider();
   if (
@@ -2850,6 +3060,9 @@ const confirmMint = async () => {
   try {
     const browserProvider = new BrowserProvider(ethereum);
     const signer = await browserProvider.getSigner();
+    const signerAddress = await signer.getAddress();
+    const nonceProvider = getReadProvider() ?? browserProvider;
+    const nonce = await nonceProvider.getTransactionCount(signerAddress, "pending");
     const mintPrice =
       walletState.mintPrice ?? ((await getReadThoughtToken()?.mintPrice()) as bigint | undefined) ?? 0n;
     const writableToken = new Contract(THOUGHT_TOKEN_ADDRESS, THOUGHT_TOKEN_ABI, signer);
@@ -2861,40 +3074,43 @@ const confirmMint = async () => {
     mintFlowData.errorKind = "none";
     syncInterface();
 
-    const tx = await writableToken.mint(
+    let txHandled = false;
+    const txPromise = writableToken.mint(
       mintFlowData.rawText,
       mintFlowData.pathId,
       mintFlowData.thoughtSpecId,
       mintFlowData.provenanceJson,
       mintFlowData.deadline,
       mintFlowData.signature,
-      { value: mintPrice },
+      { value: mintPrice, nonce },
+    ) as Promise<MintTransactionResponse>;
+
+    void txPromise.then((lateTx) => {
+      if (txHandled) {
+        return;
+      }
+      txHandled = true;
+      void registerSubmittedMintTx(lateTx, mintFlowUiMode === "cli", signerAddress, nonceProvider);
+    }).catch(() => {
+      // The awaited path below owns the visible error state.
+    });
+
+    const tx = await withTimeout(
+      txPromise,
+      WALLET_TX_SUBMIT_TIMEOUT_MS,
+      "wallet transaction not submitted.",
     );
-    walletState.txState = "submitted";
-    walletState.txHash = tx.hash;
-    mintFlowData.txHash = tx.hash;
-    syncInterface();
-    setStatus("");
-
-    const receipt = await tx.wait();
-    const mintedTokenId = extractMintedTokenId(receipt ?? { logs: [] });
-
-    walletState.txState = "idle";
-    walletState.txError = "";
-    walletState.mintedTokenId = mintedTokenId;
-    walletState.txHash = tx.hash;
-    mintFlowData.txHash = tx.hash;
-    mintFlowState = "minted";
-    await refreshMintPreflight();
-    syncInterface();
+    if (!txHandled) {
+      txHandled = true;
+      await registerSubmittedMintTx(tx, mintFlowUiMode === "cli", signerAddress, nonceProvider);
+    }
+    return tx.hash;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "mint failed.";
-    setMintFlowError(
-      message.includes("expired") ? "authorization expired." : "mint failed.",
-      message.includes("expired") ? "signature" : "mint",
-    );
+    const message = mintErrorMessage(error);
+    setMintFlowError(message, message.includes("expired") ? "signature" : "mint");
     syncInterface();
     setStatus("");
+    return null;
   }
 };
 
@@ -3045,11 +3261,7 @@ const handleViewThought = async (tokenId?: number | null) => {
     return;
   }
 
-  const url = galleryUrl(thoughtTokenId);
-  const opened = window.open(url, "_blank", "noopener,noreferrer");
-  if (!opened && await copyToClipboard(url)) {
-    setStatus("THOUGHT gallery link copied.", { flashMs: NOTICE_FLASH_MS });
-  }
+  window.location.href = thoughtDetailUrl(thoughtTokenId);
 };
 
 const galleryUrl = (targetTokenId?: number | null) => {
@@ -3070,6 +3282,19 @@ const thoughtDetailUrl = (tokenId: number) => {
   url.searchParams.set("thought", tokenId.toString());
   return url.toString();
 };
+
+const parseThoughtTokenIdInput = (input: string) => {
+  const trimmed = input.trim();
+  if (!/^[1-9]\d*$/.test(trimmed)) {
+    return null;
+  }
+
+  const tokenId = Number(trimmed);
+  return Number.isSafeInteger(tokenId) ? tokenId : null;
+};
+
+const viewThoughtUseLine = (tokenId?: number | null) =>
+  `use: view THOUGHT ${tokenId ?? "<id>"}`;
 
 const configureGalleryLink = () => {
   thoughtGalleryLink.href = galleryUrl();
@@ -3124,6 +3349,13 @@ const metadataNumber = (value: unknown) => {
 
 const shortHex = (value: string, front = 6, back = 4) =>
   value.length > front + back + 3 ? `${value.slice(0, front)}...${value.slice(-back)}` : value;
+
+const quoteCliText = (value: string, maxLength = 48) => {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const clipped =
+    normalized.length > maxLength ? `${normalized.slice(0, Math.max(0, maxLength - 3))}...` : normalized;
+  return `"${clipped}"`;
+};
 
 const galleryTime = (mintedAt: number | null) =>
   mintedAt === null ? "unknown time" : new Date(mintedAt * 1000).toISOString().replace(".000Z", "Z");
@@ -3534,7 +3766,7 @@ const syncOutputToCanvas = (raw: string, options?: { suppressWarning?: boolean }
   const title = canonicalThoughtTitle(raw);
 
   if (!options?.suppressWarning && byteLength(title) > MAX_RAW_TEXT_BYTES) {
-    setWarning(`agent output exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`, {
+    setWarning(`work exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`, {
       flashMs: NOTICE_FLASH_MS,
       level: "warn",
     });
@@ -3592,6 +3824,7 @@ const isThoughtRunContext = (value: unknown): value is ThoughtRunContext => {
   return (
     isMode(candidate.mode) &&
     typeof candidate.provider === "string" &&
+    isThoughtRunProvider(candidate.provider) &&
     typeof candidate.model === "string" &&
     typeof candidate.prompt === "string" &&
     typeof candidate.clientGeneratedAt === "string"
@@ -3658,27 +3891,31 @@ const restoreCurrentOutputSession = () => {
 };
 
 const recordThoughtRun = (
-  mode: Mode,
-  provider: string,
-  model: string,
-  prompt: string,
+  payload: ThoughtRunPayload,
   rawOutput: string,
   thoughtTitle: string,
 ) => {
   const clientGeneratedAt = new Date().toISOString();
+  const provenanceConfig = thoughtRunProvenanceConfig(payload);
   currentRunContext = {
-    mode,
-    provider,
-    model,
-    prompt,
+    mode: payload.config.route,
+    provider: payload.config.provider,
+    model: payload.config.model,
+    prompt: payload.input.prompt,
     clientGeneratedAt,
+    capabilities: provenanceConfig.capabilities,
+    request: provenanceConfig.request,
+    thoughtSpec: provenanceConfig.thoughtSpec,
   };
 
   const run = {
-    mode,
-    provider,
-    model,
-    prompt,
+    route: payload.config.route,
+    provider: payload.config.provider,
+    model: payload.config.model,
+    prompt: payload.input.prompt,
+    capabilities: payload.config.capabilities,
+    request: payload.config.request,
+    thoughtSpec: provenanceConfig.thoughtSpec,
     rawOutput,
     thoughtTitle,
     clientGeneratedAt,
@@ -4002,12 +4239,8 @@ const fetchAgentRequest = async (url: string, init: RequestInit) => {
   }
 };
 
-const buildOllamaPrompt = (prompt: string) =>
-  [getActiveThoughtInstructions(), "", "User prompt:", prompt.trim(), "", "Response:"].join("\n");
-
-const requestOllama = async (model: string, prompt: string) => {
+const requestOllama = async (payload: ThoughtRunPayload) => {
   let response: Response;
-  const ollamaModel = model.replace(/^ollama:/, "").trim();
 
   try {
     response = await fetchAgentRequest(buildOllamaApiUrl("generate"), {
@@ -4015,15 +4248,7 @@ const requestOllama = async (model: string, prompt: string) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: ollamaModel,
-        prompt: buildOllamaPrompt(prompt),
-        stream: false,
-        options: {
-          temperature: 0,
-          num_predict: 160,
-        },
-      }),
+      body: JSON.stringify(toOllamaGeneratePayload(payload)),
     });
   } catch (error) {
     if (
@@ -4036,50 +4261,44 @@ const requestOllama = async (model: string, prompt: string) => {
     throw new Error("ollama not detected.");
   }
 
-  const payload = (await response.json().catch(() => null)) as unknown;
+  const responsePayload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
-    throw new Error(readErrorMessage(payload, "ollama request failed."));
+    throw new Error(readErrorMessage(responsePayload, "ollama request failed."));
   }
 
   if (
-    typeof payload === "object" &&
-    payload !== null &&
-    "response" in payload &&
-    typeof (payload as { response?: unknown }).response === "string"
+    typeof responsePayload === "object" &&
+    responsePayload !== null &&
+    "response" in responsePayload &&
+    typeof (responsePayload as { response?: unknown }).response === "string"
   ) {
-    return ((payload as { response: string }).response).trim();
+    return ((responsePayload as { response: string }).response).trim();
   }
 
   return "";
 };
 
-const requestOpenAIResponses = async (apiKey: string, model: string, prompt: string) => {
+const requestOpenAIResponses = async (apiKey: string, payload: ThoughtRunPayload) => {
   const response = await fetchAgentRequest("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      instructions: getActiveThoughtInstructions(),
-      input: prompt,
-      max_output_tokens: 160,
-      store: false,
-    }),
+    body: JSON.stringify(toOpenAIResponsesPayload(payload)),
   });
 
-  const payload = (await response.json().catch(() => null)) as unknown;
+  const responsePayload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
-    throw new Error(readErrorMessage(payload, "openai request failed."));
+    throw new Error(readErrorMessage(responsePayload, "openai request failed."));
   }
 
-  return extractResponseText(payload);
+  return extractResponseText(responsePayload);
 };
 
-const requestAnthropicMessages = async (apiKey: string, model: string, prompt: string) => {
+const requestAnthropicMessages = async (apiKey: string, payload: ThoughtRunPayload) => {
   const response = await fetchAgentRequest("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -4088,25 +4307,21 @@ const requestAnthropicMessages = async (apiKey: string, model: string, prompt: s
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true",
     },
-    body: JSON.stringify({
-      model,
-      system: getActiveThoughtInstructions(),
-      max_tokens: 160,
-      messages: [{ role: "user", content: prompt }],
-    }),
+    body: JSON.stringify(toAnthropicMessagesPayload(payload)),
   });
 
-  const payload = (await response.json().catch(() => null)) as unknown;
+  const responsePayload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
-    throw new Error(readErrorMessage(payload, "anthropic request failed."));
+    throw new Error(readErrorMessage(responsePayload, "anthropic request failed."));
   }
 
-  if (typeof payload !== "object" || payload === null) {
+  if (typeof responsePayload !== "object" || responsePayload === null) {
     return "";
   }
 
-  const content = (payload as { content?: Array<{ type?: string; text?: string }> }).content ?? [];
+  const content =
+    (responsePayload as { content?: Array<{ type?: string; text?: string }> }).content ?? [];
   return content
     .filter((item) => item.type === "text" && typeof item.text === "string")
     .map((item) => item.text?.trim() ?? "")
@@ -4115,34 +4330,28 @@ const requestAnthropicMessages = async (apiKey: string, model: string, prompt: s
     .trim();
 };
 
-const requestOpenRouterChat = async (apiKey: string, model: string, prompt: string) => {
+const requestOpenRouterChat = async (apiKey: string, payload: ThoughtRunPayload) => {
   const response = await fetchAgentRequest("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: getActiveThoughtInstructions() },
-        { role: "user", content: prompt },
-      ],
-    }),
+    body: JSON.stringify(toOpenRouterChatPayload(payload)),
   });
 
-  const payload = (await response.json().catch(() => null)) as unknown;
+  const responsePayload = (await response.json().catch(() => null)) as unknown;
 
   if (!response.ok) {
-    throw new Error(readErrorMessage(payload, "openrouter request failed."));
+    throw new Error(readErrorMessage(responsePayload, "openrouter request failed."));
   }
 
-  if (typeof payload !== "object" || payload === null) {
+  if (typeof responsePayload !== "object" || responsePayload === null) {
     return "";
   }
 
   const choices =
-    (payload as { choices?: Array<{ message?: { content?: unknown } }> }).choices ?? [];
+    (responsePayload as { choices?: Array<{ message?: { content?: unknown } }> }).choices ?? [];
   const content = choices[0]?.message?.content;
 
   if (typeof content === "string") {
@@ -4855,6 +5064,7 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
   }
 
   const runId = startRunSession();
+  let thoughtRunPayload: ThoughtRunPayload | null = null;
 
   try {
     await ensureActiveThoughtSpec();
@@ -4862,6 +5072,7 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
       return;
     }
     syncThoughtInstructionsControls();
+    thoughtRunPayload = buildCurrentThoughtRunPayload(prompt, model);
   } catch (error) {
     if (!isCurrentRunSession(runId)) {
       return;
@@ -4874,6 +5085,10 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
     return;
   }
 
+  if (!thoughtRunPayload) {
+    return;
+  }
+
   setWarning("");
   setStatus("");
   runState = "running";
@@ -4882,26 +5097,22 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
 
   try {
     let text = "";
-    let provider = "";
 
     if (sessionState.mode === "connect") {
-      provider = "openrouter";
-      text = await requestOpenRouterChat(sessionState.connect.apiKey.trim(), model, prompt);
+      text = await requestOpenRouterChat(sessionState.connect.apiKey.trim(), thoughtRunPayload);
     } else if (sessionState.mode === "direct") {
       const directProvider = sessionState.direct.provider;
-      provider = directProvider;
       const apiKey = getDirectApiKey(directProvider);
 
-      if (provider === "openai") {
-        text = await requestOpenAIResponses(apiKey, model, prompt);
-      } else if (provider === "openrouter") {
-        text = await requestOpenRouterChat(apiKey, model, prompt);
+      if (directProvider === "openai") {
+        text = await requestOpenAIResponses(apiKey, thoughtRunPayload);
+      } else if (directProvider === "openrouter") {
+        text = await requestOpenRouterChat(apiKey, thoughtRunPayload);
       } else {
-        text = await requestAnthropicMessages(apiKey, model, prompt);
+        text = await requestAnthropicMessages(apiKey, thoughtRunPayload);
       }
     } else {
-      provider = LOCAL_MODEL_SOURCE_ID;
-      text = await requestOllama(model, prompt);
+      text = await requestOllama(thoughtRunPayload);
     }
 
     if (!isCurrentRunSession(runId)) {
@@ -4914,7 +5125,7 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
       throw new Error("provider returned empty text.");
     }
 
-    recordThoughtRun(sessionState.mode, provider, model, prompt, text, thoughtTitle);
+    recordThoughtRun(thoughtRunPayload, text, thoughtTitle);
     setAgentOutput(text);
     runState = "output_ready";
     walletState.txState = "idle";
@@ -5021,8 +5232,67 @@ const invalidateRunSession = () => {
 
 const isCurrentRunSession = (runId: number) => runId === activeRunId;
 
-const appendCliEntry = (kind: CliEntryKind, lines: string | string[]) => {
+type AppendCliEntryOptions = {
+  preserveSpacing?: boolean;
+};
+
+const CLI_SECTION_LABELS = new Set([
+  "use:",
+  "routes:",
+  "flow:",
+  "more:",
+  "need $PATH:",
+  "alternatives:",
+]);
+
+const CLI_FOLLOW_UP_PREFIXES = ["use:", "next:", "clear:", "run:", "detect:"];
+
+const isCliFollowUpLine = (line: string) => {
+  const trimmed = line.trim();
+  return CLI_FOLLOW_UP_PREFIXES.some((prefix) => trimmed.startsWith(prefix));
+};
+
+const isCliSectionLabel = (line: string) => CLI_SECTION_LABELS.has(line.trim());
+
+const formatCliSectionLines = (lines: string[]) => {
+  const formatted: string[] = [];
+
+  for (const line of lines) {
+    const previous = formatted[formatted.length - 1] ?? "";
+    const needsBreak =
+      previous.trim() &&
+      (isCliSectionLabel(line) ||
+        (isCliFollowUpLine(line) && !isCliFollowUpLine(previous) && !isCliSectionLabel(previous)));
+
+    if (needsBreak) {
+      formatted.push("");
+    }
+
+    formatted.push(line);
+  }
+
+  return formatted;
+};
+
+const normalizeCliEntryLines = (
+  kind: CliEntryKind,
+  lines: string | string[],
+  options: AppendCliEntryOptions = {},
+) => {
   const normalizedLines = Array.isArray(lines) ? lines : [lines];
+  if (options.preserveSpacing || (kind !== "output" && kind !== "error")) {
+    return normalizedLines;
+  }
+
+  return formatCliSectionLines(normalizedLines);
+};
+
+const appendCliEntry = (
+  kind: CliEntryKind,
+  lines: string | string[],
+  options: AppendCliEntryOptions = {},
+) => {
+  const normalizedLines = normalizeCliEntryLines(kind, lines, options);
   if (!normalizedLines.some((line) => line.length > 0)) {
     return null;
   }
@@ -5123,9 +5393,20 @@ const resetCliHistoryCursor = () => {
   cliHistoryDraft = "";
 };
 
+const resetCliCompletionCursor = () => {
+  cliCompletionPrefix = "";
+  cliCompletionMatches = [];
+  cliCompletionIndex = null;
+};
+
+const resetCliInputNavigation = () => {
+  resetCliHistoryCursor();
+  resetCliCompletionCursor();
+};
+
 const recordCliCommandHistory = (command: string) => {
   if (!shouldRecordCliCommand(command)) {
-    resetCliHistoryCursor();
+    resetCliInputNavigation();
     return;
   }
 
@@ -5138,7 +5419,7 @@ const recordCliCommandHistory = (command: string) => {
     cliCommandHistory.splice(0, cliCommandHistory.length - CLI_COMMAND_HISTORY_LIMIT);
   }
   writeCliCommandHistory();
-  resetCliHistoryCursor();
+  resetCliInputNavigation();
 };
 
 const setCliInputCommand = (command: string) => {
@@ -5146,6 +5427,117 @@ const setCliInputCommand = (command: string) => {
   requestAnimationFrame(() => {
     thoughtCliInput.setSelectionRange(command.length, command.length);
   });
+};
+
+const normalizeCliCompletionPrefix = (value: string) =>
+  value.trimStart().replace(/\s+/g, " ").toLowerCase();
+
+const cliCompletionCommandCatalog = () => {
+  const commands = [
+    "config",
+    "config route local",
+    "config route connect",
+    "config route direct",
+    "config local",
+    "config local detect",
+    "config local endpoint ",
+    "config local model list",
+    "config local model ",
+    "config connect",
+    "config connect authorize",
+    "config connect disconnect",
+    "config connect model list",
+    "config connect model ",
+    "config direct",
+    "config direct provider list",
+    "config direct provider ",
+    ...directProviderIds().map((providerId) => `config direct provider ${providerId}`),
+    "config direct key ",
+    "config direct key clear",
+    "config direct model list",
+    "config direct model ",
+    "prompt ",
+    "prompt clear",
+    "spec",
+    "spec text",
+    "THOUGHT.md",
+    "THOUGHT.md text",
+    "run",
+    "rerun",
+    "retry run",
+    "work",
+    "work list",
+    "work previous",
+    "work next",
+    "work latest",
+    "output",
+    "thought",
+    "thought list",
+    "mint",
+    "path",
+    "path list",
+    "path ",
+    "authorize",
+    "confirm",
+    "wallet",
+    "wallet connect",
+    "wallet disconnect",
+    "mint-path",
+    "current",
+    "status",
+    "provenance",
+    "provenance --json",
+    "gallery",
+    "view tx",
+    "view THOUGHT ",
+    "clear",
+    "reset",
+    "help",
+    "commands",
+  ];
+
+  return Array.from(new Set(commands));
+};
+
+const cliCompletionMatchesFor = (prefix: string) =>
+  cliCompletionCommandCatalog().filter((command) =>
+    normalizeCliCompletionPrefix(command).startsWith(prefix),
+  );
+
+const showCliCompletion = (direction: "previous" | "next") => {
+  const inputPrefix = normalizeCliCompletionPrefix(thoughtCliInput.value);
+  const selectedCompletion =
+    cliCompletionIndex === null ? "" : cliCompletionMatches[cliCompletionIndex] ?? "";
+  const isCyclingCompletion =
+    !!selectedCompletion &&
+    normalizeCliCompletionPrefix(selectedCompletion) === inputPrefix;
+  const prefix = isCyclingCompletion ? cliCompletionPrefix : inputPrefix;
+  if (!prefix) {
+    return false;
+  }
+
+  if (!isCyclingCompletion && (prefix !== cliCompletionPrefix || cliCompletionIndex === null)) {
+    cliCompletionPrefix = prefix;
+    cliCompletionMatches = cliCompletionMatchesFor(prefix);
+    cliCompletionIndex = null;
+  }
+
+  if (!cliCompletionMatches.length) {
+    return true;
+  }
+
+  if (cliCompletionIndex === null) {
+    cliCompletionIndex = direction === "next" ? 0 : cliCompletionMatches.length - 1;
+  } else if (direction === "next") {
+    cliCompletionIndex = (cliCompletionIndex + 1) % cliCompletionMatches.length;
+  } else {
+    cliCompletionIndex =
+      (cliCompletionIndex - 1 + cliCompletionMatches.length) % cliCompletionMatches.length;
+  }
+
+  setCliInputCommand(cliCompletionMatches[cliCompletionIndex]);
+  resetCliHistoryCursor();
+  return true;
 };
 
 const showPreviousCliCommand = () => {
@@ -5178,16 +5570,40 @@ const showNextCliCommand = () => {
   resetCliHistoryCursor();
 };
 
+const navigateCliInput = (direction: "previous" | "next") => {
+  if (cliHistoryIndex !== null) {
+    resetCliCompletionCursor();
+    if (direction === "previous") {
+      showPreviousCliCommand();
+    } else {
+      showNextCliCommand();
+    }
+    return;
+  }
+
+  if (thoughtCliInput.value.trim()) {
+    showCliCompletion(direction);
+    return;
+  }
+
+  resetCliCompletionCursor();
+  if (direction === "previous") {
+    showPreviousCliCommand();
+  } else {
+    showNextCliCommand();
+  }
+};
+
 const appendCliCommand = (command: string) => {
   return appendCliEntry("command", displayCliCommand(command));
 };
 
-const appendCliOutput = (lines: string | string[]) => {
-  return appendCliEntry("output", lines);
+const appendCliOutput = (lines: string | string[], options?: AppendCliEntryOptions) => {
+  return appendCliEntry("output", lines, options);
 };
 
-const appendCliError = (lines: string | string[]) => {
-  return appendCliEntry("error", lines);
+const appendCliError = (lines: string | string[], options?: AppendCliEntryOptions) => {
+  return appendCliEntry("error", lines, options);
 };
 
 let cliScrollHideTimer = 0;
@@ -5383,6 +5799,7 @@ const getCliSuggestions = (): CliSuggestion[] => {
 
   if (mintFlowState === "path_required" || isPathRecoveryError()) {
     return [
+      { label: "path list", command: "path list" },
       { label: "path <id>", command: "path " },
       { label: "mint-path", command: "mint-path" },
       { label: "current", command: "current" },
@@ -5392,6 +5809,7 @@ const getCliSuggestions = (): CliSuggestion[] => {
   if (mintFlowState === "path_ready" || mintFlowState === "authorizing") {
     return [
       { label: "authorize", command: "authorize" },
+      { label: "path list", command: "path list" },
       { label: "path <id>", command: "path " },
       { label: "current", command: "current" },
     ];
@@ -5405,9 +5823,13 @@ const getCliSuggestions = (): CliSuggestion[] => {
   }
 
   if (mintFlowState === "minted") {
+    const tokenId = walletState.mintedTokenId ?? mintFlowData.existingTokenId;
     return [
       { label: "view tx", command: "view tx" },
-      { label: "view THOUGHT", command: "view THOUGHT" },
+      {
+        label: tokenId ? `view THOUGHT #${tokenId}` : "view THOUGHT <id>",
+        command: tokenId ? `view THOUGHT ${tokenId}` : "view THOUGHT ",
+      },
       { label: "gallery", command: "gallery" },
     ];
   }
@@ -5592,23 +6014,23 @@ const focusCliInputFromKeyboard = (event: KeyboardEvent) => {
   if (event.key.length === 1) {
     event.preventDefault();
     setCliInputCommand(`${thoughtCliInput.value}${event.key}`);
-    resetCliHistoryCursor();
+    resetCliInputNavigation();
     return;
   }
 
   if (event.key === "Backspace") {
     event.preventDefault();
     setCliInputCommand(thoughtCliInput.value.slice(0, -1));
-    resetCliHistoryCursor();
+    resetCliInputNavigation();
     return;
   }
 
   if (event.key === "ArrowUp") {
     event.preventDefault();
-    showPreviousCliCommand();
+    navigateCliInput("previous");
   } else if (event.key === "ArrowDown") {
     event.preventDefault();
-    showNextCliCommand();
+    navigateCliInput("next");
   }
 };
 
@@ -5687,7 +6109,7 @@ const cliOutputStatus = () => {
   if (mintFlowState === "minted") {
     return {
       state: "minted",
-      hint: "use: view THOUGHT",
+      hint: viewThoughtUseLine(walletState.mintedTokenId ?? mintFlowData.existingTokenId),
     };
   }
 
@@ -5720,7 +6142,7 @@ const cliOutputStatus = () => {
 
 const cliCurrentMintState = () => {
   if (mintFlowState === "closed") {
-    return runState === "output_ready" ? "ready" : "idle";
+    return runState === "output_ready" ? "ready to mint" : "idle";
   }
   if (mintFlowState === "wallet_required") {
     return "needs wallet";
@@ -5749,11 +6171,27 @@ const cliCurrentMintState = () => {
   return "idle";
 };
 
-const cliPromptState = () => sessionState.prompt.trim() ? "set" : "empty";
+const cliPromptValue = () => {
+  const prompt = sessionState.prompt.trim();
+  return prompt ? quoteCliText(prompt) : "empty";
+};
 
 const cliPathState = () => {
   const path = mintFlowData.pathId?.toString() ?? mintFlowData.pathIdInput.trim();
-  return path || "empty";
+  return path || "not selected";
+};
+
+const cliCurrentWorkState = (outputState: string) => {
+  if (currentWorkId === null) {
+    return outputState;
+  }
+
+  const work = getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+  if (!work) {
+    return `#${currentWorkId}`;
+  }
+
+  return `#${work.id} "${formatModelLabel(work.title, 48)}"`;
 };
 
 const buildCliCurrentLines = () => {
@@ -5762,13 +6200,10 @@ const buildCliCurrentLines = () => {
   const spec = cliSpecStatus();
   const tokenId = walletState.mintedTokenId ?? mintFlowData.existingTokenId;
 
-  const lines = [
-    "current:",
-    `route: ${cliRouteLabel(sessionState.mode)}`,
-  ];
+  const lines = [`route: ${cliRouteLabel(sessionState.mode)}`];
 
   if (sessionState.mode === "connect") {
-    lines.push("service: openrouter");
+    lines.push("provider: openrouter");
     lines.push(`authorization: ${cliAuthorizationState()}`);
   }
   if (sessionState.mode === "direct") {
@@ -5776,16 +6211,15 @@ const buildCliCurrentLines = () => {
     lines.push(`api key: ${cliApiKeyState()}`);
   }
   if (sessionState.mode === "local") {
-    lines.push("runtime: ollama", `status: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
+    lines.push("provider: ollama", `status: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
   }
 
   lines.push(
     `model: ${getCurrentModelValue().trim() || "empty"}`,
-    `prompt: ${cliPromptState()}`,
+    `prompt: ${cliPromptValue()}`,
     `THOUGHT.md: ${spec.state}`,
-    `wallet: ${walletState.address ? "connected" : "disconnected"}`,
-    `output: ${output.state}`,
-    `work: ${currentWorkId ? `#${currentWorkId}` : "empty"}`,
+    `wallet: ${walletState.address ? "connected" : "not connected"}`,
+    `work: ${cliCurrentWorkState(output.state)}`,
     `provenance: ${provenance ? `${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.` : "empty"}`,
   );
 
@@ -5930,14 +6364,11 @@ const setCliApiKey = (keyInput: string) => {
   appendCliOutput(["api key set.", `provider: ${sessionState.direct.provider}`, "policy: session only. per provider.", "use: run"]);
 };
 
-const formatCliTextValue = (value: string) => JSON.stringify(value);
-
 const setCliPrompt = (promptInput: string) => {
   const prompt = promptInput.trim();
   if (!prompt || prompt.toLowerCase() === "help") {
-    const currentPrompt = sessionState.prompt.trim();
     appendCliOutput([
-      `prompt: ${currentPrompt ? formatCliTextValue(currentPrompt) : "empty"}`,
+      `prompt: ${cliPromptValue()}`,
       "use: prompt <text>",
       "clear: prompt clear",
     ]);
@@ -5949,7 +6380,7 @@ const setCliPrompt = (promptInput: string) => {
     sessionState.prompt = "";
     writeSessionState();
     syncInterface();
-    appendCliOutput(["prompt cleared.", "next: prompt <text>"]);
+    appendCliOutput(["prompt: empty", "next: prompt <text>"]);
     return;
   }
 
@@ -5957,12 +6388,12 @@ const setCliPrompt = (promptInput: string) => {
   sessionState.prompt = promptInput.trim();
   writeSessionState();
   syncInterface();
-  appendCliOutput(["prompt set.", "next: run"]);
+  appendCliOutput([`prompt: ${cliPromptValue()}`, "next: run"]);
 };
 
 const outputCliMode = async (mode: Mode | "") => {
   if (!mode) {
-    appendCliOutput(["use: config", "alias: mode -> config route"]);
+    appendCliOutput(["use: config route <local|connect|direct>", "alias: mode -> config route"]);
     return;
   }
 
@@ -5991,7 +6422,7 @@ const outputCliMode = async (mode: Mode | "") => {
         ? [
             "route: connect",
             "delegated cloud access.",
-            "service: openrouter",
+            "provider: openrouter",
             `authorization: ${cliAuthorizationState()}`,
             "use:",
             "config connect authorize",
@@ -6034,7 +6465,7 @@ const outputCliConfigSummary = () => {
   } else if (sessionState.mode === "connect") {
     lines.push(
       `model: ${getCurrentModelValue().trim() || "empty"}`,
-      "service: openrouter",
+      "provider: openrouter",
       `authorization: ${cliAuthorizationState()}`,
     );
   } else {
@@ -6053,6 +6484,7 @@ const outputCliConfigSummary = () => {
     "direct    raw provider key. session only.",
     "",
     "use:",
+    "config route <local|connect|direct>",
     "config local",
     "config connect",
     "config direct",
@@ -6281,6 +6713,30 @@ const outputCliConfig = async (configInput: string) => {
     return;
   }
 
+  if (lowerHead === "route") {
+    if (!lowerRest || lowerRest === "help") {
+      appendCliOutput([
+        "route selects how THOUGHT reaches a model.",
+        "",
+        `route: ${sessionState.mode}`,
+        "",
+        "use:",
+        "config route local",
+        "config route connect",
+        "config route direct",
+      ]);
+      return;
+    }
+
+    if (lowerRest === "local" || lowerRest === "connect" || lowerRest === "direct") {
+      await outputCliMode(lowerRest);
+      return;
+    }
+
+    appendCliError(["route not found.", "use: config route <local|connect|direct>"]);
+    return;
+  }
+
   if (lowerHead === "disconnect" && lowerRest === "openrouter") {
     disconnectOpenRouter();
     appendCliOutput(["openrouter unlinked.", "use: config connect authorize"]);
@@ -6316,7 +6772,7 @@ const outputCliConfig = async (configInput: string) => {
 
 const outputCliProvenance = async (json = false) => {
   if (!currentOutputText) {
-    appendCliError(["no THOUGHT ready.", "next: run"]);
+    appendCliError(["no work ready.", "next: run"]);
     return;
   }
 
@@ -6328,12 +6784,11 @@ const outputCliProvenance = async (json = false) => {
     }
 
     if (json) {
-      appendCliOutput(["provenance --json", formatProvenanceJson(provenance.json)]);
+      appendCliOutput(formatProvenanceJson(provenance.json));
       return;
     }
 
     appendCliOutput([
-      "provenance",
       "records the run context for mint.",
       "schema: thought.provenance.v1",
       `spec: ${currentSpecLabel()}`,
@@ -6347,7 +6802,7 @@ const outputCliProvenance = async (json = false) => {
 };
 
 const isThoughtInstructionsCommand = (commandHead: string) =>
-  commandHead === "thought" || commandHead === "thought.md";
+  commandHead === "spec" || commandHead === "thought.md";
 
 const thoughtInstructionsUsageLines = (
   state: "available" | "unavailable",
@@ -6378,11 +6833,67 @@ const outputCliThoughtInstructions = async (topic: string) => {
   const label = getActiveThoughtInstructionsLabel();
 
   if (normalizedTopic === "text" || normalizedTopic === "show" || normalizedTopic === "cat") {
-    appendCliOutput([`THOUGHT.md: ${label}`, ...text.split(/\r?\n/)]);
+    appendCliOutput([`THOUGHT.md: ${label}`, ...text.split(/\r?\n/)], { preserveSpacing: true });
     return;
   }
 
-  appendCliOutput(thoughtInstructionsUsageLines("available"));
+  appendCliOutput([
+    "THOUGHT.md spec.",
+    "generation contract for a run.",
+    `state: ready`,
+    `ref: ${activeThoughtSpec?.ref ?? label}`,
+    ...(activeThoughtSpec ? [
+      `id: ${shortHex(activeThoughtSpec.specId, 10, 8)}`,
+      `hash: ${shortHex(activeThoughtSpec.specHash, 10, 8)}`,
+      `bytes: ${activeThoughtSpec.byteLength}`,
+      `source: ${activeThoughtSpec.pointer}`,
+    ] : []),
+    "use: spec text",
+    "use: THOUGHT.md text",
+  ]);
+};
+
+const formatMintedThoughtLine = (thought: GalleryThought) => {
+  const title = canonicalThoughtTitle(thought.rawText) || "UNTITLED";
+  return `#${thought.tokenId} ${quoteCliText(title, 40)} $PATH #${thought.pathId}`;
+};
+
+const outputCliThoughtWorks = async (topic: string) => {
+  const normalizedTopic = topic.trim().toLowerCase();
+  if (normalizedTopic && normalizedTopic !== "list") {
+    appendCliError(["thought option not found.", "use: thought", "use: thought list"]);
+    return;
+  }
+
+  try {
+    const thoughts = await readGalleryThoughts();
+    if (!thoughts) {
+      appendCliError(["THOUGHT works unavailable.", "use: gallery"]);
+      return;
+    }
+
+    if (!thoughts.length) {
+      appendCliOutput([
+        "THOUGHT works minted.",
+        "tokens kept onchain.",
+        "empty.",
+        "use: mint",
+        "use: gallery",
+      ]);
+      return;
+    }
+
+    appendCliOutput([
+      "THOUGHT works minted.",
+      "tokens kept onchain.",
+      ...thoughts.map(formatMintedThoughtLine),
+      "",
+      "use: gallery",
+      "use: view THOUGHT <id>",
+    ]);
+  } catch {
+    appendCliError(["failed to read THOUGHT works.", "use: gallery"]);
+  }
 };
 
 const formatWorkLine = (work: ThoughtWorkRecord) =>
@@ -6398,17 +6909,18 @@ const workLoadedLines = (work: ThoughtWorkRecord) => [
 const outputCliWorkList = () => {
   const works = readThoughtWorks(sessionStorage);
   if (!works.length) {
-    appendCliOutput(["work list", "session results from run.", "empty.", "next: run"]);
+    appendCliOutput(["generated works from run.", "empty.", "next: run"]);
     return;
   }
 
   appendCliOutput([
-    "work list",
-    "session results from run.",
+    "generated works from run.",
     ...works.map(formatWorkLine),
     "",
     "use: work <id>",
-    "use: last work",
+    "use: work previous",
+    "use: work next",
+    "use: work latest",
   ]);
 };
 
@@ -6417,11 +6929,13 @@ const outputCliWorkUsage = () => {
     ? null
     : getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
   appendCliOutput([
-    "work",
+    "work is generated by a model.",
     currentWork ? `current: #${currentWork.id} "${formatModelLabel(currentWork.title, 48)}"` : "current: empty",
     "use: work list",
     "use: work <id>",
-    "use: last work",
+    "use: work previous",
+    "use: work next",
+    "use: work latest",
   ]);
 };
 
@@ -6432,8 +6946,18 @@ const loadWorkFromCli = (input: string) => {
     return;
   }
 
-  if (normalized.toLowerCase() === "last") {
-    loadLastWorkFromCli();
+  if (normalized.toLowerCase() === "previous" || normalized.toLowerCase() === "prev") {
+    loadPreviousWorkFromCli();
+    return;
+  }
+
+  if (normalized.toLowerCase() === "next") {
+    loadNextWorkFromCli();
+    return;
+  }
+
+  if (normalized.toLowerCase() === "latest" || normalized.toLowerCase() === "last") {
+    loadLatestWorkFromCli();
     return;
   }
 
@@ -6453,10 +6977,32 @@ const loadWorkFromCli = (input: string) => {
   appendCliOutput(workLoadedLines(work));
 };
 
-const loadLastWorkFromCli = () => {
+const loadPreviousWorkFromCli = () => {
   const work = getPreviousWork(readThoughtWorks(sessionStorage), currentWorkId);
   if (!work) {
     appendCliError(currentWorkId ? ["no previous work.", "use: work list"] : ["no work found.", "next: run"]);
+    return;
+  }
+
+  loadWorkRecord(work);
+  appendCliOutput(workLoadedLines(work));
+};
+
+const loadNextWorkFromCli = () => {
+  const work = getNextWork(readThoughtWorks(sessionStorage), currentWorkId);
+  if (!work) {
+    appendCliError(currentWorkId ? ["no next work.", "use: work list"] : ["no work found.", "next: run"]);
+    return;
+  }
+
+  loadWorkRecord(work);
+  appendCliOutput(workLoadedLines(work));
+};
+
+const loadLatestWorkFromCli = () => {
+  const work = getLatestWork(readThoughtWorks(sessionStorage));
+  if (!work) {
+    appendCliError(["no work found.", "next: run"]);
     return;
   }
 
@@ -6539,6 +7085,11 @@ const switchMintFlowToCli = () => {
 const selectedCliPathId = () =>
   mintFlowData.pathId?.toString() ?? mintFlowData.pathIdInput.trim();
 
+const hasPendingMintTransaction = () =>
+  mintFlowState === "minting" ||
+  walletState.txState === "awaiting_signature" ||
+  walletState.txState === "submitted";
+
 const buildCliMintStateLines = () => {
   const pathId = selectedCliPathId();
 
@@ -6546,7 +7097,7 @@ const buildCliMintStateLines = () => {
     return ["checking THOUGHT..."];
   }
   if (mintFlowState === "wallet_required") {
-    return ["wallet disconnected.", "use: wallet connect"];
+    return ["wallet not connected.", "use: wallet connect"];
   }
   if (mintFlowState === "path_required") {
     return [
@@ -6560,7 +7111,7 @@ const buildCliMintStateLines = () => {
     return [`checking $PATH #${pathId || "?"}...`];
   }
   if (mintFlowState === "path_ready") {
-    return [`$PATH #${pathId || "?"} ready.`, "use: authorize"];
+    return [`$PATH #${pathId || "?"} selected.`, "use: authorize"];
   }
   if (mintFlowState === "authorizing") {
     return ["signing authorization..."];
@@ -6572,11 +7123,22 @@ const buildCliMintStateLines = () => {
     return ["confirming mint..."];
   }
   if (mintFlowState === "minted") {
-    return ["minted.", "use: view tx", "use: view THOUGHT"];
+    return ["minted.", "use: view tx", viewThoughtUseLine(walletState.mintedTokenId)];
   }
   if (mintFlowState === "text_taken") {
     const token = mintFlowData.existingTokenId;
-    return [token ? `THOUGHT #${token} already minted.` : "THOUGHT already minted.", "use: view THOUGHT"];
+    return [
+      "already minted:",
+      token ? `THOUGHT #${token} already minted.` : "THOUGHT already minted.",
+      viewThoughtUseLine(token),
+      "",
+      "to mint another:",
+      "run makes a new work.",
+      walletState.address ? `wallet linked: ${formatCliAddress(walletState.address)}` : "wallet not connected.",
+      walletState.address ? "select $PATH after run." : "use: wallet connect",
+      walletState.address ? "use: path <id>" : "",
+      "use: run",
+    ].filter(Boolean);
   }
   if (mintFlowState === "error") {
     return [mintFlowData.error || "mint unavailable.", "use: current"];
@@ -6601,12 +7163,13 @@ const appendCliMintState = () => {
 
 const startCliMint = async () => {
   if (!currentOutputText) {
-    appendCliError(["nothing to mint.", "use: run"]);
+    appendCliError(["no work to mint.", "use: run"]);
     return;
   }
 
   appendCliOutput([
     "mint THOUGHT.",
+    "keeps current work onchain.",
     "one THOUGHT needs one $PATH.",
     "select $PATH · authorize · confirm.",
   ]);
@@ -6621,7 +7184,7 @@ const ensureCliMintFlow = async () => {
   }
 
   if (!currentOutputText) {
-    appendCliError(["nothing to mint.", "use: run"]);
+    appendCliError(["no work to mint.", "use: run"]);
     return false;
   }
 
@@ -6629,28 +7192,172 @@ const ensureCliMintFlow = async () => {
   return mintFlowState !== "closed";
 };
 
+const cliPathHelpLines = () => {
+  const currentPath = selectedCliPathId();
+  return [
+    "$PATH selects permission for minting.",
+    "",
+    "one THOUGHT needs one $PATH.",
+    "select $PATH · authorize · confirm.",
+    "",
+    `current: ${currentPath ? `#${currentPath}` : "not selected"}`,
+    "",
+    "use:",
+    "path list",
+    "path <id>",
+    "mint-path",
+  ];
+};
+
+const cliPathAvailability = async (
+  pathNft: Contract,
+  pathId: bigint,
+  authorizedMinter: string,
+  movementQuota: bigint,
+) => {
+  if (authorizedMinter.toLowerCase() !== THOUGHT_TOKEN_ADDRESS.toLowerCase() || movementQuota === 0n) {
+    return "not ready";
+  }
+
+  try {
+    const [stage, stageMinted] = await Promise.all([
+      pathNft.getStage(pathId) as Promise<bigint>,
+      pathNft.getStageMinted(pathId) as Promise<bigint>,
+    ]);
+    return stage !== 0n || stageMinted >= movementQuota ? "spent" : "available";
+  } catch {
+    return "unknown";
+  }
+};
+
+const listCliPaths = async () => {
+  await refreshWalletState();
+
+  if (!walletState.address) {
+    appendCliOutput([
+      "wallet $PATHs for THOUGHT mint.",
+      "",
+      "wallet not connected.",
+      "use: wallet connect",
+    ]);
+    return;
+  }
+
+  const provider = getReadProvider();
+  const pathNft = getReadPathNft();
+  if (!provider || !pathNft || !PATH_NFT_ADDRESS || !THOUGHT_TOKEN_ADDRESS) {
+    appendCliOutput([
+      "wallet $PATHs for THOUGHT mint.",
+      "",
+      "path list unavailable.",
+      "use: mint-path",
+    ]);
+    return;
+  }
+
+  try {
+    const walletTopic = indexedAddressTopic(walletState.address);
+    const [incomingLogs, outgoingLogs] = await Promise.all([
+      provider.getLogs({
+        address: PATH_NFT_ADDRESS,
+        fromBlock: 0,
+        toBlock: "latest",
+        topics: [ERC721_TRANSFER_TOPIC, null, walletTopic],
+      }),
+      provider.getLogs({
+        address: PATH_NFT_ADDRESS,
+        fromBlock: 0,
+        toBlock: "latest",
+        topics: [ERC721_TRANSFER_TOPIC, walletTopic],
+      }),
+    ]);
+    const candidateIds = new Set<bigint>();
+    for (const log of [...incomingLogs, ...outgoingLogs]) {
+      const tokenId = transferLogTokenId(log.topics);
+      if (tokenId !== null) {
+        candidateIds.add(tokenId);
+      }
+    }
+
+    const [authorizedMinter, movementQuota] = await Promise.all([
+      pathNft.getAuthorizedMinter(PATH_MOVEMENT_THOUGHT) as Promise<string>,
+      pathNft.getMovementQuota(PATH_MOVEMENT_THOUGHT) as Promise<bigint>,
+    ]);
+    const wallet = walletState.address.toLowerCase();
+    const ownedPaths = (
+      await Promise.all(
+        [...candidateIds]
+          .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+          .map(async (pathId) => {
+            try {
+              const owner = (await pathNft.ownerOf(pathId)) as string;
+              if (owner.toLowerCase() !== wallet) {
+                return null;
+              }
+              const status = await cliPathAvailability(pathNft, pathId, authorizedMinter, movementQuota);
+              return { pathId, status };
+            } catch {
+              return null;
+            }
+          }),
+      )
+    ).filter((path): path is { pathId: bigint; status: string } => path !== null);
+
+    appendCliOutput([
+      "wallet $PATHs for THOUGHT mint.",
+      `wallet: ${formatCliAddress(walletState.address)}`,
+      "",
+      ...(ownedPaths.length
+        ? ownedPaths.map(({ pathId, status }) => `#${pathId.toString()} ${status}`)
+        : ["none found."]),
+      "",
+      "use: path <id>",
+      "use: mint-path",
+    ]);
+  } catch {
+    appendCliOutput([
+      "wallet $PATHs for THOUGHT mint.",
+      "",
+      "path list unavailable.",
+      "use: path <id>",
+      "use: mint-path",
+    ]);
+  }
+};
+
 const checkCliPath = async (pathInput: string) => {
+  const trimmed = pathInput.trim();
+  if (!trimmed) {
+    appendCliOutput(cliPathHelpLines());
+    return;
+  }
+
+  if (trimmed.toLowerCase() === "list") {
+    await listCliPaths();
+    return;
+  }
+
+  if (hasPendingMintTransaction()) {
+    appendCliError(["mint already pending.", "use: view tx", "use: current"]);
+    return;
+  }
+
   if (!await ensureCliMintFlow()) {
     return;
   }
 
-  if (!pathInput.trim()) {
-    appendCliError(["enter a $PATH #.", "use: path <id>", "use: mint-path"]);
-    return;
-  }
-
-  mintFlowData.pathIdInput = pathInput.trim();
+  mintFlowData.pathIdInput = trimmed;
   mintFlowData.pathId = parsePathTokenId(pathInput);
-  appendCliOutput(`checking $PATH #${pathInput.trim()}...`);
+  appendCliOutput(`checking $PATH #${trimmed}...`);
   await checkPathEligibility();
   stopCliProgress();
 
   if (mintFlowState === "path_ready") {
-    appendCliOutput([`$PATH #${mintFlowData.pathId?.toString() ?? pathInput.trim()} ready.`, "use: authorize"]);
+    appendCliOutput([`$PATH #${mintFlowData.pathId?.toString() ?? trimmed} selected.`, "use: authorize"]);
   } else if (mintFlowState === "wallet_required") {
-    appendCliError(["wallet disconnected.", "use: wallet connect"]);
+    appendCliError(["wallet not connected.", "use: wallet connect"]);
   } else if (mintFlowState === "error") {
-    appendCliError([mintFlowData.error || `$PATH #${pathInput.trim()} not available.`, "use: path <id>", "use: mint-path"]);
+    appendCliError([mintFlowData.error || `$PATH #${trimmed} not available.`, "use: path <id>", "use: mint-path"]);
   }
 };
 
@@ -6664,7 +7371,14 @@ const authorizeFromCli = async () => {
     return;
   }
 
-  appendCliOutput("sign in wallet...");
+  const pathId = selectedCliPathId() || "?";
+  appendCliOutput([
+    `authorize $PATH #${pathId} for THOUGHT mint.`,
+    "no gas.",
+    "does not mint.",
+    `expires in ${Math.floor(Number(PATH_CONSUME_AUTH_TTL_SECONDS) / 3600)} hour.`,
+    "sign in wallet...",
+  ]);
   await authorizeMint();
   stopCliProgress();
   const state = mintFlowState as MintFlowState;
@@ -6673,6 +7387,35 @@ const authorizeFromCli = async () => {
   } else if (state === "error") {
     appendCliError([mintFlowData.error || "authorization failed.", "use: path <id>"]);
   }
+};
+
+const cliMintPriceLine = async () => {
+  try {
+    const mintPrice =
+      walletState.mintPrice ?? ((await getReadThoughtToken()?.mintPrice()) as bigint | undefined) ?? null;
+    return mintPrice === null ? "price: unknown" : `price: ${formatEther(mintPrice)} ETH`;
+  } catch {
+    return "price: unknown";
+  }
+};
+
+const cliConfirmPreviewLines = async () => {
+  const pathId = selectedCliPathId() || "?";
+  const text = mintFlowData.rawText || currentOutputText;
+  const provenanceBytes = mintFlowData.provenanceJson ? byteLength(mintFlowData.provenanceJson) : null;
+  const specLabel = activeThoughtSpec?.ref ?? (shortHex(mintFlowData.thoughtSpecId || "", 10, 8) || "unknown");
+
+  return [
+    "confirm THOUGHT mint.",
+    `THOUGHT: ${quoteCliText(text)}`,
+    `$PATH: #${pathId}`,
+    `provenance: ${provenanceBytes ?? "unknown"}/${MAX_PROVENANCE_BYTES} bytes.`,
+    `spec: ${specLabel}`,
+    await cliMintPriceLine(),
+    "spends gas.",
+    "consumes this $PATH.",
+    "confirm in wallet...",
+  ];
 };
 
 const confirmFromCli = async () => {
@@ -6685,13 +7428,11 @@ const confirmFromCli = async () => {
     return;
   }
 
-  appendCliOutput("confirm in wallet...");
-  await confirmMint();
+  appendCliOutput(await cliConfirmPreviewLines());
+  const txHash = await confirmMint();
   stopCliProgress();
   const state = mintFlowState as MintFlowState;
-  if (state === "minted") {
-    appendCliOutput(["minted.", "use: view tx", "use: view THOUGHT"]);
-  } else if (state === "error") {
+  if (!txHash && state === "error") {
     appendCliError([mintFlowData.error || "mint failed.", "use: current"]);
   }
 };
@@ -6719,30 +7460,34 @@ const connectWalletFromCli = async () => {
     return;
   }
 
-  appendCliOutput(walletState.address ? ["wallet linked.", "use: mint"] : ["wallet disconnected.", "use: wallet connect"]);
+  appendCliOutput(walletState.address ? ["wallet linked.", "use: mint"] : ["wallet not connected.", "use: wallet connect"]);
 };
 
 const outputCliWalletUsage = () => {
   appendCliOutput([
     "wallet is used for $PATH and minting.",
-    `wallet: ${walletState.address ? `linked ${formatCliAddress(walletState.address)}` : "disconnected"}`,
+    `wallet: ${walletState.address ? `linked ${formatCliAddress(walletState.address)}` : "not connected"}`,
     "use: wallet connect",
     "clear: wallet disconnect",
   ]);
 };
 
 const disconnectWalletFromCli = () => {
+  walletDisconnectedByUser = true;
   walletState.address = "";
   walletState.chainId = null;
   walletState.menuOpen = false;
+  walletState.preflightLoading = false;
+  walletState.preflightError = "";
   resetMintRuntimeState();
   syncInterface();
-  appendCliOutput(["wallet unlinked.", "use: wallet connect"]);
+  appendCliOutput(["wallet disconnected.", "use: wallet connect"]);
 };
 
 const cliCommandsHelpLines = () => [
   "commands:",
   "config",
+  "config route <local|connect|direct>",
   "config local | connect | direct",
   "config local detect",
   "config local endpoint <url>",
@@ -6761,17 +7506,27 @@ const cliCommandsHelpLines = () => [
   "",
   "prompt <text>",
   "prompt clear",
+  "spec",
+  "spec text",
   "THOUGHT.md",
   "THOUGHT.md text",
   "",
   "run",
   "rerun",
   "retry run",
+  "work",
+  "output",
   "work list",
   "work <id>",
-  "last work",
+  "work previous",
+  "work next",
+  "work latest",
+  "thought",
+  "thought list",
   "",
   "mint",
+  "path",
+  "path list",
   "path <id>",
   "authorize",
   "confirm",
@@ -6784,7 +7539,7 @@ const cliCommandsHelpLines = () => [
   "provenance --json",
   "gallery",
   "view tx",
-  "view THOUGHT",
+  "view THOUGHT <id>",
   "clear",
   "reset",
   "help",
@@ -6801,25 +7556,21 @@ const cliHelpLines = (topic = "") => {
       "then renders the returned text to canvas.",
       "",
       "flow:",
-      "config    choose route + model",
+      "config    choose route, provider, model",
       "prompt    write intention",
       "run       make canvas",
-      "work list  show session works",
+      "work      show generated works",
       "mint      keep it onchain",
       "",
-      "try:",
-      "config",
-      "prompt <text>",
-      "run",
-      "",
       "more:",
-      "help config",
-      "help prompt",
-      "help run",
-      "help work",
-      "help mint",
-      "commands",
+      "work",
+      "thought",
+      "spec",
+      "wallet",
+      "path",
+      "provenance",
       "current",
+      "commands",
     ];
   }
 
@@ -6856,6 +7607,7 @@ const cliHelpLines = (topic = "") => {
       "",
       "use:",
       "config",
+      "config route <local|connect|direct>",
       "config local",
       "config connect",
       "config direct",
@@ -6867,7 +7619,7 @@ const cliHelpLines = (topic = "") => {
   }
 
   if (normalizedTopic === "mode") {
-    return ["use: config", "alias: mode -> config route"];
+    return ["use: config route <local|connect|direct>", "alias: mode -> config route"];
   }
 
   if (normalizedTopic === "model") {
@@ -6905,7 +7657,22 @@ const cliHelpLines = (topic = "") => {
     ];
   }
 
-  if (normalizedTopic === "thought.md" || normalizedTopic === "thought") {
+  if (normalizedTopic === "thought") {
+    return [
+      "thought lists minted THOUGHT works.",
+      "",
+      "THOUGHT is a minted generated work.",
+      "work is generated by a model.",
+      "",
+      "use:",
+      "thought",
+      "thought list",
+      "gallery",
+      "view THOUGHT <id>",
+    ];
+  }
+
+  if (normalizedTopic === "thought.md" || normalizedTopic === "spec") {
     return [
       "THOUGHT.md is the generation spec.",
       "",
@@ -6913,6 +7680,8 @@ const cliHelpLines = (topic = "") => {
       "canvas out.",
       "",
       "use:",
+      "spec",
+      "spec text",
       "THOUGHT.md",
       "THOUGHT.md text",
     ];
@@ -6932,17 +7701,20 @@ const cliHelpLines = (topic = "") => {
     ];
   }
 
-  if (normalizedTopic === "works" || normalizedTopic === "work") {
+  if (normalizedTopic === "works" || normalizedTopic === "work" || normalizedTopic === "output") {
     return [
-      "works are session results from run.",
+      "work is generated by a model.",
       "",
       "each work stores the canvas text,",
       "image thumbnail, and run context.",
       "",
       "use:",
+      "work",
       "work list",
       "work <id>",
-      "last work",
+      "work previous",
+      "work next",
+      "work latest",
     ];
   }
 
@@ -6970,6 +7742,8 @@ const cliHelpLines = (topic = "") => {
       "",
       "use:",
       "mint",
+      "path",
+      "path list",
       "path <id>",
       "authorize",
       "confirm",
@@ -6977,6 +7751,10 @@ const cliHelpLines = (topic = "") => {
       "need $PATH:",
       "mint-path",
     ];
+  }
+
+  if (normalizedTopic === "path" || normalizedTopic === "$path") {
+    return cliPathHelpLines();
   }
 
   if (normalizedTopic === "wallet") {
@@ -7097,7 +7875,7 @@ const executeCliCommand = async (rawCommand: string) => {
       if (!lowerRest || lowerRest === "help") {
         await outputCliMode("");
       } else if (mode && !isMode(mode)) {
-        appendCliError(["route not found.", "use: config local | connect | direct"]);
+        appendCliError(["route not found.", "use: config route <local|connect|direct>"]);
       } else {
         await outputCliMode(mode);
       }
@@ -7124,16 +7902,16 @@ const executeCliCommand = async (rawCommand: string) => {
       setCliPrompt(rest);
     } else if (isThoughtInstructionsCommand(lowerHead)) {
       await outputCliThoughtInstructions(lowerRest);
+    } else if (lowerHead === "thought") {
+      await outputCliThoughtWorks(lowerRest);
     } else if (lowerHead === "works") {
       outputCliWorkList();
-    } else if (lowerHead === "work") {
+    } else if (lowerHead === "work" || lowerHead === "output") {
       if (lowerRest === "list") {
         outputCliWorkList();
       } else {
         loadWorkFromCli(rest);
       }
-    } else if (lowerHead === "last" && second.toLowerCase() === "work") {
-      loadLastWorkFromCli();
     } else if (lowerHead === "run" || lowerHead === "rerun" || command.toLowerCase() === "retry run") {
       await runFromCli();
     } else if (lowerHead === "provenance") {
@@ -7161,9 +7939,19 @@ const executeCliCommand = async (rawCommand: string) => {
       appendCliOutput("opening tx...");
       await handleViewTx();
     } else if (lowerHead === "view" && second.toLowerCase() === "thought") {
-      appendCliOutput("opening THOUGHT...");
-      await handleViewThought(walletState.mintedTokenId ?? mintFlowData.existingTokenId);
-  } else {
+      const tokenIdInput = command.split(/\s+/).slice(2).join(" ");
+      const tokenId = tokenIdInput
+        ? parseThoughtTokenIdInput(tokenIdInput)
+        : (walletState.mintedTokenId ?? mintFlowData.existingTokenId);
+      if (tokenIdInput && tokenId === null) {
+        appendCliError(["THOUGHT id invalid.", "use: view THOUGHT <id>"]);
+      } else if (tokenId === null || tokenId === undefined) {
+        appendCliError(["THOUGHT id required.", "use: view THOUGHT <id>"]);
+      } else {
+        appendCliOutput(`opening THOUGHT #${tokenId}...`);
+        await handleViewThought(tokenId);
+      }
+    } else {
       appendCliError(["unknown command.", "use: help"]);
     }
   } finally {
@@ -7178,6 +7966,7 @@ thoughtCliForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const command = thoughtCliInput.value;
   thoughtCliInput.value = "";
+  resetCliInputNavigation();
   void executeCliCommand(command);
   focusCliInput();
 });
@@ -7193,7 +7982,7 @@ thoughtCliInput.addEventListener("keydown", (event) => {
   ) {
     event.preventDefault();
     thoughtCliInput.value = "";
-    resetCliHistoryCursor();
+    resetCliInputNavigation();
     return;
   }
 
@@ -7203,16 +7992,16 @@ thoughtCliInput.addEventListener("keydown", (event) => {
 
   if (event.key === "ArrowUp") {
     event.preventDefault();
-    showPreviousCliCommand();
+    navigateCliInput("previous");
   } else if (event.key === "ArrowDown") {
     event.preventDefault();
-    showNextCliCommand();
+    navigateCliInput("next");
   }
 });
 
 thoughtCliInput.addEventListener("input", () => {
-  if (cliHistoryIndex !== null) {
-    resetCliHistoryCursor();
+  if (cliHistoryIndex !== null || cliCompletionIndex !== null) {
+    resetCliInputNavigation();
   }
 });
 

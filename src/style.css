@@ -1582,6 +1582,12 @@ html.thought-route .thought-detail.is-hidden {
   letter-spacing: 0.08em;
 }
 
+.thought-detail__links {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+}
+
 .thought-detail__link,
 .thought-detail__status {
   margin: 0;

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   THOUGHT_WORKS_LIMIT,
   appendThoughtWork,
+  getLatestWork,
+  getNextWork,
   getPreviousWork,
   getWorkById,
   parseWorkId,
@@ -114,7 +116,7 @@ describe("thought works", () => {
     expect(getWorkById(works, 9)).toBeNull();
   });
 
-  it("resolves last work as previous to current, or newest when no current exists", () => {
+  it("resolves previous work relative to current", () => {
     const works = [makeWork(1), makeWork(2), makeWork(3)];
 
     expect(getPreviousWork(works, 3)?.id).toBe(2);
@@ -123,5 +125,18 @@ describe("thought works", () => {
     expect(getPreviousWork(works, 99)?.id).toBe(3);
     expect(getPreviousWork(works, 1)).toBeNull();
     expect(getPreviousWork([], null)).toBeNull();
+  });
+
+  it("resolves next and latest work", () => {
+    const works = [makeWork(1), makeWork(2), makeWork(3)];
+
+    expect(getNextWork(works, 1)?.id).toBe(2);
+    expect(getNextWork(works, 2)?.id).toBe(3);
+    expect(getNextWork(works, null)?.id).toBe(1);
+    expect(getNextWork(works, 3)).toBeNull();
+    expect(getNextWork(works, 99)).toBeNull();
+    expect(getNextWork([], null)).toBeNull();
+    expect(getLatestWork(works)?.id).toBe(3);
+    expect(getLatestWork([])).toBeNull();
   });
 });
