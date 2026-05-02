@@ -479,6 +479,7 @@ const IS_THOUGHT_PAGE = !IS_GALLERY_PAGE && ROUTE_THOUGHT_TOKEN_ID !== null;
 const THOUGHT_MINTED_TOPIC = id(
   "ThoughtMinted(uint256,address,uint256,bytes32,bytes32,bytes32,uint64)",
 );
+const TOKEN_URI_CALL_GAS_LIMIT = 100_000_000n;
 const THOUGHT_TOKEN_ABI = [
   "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
   "function mintPrice() view returns (uint256)",
@@ -3918,11 +3919,25 @@ const readGalleryThoughts = async (): Promise<GalleryThought[] | null> => {
         const provenanceHash = String(parsed.args[4]);
         const thoughtSpecId = String(parsed.args[5]);
         const eventMintedAt = Number(parsed.args[6] as bigint);
-        const tokenUri = (await token.tokenURI(tokenId)) as string;
-        const metadata = readTokenMetadata(tokenUri);
+        let tokenUri = "";
+        let metadata: ThoughtTokenMetadata = {};
+        try {
+          tokenUri = (await token.tokenURI(tokenId, { gasLimit: TOKEN_URI_CALL_GAS_LIMIT })) as string;
+          metadata = readTokenMetadata(tokenUri);
+        } catch {
+          // Long v0.8 works can exceed conservative eth_call gas defaults for tokenURI.
+          tokenUri = "";
+        }
         const properties = metadata.properties ?? {};
         const thoughtEnvelope = metadata.thought ?? {};
-        const provenanceJson = metadataString(properties.provenanceJson) || metadataString(thoughtEnvelope.provenance);
+        const rawText =
+          metadataString(properties.rawText) ||
+          metadataString(thoughtEnvelope.text) ||
+          String(await token.rawTextOf(tokenId));
+        const provenanceJson =
+          metadataString(properties.provenanceJson) ||
+          metadataString(thoughtEnvelope.provenance) ||
+          String(await token.provenanceOf(tokenId));
         const provenanceMaterial = parseProvenanceMaterial(provenanceJson);
 
         return {
@@ -3934,12 +3949,12 @@ const readGalleryThoughts = async (): Promise<GalleryThought[] | null> => {
           provenanceHash: metadataString(properties.provenanceHash) || provenanceHash,
           thoughtSpecId: metadataString(properties.thoughtSpecId) || thoughtSpecId,
           mintedAt: metadataNumber(properties.mintedAt) ?? eventMintedAt,
-          rawText: metadataString(properties.rawText) || metadataString(thoughtEnvelope.text),
+          rawText,
           prompt: provenanceMaterial.prompt,
           returnedText: provenanceMaterial.returnedText,
           returnedTextHash: provenanceMaterial.returnedTextHash,
           provenanceJson,
-          image: metadata.image ?? "",
+          image: metadata.image ?? galleryThumbnailUri(rawText),
           tokenUri,
           txHash: log.transactionHash,
           blockNumber: log.blockNumber,
