@@ -31,17 +31,12 @@ describe("thought run payload", () => {
       route: "connect",
       provider: "openrouter",
       model: "meta-llama/llama-3.3-70b-instruct:free",
-      capabilities: {
-        webSearch: true,
-        structuredOutput: false,
-        stream: false,
-      },
       request: {
         maxOutputTokens: THOUGHT_MAX_OUTPUT_TOKENS,
-        temperature: 0.7,
-        topP: 1,
-        topK: null,
-        seed: null,
+      },
+      web: {
+        enabled: true,
+        tool: "openrouter:web_search",
       },
     });
     expect(payload.input).toEqual({
@@ -66,8 +61,6 @@ describe("thought run payload", () => {
         { role: "user", content: "user prompt" },
       ],
       max_tokens: 128,
-      temperature: 0.7,
-      top_p: 1,
       tools: [{ type: "openrouter:web_search" }],
     });
 
@@ -76,8 +69,6 @@ describe("thought run payload", () => {
       instructions: thoughtSpec.text,
       input: [{ role: "user", content: [{ type: "input_text", text: "user prompt" }] }],
       max_output_tokens: 128,
-      temperature: 0.7,
-      top_p: 1,
       tools: [{ type: "web_search" }],
       tool_choice: "auto",
     });
@@ -87,8 +78,6 @@ describe("thought run payload", () => {
       system: thoughtSpec.text,
       messages: [{ role: "user", content: "user prompt" }],
       max_tokens: 128,
-      temperature: 0.7,
-      top_p: 1,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
     });
   });
@@ -102,7 +91,7 @@ describe("thought run payload", () => {
       thoughtSpec,
     });
 
-    expect(payload.config.capabilities.webSearch).toBe(false);
+    expect(payload.config.web).toEqual({ enabled: false, tool: "unavailable" });
     expect(toOllamaGeneratePayload(payload)).toEqual({
       model: "llama3.2:1b",
       system: thoughtSpec.text,
@@ -110,9 +99,6 @@ describe("thought run payload", () => {
       stream: false,
       options: {
         num_predict: 128,
-        temperature: 0.7,
-        top_p: 1,
-        seed: null,
       },
     });
   });
@@ -130,17 +116,12 @@ describe("thought run payload", () => {
       route: "direct",
       provider: "openai",
       model: "gpt-5-mini",
-      capabilities: {
-        webSearch: true,
-        structuredOutput: false,
-        stream: false,
-      },
       request: {
-        maxOutputTokens: 128,
-        temperature: 0.7,
-        topP: 1,
-        topK: null,
-        seed: null,
+        maxOutputTokens: "128",
+      },
+      web: {
+        enabled: true,
+        tool: "openai:web_search",
       },
       thoughtSpec: {
         id: "thought.md.v1",

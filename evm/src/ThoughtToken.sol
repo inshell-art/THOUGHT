@@ -47,8 +47,8 @@ contract ThoughtToken {
     error NonexistentToken();
     error NotAuthorized();
     error NotOwner();
-    error ProvenanceTooLarge(uint256 actual, uint256 max);
-    error RawTextTooLarge(uint256 actual, uint256 max);
+    error NonCanonicalThoughtText();
+    error ProvenanceTooLarge(uint256 size, uint256 max);
     error ReentrantCall();
     error ThoughtAlreadyMinted(bytes32 textHash, uint256 tokenId);
     error ThoughtTextTooLarge(uint256 actual, uint256 max);
@@ -75,6 +75,7 @@ contract ThoughtToken {
         string rawText;
         string provenanceJson;
         bytes32 textHash;
+        bytes32 promptHash;
         bytes32 provenanceHash;
         bytes32 thoughtSpecId;
         uint256 pathId;
@@ -86,8 +87,8 @@ contract ThoughtToken {
     string public constant name = "THOUGHT";
     string public constant symbol = "THOUGHT";
 
-    uint256 public constant MAX_RAW_TEXT_BYTES = 4096;
-    uint256 public constant MAX_PROVENANCE_BYTES = 1024;
+    uint256 public constant MAX_TEXT_BYTES = 1024;
+    uint256 public constant MAX_PROVENANCE_BYTES = 2048;
     bytes32 public constant PATH_MOVEMENT_THOUGHT = bytes32("THOUGHT");
     bytes32 public constant DEFAULT_THOUGHT_SPEC_ID = keccak256("thought.md.v1");
     uint256 private constant CANVAS_SIZE = 960;
@@ -208,18 +209,94 @@ contract ThoughtToken {
         return _thoughts[tokenId].textHash;
     }
 
+    function promptHashOf(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _thoughts[tokenId].promptHash;
+    }
+
     function provenanceHashOf(uint256 tokenId) external view returns (bytes32) {
         _requireMinted(tokenId);
         return _thoughts[tokenId].provenanceHash;
     }
 
-    function recordOf(uint256 tokenId) external view returns (ThoughtRecord memory) {
+    function recordOf(uint256 tokenId)
+        external
+        view
+        returns (
+            bytes32 textHash,
+            bytes32 promptHash,
+            bytes32 provenanceHash,
+            bytes32 thoughtSpecId,
+            uint256 pathId,
+            address minter,
+            uint64 mintedAt
+        )
+    {
         _requireMinted(tokenId);
-        return _thoughts[tokenId];
+        ThoughtRecord storage record = _thoughts[tokenId];
+        return (
+            record.textHash,
+            record.promptHash,
+            record.provenanceHash,
+            record.thoughtSpecId,
+            record.pathId,
+            record.minter,
+            record.mintedAt
+        );
     }
 
     function normalizeThought(string calldata rawText) external pure returns (string memory) {
         return _canonicalizeThought(rawText);
+    }
+
+    function normalizeText(string calldata input) external pure returns (string memory normalized) {
+        return _canonicalizeThought(input);
+    }
+
+    function isCanonicalText(string calldata text) external pure returns (bool) {
+        bytes memory input = bytes(text);
+        if (input.length == 0 || input.length > MAX_TEXT_BYTES) {
+            return false;
+        }
+
+        string memory normalized = _canonicalizeThought(text);
+        bytes memory normalizedBytes = bytes(normalized);
+        return (
+            normalizedBytes.length != 0
+                && normalizedBytes.length <= MAX_TEXT_BYTES
+                && keccak256(normalizedBytes) == keccak256(input)
+        );
+    }
+
+    function previewText(string calldata input)
+        external
+        pure
+        returns (string memory normalized, bool valid, uint8 reasonCode)
+    {
+        normalized = _canonicalizeThought(input);
+        bytes memory normalizedBytes = bytes(normalized);
+        if (normalizedBytes.length == 0) {
+            return (normalized, false, 1);
+        }
+        if (normalizedBytes.length > MAX_TEXT_BYTES) {
+            return (normalized, false, 2);
+        }
+        return (normalized, true, 0);
+    }
+
+    function textHashOf(string calldata canonicalText) external pure returns (bytes32) {
+        bytes memory input = bytes(canonicalText);
+        if (input.length == 0) {
+            revert EmptyThoughtText();
+        }
+        if (input.length > MAX_TEXT_BYTES) {
+            revert ThoughtTextTooLarge(input.length, MAX_TEXT_BYTES);
+        }
+        string memory normalized = _canonicalizeThought(canonicalText);
+        if (keccak256(bytes(normalized)) != keccak256(input)) {
+            revert NonCanonicalThoughtText();
+        }
+        return keccak256(input);
     }
 
     function renderThoughtSvg(string calldata rawText) external pure returns (string memory) {
@@ -279,6 +356,7 @@ contract ThoughtToken {
         string calldata rawText,
         uint256 pathId,
         bytes32 thoughtSpecId,
+        bytes32 promptHash,
         string calldata provenanceJson,
         uint256 deadline,
         bytes calldata pathSignature
@@ -290,6 +368,14 @@ contract ThoughtToken {
             revert UnknownThoughtSpec(thoughtSpecId);
         }
 
+        bytes memory inputBytes = bytes(rawText);
+        if (inputBytes.length == 0) {
+            revert EmptyThoughtText();
+        }
+        if (inputBytes.length > MAX_TEXT_BYTES) {
+            revert ThoughtTextTooLarge(inputBytes.length, MAX_TEXT_BYTES);
+        }
+
         string memory canonicalText = _canonicalizeThought(rawText);
         bytes memory rawBytes = bytes(canonicalText);
         bytes memory provenanceBytes = bytes(provenanceJson);
@@ -297,11 +383,14 @@ contract ThoughtToken {
         if (rawBytes.length == 0) {
             revert EmptyThoughtText();
         }
+        if (keccak256(rawBytes) != keccak256(inputBytes)) {
+            revert NonCanonicalThoughtText();
+        }
         if (provenanceBytes.length == 0) {
             revert EmptyProvenance();
         }
-        if (rawBytes.length > MAX_RAW_TEXT_BYTES) {
-            revert RawTextTooLarge(rawBytes.length, MAX_RAW_TEXT_BYTES);
+        if (rawBytes.length > MAX_TEXT_BYTES) {
+            revert ThoughtTextTooLarge(rawBytes.length, MAX_TEXT_BYTES);
         }
         if (provenanceBytes.length > MAX_PROVENANCE_BYTES) {
             revert ProvenanceTooLarge(provenanceBytes.length, MAX_PROVENANCE_BYTES);
@@ -330,6 +419,7 @@ contract ThoughtToken {
             rawText: canonicalText,
             provenanceJson: provenanceJson,
             textHash: textHash,
+            promptHash: promptHash,
             provenanceHash: provenanceHash,
             thoughtSpecId: thoughtSpecId,
             pathId: pathId,
@@ -382,6 +472,8 @@ contract ThoughtToken {
             '"},{"trait_type":"schema","value":"thought.provenance.v1',
             '"},{"trait_type":"textHash","value":"',
             textHash,
+            '"},{"trait_type":"promptHash","value":"',
+            _bytes32ToHex(record.promptHash),
             '"},{"trait_type":"provenanceHash","value":"',
             provenanceHash,
             '"},{"trait_type":"thoughtSpec","value":"',
@@ -407,6 +499,8 @@ contract ThoughtToken {
             _jsonString(record.provenanceJson),
             ',"textHash":"',
             textHash,
+            '","promptHash":"',
+            _bytes32ToHex(record.promptHash),
             '","provenanceHash":"',
             provenanceHash,
             '","thoughtSpecId":"',
@@ -491,23 +585,37 @@ contract ThoughtToken {
     function _canonicalizeThought(string memory rawText) private pure returns (string memory) {
         bytes memory input = bytes(rawText);
         uint256 outputLen = 0;
+        bool pendingSpace = false;
 
         for (uint256 i = 0; i < input.length; i++) {
             uint8 code = uint8(input[i]);
             if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+                if (pendingSpace && outputLen > 0) {
+                    outputLen += 1;
+                }
                 outputLen += 1;
+                pendingSpace = false;
+            } else if (outputLen > 0) {
+                pendingSpace = true;
             }
         }
 
         bytes memory output = new bytes(outputLen);
         uint256 cursor = 0;
+        pendingSpace = false;
         for (uint256 i = 0; i < input.length; i++) {
             uint8 code = uint8(input[i]);
             if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+                if (pendingSpace && cursor > 0) {
+                    output[cursor++] = " ";
+                }
                 if (code >= 97) {
                     code -= 32;
                 }
                 output[cursor++] = bytes1(code);
+                pendingSpace = false;
+            } else if (cursor > 0) {
+                pendingSpace = true;
             }
         }
 

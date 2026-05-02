@@ -177,6 +177,7 @@ body {
   --weight-thin: 200;
   --weight-mid: 400;
   --main-area-width: 1120px;
+  --thought-detail-width: var(--main-area-width);
   --thought-canvas-outer-height: 620px;
 }
 
@@ -254,6 +255,10 @@ html.thought-route body.frontpage .frontpage-shell {
   justify-content: center;
   min-height: 100vh;
   padding: 28px clamp(18px, 4vw, 52px) 28px;
+}
+
+html.thought-route body.frontpage {
+  overflow: hidden;
 }
 
 .frontpage-stage {
@@ -1547,8 +1552,9 @@ html.gallery-route .thought-gallery.is-hidden {
 }
 
 .thought-detail {
-  width: min(var(--main-area-width), 100%);
-  min-height: calc(100vh - 56px);
+  width: min(var(--thought-detail-width), 100%);
+  height: calc(100vh - 56px);
+  min-height: 0;
   box-sizing: border-box;
   padding: 0;
   background: transparent;
@@ -1589,6 +1595,8 @@ html.thought-route .thought-detail.is-hidden {
 }
 
 .thought-detail__link,
+.thought-detail__action,
+.thought-detail__disclosure,
 .thought-detail__status {
   margin: 0;
   color: var(--muted);
@@ -1598,20 +1606,65 @@ html.thought-route .thought-detail.is-hidden {
   text-decoration: none;
 }
 
+.thought-detail__status:empty {
+  display: none;
+}
+
+.thought-detail__action {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.thought-detail__disclosure {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thought-detail__disclosure.is-hidden {
+  display: none;
+}
+
 .thought-detail__link:hover,
-.thought-detail__link:focus-visible {
-  color: var(--muted);
+.thought-detail__link:focus-visible,
+.thought-detail__action:hover,
+.thought-detail__action:focus-visible,
+.thought-detail__disclosure:hover,
+.thought-detail__disclosure:focus-visible {
+  color: var(--accent);
   outline: none;
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-underline-offset: 5px;
 }
 
 .thought-detail__body {
+  --thought-detail-panel-size: min(
+    calc(100vh - 126px),
+    calc(var(--thought-detail-width) - 392px),
+    calc(100vw - 104px - 392px)
+  );
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.85fr);
-  gap: 28px;
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 32px;
   align-items: start;
+  width: 100%;
 }
 
 .thought-detail__body.is-hidden {
@@ -1619,7 +1672,10 @@ html.thought-route .thought-detail.is-hidden {
 }
 
 .thought-detail__canvas-frame {
-  padding: 10px;
+  width: min(100%, var(--thought-detail-panel-size));
+  max-width: 100%;
+  justify-self: center;
+  padding: 16px;
   box-sizing: border-box;
   background: var(--panel);
 }
@@ -1632,28 +1688,67 @@ html.thought-route .thought-detail.is-hidden {
   background: #050505;
 }
 
-.thought-detail__provenance {
+.thought-detail__rail {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 22px;
   min-width: 0;
+  max-height: var(--thought-detail-panel-size);
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.thought-detail__section {
+  min-width: 0;
+}
+
+.thought-detail__section h2 {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: var(--weight-mid, 400);
+  letter-spacing: 0.08em;
+}
+
+.thought-detail__text,
+.thought-detail__value {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.thought-detail__text {
+  max-height: 8.5em;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+#thought-detail-prompt {
+  max-height: none;
+  overflow: visible;
 }
 
 .thought-detail__fields {
   display: grid;
-  gap: 12px;
+  gap: 7px;
   margin: 0;
 }
 
 .thought-detail__fields div {
+  display: grid;
+  grid-template-columns: minmax(70px, max-content) minmax(0, 1fr);
+  gap: 12px;
   min-width: 0;
 }
 
 .thought-detail__fields dt {
-  margin: 0 0 3px;
-  color: var(--accent);
+  margin: 0;
+  color: var(--muted-dim);
   font-size: 12px;
-  font-weight: var(--weight-mid, 400);
+  font-weight: 300;
   letter-spacing: 0.08em;
 }
 
@@ -1664,6 +1759,49 @@ html.thought-route .thought-detail.is-hidden {
   font-weight: 300;
   line-height: 1.55;
   overflow-wrap: anywhere;
+}
+
+.thought-detail__fields dd .thought-detail__disclosure {
+  display: inline-block;
+}
+
+#thought-detail-minter,
+#thought-detail-tx,
+#thought-detail-text-hash-line,
+#thought-detail-prompt-hash,
+#thought-detail-model-return-hash,
+#thought-detail-spec,
+#thought-detail-provenance-hash-line,
+#thought-detail-spec-viewer-hash {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.thought-detail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 9px;
+}
+
+.thought-detail__section:has(.thought-detail__fields) .thought-detail__actions {
+  margin-left: calc(70px + 12px);
+}
+
+.thought-detail__viewer {
+  margin-top: 12px;
+}
+
+.thought-detail__viewer.is-hidden {
+  display: none;
+}
+
+.thought-detail__viewer-title {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: var(--weight-mid, 400);
+  letter-spacing: 0.08em;
 }
 
 .thought-detail__json {
@@ -1681,6 +1819,24 @@ html.thought-route .thought-detail.is-hidden {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  scrollbar-color: rgba(178, 184, 198, 0.5) #050505;
+  scrollbar-width: thin;
+}
+
+.thought-detail__json::-webkit-scrollbar,
+.thought-detail__text::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.thought-detail__json::-webkit-scrollbar-track,
+.thought-detail__text::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+.thought-detail__json::-webkit-scrollbar-thumb,
+.thought-detail__text::-webkit-scrollbar-thumb {
+  background: rgba(178, 184, 198, 0.5);
 }
 
 .thought-gallery__header {
@@ -1727,11 +1883,11 @@ html.thought-route .thought-detail.is-hidden {
 
 .thought-gallery__create:hover,
 .thought-gallery__create:focus-visible {
-  color: var(--muted);
+  color: var(--accent);
   outline: none;
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  text-underline-offset: 5px;
 }
 
 .thought-gallery__status-row {
@@ -1812,9 +1968,13 @@ html.thought-route .thought-detail.is-hidden {
 }
 
 .thought-gallery__tip strong {
-  color: var(--accent);
+  color: inherit;
   font-size: 12px;
   font-weight: var(--weight-mid, 400);
+}
+
+.thought-gallery__tip-break {
+  height: 4px;
 }
 
 .thought-gallery__thumb:hover .thought-gallery__tip,
@@ -1937,11 +2097,16 @@ html.thought-route .thought-detail.is-hidden {
     padding: 18px 14px;
   }
 
+  html.thought-route body.frontpage {
+    overflow-y: auto;
+  }
+
   .thought-gallery {
     min-height: calc(100vh - 36px);
   }
 
   .thought-detail {
+    height: auto;
     min-height: calc(100vh - 36px);
   }
 
@@ -1957,5 +2122,16 @@ html.thought-route .thought-detail.is-hidden {
   .thought-detail__header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .thought-detail__canvas-frame {
+    width: 100%;
+  }
+
+  .thought-detail__rail {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    margin-right: 0;
   }
 }

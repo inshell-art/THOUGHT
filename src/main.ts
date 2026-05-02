@@ -36,16 +36,17 @@ import {
   type ThoughtWorkRecord,
 } from "./works";
 import {
+  THOUGHT_MAX_OUTPUT_TOKENS,
   buildThoughtRunPayload,
   thoughtRunProvenanceConfig,
   toAnthropicMessagesPayload,
   toOllamaGeneratePayload,
   toOpenAIResponsesPayload,
   toOpenRouterChatPayload,
-  type ThoughtRunCapabilities,
   type ThoughtRunPayload,
   type ThoughtRunProvider,
-  type ThoughtRunRequestConfig,
+  type ThoughtRunProvenanceRequestConfig,
+  type ThoughtRunWebConfig,
 } from "./thought-run-payload";
 
 type ColorFontFile = {
@@ -284,6 +285,7 @@ type ThoughtWalletState = {
 type MintFlowData = {
   rawText: string;
   textHash: string;
+  promptHash: string;
   thoughtSpecId: string;
   provenanceJson: string;
   existingTokenId: number | null;
@@ -301,9 +303,10 @@ type ThoughtRunContext = {
   provider: ThoughtRunProvider;
   model: string;
   prompt: string;
+  returnedText?: string;
   clientGeneratedAt: string;
-  capabilities?: ThoughtRunCapabilities;
-  request?: ThoughtRunRequestConfig;
+  request?: ThoughtRunProvenanceRequestConfig;
+  web?: ThoughtRunWebConfig;
   thoughtSpec?: {
     id: string;
     ref: string;
@@ -322,6 +325,7 @@ type ThoughtTokenMetadata = {
     rawText?: string;
     provenanceJson?: string;
     textHash?: string;
+    promptHash?: string;
     provenanceHash?: string;
     thoughtSpecId?: string;
     pathId?: string | number;
@@ -335,15 +339,44 @@ type GalleryThought = {
   pathId: string;
   minter: string;
   textHash: string;
+  promptHash: string;
   provenanceHash: string;
   thoughtSpecId: string;
   mintedAt: number | null;
   rawText: string;
+  prompt: string;
+  returnedText: string;
+  returnedTextHash: string;
   provenanceJson: string;
   image: string;
   tokenUri: string;
   txHash: string;
   blockNumber: number;
+};
+
+type ThoughtDetailSpec = {
+  id: string;
+  ref: string;
+  hash: string;
+  text: string;
+};
+
+type ThoughtDetail = {
+  tokenId: number;
+  rawText: string;
+  prompt: string;
+  returnedText: string;
+  pathId: string;
+  minter: string;
+  mintedAt: number | null;
+  txHash: string;
+  textHash: string;
+  promptHash: string;
+  returnedTextHash: string;
+  provenanceHash: string;
+  thoughtSpec: ThoughtDetailSpec;
+  provenanceJson: string;
+  image: string;
 };
 
 type ActiveThoughtSpec = {
@@ -390,9 +423,8 @@ const APP_BUILD = typeof import.meta.env.VITE_APP_BUILD === "string" && import.m
   ? import.meta.env.VITE_APP_BUILD
   : "dev";
 const IS_DEV_MODE = import.meta.env.DEV || import.meta.env.MODE === "development";
-const MAX_RAW_TEXT_BYTES = 4096;
-const MAX_PROVENANCE_BYTES = 1024;
-const MINT_GAS_ESTIMATE = 602_800;
+const MAX_TEXT_BYTES = 1024;
+const MAX_PROVENANCE_BYTES = 2048;
 const COLOR_FONT_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const CANVAS_TEXT_FAMILY =
   '"Roboto Mono Variable", "Roboto Mono", "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
@@ -448,10 +480,15 @@ const THOUGHT_MINTED_TOPIC = id(
   "ThoughtMinted(uint256,address,uint256,bytes32,bytes32,bytes32,uint64)",
 );
 const THOUGHT_TOKEN_ABI = [
-  "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
+  "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
   "function mintPrice() view returns (uint256)",
+  "function previewText(string input) pure returns (string normalized, bool valid, uint8 reasonCode)",
+  "function textHashOf(string canonicalText) pure returns (bytes32)",
   "function tokenOfThought(bytes32 textHash) view returns (uint256)",
   "function tokenURI(uint256 tokenId) view returns (string)",
+  "function rawTextOf(uint256 tokenId) view returns (string)",
+  "function provenanceOf(uint256 tokenId) view returns (string)",
+  "function recordOf(uint256 tokenId) view returns (bytes32 textHash, bytes32 promptHash, bytes32 provenanceHash, bytes32 thoughtSpecId, uint256 pathId, address minter, uint64 mintedAt)",
   "function totalSupply() view returns (uint256)",
   "function thoughtText(uint256 tokenId) view returns (string)",
   "function authorOf(uint256 tokenId) view returns (address)",
@@ -585,16 +622,54 @@ const thoughtDetailTitleToken = document.getElementById("thought-detail-token-id
 const thoughtDetailGalleryLink = document.getElementById("thought-detail-gallery-link") as HTMLAnchorElement | null;
 const thoughtDetailStatus = document.getElementById("thought-detail-status") as HTMLElement | null;
 const thoughtDetailBody = document.getElementById("thought-detail-body") as HTMLElement | null;
+const thoughtDetailRail = document.querySelector(".thought-detail__rail") as HTMLElement | null;
 const thoughtDetailImage = document.getElementById("thought-detail-image") as HTMLImageElement | null;
 const thoughtDetailCanonicalTitle = document.getElementById("thought-detail-canonical-title") as HTMLElement | null;
+const thoughtDetailTextHashLine = document.getElementById("thought-detail-text-hash-line") as HTMLButtonElement | null;
+const thoughtDetailTextHashPanel = document.getElementById("thought-detail-text-hash-panel") as HTMLElement | null;
+const thoughtDetailTextHashText = document.getElementById("thought-detail-text-hash-text") as HTMLElement | null;
+const thoughtDetailPrompt = document.getElementById("thought-detail-prompt") as HTMLElement | null;
+const thoughtDetailPromptHash = document.getElementById("thought-detail-prompt-hash") as HTMLButtonElement | null;
+const thoughtDetailPromptHashPanel = document.getElementById("thought-detail-prompt-hash-panel") as HTMLElement | null;
+const thoughtDetailPromptHashText = document.getElementById("thought-detail-prompt-hash-text") as HTMLElement | null;
+const thoughtDetailModelReturn = document.getElementById("thought-detail-model-return") as HTMLElement | null;
+const thoughtDetailModelReturnHash = document.getElementById("thought-detail-model-return-hash") as HTMLButtonElement | null;
+const thoughtDetailModelReturnHashPanel = document.getElementById("thought-detail-model-return-hash-panel") as HTMLElement | null;
+const thoughtDetailModelReturnHashText = document.getElementById("thought-detail-model-return-hash-text") as HTMLElement | null;
 const thoughtDetailPath = document.getElementById("thought-detail-path") as HTMLElement | null;
-const thoughtDetailMinter = document.getElementById("thought-detail-minter") as HTMLElement | null;
+const thoughtDetailViewPath = document.getElementById("thought-detail-view-path") as HTMLAnchorElement | null;
+const thoughtDetailFetchPath = document.getElementById("thought-detail-fetch-path") as HTMLButtonElement | null;
+const thoughtDetailPathEvidence = document.getElementById("thought-detail-path-evidence") as HTMLElement | null;
+const thoughtDetailPathEvidenceText = document.getElementById("thought-detail-path-evidence-text") as HTMLElement | null;
+const thoughtDetailMinter = document.getElementById("thought-detail-minter") as HTMLButtonElement | null;
 const thoughtDetailMinted = document.getElementById("thought-detail-minted") as HTMLElement | null;
-const thoughtDetailTextHash = document.getElementById("thought-detail-text-hash") as HTMLElement | null;
-const thoughtDetailProvenanceHash = document.getElementById("thought-detail-provenance-hash") as HTMLElement | null;
-const thoughtDetailSpec = document.getElementById("thought-detail-spec") as HTMLElement | null;
-const thoughtDetailTx = document.getElementById("thought-detail-tx") as HTMLElement | null;
+const thoughtDetailSpecRef = document.getElementById("thought-detail-spec-ref") as HTMLElement | null;
+const thoughtDetailSpec = document.getElementById("thought-detail-spec") as HTMLButtonElement | null;
+const thoughtDetailSpecHashPanel = document.getElementById("thought-detail-spec-hash-panel") as HTMLElement | null;
+const thoughtDetailSpecHashText = document.getElementById("thought-detail-spec-hash-text") as HTMLElement | null;
+const thoughtDetailTx = document.getElementById("thought-detail-tx") as HTMLButtonElement | null;
+const thoughtDetailViewTx = document.getElementById("thought-detail-view-tx") as HTMLAnchorElement | null;
+const thoughtDetailMintEvidence = document.getElementById("thought-detail-mint-evidence") as HTMLElement | null;
+const thoughtDetailMintEvidenceText = document.getElementById("thought-detail-mint-evidence-text") as HTMLElement | null;
+const thoughtDetailViewSpec = document.getElementById("thought-detail-view-spec") as HTMLButtonElement | null;
+const thoughtDetailFetchSpec = document.getElementById("thought-detail-fetch-spec") as HTMLButtonElement | null;
+const thoughtDetailSpecViewer = document.getElementById("thought-detail-spec-viewer") as HTMLElement | null;
+const thoughtDetailSpecViewerTitle = document.getElementById("thought-detail-spec-viewer-title") as HTMLElement | null;
+const thoughtDetailSpecViewerHash = document.getElementById("thought-detail-spec-viewer-hash") as HTMLElement | null;
+const thoughtDetailSpecText = document.getElementById("thought-detail-spec-text") as HTMLElement | null;
+const thoughtDetailSpecEvidence = document.getElementById("thought-detail-spec-evidence") as HTMLElement | null;
+const thoughtDetailSpecEvidenceText = document.getElementById("thought-detail-spec-evidence-text") as HTMLElement | null;
+const thoughtDetailProvenanceBytes = document.getElementById("thought-detail-provenance-bytes") as HTMLElement | null;
+const thoughtDetailProvenanceHashLine = document.getElementById("thought-detail-provenance-hash-line") as HTMLButtonElement | null;
+const thoughtDetailProvenanceHashPanel = document.getElementById("thought-detail-provenance-hash-panel") as HTMLElement | null;
+const thoughtDetailProvenanceHashText = document.getElementById("thought-detail-provenance-hash-text") as HTMLElement | null;
+const thoughtDetailToggleJson = document.getElementById("thought-detail-toggle-json") as HTMLButtonElement | null;
+const thoughtDetailFetchProvenance = document.getElementById("thought-detail-fetch-provenance") as HTMLButtonElement | null;
+const thoughtDetailJsonPanel = document.getElementById("thought-detail-json-panel") as HTMLElement | null;
 const thoughtDetailProvenanceJson = document.getElementById("thought-detail-provenance-json") as HTMLElement | null;
+const thoughtDetailProvenanceEvidence = document.getElementById("thought-detail-provenance-evidence") as HTMLElement | null;
+const thoughtDetailProvenanceEvidenceText = document.getElementById("thought-detail-provenance-evidence-text") as HTMLElement | null;
+const thoughtDetailCopyStatus = document.getElementById("thought-detail-copy-status") as HTMLElement | null;
 const canvas = document.getElementById("thought-grid") as HTMLCanvasElement | null;
 const mintSheetBackdrop = document.getElementById("mint-sheet-backdrop") as HTMLElement | null;
 const mintSheet = document.getElementById("mint-sheet") as HTMLElement | null;
@@ -680,16 +755,54 @@ if (
   !thoughtDetailGalleryLink ||
   !thoughtDetailStatus ||
   !thoughtDetailBody ||
+  !thoughtDetailRail ||
   !thoughtDetailImage ||
   !thoughtDetailCanonicalTitle ||
+  !thoughtDetailTextHashLine ||
+  !thoughtDetailTextHashPanel ||
+  !thoughtDetailTextHashText ||
+  !thoughtDetailPrompt ||
+  !thoughtDetailPromptHash ||
+  !thoughtDetailPromptHashPanel ||
+  !thoughtDetailPromptHashText ||
+  !thoughtDetailModelReturn ||
+  !thoughtDetailModelReturnHash ||
+  !thoughtDetailModelReturnHashPanel ||
+  !thoughtDetailModelReturnHashText ||
   !thoughtDetailPath ||
+  !thoughtDetailViewPath ||
+  !thoughtDetailFetchPath ||
+  !thoughtDetailPathEvidence ||
+  !thoughtDetailPathEvidenceText ||
   !thoughtDetailMinter ||
   !thoughtDetailMinted ||
-  !thoughtDetailTextHash ||
-  !thoughtDetailProvenanceHash ||
+  !thoughtDetailSpecRef ||
   !thoughtDetailSpec ||
+  !thoughtDetailSpecHashPanel ||
+  !thoughtDetailSpecHashText ||
   !thoughtDetailTx ||
+  !thoughtDetailViewTx ||
+  !thoughtDetailMintEvidence ||
+  !thoughtDetailMintEvidenceText ||
+  !thoughtDetailViewSpec ||
+  !thoughtDetailFetchSpec ||
+  !thoughtDetailSpecViewer ||
+  !thoughtDetailSpecViewerTitle ||
+  !thoughtDetailSpecViewerHash ||
+  !thoughtDetailSpecText ||
+  !thoughtDetailSpecEvidence ||
+  !thoughtDetailSpecEvidenceText ||
+  !thoughtDetailProvenanceBytes ||
+  !thoughtDetailProvenanceHashLine ||
+  !thoughtDetailProvenanceHashPanel ||
+  !thoughtDetailProvenanceHashText ||
+  !thoughtDetailToggleJson ||
+  !thoughtDetailFetchProvenance ||
+  !thoughtDetailJsonPanel ||
   !thoughtDetailProvenanceJson ||
+  !thoughtDetailProvenanceEvidence ||
+  !thoughtDetailProvenanceEvidenceText ||
+  !thoughtDetailCopyStatus ||
   !canvas ||
   !mintSheetBackdrop ||
   !mintSheet ||
@@ -725,6 +838,9 @@ let currentOutputText = "";
 let runInFlight = false;
 let runState: ThoughtRunState = "idle";
 let currentWorkId: number | null = null;
+let currentThoughtDetail: ThoughtDetail | null = null;
+let thoughtDetailStatusTimer: number | null = null;
+let thoughtDetailEmbeddedHeightFrame = 0;
 let cliSuggestionContext: "auto" | "help" | "current" | "config" = "auto";
 let pageUnloading = false;
 let walletConnectInFlight = false;
@@ -900,6 +1016,7 @@ let mintFlowUiMode: MintFlowUiMode = "sheet";
 const mintFlowData: MintFlowData = {
   rawText: "",
   textHash: "",
+  promptHash: "",
   thoughtSpecId: "",
   provenanceJson: "",
   existingTokenId: null,
@@ -1352,11 +1469,59 @@ const getReadPathNft = () => {
 
 const byteLength = (value: string) => new TextEncoder().encode(value).length;
 
-const formatCount = (value: number) => value.toLocaleString("en-US");
+const formatProvenanceBytes = (bytes: number) => `provenance: ${bytes} bytes`;
+
+const provenanceTooLargeLines = (bytes: number, scope: "mint" | "work" = "mint") => [
+  `${scope} blocked.`,
+  "provenance too large.",
+  `${bytes} / ${MAX_PROVENANCE_BYTES} bytes.`,
+  "",
+  `prompt: ${byteLength(currentRunContext?.prompt ?? sessionState.prompt)} bytes`,
+  `model return: ${byteLength(currentRunContext?.returnedText ?? "")} bytes`,
+  "",
+  "shorten prompt or run again.",
+];
+
+const provenanceTooLargeMessage = (bytes: number) => provenanceTooLargeLines(bytes).join(" ");
+
+const provenanceTooLargeLinesFromMessage = (message: string) => {
+  const match = message.match(/(\d+)\s*\/\s*\d+\s*bytes/);
+  return match ? provenanceTooLargeLines(Number(match[1])) : [message];
+};
 
 const hashText = (value: string) => keccak256(toUtf8Bytes(value));
 
-const canonicalThoughtTitle = (value: string) => value.replace(/[^A-Za-z]+/g, "").toUpperCase();
+const canonicalThoughtTitle = (value: string) => value.replace(/[^A-Za-z]+/g, " ").trim().replace(/\s+/g, " ").toUpperCase();
+
+const previewCanonicalThoughtText = async (value: string) => {
+  const token = getReadThoughtToken();
+  if (!token) {
+    throw new Error("text preview unavailable.");
+  }
+
+  const [normalized, valid, reasonCode] = await token.previewText(value) as [string, boolean, bigint | number];
+  if (!valid) {
+    const code = Number(reasonCode);
+    if (code === 1) {
+      throw new Error("provider returned empty text.");
+    }
+    if (code === 2) {
+      throw new Error("THOUGHT too large.");
+    }
+    throw new Error("THOUGHT text invalid.");
+  }
+
+  return normalized;
+};
+
+const textHashFromContract = async (canonicalText: string) => {
+  const token = getReadThoughtToken();
+  if (!token) {
+    throw new Error("text hash unavailable.");
+  }
+
+  return String(await token.textHashOf(canonicalText));
+};
 
 const getThoughtSpecCacheKey = (specId: string, specHash: string) =>
   `thought.spec.${THOUGHT_CHAIN_ID}.${THOUGHT_SPEC_REGISTRY_ADDRESS.toLowerCase()}.${specId.toLowerCase()}.${specHash.toLowerCase()}`;
@@ -1620,7 +1785,27 @@ const buildThoughtRunPayloadFromContext = (context: ThoughtRunContext) => {
   });
 };
 
-const buildProvenanceJson = (textHash: string) => {
+const provenanceRequestConfig = (request?: ThoughtRunProvenanceRequestConfig | { maxOutputTokens?: unknown }) => ({
+  maxOutputTokens: String(request?.maxOutputTokens ?? THOUGHT_MAX_OUTPUT_TOKENS),
+});
+
+const provenanceWebConfig = (context: ThoughtRunContext, payload: ThoughtRunPayload): ThoughtRunWebConfig => {
+  if (context.web) {
+    return context.web;
+  }
+
+  const provenanceConfig = thoughtRunProvenanceConfig(payload);
+  return provenanceConfig.web;
+};
+
+const buildProvenanceJson = (
+  textHash: string,
+  mint?: {
+    minter: string;
+    pathId: string | bigint;
+    promptHash?: string;
+  },
+) => {
   const spec = activeThoughtSpec;
   if (!spec) {
     throw new Error("spec unavailable.");
@@ -1634,40 +1819,59 @@ const buildProvenanceJson = (textHash: string) => {
     clientGeneratedAt: new Date().toISOString(),
   };
   const fallbackPayload = buildThoughtRunPayloadFromContext(context);
-  const request = context.request ?? fallbackPayload.config.request;
-  const capabilities = context.capabilities ?? fallbackPayload.config.capabilities;
+  const request = provenanceRequestConfig(context.request);
+  const web = provenanceWebConfig(context, fallbackPayload);
   const thoughtSpec = context.thoughtSpec ?? {
     hash: spec.specHash,
     id: spec.specId,
     ref: spec.ref,
   };
+  const promptHash = mint?.promptHash || hashText(context.prompt);
+  const returnedText = context.returnedText ?? currentOutputText;
+  const returnedTextHash = hashText(returnedText);
+  const chain = mint
+    ? {
+        chainId: String(THOUGHT_CHAIN_ID),
+        pathNFT: PATH_NFT_ADDRESS,
+        thoughtToken: THOUGHT_TOKEN_ADDRESS,
+      }
+    : undefined;
+  const mintContext = mint
+    ? {
+        minter: mint.minter,
+        movement: "THOUGHT",
+        pathId: typeof mint.pathId === "bigint" ? mint.pathId.toString() : mint.pathId,
+      }
+    : undefined;
 
   return stableStringify({
     app: "THOUGHT",
     appBuild: APP_BUILD,
     appVersion: APP_VERSION,
+    ...(chain ? { chain } : {}),
     client: {
       generatedAt: context.clientGeneratedAt,
     },
     hashes: {
-      promptHash: hashText(context.prompt),
+      promptHash,
+      returnedTextHash,
       textHash,
     },
     route: context.mode,
     model: context.model,
+    ...(mintContext ? { mint: mintContext } : {}),
+    output: {
+      returnedText,
+      format: "thought.text.v1",
+      normalizer: "thought.normalize.v1",
+      textHash,
+    },
     prompt: context.prompt,
     provider: context.provider,
-    capabilities,
     request,
-    response: {
-      finishReason: null,
-      providerResponseId: null,
-      reportedModel: null,
-      systemFingerprint: null,
-      usage: null,
-    },
     schema: "thought.provenance.v1",
     thoughtSpec,
+    web,
   });
 };
 
@@ -1722,6 +1926,7 @@ const resetMintFlow = () => {
   mintFlowUiMode = "sheet";
   mintFlowData.rawText = "";
   mintFlowData.textHash = "";
+  mintFlowData.promptHash = "";
   mintFlowData.thoughtSpecId = "";
   mintFlowData.provenanceJson = "";
   mintFlowData.existingTokenId = null;
@@ -2091,7 +2296,7 @@ const getDebugWarningPresentation = () => {
     wallet_switch_failed: { level: "error", text: "wallet switch failed." },
     thought_too_large: {
       level: "warn",
-      text: `work exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`,
+      text: `work exceeds the ${MAX_TEXT_BYTES}-byte mint limit.`,
     },
     mint_contract_unavailable: { level: "error", text: "mint contract not configured." },
   };
@@ -2347,7 +2552,7 @@ const getMintSheetProvenanceCopy = () => {
     return "";
   }
 
-  return `provenance ${byteLength(mintFlowData.provenanceJson)}/${MAX_PROVENANCE_BYTES} · ~${formatCount(MINT_GAS_ESTIMATE)} gas`;
+  return formatProvenanceBytes(byteLength(mintFlowData.provenanceJson));
 };
 
 const syncMintSheetButton = (
@@ -2691,7 +2896,14 @@ const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
   resetMintFlow();
   mintFlowUiMode = uiMode;
   mintFlowData.rawText = currentOutputText;
-  mintFlowData.textHash = hashText(currentOutputText);
+  try {
+    mintFlowData.textHash = await textHashFromContract(currentOutputText);
+  } catch {
+    setMintFlowError("text preview unavailable.", "thought");
+    syncInterface();
+    return;
+  }
+  mintFlowData.promptHash = currentRunContext?.prompt ? hashText(currentRunContext.prompt) : "";
   mintFlowData.error = "";
   mintFlowData.errorKind = "none";
   mintFlowData.txHash = "";
@@ -2700,7 +2912,7 @@ const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
   mintFlowState = "thought_checking";
   syncInterface();
 
-  if (byteLength(mintFlowData.rawText) > MAX_RAW_TEXT_BYTES) {
+  if (byteLength(mintFlowData.rawText) > MAX_TEXT_BYTES) {
     setMintFlowError("THOUGHT too large.", "thought");
     syncInterface();
     return;
@@ -2719,8 +2931,9 @@ const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
 
   mintFlowData.thoughtSpecId = spec.specId;
   const provenanceJson = buildProvenanceJson(mintFlowData.textHash);
-  if (byteLength(provenanceJson) > MAX_PROVENANCE_BYTES) {
-    setMintFlowError("provenance too large.", "thought");
+  const provenanceBytes = byteLength(provenanceJson);
+  if (provenanceBytes > MAX_PROVENANCE_BYTES) {
+    setMintFlowError(provenanceTooLargeMessage(provenanceBytes), "thought");
     syncInterface();
     return;
   }
@@ -2881,17 +3094,7 @@ const authorizeMint = async () => {
   }
 
   try {
-    if (!mintFlowData.provenanceJson) {
-      const spec = await ensureActiveThoughtSpec();
-      mintFlowData.thoughtSpecId = spec.specId;
-      const provenanceJson = buildProvenanceJson(mintFlowData.textHash);
-      if (byteLength(provenanceJson) > MAX_PROVENANCE_BYTES) {
-        setMintFlowError("provenance too large.", "thought");
-        syncInterface();
-        return;
-      }
-      mintFlowData.provenanceJson = provenanceJson;
-    }
+    await rebuildFinalMintProvenance();
 
     mintFlowState = "authorizing";
     walletState.txError = "";
@@ -2910,6 +3113,11 @@ const authorizeMint = async () => {
     syncInterface();
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
+    if (message.includes("provenance too large")) {
+      setMintFlowError(message, "thought");
+      syncInterface();
+      return;
+    }
     setMintFlowError(
       message.startsWith("spec ") ? message : "authorization rejected.",
       message.startsWith("spec ") ? "spec" : "signature",
@@ -2963,7 +3171,10 @@ const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliRe
     }
   } catch (error) {
     const message = mintErrorMessage(error);
-    setMintFlowError(message, message.includes("expired") ? "signature" : "mint");
+    setMintFlowError(
+      message,
+      message.includes("provenance too large") ? "thought" : message.includes("expired") ? "signature" : "mint",
+    );
     syncInterface();
     setStatus("");
 
@@ -3029,10 +3240,34 @@ const registerSubmittedMintTx = async (
   syncInterface();
 
   if (shouldAppendCliResult) {
-    appendCliOutput(["transaction submitted.", `tx: ${shortHex(tx.hash, 10, 8)}`, "waiting for mint...", "use: view tx"]);
+    appendCliOutput(["transaction submitted.", `tx: ${shortHex(tx.hash, 10, 8)}`, "waiting for chain confirmation...", "use: view tx"]);
   }
 
   void waitForMintReceipt(tx, shouldAppendCliResult);
+};
+
+const rebuildFinalMintProvenance = async () => {
+  if (!walletState.address || mintFlowData.pathId === null) {
+    throw new Error("mint context unavailable.");
+  }
+
+  const spec = await ensureActiveThoughtSpec();
+  mintFlowData.thoughtSpecId = spec.specId;
+  if (!mintFlowData.textHash) {
+    mintFlowData.textHash = await textHashFromContract(mintFlowData.rawText);
+  }
+  const promptHash = currentRunContext?.prompt ? hashText(currentRunContext.prompt) : hashText(sessionState.prompt);
+  mintFlowData.promptHash = promptHash;
+  const provenanceJson = buildProvenanceJson(mintFlowData.textHash, {
+    minter: walletState.address,
+    pathId: mintFlowData.pathId,
+    promptHash,
+  });
+  const provenanceBytes = byteLength(provenanceJson);
+  if (provenanceBytes > MAX_PROVENANCE_BYTES) {
+    throw new Error(provenanceTooLargeMessage(provenanceBytes));
+  }
+  mintFlowData.provenanceJson = provenanceJson;
 };
 
 const confirmMint = async () => {
@@ -3058,6 +3293,7 @@ const confirmMint = async () => {
   }
 
   try {
+    await rebuildFinalMintProvenance();
     const browserProvider = new BrowserProvider(ethereum);
     const signer = await browserProvider.getSigner();
     const signerAddress = await signer.getAddress();
@@ -3079,6 +3315,7 @@ const confirmMint = async () => {
       mintFlowData.rawText,
       mintFlowData.pathId,
       mintFlowData.thoughtSpecId,
+      mintFlowData.promptHash,
       mintFlowData.provenanceJson,
       mintFlowData.deadline,
       mintFlowData.signature,
@@ -3357,8 +3594,128 @@ const quoteCliText = (value: string, maxLength = 48) => {
   return `"${clipped}"`;
 };
 
-const galleryTime = (mintedAt: number | null) =>
-  mintedAt === null ? "unknown time" : new Date(mintedAt * 1000).toISOString().replace(".000Z", "Z");
+const quoteCliFullText = (value: string) => `"${value.replace(/\s+/g, " ").trim()}"`;
+
+const galleryTipTime = (mintedAt: number | null) =>
+  mintedAt === null
+    ? "unknown time"
+    : `${new Date(mintedAt * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC`;
+
+const detailTime = (mintedAt: number | null) => {
+  if (mintedAt === null) {
+    return "unknown time";
+  }
+
+  return new Date(mintedAt * 1000)
+    .toISOString()
+    .replace(".000Z", "Z")
+    .replace("T", " ")
+    .replace("Z", " UTC");
+};
+
+const shortDetailAddress = (value: string) => shortHex(value, 18, 10);
+const shortDetailHash = (value: string) => shortHex(value, 22, 14);
+
+const parseThoughtDetailSpec = (thought: GalleryThought): ThoughtDetailSpec => {
+  const fallback = {
+    id: thought.thoughtSpecId,
+    ref: "THOUGHT.md@v1",
+    hash: thought.thoughtSpecId,
+    text: "",
+  };
+
+  if (!thought.provenanceJson) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(thought.provenanceJson) as {
+      thoughtSpec?: {
+        id?: unknown;
+        ref?: unknown;
+        hash?: unknown;
+      };
+    };
+    const thoughtSpec = parsed.thoughtSpec;
+    return {
+      id: typeof thoughtSpec?.id === "string" ? thoughtSpec.id : fallback.id,
+      ref: typeof thoughtSpec?.ref === "string" ? thoughtSpec.ref : fallback.ref,
+      hash: typeof thoughtSpec?.hash === "string" ? thoughtSpec.hash : fallback.hash,
+      text: "",
+    };
+  } catch {
+    return fallback;
+  }
+};
+
+const parseProvenanceMaterial = (provenanceJson: string) => {
+  if (!provenanceJson) {
+    return { prompt: "", promptHash: "", returnedText: "", returnedTextHash: "" };
+  }
+
+  try {
+    const parsed = JSON.parse(provenanceJson) as {
+      prompt?: unknown;
+      output?: {
+        returnedText?: unknown;
+      };
+      hashes?: {
+        promptHash?: unknown;
+        returnedTextHash?: unknown;
+      };
+    };
+    const prompt = typeof parsed.prompt === "string" ? parsed.prompt : "";
+    const promptHash = typeof parsed.hashes?.promptHash === "string" ? parsed.hashes.promptHash : "";
+    const returnedText = typeof parsed.output?.returnedText === "string" ? parsed.output.returnedText : "";
+    const returnedTextHash =
+      typeof parsed.hashes?.returnedTextHash === "string" ? parsed.hashes.returnedTextHash : "";
+    return {
+      prompt,
+      promptHash: promptHash || (prompt ? hashText(prompt) : ""),
+      returnedText,
+      returnedTextHash: returnedTextHash || (returnedText ? hashText(returnedText) : ""),
+    };
+  } catch {
+    return { prompt: "", promptHash: "", returnedText: "", returnedTextHash: "" };
+  }
+};
+
+const normalizeThoughtDetail = (thought: GalleryThought): ThoughtDetail => ({
+  tokenId: thought.tokenId,
+  rawText: thought.rawText,
+  prompt: thought.prompt,
+  returnedText: thought.returnedText,
+  pathId: thought.pathId,
+  minter: thought.minter,
+  mintedAt: thought.mintedAt,
+  txHash: thought.txHash,
+  textHash: thought.textHash,
+  promptHash: thought.promptHash,
+  returnedTextHash: thought.returnedTextHash,
+  provenanceHash: thought.provenanceHash,
+  thoughtSpec: parseThoughtDetailSpec(thought),
+  provenanceJson: thought.provenanceJson,
+  image: thought.image,
+});
+
+const showThoughtDetailStatus = (message: string) => {
+  if (thoughtDetailStatusTimer !== null) {
+    window.clearTimeout(thoughtDetailStatusTimer);
+  }
+  thoughtDetailCopyStatus.textContent = message;
+  if (!message) {
+    return;
+  }
+  thoughtDetailStatusTimer = window.setTimeout(() => {
+    thoughtDetailCopyStatus.textContent = "";
+    thoughtDetailStatusTimer = null;
+  }, NOTICE_FLASH_MS);
+};
+
+const copyThoughtDetailValue = async (value: string, label = "copied.") => {
+  const copied = await copyToClipboard(value);
+  showThoughtDetailStatus(copied ? label : "copy unavailable.");
+};
 
 const formatProvenanceJson = (value: string) => {
   if (!value) {
@@ -3370,6 +3727,90 @@ const formatProvenanceJson = (value: string) => {
   } catch {
     return value;
   }
+};
+
+const visibleThoughtDetailEmbeds = () =>
+  [
+    thoughtDetailTextHashPanel.classList.contains("is-hidden") ? null : thoughtDetailTextHashText,
+    thoughtDetailPromptHashPanel.classList.contains("is-hidden") ? null : thoughtDetailPromptHashText,
+    thoughtDetailModelReturnHashPanel.classList.contains("is-hidden") ? null : thoughtDetailModelReturnHashText,
+    thoughtDetailMintEvidence.classList.contains("is-hidden") ? null : thoughtDetailMintEvidenceText,
+    thoughtDetailSpecHashPanel.classList.contains("is-hidden") ? null : thoughtDetailSpecHashText,
+    thoughtDetailSpecViewer.classList.contains("is-hidden") ? null : thoughtDetailSpecText,
+    thoughtDetailSpecEvidence.classList.contains("is-hidden") ? null : thoughtDetailSpecEvidenceText,
+    thoughtDetailProvenanceHashPanel.classList.contains("is-hidden") ? null : thoughtDetailProvenanceHashText,
+    thoughtDetailJsonPanel.classList.contains("is-hidden") ? null : thoughtDetailProvenanceJson,
+    thoughtDetailPathEvidence.classList.contains("is-hidden") ? null : thoughtDetailPathEvidenceText,
+    thoughtDetailProvenanceEvidence.classList.contains("is-hidden") ? null : thoughtDetailProvenanceEvidenceText,
+  ].filter((element): element is HTMLElement => element !== null);
+
+const thoughtDetailRailContentBottom = () =>
+  Array.from(thoughtDetailRail.children).reduce(
+    (bottom, element) => Math.max(bottom, element.getBoundingClientRect().bottom),
+    thoughtDetailRail.getBoundingClientRect().top,
+  );
+
+const syncThoughtDetailEmbeddedHeights = () => {
+  window.cancelAnimationFrame(thoughtDetailEmbeddedHeightFrame);
+
+  thoughtDetailEmbeddedHeightFrame = window.requestAnimationFrame(() => {
+    const embeddedWindows = visibleThoughtDetailEmbeds();
+    embeddedWindows.forEach((element) => {
+      element.style.maxHeight = "";
+    });
+
+    if (
+      !embeddedWindows.length ||
+      window.matchMedia("(max-width: 900px)").matches ||
+      thoughtDetailBody.classList.contains("is-hidden")
+    ) {
+      return;
+    }
+
+    const canvasFrame = thoughtDetailImage.closest(".thought-detail__canvas-frame") as HTMLElement | null;
+    if (!canvasFrame) {
+      return;
+    }
+
+    const targetBottom = canvasFrame.getBoundingClientRect().bottom;
+    const railBottom = thoughtDetailRailContentBottom();
+    const overflow = Math.ceil(railBottom - targetBottom);
+
+    if (overflow <= 0) {
+      return;
+    }
+
+    const minimumHeight = 120;
+    const reducibleHeights = embeddedWindows.map((element) =>
+      Math.max(0, element.getBoundingClientRect().height - minimumHeight),
+    );
+    const totalReducibleHeight = reducibleHeights.reduce((sum, value) => sum + value, 0);
+
+    if (totalReducibleHeight <= 0) {
+      embeddedWindows.forEach((element) => {
+        element.style.maxHeight = `${minimumHeight}px`;
+      });
+      return;
+    }
+
+    embeddedWindows.forEach((element, index) => {
+      const currentHeight = element.getBoundingClientRect().height;
+      const reduction = overflow * (reducibleHeights[index] / totalReducibleHeight);
+      element.style.maxHeight = `${Math.max(minimumHeight, currentHeight - reduction - 2)}px`;
+    });
+
+    thoughtDetailEmbeddedHeightFrame = window.requestAnimationFrame(() => {
+      const remainingOverflow = Math.ceil(thoughtDetailRailContentBottom() - targetBottom);
+      if (remainingOverflow <= 0) {
+        return;
+      }
+
+      const lastWindow = embeddedWindows[embeddedWindows.length - 1];
+      const currentMaxHeight =
+        Number.parseFloat(lastWindow.style.maxHeight) || lastWindow.getBoundingClientRect().height;
+      lastWindow.style.maxHeight = `${Math.max(minimumHeight, currentMaxHeight - remainingOverflow - 2)}px`;
+    });
+  });
 };
 
 const escapeSvgText = (value: string) =>
@@ -3422,14 +3863,19 @@ const renderGalleryCard = (thought: GalleryThought) => {
   const tip = document.createElement("span");
   tip.className = "thought-gallery__tip";
   const tipTitle = document.createElement("strong");
-  tipTitle.textContent = `#${thought.tokenId} ${(title || "(empty)").toUpperCase()}`;
+  tipTitle.textContent = `THOUGHT #${thought.tokenId}`;
+  const tipText = document.createElement("span");
+  tipText.textContent = title || "(empty)";
+  const tipBreak = document.createElement("span");
+  tipBreak.className = "thought-gallery__tip-break";
+  tipBreak.setAttribute("aria-hidden", "true");
   const tipPath = document.createElement("span");
-  tipPath.textContent = `$PATH #${thought.pathId} / ${galleryTime(thought.mintedAt)}`;
+  tipPath.textContent = `$PATH #${thought.pathId} consumed`;
+  const tipMinted = document.createElement("span");
+  tipMinted.textContent = `minted ${galleryTipTime(thought.mintedAt)}`;
   const tipMinter = document.createElement("span");
-  tipMinter.textContent = `minter ${shortHex(thought.minter, 8, 6)}`;
-  const tipHash = document.createElement("span");
-  tipHash.textContent = `text ${shortHex(thought.textHash, 10, 8)}`;
-  tip.append(tipTitle, tipPath, tipMinter, tipHash);
+  tipMinter.textContent = `by ${shortHex(thought.minter, 6, 4)}`;
+  tip.append(tipTitle, tipText, tipBreak, tipPath, tipMinted, tipMinter);
 
   imageLink.append(image, tip);
   card.append(imageLink);
@@ -3471,17 +3917,23 @@ const readGalleryThoughts = async (): Promise<GalleryThought[] | null> => {
         const metadata = readTokenMetadata(tokenUri);
         const properties = metadata.properties ?? {};
         const thoughtEnvelope = metadata.thought ?? {};
+        const provenanceJson = metadataString(properties.provenanceJson) || metadataString(thoughtEnvelope.provenance);
+        const provenanceMaterial = parseProvenanceMaterial(provenanceJson);
 
         return {
           tokenId,
           pathId: metadataString(properties.pathId) || pathId,
           minter: metadataString(properties.minter) || minter,
           textHash: metadataString(properties.textHash) || textHash,
+          promptHash: metadataString(properties.promptHash) || provenanceMaterial.promptHash,
           provenanceHash: metadataString(properties.provenanceHash) || provenanceHash,
           thoughtSpecId: metadataString(properties.thoughtSpecId) || thoughtSpecId,
           mintedAt: metadataNumber(properties.mintedAt) ?? eventMintedAt,
           rawText: metadataString(properties.rawText) || metadataString(thoughtEnvelope.text),
-          provenanceJson: metadataString(properties.provenanceJson) || metadataString(thoughtEnvelope.provenance),
+          prompt: provenanceMaterial.prompt,
+          returnedText: provenanceMaterial.returnedText,
+          returnedTextHash: provenanceMaterial.returnedTextHash,
+          provenanceJson,
           image: metadata.image ?? "",
           tokenUri,
           txHash: log.transactionHash,
@@ -3543,7 +3995,23 @@ const loadThoughtDetail = async () => {
 
   thoughtDetailTitleToken.textContent = ROUTE_THOUGHT_TOKEN_ID.toString();
   thoughtDetailBody.classList.add("is-hidden");
-  thoughtDetailStatus.textContent = "loading THOUGHT...";
+  thoughtDetailStatus.textContent = `loading THOUGHT #${ROUTE_THOUGHT_TOKEN_ID}...`;
+  currentThoughtDetail = null;
+  thoughtDetailTextHashPanel.classList.add("is-hidden");
+  thoughtDetailPromptHashPanel.classList.add("is-hidden");
+  thoughtDetailModelReturnHashPanel.classList.add("is-hidden");
+  thoughtDetailMintEvidence.classList.add("is-hidden");
+  thoughtDetailSpecHashPanel.classList.add("is-hidden");
+  thoughtDetailJsonPanel.classList.add("is-hidden");
+  thoughtDetailSpecViewer.classList.add("is-hidden");
+  thoughtDetailPathEvidence.classList.add("is-hidden");
+  thoughtDetailSpecEvidence.classList.add("is-hidden");
+  thoughtDetailProvenanceHashPanel.classList.add("is-hidden");
+  thoughtDetailProvenanceEvidence.classList.add("is-hidden");
+  syncThoughtDetailEmbeddedHeights();
+  thoughtDetailToggleJson.textContent = "[ view json ]";
+  thoughtDetailViewSpec.textContent = "[ view spec ]";
+  showThoughtDetailStatus("");
 
   try {
     const thoughts = await readGalleryThoughts();
@@ -3558,27 +4026,306 @@ const loadThoughtDetail = async () => {
       return;
     }
 
-    const title = canonicalThoughtTitle(thought.rawText);
+    const detail = normalizeThoughtDetail(thought);
+    currentThoughtDetail = detail;
+    const title = canonicalThoughtTitle(detail.rawText);
+    const rawText = detail.rawText || title || "-";
+    const specHash = detail.thoughtSpec.hash || detail.thoughtSpec.id;
+    const provenanceBytes = detail.provenanceJson ? byteLength(detail.provenanceJson) : 0;
     document.title = `THOUGHT #${thought.tokenId}`;
-    thoughtDetailTitleToken.textContent = thought.tokenId.toString();
+    thoughtDetailTitleToken.textContent = detail.tokenId.toString();
     thoughtDetailStatus.textContent = "";
-    thoughtDetailImage.src = thought.image || galleryThumbnailUri(title);
-    thoughtDetailImage.alt = `THOUGHT #${thought.tokenId} canvas`;
-    thoughtDetailCanonicalTitle.textContent = title || "-";
-    thoughtDetailPath.textContent = `#${thought.pathId}`;
-    thoughtDetailMinter.textContent = thought.minter;
-    thoughtDetailMinted.textContent = galleryTime(thought.mintedAt);
-    thoughtDetailTextHash.textContent = thought.textHash;
-    thoughtDetailProvenanceHash.textContent = thought.provenanceHash;
-    thoughtDetailSpec.textContent = shortHex(thought.thoughtSpecId, 10, 8);
-    thoughtDetailSpec.title = thought.thoughtSpecId;
-    thoughtDetailTx.textContent = thought.txHash;
-    thoughtDetailProvenanceJson.textContent = formatProvenanceJson(thought.provenanceJson);
+    thoughtDetailImage.src = detail.image || galleryThumbnailUri(title);
+    thoughtDetailImage.alt = `THOUGHT #${detail.tokenId} canvas`;
+    thoughtDetailCanonicalTitle.textContent = rawText;
+    setThoughtDetailDisclosure(
+      thoughtDetailTextHashLine,
+      thoughtDetailTextHashPanel,
+      hashDisclosureLabel(detail.textHash),
+    );
+    thoughtDetailTextHashLine.title = detail.textHash;
+    thoughtDetailPrompt.textContent = detail.prompt || "prompt unavailable.";
+    setThoughtDetailDisclosure(
+      thoughtDetailPromptHash,
+      thoughtDetailPromptHashPanel,
+      hashDisclosureLabel(detail.promptHash),
+    );
+    thoughtDetailPromptHash.title = detail.promptHash;
+    const modelReturnSameAsText = Boolean(detail.returnedText && detail.returnedText === rawText);
+    const showModelReturnHash = Boolean(detail.returnedTextHash && !modelReturnSameAsText);
+    thoughtDetailModelReturn.textContent = detail.returnedText
+      ? modelReturnSameAsText
+        ? "same as text"
+        : detail.returnedText
+      : "model return unavailable.";
+    thoughtDetailModelReturnHash.classList.toggle("is-hidden", !showModelReturnHash);
+    if (showModelReturnHash) {
+      setThoughtDetailDisclosure(
+        thoughtDetailModelReturnHash,
+        thoughtDetailModelReturnHashPanel,
+        hashDisclosureLabel(detail.returnedTextHash),
+      );
+    } else {
+      thoughtDetailModelReturnHashPanel.classList.add("is-hidden");
+    }
+    thoughtDetailModelReturnHash.title = detail.returnedTextHash;
+    thoughtDetailPath.textContent = `#${detail.pathId} consumed`;
+    thoughtDetailViewPath.href = `${PATH_MINT_URL.replace(/\/$/, "")}?path=${encodeURIComponent(detail.pathId)}`;
+    setThoughtDetailDisclosure(
+      thoughtDetailMinter,
+      thoughtDetailMintEvidence,
+      shortDetailAddress(detail.minter),
+    );
+    thoughtDetailMinter.title = detail.minter;
+    thoughtDetailMinted.textContent = detailTime(detail.mintedAt);
+    thoughtDetailSpecRef.textContent = detail.thoughtSpec.ref || "THOUGHT.md@v1";
+    setThoughtDetailDisclosure(
+      thoughtDetailSpec,
+      thoughtDetailSpecHashPanel,
+      hashDisclosureLabel(specHash),
+    );
+    thoughtDetailSpec.title = specHash;
+    setThoughtDetailDisclosure(
+      thoughtDetailTx,
+      thoughtDetailMintEvidence,
+      shortDetailHash(detail.txHash),
+    );
+    thoughtDetailTx.title = detail.txHash;
+    thoughtDetailProvenanceBytes.textContent =
+      detail.provenanceJson ? `${provenanceBytes} bytes` : "provenance unavailable.";
+    setThoughtDetailDisclosure(
+      thoughtDetailProvenanceHashLine,
+      thoughtDetailProvenanceHashPanel,
+      hashDisclosureLabel(detail.provenanceHash),
+    );
+    thoughtDetailProvenanceHashLine.title = detail.provenanceHash;
+    thoughtDetailProvenanceJson.textContent = formatProvenanceJson(detail.provenanceJson);
+    thoughtDetailViewTx.href = THOUGHT_EXPLORER_BASE_URL
+      ? `${THOUGHT_EXPLORER_BASE_URL}/tx/${detail.txHash}`
+      : "#";
     thoughtDetailBody.classList.remove("is-hidden");
+    syncThoughtDetailEmbeddedHeights();
   } catch {
     thoughtDetailStatus.textContent = "failed to load THOUGHT.";
   }
 };
+
+const toggleThoughtDetailJson = () => {
+  if (!currentThoughtDetail) {
+    return;
+  }
+
+  const isHidden = thoughtDetailJsonPanel.classList.toggle("is-hidden");
+  thoughtDetailToggleJson.textContent = isHidden ? "[ view json ]" : "[ hide json ]";
+  syncThoughtDetailEmbeddedHeights();
+};
+
+const activeSpecMatchesThoughtDetail = (detail: ThoughtDetail, spec: ActiveThoughtSpec) =>
+  detail.thoughtSpec.id === spec.specId ||
+  detail.thoughtSpec.hash === spec.specHash ||
+  detail.thoughtSpec.ref === spec.ref;
+
+const toggleThoughtDetailSpec = async () => {
+  if (!currentThoughtDetail) {
+    return;
+  }
+
+  if (!thoughtDetailSpecViewer.classList.contains("is-hidden")) {
+    thoughtDetailSpecViewer.classList.add("is-hidden");
+    thoughtDetailViewSpec.textContent = "[ view spec ]";
+    syncThoughtDetailEmbeddedHeights();
+    return;
+  }
+
+  thoughtDetailSpecViewer.classList.remove("is-hidden");
+  thoughtDetailSpecViewerTitle.textContent = currentThoughtDetail.thoughtSpec.ref || "THOUGHT.md@v1";
+  thoughtDetailSpecViewerHash.textContent = `hash ${shortDetailHash(currentThoughtDetail.thoughtSpec.hash)}`;
+  thoughtDetailSpecText.textContent = "loading spec...";
+  syncThoughtDetailEmbeddedHeights();
+
+  try {
+    await ensureActiveThoughtSpec();
+    if (!activeThoughtSpec || !activeSpecMatchesThoughtDetail(currentThoughtDetail, activeThoughtSpec)) {
+      thoughtDetailSpecText.textContent = "spec unavailable.";
+      syncThoughtDetailEmbeddedHeights();
+      return;
+    }
+
+    thoughtDetailSpecViewerTitle.textContent = activeThoughtSpec.ref;
+    thoughtDetailSpecViewerHash.textContent = `hash ${shortDetailHash(activeThoughtSpec.specHash)}`;
+    thoughtDetailSpecText.textContent = getActiveThoughtInstructions().trim();
+    syncThoughtDetailEmbeddedHeights();
+  } catch {
+    thoughtDetailSpecText.textContent = "spec unavailable.";
+    syncThoughtDetailEmbeddedHeights();
+  }
+};
+
+const toggleThoughtDetailEvidence = (panel: HTMLElement, textElement: HTMLElement, lines: string[]) => {
+  if (!currentThoughtDetail) {
+    return;
+  }
+
+  const isHidden = panel.classList.toggle("is-hidden");
+  if (!isHidden) {
+    textElement.textContent = lines.join("\n");
+  }
+  syncThoughtDetailEmbeddedHeights();
+};
+
+const disclosureLabel = (label: string, expanded: boolean) => `${label} ${expanded ? "▾" : "▸"}`;
+
+const setThoughtDetailDisclosure = (
+  button: HTMLButtonElement,
+  panel: HTMLElement,
+  label: string,
+  expanded = false,
+) => {
+  button.textContent = disclosureLabel(label, expanded);
+  button.setAttribute("aria-expanded", String(expanded));
+  panel.classList.toggle("is-hidden", !expanded);
+};
+
+const toggleThoughtDetailDisclosure = (
+  button: HTMLButtonElement,
+  panel: HTMLElement,
+  textElement: HTMLElement,
+  label: string,
+  lines: string[],
+) => {
+  if (!currentThoughtDetail) {
+    return;
+  }
+
+  const expanded = panel.classList.contains("is-hidden");
+  if (expanded) {
+    textElement.textContent = lines.join("\n");
+  }
+  setThoughtDetailDisclosure(button, panel, label, expanded);
+  syncThoughtDetailEmbeddedHeights();
+};
+
+const hashDisclosureLabel = (hash: string) => `hash ${shortDetailHash(hash)}`;
+
+const valueDisclosureLines = (title: string, value: string, verify: string) => [
+  title,
+  value || "unavailable",
+  "",
+  "verify",
+  verify,
+];
+
+const thoughtDetailTextHashLines = (detail: ThoughtDetail) =>
+  valueDisclosureLines(
+    "text hash",
+    detail.textHash,
+    "keccak256(bytes(text)) == text hash",
+  );
+
+const thoughtDetailPromptHashLines = (detail: ThoughtDetail) =>
+  valueDisclosureLines(
+    "prompt hash",
+    detail.promptHash,
+    "keccak256(bytes(prompt)) == prompt hash",
+  );
+
+const thoughtDetailModelReturnHashLines = (detail: ThoughtDetail) =>
+  valueDisclosureLines(
+    "model return hash",
+    detail.returnedTextHash,
+    "keccak256(bytes(model return)) == returnedText hash",
+  );
+
+const thoughtDetailMintEvidenceLines = (detail: ThoughtDetail) => [
+  "minter",
+  detail.minter,
+  "",
+  "tx",
+  detail.txHash,
+];
+
+const thoughtDetailSpecHashLines = (detail: ThoughtDetail) =>
+  valueDisclosureLines(
+    "spec hash",
+    detail.thoughtSpec.hash || detail.thoughtSpec.id,
+    "keccak256(bytes(THOUGHT.md)) == spec hash",
+  );
+
+const thoughtDetailProvenanceHashLines = (detail: ThoughtDetail) =>
+  valueDisclosureLines(
+    "provenance hash",
+    detail.provenanceHash,
+    "keccak256(bytes(provenanceJson)) == provenance hash",
+  );
+
+const thoughtDetailSpecEvidenceLines = (detail: ThoughtDetail) => [
+  "fetch spec",
+  "",
+  "source",
+  "onchain spec registry",
+  "",
+  "1 registry",
+  `contract ${THOUGHT_SPEC_REGISTRY_ADDRESS || "unavailable"}`,
+  "specMeta(bytes32 specId)",
+  "",
+  "2 data",
+  "specText(bytes32 specId)",
+  "",
+  "verify",
+  "keccak256(bytes(THOUGHT.md)) == spec.hash",
+  "",
+  "specId",
+  detail.thoughtSpec.id,
+  "",
+  "ABI fragment",
+  "function specMeta(bytes32 specId) view returns (...)",
+  "function specText(bytes32 specId) view returns (string)",
+];
+
+const thoughtDetailProvenanceEvidenceLines = (detail: ThoughtDetail) => [
+  "fetch provenance",
+  "",
+  "contract",
+  "ThoughtToken",
+  THOUGHT_TOKEN_ADDRESS || "unavailable",
+  "",
+  "call",
+  `provenanceOf(${detail.tokenId})`,
+  "",
+  "verify",
+  "keccak256(bytes(provenanceJson)) == recordOf(tokenId).provenanceHash",
+  "",
+  "tokenId",
+  detail.tokenId.toString(),
+  "",
+  "ABI fragment",
+  "function provenanceOf(uint256 tokenId) view returns (string)",
+  "function recordOf(uint256 tokenId) view returns (...)",
+];
+
+const thoughtDetailPathEvidenceLines = (detail: ThoughtDetail) => [
+  "fetch $PATH evidence",
+  "",
+  "PATH contract",
+  PATH_NFT_ADDRESS || "unavailable",
+  "",
+  "pathId",
+  detail.pathId,
+  "",
+  "movement",
+  "THOUGHT",
+  "",
+  "contract anchors",
+  `ThoughtToken.recordOf(${detail.tokenId}).pathId == ${detail.pathId}`,
+  "ThoughtToken.recordOf(tokenId).minter == minter",
+  "",
+  "PATH checks",
+  "owner/quota/consumption state from PathNFT views",
+  "getAuthorizedMinter(bytes32 movement)",
+  "getMovementQuota(bytes32 movement)",
+  "getStage(uint256 tokenId)",
+  "getStageMinted(uint256 tokenId)",
+];
 
 const getActionStatusKind = (status: string): "info" | "success" | "warn" | "error" => {
   if (status === "ready" || status === "minted") {
@@ -3765,8 +4512,8 @@ const renderCanvas = (rawText: string) => {
 const syncOutputToCanvas = (raw: string, options?: { suppressWarning?: boolean }) => {
   const title = canonicalThoughtTitle(raw);
 
-  if (!options?.suppressWarning && byteLength(title) > MAX_RAW_TEXT_BYTES) {
-    setWarning(`work exceeds the ${MAX_RAW_TEXT_BYTES}-byte mint limit.`, {
+  if (!options?.suppressWarning && byteLength(title) > MAX_TEXT_BYTES) {
+    setWarning(`work exceeds the ${MAX_TEXT_BYTES}-byte mint limit.`, {
       flashMs: NOTICE_FLASH_MS,
       level: "warn",
     });
@@ -3786,7 +4533,12 @@ const setAgentOutput = (text: string) => {
 };
 
 const workRunContextToThoughtRunContext = (work: ThoughtWorkRecord) =>
-  isThoughtRunContext(work.runContext) ? work.runContext : null;
+  isThoughtRunContext(work.runContext)
+    ? {
+        ...work.runContext,
+        returnedText: work.runContext.returnedText ?? work.returnedText,
+      }
+    : null;
 
 const recordCurrentWork = (rawOutput: string) => {
   if (!currentOutputText || !currentRunContext) {
@@ -3794,10 +4546,29 @@ const recordCurrentWork = (rawOutput: string) => {
   }
 
   const existingWorks = readThoughtWorks(sessionStorage);
+  const provenance = getProvenanceSummary();
   const result = appendThoughtWork(existingWorks, {
+    prompt: currentRunContext.prompt,
+    returnedText: rawOutput,
+    text: currentOutputText,
     title: currentOutputText,
     rawOutput,
     image: galleryThumbnailUri(currentOutputText),
+    route: currentRunContext.mode,
+    provider: currentRunContext.provider,
+    model: currentRunContext.model,
+    thoughtSpec: currentRunContext.thoughtSpec,
+    normalizer: {
+      id: "thought.normalize.v1",
+      source: "contract-view",
+    },
+    provenanceJson: provenance?.json,
+    provenanceBytes: provenance?.bytes,
+    hashes: {
+      promptHash: hashText(currentRunContext.prompt),
+      returnedTextHash: hashText(rawOutput),
+      textHash: hashText(currentOutputText),
+    },
     runContext: currentRunContext,
   });
   writeThoughtWorks(sessionStorage, result.works);
@@ -3806,7 +4577,7 @@ const recordCurrentWork = (rawOutput: string) => {
 
 const loadWorkRecord = (work: ThoughtWorkRecord) => {
   resetMintRuntimeState();
-  currentOutputText = canonicalThoughtTitle(work.title);
+  currentOutputText = canonicalThoughtTitle(work.text || work.title);
   currentRunContext = workRunContextToThoughtRunContext(work);
   currentWorkId = work.id;
   runState = "output_ready";
@@ -3902,9 +4673,10 @@ const recordThoughtRun = (
     provider: payload.config.provider,
     model: payload.config.model,
     prompt: payload.input.prompt,
+    returnedText: rawOutput,
     clientGeneratedAt,
-    capabilities: provenanceConfig.capabilities,
     request: provenanceConfig.request,
+    web: provenanceConfig.web,
     thoughtSpec: provenanceConfig.thoughtSpec,
   };
 
@@ -3913,10 +4685,10 @@ const recordThoughtRun = (
     provider: payload.config.provider,
     model: payload.config.model,
     prompt: payload.input.prompt,
-    capabilities: payload.config.capabilities,
-    request: payload.config.request,
+    request: provenanceConfig.request,
+    web: provenanceConfig.web,
     thoughtSpec: provenanceConfig.thoughtSpec,
-    rawOutput,
+    returnedText: rawOutput,
     thoughtTitle,
     clientGeneratedAt,
   };
@@ -3927,7 +4699,7 @@ const recordThoughtRun = (
     }
   ).__thoughtLastRun = run;
 
-  console.info("[thought] provider output", run);
+  console.info("[thought] model return", run);
 };
 
 const resetThought = (options?: { preserveStoredOutput?: boolean }) => {
@@ -5119,14 +5891,18 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
       return;
     }
 
-    const thoughtTitle = canonicalThoughtTitle(text);
+    if (!text.trim()) {
+      throw new Error("model returned no text.");
+    }
+
+    const thoughtTitle = await previewCanonicalThoughtText(text);
 
     if (!thoughtTitle) {
-      throw new Error("provider returned empty text.");
+      throw new Error("model returned no text.");
     }
 
     recordThoughtRun(thoughtRunPayload, text, thoughtTitle);
-    setAgentOutput(text);
+    setAgentOutput(thoughtTitle);
     runState = "output_ready";
     walletState.txState = "idle";
     walletState.txError = "";
@@ -5466,11 +6242,11 @@ const cliCompletionCommandCatalog = () => {
     "rerun",
     "retry run",
     "work",
+    "work current",
     "work list",
     "work previous",
     "work next",
     "work latest",
-    "output",
     "thought",
     "thought list",
     "mint",
@@ -5662,7 +6438,7 @@ const appendCliProgressOutput = (lines: string | string[]) => {
 const startCliRunProgress = () => {
   appendCliProgressOutput([
     "running...",
-    "one round on a model.",
+    "one model round.",
     "prompt + THOUGHT.md in.",
     "canvas out.",
   ]);
@@ -5935,7 +6711,7 @@ const initializeCliTranscript = () => {
   const intro = [
     "THOUGHT operator.",
     "",
-    "one round on a model.",
+    "one model round.",
     "prompt + THOUGHT.md in.",
     "canvas out.",
     "",
@@ -6044,11 +6820,7 @@ const directProviderIds = () => Object.keys(DIRECT_PROVIDERS) as DirectProviderI
 
 const directProviderListLines = () => [
   "providers:",
-  ...directProviderIds().map((providerId) => {
-    const current = providerId === sessionState.direct.provider ? " current" : "";
-    const keyState = sessionState.direct.apiKeys[providerId].trim() ? " key set" : " key not set";
-    return `${providerId}${current}${keyState}`;
-  }),
+  ...directProviderIds(),
   "",
   "use: config direct provider <id>",
 ];
@@ -6061,12 +6833,12 @@ const cliApiKeyState = () =>
 
 const cliLocalStatus = () => {
   if (sessionState.local.available === true) {
-    return "ollama detected";
+    return "detected";
   }
   if (sessionState.local.available === false) {
-    return "ollama not detected";
+    return "not detected";
   }
-  return "not checked";
+  return "checking";
 };
 
 const localSetupUsageLines = () => [
@@ -6142,7 +6914,7 @@ const cliOutputStatus = () => {
 
 const cliCurrentMintState = () => {
   if (mintFlowState === "closed") {
-    return runState === "output_ready" ? "ready to mint" : "idle";
+    return runState === "output_ready" ? "ready" : "idle";
   }
   if (mintFlowState === "wallet_required") {
     return "needs wallet";
@@ -6181,9 +6953,9 @@ const cliPathState = () => {
   return path || "not selected";
 };
 
-const cliCurrentWorkState = (outputState: string) => {
+const cliCurrentWorkState = () => {
   if (currentWorkId === null) {
-    return outputState;
+    return "empty";
   }
 
   const work = getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
@@ -6191,7 +6963,7 @@ const cliCurrentWorkState = (outputState: string) => {
     return `#${currentWorkId}`;
   }
 
-  return `#${work.id} "${formatModelLabel(work.title, 48)}"`;
+  return `#${work.id} "${formatModelLabel(work.text || work.title, 48)}"`;
 };
 
 const buildCliCurrentLines = () => {
@@ -6204,34 +6976,30 @@ const buildCliCurrentLines = () => {
 
   if (sessionState.mode === "connect") {
     lines.push("provider: openrouter");
-    lines.push(`authorization: ${cliAuthorizationState()}`);
+    lines.push(`openrouter: ${cliAuthorizationState()}`);
   }
   if (sessionState.mode === "direct") {
     lines.push(`provider: ${sessionState.direct.provider}`);
     lines.push(`api key: ${cliApiKeyState()}`);
   }
   if (sessionState.mode === "local") {
-    lines.push("provider: ollama", `status: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
+    lines.push("provider: ollama", `ollama: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
   }
 
   lines.push(
     `model: ${getCurrentModelValue().trim() || "empty"}`,
     `prompt: ${cliPromptValue()}`,
     `THOUGHT.md: ${spec.state}`,
-    `wallet: ${walletState.address ? "connected" : "not connected"}`,
-    `work: ${cliCurrentWorkState(output.state)}`,
-    `provenance: ${provenance ? `${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.` : "empty"}`,
+    `wallet: ${walletState.address ? `connected ${formatCliAddress(walletState.address)}` : "not connected"}`,
+    `work: ${cliCurrentWorkState()}`,
+    `provenance: ${provenance ? `${provenance.bytes} bytes` : "empty"}`,
   );
 
   if (output.state !== "empty" || mintFlowState !== "closed") {
     lines.push(`$PATH: ${cliPathState()}`, `mint: ${cliCurrentMintState()}`);
   }
-  if (output.state === "minted" && tokenId !== null) {
-    lines.push(`THOUGHT #${tokenId}`);
-  }
-  if (walletState.txHash) {
-    lines.push(`tx: ${walletState.txHash}`);
-  }
+  lines.push(`THOUGHT: ${tokenId !== null ? `#${tokenId}` : "empty"}`);
+  lines.push(`tx: ${walletState.txHash ? shortHex(walletState.txHash, 10, 8) : "empty"}`);
 
   return lines;
 };
@@ -6240,7 +7008,7 @@ const listModelsForCli = () => {
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
     return [
       "model list unavailable.",
-      "authorization: not linked",
+      "openrouter: not linked",
       "use: config connect authorize",
     ];
   }
@@ -6260,7 +7028,7 @@ const listModelsForCli = () => {
 
 const setCliModel = (modelId: string) => {
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
-    appendCliError(["model unavailable.", "authorization: not linked", "use: config connect authorize"]);
+    appendCliError(["model unavailable.", "openrouter: not linked", "use: config connect authorize"]);
     return;
   }
 
@@ -6284,7 +7052,7 @@ const setCliModel = (modelId: string) => {
   setCurrentModelValue(modelId);
   writeSessionState();
   syncInterface();
-  appendCliOutput(["model set.", `model: ${modelId}`, "use: run"]);
+  appendCliOutput(["model set.", `model: ${modelId}`, "next: run"]);
 };
 
 const setCliProvider = (providerId: string) => {
@@ -6403,17 +7171,19 @@ const outputCliMode = async (mode: Mode | "") => {
     mode === "local"
       ? [
           "route: local",
+          "provider: ollama",
           "runs on this machine.",
-          `status: ${cliLocalStatus()}`,
+          `ollama: ${cliLocalStatus()}`,
           ...(
             sessionState.local.available === true
               ? [
                   `endpoint: ${getOllamaEndpoint()}`,
+                  `model: ${getCurrentModelValue().trim() || "empty"}`,
                   "use:",
                   "config local model list",
                   "config local model <id>",
-                  "run",
                   "config local endpoint <url>",
+                  "run",
                 ]
               : localSetupUsageLines()
           ),
@@ -6421,9 +7191,10 @@ const outputCliMode = async (mode: Mode | "") => {
       : mode === "connect"
         ? [
             "route: connect",
-            "delegated cloud access.",
             "provider: openrouter",
-            `authorization: ${cliAuthorizationState()}`,
+            "delegated cloud access.",
+            `openrouter: ${cliAuthorizationState()}`,
+            `model: ${getCurrentModelValue().trim() || "empty"}`,
             "use:",
             "config connect authorize",
             "config connect disconnect",
@@ -6450,7 +7221,7 @@ const outputCliMode = async (mode: Mode | "") => {
 
 const outputCliConfigSummary = () => {
   const lines = [
-    "config sets the route and model for one round.",
+    "config sets route, provider, and model for one round.",
     "",
     `route: ${sessionState.mode}`,
   ];
@@ -6458,15 +7229,15 @@ const outputCliConfigSummary = () => {
   if (sessionState.mode === "local") {
     lines.push(
       "provider: ollama",
-      `status: ${cliLocalStatus()}`,
+      `ollama: ${cliLocalStatus()}`,
       `endpoint: ${getOllamaEndpoint()}`,
       `model: ${getCurrentModelValue().trim() || "empty"}`,
     );
   } else if (sessionState.mode === "connect") {
     lines.push(
-      `model: ${getCurrentModelValue().trim() || "empty"}`,
       "provider: openrouter",
-      `authorization: ${cliAuthorizationState()}`,
+      `openrouter: ${cliAuthorizationState()}`,
+      `model: ${getCurrentModelValue().trim() || "empty"}`,
     );
   } else {
     lines.push(
@@ -6788,13 +7559,19 @@ const outputCliProvenance = async (json = false) => {
       return;
     }
 
+    if (provenance.bytes > MAX_PROVENANCE_BYTES) {
+      appendCliError(provenanceTooLargeLines(provenance.bytes));
+      return;
+    }
+
     appendCliOutput([
-      "records the run context for mint.",
+      "provenance records run context for mint.",
       "schema: thought.provenance.v1",
       `spec: ${currentSpecLabel()}`,
-      `bytes: ${provenance.bytes}/${MAX_PROVENANCE_BYTES}`,
-      `gas: ~${formatCount(MINT_GAS_ESTIMATE)}`,
-      "run: provenance --json",
+      `prompt: ${currentRunContext?.prompt ? "included" : "unavailable"}`,
+      `model return: ${currentRunContext?.returnedText ? "included" : "unavailable"}`,
+      `bytes: ${provenance.bytes}`,
+      "use: provenance --json",
     ]);
   } catch (error) {
     appendCliError([formatThoughtSpecError(error), "next: current"]);
@@ -6839,7 +7616,7 @@ const outputCliThoughtInstructions = async (topic: string) => {
 
   appendCliOutput([
     "THOUGHT.md spec.",
-    "generation contract for a run.",
+    "generation spec for a run.",
     `state: ready`,
     `ref: ${activeThoughtSpec?.ref ?? label}`,
     ...(activeThoughtSpec ? [
@@ -6874,8 +7651,8 @@ const outputCliThoughtWorks = async (topic: string) => {
 
     if (!thoughts.length) {
       appendCliOutput([
-        "THOUGHT works minted.",
-        "tokens kept onchain.",
+        "minted THOUGHTs.",
+        "kept onchain.",
         "empty.",
         "use: mint",
         "use: gallery",
@@ -6884,8 +7661,8 @@ const outputCliThoughtWorks = async (topic: string) => {
     }
 
     appendCliOutput([
-      "THOUGHT works minted.",
-      "tokens kept onchain.",
+      "minted THOUGHTs.",
+      "kept onchain.",
       ...thoughts.map(formatMintedThoughtLine),
       "",
       "use: gallery",
@@ -6897,14 +7674,95 @@ const outputCliThoughtWorks = async (topic: string) => {
 };
 
 const formatWorkLine = (work: ThoughtWorkRecord) =>
-  `#${work.id} "${formatModelLabel(work.title, 48)}"`;
+  `#${work.id} "${formatModelLabel(work.text || work.title, 48)}"`;
 
-const workLoadedLines = (work: ThoughtWorkRecord) => [
-  `work #${work.id} loaded.`,
-  `text: "${work.title}"`,
-  "use: mint",
-  "use: provenance",
-];
+const workText = (work: ThoughtWorkRecord) => canonicalThoughtTitle(work.text || work.title);
+
+const workPrompt = (work: ThoughtWorkRecord) => work.prompt || work.runContext.prompt;
+
+const workReturnedText = (work: ThoughtWorkRecord) =>
+  work.returnedText || work.runContext.returnedText || work.rawOutput;
+
+const workSpecRef = (work: ThoughtWorkRecord) =>
+  work.thoughtSpec?.ref || work.runContext.thoughtSpec?.ref || currentSpecLabel();
+
+const workProvenanceBytes = (work: ThoughtWorkRecord) => {
+  if (typeof work.provenanceBytes === "number") {
+    return work.provenanceBytes;
+  }
+  if (work.provenanceJson) {
+    return byteLength(work.provenanceJson);
+  }
+  const current = work.id === currentWorkId ? getProvenanceSummary() : null;
+  return current?.bytes ?? null;
+};
+
+const workDetailLines = (work: ThoughtWorkRecord, state: "loaded" | "current" = "loaded") => {
+  const text = workText(work);
+  const returnedText = workReturnedText(work);
+  const prompt = workPrompt(work);
+  const provenanceBytes = workProvenanceBytes(work);
+  return [
+    `work #${work.id} ${state}.`,
+    "",
+    "prompt:",
+    prompt ? quoteCliFullText(prompt) : "unavailable",
+    "",
+    "model return:",
+    returnedText ? (returnedText === text ? "same as text" : quoteCliFullText(returnedText)) : "unavailable",
+    "",
+    "text:",
+    quoteCliFullText(text),
+    "",
+    `model: ${work.provider || work.runContext.provider}/${work.model || work.runContext.model}`,
+    `spec: ${workSpecRef(work)}`,
+    `normalizer: ${work.normalizer?.id ?? "thought.normalize.v1"}`,
+    provenanceBytes === null ? "provenance: unavailable" : formatProvenanceBytes(provenanceBytes),
+    "",
+    "use: mint",
+    "use: provenance",
+  ];
+};
+
+const currentWorkRecord = (): ThoughtWorkRecord | null => {
+  if (currentWorkId !== null) {
+    const stored = getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+    if (stored) {
+      return stored;
+    }
+  }
+  if (!currentOutputText || !currentRunContext) {
+    return null;
+  }
+
+  const provenance = getProvenanceSummary();
+  return {
+    id: currentWorkId ?? 0,
+    prompt: currentRunContext.prompt,
+    returnedText: currentRunContext.returnedText ?? "",
+    text: currentOutputText,
+    title: currentOutputText,
+    rawOutput: currentRunContext.returnedText ?? "",
+    image: galleryThumbnailUri(currentOutputText),
+    route: currentRunContext.mode,
+    provider: currentRunContext.provider,
+    model: currentRunContext.model,
+    thoughtSpec: currentRunContext.thoughtSpec,
+    normalizer: {
+      id: "thought.normalize.v1",
+      source: "contract-view",
+    },
+    provenanceJson: provenance?.json,
+    provenanceBytes: provenance?.bytes,
+    hashes: {
+      promptHash: hashText(currentRunContext.prompt),
+      returnedTextHash: hashText(currentRunContext.returnedText ?? ""),
+      textHash: hashText(currentOutputText),
+    },
+    runContext: currentRunContext,
+    createdAt: currentRunContext.clientGeneratedAt,
+  };
+};
 
 const outputCliWorkList = () => {
   const works = readThoughtWorks(sessionStorage);
@@ -6918,6 +7776,7 @@ const outputCliWorkList = () => {
     ...works.map(formatWorkLine),
     "",
     "use: work <id>",
+    "use: work current",
     "use: work previous",
     "use: work next",
     "use: work latest",
@@ -6925,12 +7784,12 @@ const outputCliWorkList = () => {
 };
 
 const outputCliWorkUsage = () => {
-  const currentWork = currentWorkId === null
-    ? null
-    : getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+  const currentWork = currentWorkRecord();
   appendCliOutput([
     "work is generated by a model.",
-    currentWork ? `current: #${currentWork.id} "${formatModelLabel(currentWork.title, 48)}"` : "current: empty",
+    currentWork ? `current: #${currentWork.id} "${formatModelLabel(workText(currentWork), 48)}"` : "current: empty",
+    "",
+    "use: work current",
     "use: work list",
     "use: work <id>",
     "use: work previous",
@@ -6943,6 +7802,16 @@ const loadWorkFromCli = (input: string) => {
   const normalized = input.trim();
   if (!normalized || normalized.toLowerCase() === "help") {
     outputCliWorkUsage();
+    return;
+  }
+
+  if (normalized.toLowerCase() === "current") {
+    const work = currentWorkRecord();
+    if (!work) {
+      appendCliError(["no current work.", "use: work list", "use: run"]);
+      return;
+    }
+    appendCliOutput(workDetailLines(work, "current"));
     return;
   }
 
@@ -6974,7 +7843,7 @@ const loadWorkFromCli = (input: string) => {
   }
 
   loadWorkRecord(work);
-  appendCliOutput(workLoadedLines(work));
+  appendCliOutput(workDetailLines(work));
 };
 
 const loadPreviousWorkFromCli = () => {
@@ -6985,7 +7854,7 @@ const loadPreviousWorkFromCli = () => {
   }
 
   loadWorkRecord(work);
-  appendCliOutput(workLoadedLines(work));
+  appendCliOutput(workDetailLines(work));
 };
 
 const loadNextWorkFromCli = () => {
@@ -6996,7 +7865,7 @@ const loadNextWorkFromCli = () => {
   }
 
   loadWorkRecord(work);
-  appendCliOutput(workLoadedLines(work));
+  appendCliOutput(workDetailLines(work));
 };
 
 const loadLatestWorkFromCli = () => {
@@ -7007,7 +7876,7 @@ const loadLatestWorkFromCli = () => {
   }
 
   loadWorkRecord(work);
-  appendCliOutput(workLoadedLines(work));
+  appendCliOutput(workDetailLines(work));
 };
 
 const runFromCli = async () => {
@@ -7058,19 +7927,25 @@ const runFromCli = async () => {
 
   if (runState === "output_ready") {
     const provenance = getProvenanceSummary();
+    const text = currentOutputText || "";
+    const returnedText = currentRunContext?.returnedText ?? "";
+    if (provenance && provenance.bytes > MAX_PROVENANCE_BYTES) {
+      appendCliError(provenanceTooLargeLines(provenance.bytes, "work"));
+      return;
+    }
     appendCliOutput([
       currentWorkId ? `work #${currentWorkId} is done.` : "work is done.",
-      provenance
-        ? `provenance ${provenance.bytes}/${MAX_PROVENANCE_BYTES} bytes. ~${formatCount(MINT_GAS_ESTIMATE)} gas.`
-        : "provenance ready.",
+      `text: ${quoteCliFullText(text)}`,
+      `model return: ${returnedText && returnedText !== text ? quoteCliFullText(returnedText) : "same as text"}`,
+      provenance ? `provenance ${provenance.bytes} bytes.` : "provenance ready.",
       "use: mint",
       "use: provenance",
-      "use: work list",
+      currentWorkId ? `use: work ${currentWorkId}` : "use: work current",
     ]);
     return;
   }
 
-  appendCliError(panelWarningMessage ? ["run failed.", panelWarningMessage] : ["run failed."]);
+  appendCliError(panelWarningMessage ? ["run failed.", panelWarningMessage, "use: retry run"] : ["run failed."]);
 };
 
 const switchMintFlowToCli = () => {
@@ -7101,10 +7976,11 @@ const buildCliMintStateLines = () => {
   }
   if (mintFlowState === "path_required") {
     return [
-      walletState.address ? `wallet linked: ${formatCliAddress(walletState.address)}` : "wallet linked.",
+      walletState.address ? `wallet: connected ${formatCliAddress(walletState.address)}` : "wallet: connected",
       "select $PATH.",
       "use: path <id>",
-      "use: mint-path",
+      "use: path list",
+      "need $PATH: mint-path",
     ];
   }
   if (mintFlowState === "path_checking") {
@@ -7128,19 +8004,19 @@ const buildCliMintStateLines = () => {
   if (mintFlowState === "text_taken") {
     const token = mintFlowData.existingTokenId;
     return [
-      "already minted:",
-      token ? `THOUGHT #${token} already minted.` : "THOUGHT already minted.",
+      "already minted.",
+      token ? `THOUGHT #${token} exists.` : "THOUGHT exists.",
       viewThoughtUseLine(token),
       "",
       "to mint another:",
       "run makes a new work.",
-      walletState.address ? `wallet linked: ${formatCliAddress(walletState.address)}` : "wallet not connected.",
-      walletState.address ? "select $PATH after run." : "use: wallet connect",
-      walletState.address ? "use: path <id>" : "",
       "use: run",
     ].filter(Boolean);
   }
   if (mintFlowState === "error") {
+    if (mintFlowData.error.includes("provenance too large")) {
+      return provenanceTooLargeLinesFromMessage(mintFlowData.error);
+    }
     return [mintFlowData.error || "mint unavailable.", "use: current"];
   }
 
@@ -7171,7 +8047,7 @@ const startCliMint = async () => {
     "mint THOUGHT.",
     "keeps current work onchain.",
     "one THOUGHT needs one $PATH.",
-    "select $PATH · authorize · confirm.",
+    "path / authorize / confirm.",
   ]);
   await openMintSheet("cli");
   appendCliMintState();
@@ -7195,17 +8071,17 @@ const ensureCliMintFlow = async () => {
 const cliPathHelpLines = () => {
   const currentPath = selectedCliPathId();
   return [
-    "$PATH selects permission for minting.",
+    "$PATH is mint permission.",
     "",
     "one THOUGHT needs one $PATH.",
-    "select $PATH · authorize · confirm.",
+    "path / authorize / confirm.",
     "",
     `current: ${currentPath ? `#${currentPath}` : "not selected"}`,
     "",
     "use:",
     "path list",
     "path <id>",
-    "mint-path",
+    "need $PATH: mint-path",
   ];
 };
 
@@ -7235,7 +8111,7 @@ const listCliPaths = async () => {
 
   if (!walletState.address) {
     appendCliOutput([
-      "wallet $PATHs for THOUGHT mint.",
+      "wallet $PATHs.",
       "",
       "wallet not connected.",
       "use: wallet connect",
@@ -7247,10 +8123,10 @@ const listCliPaths = async () => {
   const pathNft = getReadPathNft();
   if (!provider || !pathNft || !PATH_NFT_ADDRESS || !THOUGHT_TOKEN_ADDRESS) {
     appendCliOutput([
-      "wallet $PATHs for THOUGHT mint.",
+      "wallet $PATHs.",
       "",
       "path list unavailable.",
-      "use: mint-path",
+      "need $PATH: mint-path",
     ]);
     return;
   }
@@ -7304,7 +8180,7 @@ const listCliPaths = async () => {
     ).filter((path): path is { pathId: bigint; status: string } => path !== null);
 
     appendCliOutput([
-      "wallet $PATHs for THOUGHT mint.",
+      "wallet $PATHs.",
       `wallet: ${formatCliAddress(walletState.address)}`,
       "",
       ...(ownedPaths.length
@@ -7312,15 +8188,15 @@ const listCliPaths = async () => {
         : ["none found."]),
       "",
       "use: path <id>",
-      "use: mint-path",
+      "need $PATH: mint-path",
     ]);
   } catch {
     appendCliOutput([
-      "wallet $PATHs for THOUGHT mint.",
+      "wallet $PATHs.",
       "",
       "path list unavailable.",
       "use: path <id>",
-      "use: mint-path",
+      "need $PATH: mint-path",
     ]);
   }
 };
@@ -7357,7 +8233,11 @@ const checkCliPath = async (pathInput: string) => {
   } else if (mintFlowState === "wallet_required") {
     appendCliError(["wallet not connected.", "use: wallet connect"]);
   } else if (mintFlowState === "error") {
-    appendCliError([mintFlowData.error || `$PATH #${trimmed} not available.`, "use: path <id>", "use: mint-path"]);
+    if (mintFlowData.error.includes("provenance too large")) {
+      appendCliError(provenanceTooLargeLinesFromMessage(mintFlowData.error));
+      return;
+    }
+    appendCliError([mintFlowData.error || `$PATH #${trimmed} not available.`, "use: path <id>", "need $PATH: mint-path"]);
   }
 };
 
@@ -7385,6 +8265,10 @@ const authorizeFromCli = async () => {
   if (state === "authorized") {
     appendCliOutput(["authorized.", "use: confirm"]);
   } else if (state === "error") {
+    if (mintFlowData.error.includes("provenance too large")) {
+      appendCliError(provenanceTooLargeLinesFromMessage(mintFlowData.error));
+      return;
+    }
     appendCliError([mintFlowData.error || "authorization failed.", "use: path <id>"]);
   }
 };
@@ -7400,19 +8284,25 @@ const cliMintPriceLine = async () => {
 };
 
 const cliConfirmPreviewLines = async () => {
+  await rebuildFinalMintProvenance();
   const pathId = selectedCliPathId() || "?";
   const text = mintFlowData.rawText || currentOutputText;
+  const prompt = currentRunContext?.prompt || sessionState.prompt;
+  const returnedText = currentRunContext?.returnedText ?? "";
   const provenanceBytes = mintFlowData.provenanceJson ? byteLength(mintFlowData.provenanceJson) : null;
   const specLabel = activeThoughtSpec?.ref ?? (shortHex(mintFlowData.thoughtSpecId || "", 10, 8) || "unknown");
 
   return [
     "confirm THOUGHT mint.",
-    `THOUGHT: ${quoteCliText(text)}`,
+    `work: ${quoteCliFullText(text)}`,
+    `prompt: ${quoteCliFullText(prompt)}`,
+    `model return: ${returnedText && returnedText !== text ? quoteCliFullText(returnedText) : "same as work"}`,
     `$PATH: #${pathId}`,
-    `provenance: ${provenanceBytes ?? "unknown"}/${MAX_PROVENANCE_BYTES} bytes.`,
+    provenanceBytes === null ? "provenance: unknown" : formatProvenanceBytes(provenanceBytes),
     `spec: ${specLabel}`,
     await cliMintPriceLine(),
     "spends gas.",
+    "publishes prompt + model return + provenance.",
     "consumes this $PATH.",
     "confirm in wallet...",
   ];
@@ -7428,11 +8318,25 @@ const confirmFromCli = async () => {
     return;
   }
 
-  appendCliOutput(await cliConfirmPreviewLines());
+  try {
+    appendCliOutput(await cliConfirmPreviewLines());
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "mint unavailable.";
+    if (message.includes("provenance too large")) {
+      appendCliError(provenanceTooLargeLinesFromMessage(message));
+      return;
+    }
+    appendCliError([message, "use: current"]);
+    return;
+  }
   const txHash = await confirmMint();
   stopCliProgress();
   const state = mintFlowState as MintFlowState;
   if (!txHash && state === "error") {
+    if (mintFlowData.error.includes("provenance too large")) {
+      appendCliError(provenanceTooLargeLinesFromMessage(mintFlowData.error));
+      return;
+    }
     appendCliError([mintFlowData.error || "mint failed.", "use: current"]);
   }
 };
@@ -7460,13 +8364,13 @@ const connectWalletFromCli = async () => {
     return;
   }
 
-  appendCliOutput(walletState.address ? ["wallet linked.", "use: mint"] : ["wallet not connected.", "use: wallet connect"]);
+  appendCliOutput(walletState.address ? ["wallet connected.", "use: mint"] : ["wallet not connected.", "use: wallet connect"]);
 };
 
 const outputCliWalletUsage = () => {
   appendCliOutput([
-    "wallet is used for $PATH and minting.",
-    `wallet: ${walletState.address ? `linked ${formatCliAddress(walletState.address)}` : "not connected"}`,
+    "wallet is used for $PATH and mint.",
+    `wallet: ${walletState.address ? `connected ${formatCliAddress(walletState.address)}` : "not connected"}`,
     "use: wallet connect",
     "clear: wallet disconnect",
   ]);
@@ -7488,7 +8392,9 @@ const cliCommandsHelpLines = () => [
   "commands:",
   "config",
   "config route <local|connect|direct>",
-  "config local | connect | direct",
+  "config local",
+  "config connect",
+  "config direct",
   "config local detect",
   "config local endpoint <url>",
   "config local model list",
@@ -7515,7 +8421,7 @@ const cliCommandsHelpLines = () => [
   "rerun",
   "retry run",
   "work",
-  "output",
+  "work current",
   "work list",
   "work <id>",
   "work previous",
@@ -7525,13 +8431,14 @@ const cliCommandsHelpLines = () => [
   "thought list",
   "",
   "mint",
+  "wallet",
+  "wallet connect",
+  "wallet disconnect",
   "path",
   "path list",
   "path <id>",
   "authorize",
   "confirm",
-  "wallet connect",
-  "wallet disconnect",
   "mint-path",
   "",
   "current",
@@ -7552,25 +8459,27 @@ const cliHelpLines = (topic = "") => {
   if (!normalizedTopic) {
     return [
       "THOUGHT takes a prompt and THOUGHT.md,",
-      "runs one round on the selected model,",
+      "runs one model round,",
       "then renders the returned text to canvas.",
       "",
       "flow:",
-      "config    choose route, provider, model",
-      "prompt    write intention",
-      "run       make canvas",
-      "work      show generated works",
-      "mint      keep it onchain",
+      "config   choose route, provider, model",
+      "prompt   write intention",
+      "run      one model round",
+      "mint     keep the work onchain",
       "",
       "more:",
-      "work",
-      "thought",
-      "spec",
-      "wallet",
-      "path",
-      "provenance",
-      "current",
+      "help flow",
       "commands",
+      "current",
+      "config",
+      "prompt",
+      "THOUGHT.md",
+      "work",
+      "mint",
+      "wallet",
+      "$PATH",
+      "provenance",
     ];
   }
 
@@ -7588,19 +8497,19 @@ const cliHelpLines = (topic = "") => {
       "  set the user intention.",
       "",
       "3 run",
-      "  one round only.",
+      "  one model round.",
       "  prompt + THOUGHT.md in.",
       "  canvas out.",
       "",
       "4 mint",
       "  one THOUGHT needs one $PATH.",
-      "  select $PATH · authorize · confirm",
+      "  path / authorize / confirm.",
     ];
   }
 
   if (normalizedTopic === "config") {
     return [
-      "config sets the route and model for one round.",
+      "config sets route, provider, and model for one round.",
       "",
       "route is how THOUGHT reaches the model.",
       "model is the selected AI model.",
@@ -7691,7 +8600,7 @@ const cliHelpLines = (topic = "") => {
     return [
       "run sends prompt + THOUGHT.md to the selected model.",
       "",
-      "one round only.",
+      "one model round.",
       "canvas out.",
       "",
       "use:",
@@ -7710,6 +8619,7 @@ const cliHelpLines = (topic = "") => {
       "",
       "use:",
       "work",
+      "work current",
       "work list",
       "work <id>",
       "work previous",
@@ -7720,7 +8630,7 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "provenance") {
     return [
-      "provenance records the run context.",
+      "provenance records the run and mint context.",
       "",
       "prompt, model, THOUGHT.md,",
       "route, hashes, and mint context.",
@@ -7735,10 +8645,10 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "mint") {
     return [
-      "mint keeps the current THOUGHT.",
+      "mint keeps the current work onchain.",
       "",
       "one THOUGHT needs one $PATH.",
-      "select $PATH · authorize · confirm",
+      "path / authorize / confirm.",
       "",
       "use:",
       "mint",
@@ -8252,8 +9162,143 @@ resetThoughtButton.addEventListener("click", () => {
   }
 });
 
+thoughtDetailViewTx.addEventListener("click", (event) => {
+  if (!currentThoughtDetail) {
+    event.preventDefault();
+    return;
+  }
+
+  if (!THOUGHT_EXPLORER_BASE_URL) {
+    event.preventDefault();
+    void copyThoughtDetailValue(currentThoughtDetail.txHash);
+  }
+});
+
+thoughtDetailTextHashLine.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailDisclosure(
+      thoughtDetailTextHashLine,
+      thoughtDetailTextHashPanel,
+      thoughtDetailTextHashText,
+      hashDisclosureLabel(currentThoughtDetail.textHash),
+      thoughtDetailTextHashLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailPromptHash.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailDisclosure(
+      thoughtDetailPromptHash,
+      thoughtDetailPromptHashPanel,
+      thoughtDetailPromptHashText,
+      hashDisclosureLabel(currentThoughtDetail.promptHash),
+      thoughtDetailPromptHashLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailModelReturnHash.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailDisclosure(
+      thoughtDetailModelReturnHash,
+      thoughtDetailModelReturnHashPanel,
+      thoughtDetailModelReturnHashText,
+      hashDisclosureLabel(currentThoughtDetail.returnedTextHash),
+      thoughtDetailModelReturnHashLines(currentThoughtDetail),
+    );
+  }
+});
+
+const toggleThoughtDetailMintEvidence = () => {
+  if (currentThoughtDetail) {
+    const labelMinter = shortDetailAddress(currentThoughtDetail.minter);
+    const labelTx = shortDetailHash(currentThoughtDetail.txHash);
+    const expanded = thoughtDetailMintEvidence.classList.contains("is-hidden");
+    if (expanded) {
+      thoughtDetailMintEvidenceText.textContent = thoughtDetailMintEvidenceLines(currentThoughtDetail).join("\n");
+    }
+    setThoughtDetailDisclosure(thoughtDetailMinter, thoughtDetailMintEvidence, labelMinter, expanded);
+    thoughtDetailTx.textContent = disclosureLabel(labelTx, expanded);
+    thoughtDetailTx.setAttribute("aria-expanded", String(expanded));
+    syncThoughtDetailEmbeddedHeights();
+  }
+};
+
+thoughtDetailMinter.addEventListener("click", () => {
+  toggleThoughtDetailMintEvidence();
+});
+
+thoughtDetailTx.addEventListener("click", () => {
+  toggleThoughtDetailMintEvidence();
+});
+
+thoughtDetailFetchPath.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailEvidence(
+      thoughtDetailPathEvidence,
+      thoughtDetailPathEvidenceText,
+      thoughtDetailPathEvidenceLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailViewSpec.addEventListener("click", () => {
+  void toggleThoughtDetailSpec();
+});
+
+thoughtDetailFetchSpec.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailEvidence(
+      thoughtDetailSpecEvidence,
+      thoughtDetailSpecEvidenceText,
+      thoughtDetailSpecEvidenceLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailSpec.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    const specHash = currentThoughtDetail.thoughtSpec.hash || currentThoughtDetail.thoughtSpec.id;
+    toggleThoughtDetailDisclosure(
+      thoughtDetailSpec,
+      thoughtDetailSpecHashPanel,
+      thoughtDetailSpecHashText,
+      hashDisclosureLabel(specHash),
+      thoughtDetailSpecHashLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailToggleJson.addEventListener("click", () => {
+  toggleThoughtDetailJson();
+});
+
+thoughtDetailFetchProvenance.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailEvidence(
+      thoughtDetailProvenanceEvidence,
+      thoughtDetailProvenanceEvidenceText,
+      thoughtDetailProvenanceEvidenceLines(currentThoughtDetail),
+    );
+  }
+});
+
+thoughtDetailProvenanceHashLine.addEventListener("click", () => {
+  if (currentThoughtDetail) {
+    toggleThoughtDetailDisclosure(
+      thoughtDetailProvenanceHashLine,
+      thoughtDetailProvenanceHashPanel,
+      thoughtDetailProvenanceHashText,
+      hashDisclosureLabel(currentThoughtDetail.provenanceHash),
+      thoughtDetailProvenanceHashLines(currentThoughtDetail),
+    );
+  }
+});
+
 const handleViewportResize = () => {
   syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+  syncThoughtDetailEmbeddedHeights();
 };
 
 window.addEventListener("resize", handleViewportResize);

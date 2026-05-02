@@ -3,18 +3,14 @@ export type WorkRunContext = {
   provider: string;
   model: string;
   prompt: string;
+  returnedText?: string;
   clientGeneratedAt: string;
-  capabilities?: {
-    webSearch: boolean;
-    structuredOutput: boolean;
-    stream: boolean;
-  };
   request?: {
-    maxOutputTokens: 128;
-    temperature: number;
-    topP: number;
-    topK: number | null;
-    seed: number | null;
+    maxOutputTokens: 128 | "128";
+  };
+  web?: {
+    enabled: boolean;
+    tool: string;
   };
   thoughtSpec?: {
     id: string;
@@ -25,17 +21,61 @@ export type WorkRunContext = {
 
 export type ThoughtWorkRecord = {
   id: number;
+  prompt: string;
+  returnedText: string;
+  text: string;
   title: string;
   rawOutput: string;
   image: string;
+  route: string;
+  provider: string;
+  model: string;
+  thoughtSpec?: {
+    id: string;
+    ref: string;
+    hash: string;
+  };
+  normalizer: {
+    id: "thought.normalize.v1";
+    source: "contract-view";
+  };
+  provenanceJson?: string;
+  provenanceBytes?: number;
+  hashes?: {
+    promptHash?: string;
+    returnedTextHash?: string;
+    textHash?: string;
+  };
   runContext: WorkRunContext;
   createdAt: string;
 };
 
 export type ThoughtWorkInput = {
+  prompt?: string;
+  returnedText?: string;
+  text?: string;
   title: string;
   rawOutput: string;
   image: string;
+  route?: string;
+  provider?: string;
+  model?: string;
+  thoughtSpec?: {
+    id: string;
+    ref: string;
+    hash: string;
+  };
+  normalizer?: {
+    id: "thought.normalize.v1";
+    source: "contract-view";
+  };
+  provenanceJson?: string;
+  provenanceBytes?: number;
+  hashes?: {
+    promptHash?: string;
+    returnedTextHash?: string;
+    textHash?: string;
+  };
   runContext: WorkRunContext;
   createdAt?: string;
 };
@@ -67,6 +107,7 @@ export const sanitizeWorkRecord = (value: unknown): ThoughtWorkRecord | null => 
 
   const candidate = value as Partial<ThoughtWorkRecord>;
   const id = candidate.id;
+  const runContext = candidate.runContext;
   if (
     !Number.isSafeInteger(id) ||
     id === undefined ||
@@ -76,17 +117,42 @@ export const sanitizeWorkRecord = (value: unknown): ThoughtWorkRecord | null => 
     typeof candidate.rawOutput !== "string" ||
     typeof candidate.image !== "string" ||
     typeof candidate.createdAt !== "string" ||
-    !isWorkRunContext(candidate.runContext)
+    !isWorkRunContext(runContext)
   ) {
     return null;
   }
 
+  const text = typeof candidate.text === "string" && candidate.text.trim()
+    ? candidate.text
+    : candidate.title;
+  const returnedText = typeof candidate.returnedText === "string"
+    ? candidate.returnedText
+    : candidate.rawOutput;
+  const prompt = typeof candidate.prompt === "string" ? candidate.prompt : runContext.prompt;
+
   return {
     id,
+    prompt,
+    returnedText,
+    text,
     title: candidate.title,
     rawOutput: candidate.rawOutput,
     image: candidate.image,
-    runContext: candidate.runContext,
+    route: typeof candidate.route === "string" ? candidate.route : runContext.mode,
+    provider: typeof candidate.provider === "string" ? candidate.provider : runContext.provider,
+    model: typeof candidate.model === "string" ? candidate.model : runContext.model,
+    thoughtSpec: candidate.thoughtSpec ?? runContext.thoughtSpec,
+    normalizer: candidate.normalizer ?? {
+      id: "thought.normalize.v1",
+      source: "contract-view",
+    },
+    provenanceJson: typeof candidate.provenanceJson === "string" ? candidate.provenanceJson : undefined,
+    provenanceBytes: typeof candidate.provenanceBytes === "number" ? candidate.provenanceBytes : undefined,
+    hashes: candidate.hashes,
+    runContext: {
+      ...runContext,
+      returnedText: runContext.returnedText ?? returnedText,
+    },
     createdAt: candidate.createdAt,
   };
 };
@@ -137,10 +203,27 @@ export const appendThoughtWork = (
   const maxId = existingWorks.reduce((max, work) => Math.max(max, work.id), 0);
   const work: ThoughtWorkRecord = {
     id: maxId + 1,
+    prompt: input.prompt ?? input.runContext.prompt,
+    returnedText: input.returnedText ?? input.rawOutput,
+    text: input.text ?? input.title,
     title: input.title,
     rawOutput: input.rawOutput,
     image: input.image,
-    runContext: input.runContext,
+    route: input.route ?? input.runContext.mode,
+    provider: input.provider ?? input.runContext.provider,
+    model: input.model ?? input.runContext.model,
+    thoughtSpec: input.thoughtSpec ?? input.runContext.thoughtSpec,
+    normalizer: input.normalizer ?? {
+      id: "thought.normalize.v1",
+      source: "contract-view",
+    },
+    provenanceJson: input.provenanceJson,
+    provenanceBytes: input.provenanceBytes,
+    hashes: input.hashes,
+    runContext: {
+      ...input.runContext,
+      returnedText: input.runContext.returnedText ?? input.returnedText ?? input.rawOutput,
+    },
     createdAt: input.createdAt ?? new Date().toISOString(),
   };
 

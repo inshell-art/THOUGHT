@@ -21,22 +21,39 @@ const runContext = {
   provider: "openrouter",
   model: "meta-llama/llama-3.3-70b-instruct:free",
   prompt: "when will we be done?",
+  returnedText: "hello",
   clientGeneratedAt: "2026-04-29T00:00:00.000Z",
 };
 
 const makeInput = (title: string, createdAt = "2026-04-29T00:00:00.000Z"): ThoughtWorkInput => ({
+  prompt: runContext.prompt,
+  returnedText: title.toLowerCase(),
+  text: title,
   title,
   rawOutput: title.toLowerCase(),
   image: `data:image/svg+xml,${title}`,
+  route: runContext.mode,
+  provider: runContext.provider,
+  model: runContext.model,
   runContext,
   createdAt,
 });
 
 const makeWork = (id: number, title = `WORK ${id}`): ThoughtWorkRecord => ({
   id,
+  prompt: runContext.prompt,
+  returnedText: title.toLowerCase(),
+  text: title,
   title,
   rawOutput: title.toLowerCase(),
   image: `data:image/svg+xml,${title}`,
+  route: runContext.mode,
+  provider: runContext.provider,
+  model: runContext.model,
+  normalizer: {
+    id: "thought.normalize.v1",
+    source: "contract-view",
+  },
   runContext,
   createdAt: "2026-04-29T00:00:00.000Z",
 });
@@ -64,6 +81,27 @@ describe("thought works", () => {
     expect(sanitizeWorkRecord({ ...valid, runContext: { ...runContext, mode: "unknown" } })).toBeNull();
     expect(sanitizeWorkRecord({ ...valid, runContext: { ...runContext, prompt: 1 } })).toBeNull();
     expect(sanitizeWorkRecord(null)).toBeNull();
+  });
+
+  it("fills model return fields for legacy records", () => {
+    const legacy = {
+      id: 1,
+      title: "HELLO",
+      rawOutput: "hello",
+      image: "data:image/svg+xml,HELLO",
+      runContext: { ...runContext, returnedText: undefined },
+      createdAt: "2026-04-29T00:00:00.000Z",
+    };
+
+    expect(sanitizeWorkRecord(legacy)).toMatchObject({
+      text: "HELLO",
+      returnedText: "hello",
+      prompt: runContext.prompt,
+      normalizer: {
+        id: "thought.normalize.v1",
+        source: "contract-view",
+      },
+    });
   });
 
   it("reads only valid records from session storage", () => {

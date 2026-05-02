@@ -2,18 +2,13 @@ export type ThoughtRunRoute = "connect" | "direct" | "local";
 
 export type ThoughtRunProvider = "openrouter" | "openai" | "anthropic" | "ollama";
 
-export type ThoughtRunCapabilities = {
-  webSearch: boolean;
-  structuredOutput: boolean;
-  stream: boolean;
+export type ThoughtRunProvenanceRequestConfig = {
+  maxOutputTokens: "128";
 };
 
-export type ThoughtRunRequestConfig = {
-  maxOutputTokens: 128;
-  temperature: number;
-  topP: number;
-  topK: number | null;
-  seed: number | null;
+export type ThoughtRunWebConfig = {
+  enabled: boolean;
+  tool: string;
 };
 
 export type ThoughtRunSpec = {
@@ -28,8 +23,10 @@ export type ThoughtRunPayload = {
     route: ThoughtRunRoute;
     provider: ThoughtRunProvider;
     model: string;
-    capabilities: ThoughtRunCapabilities;
-    request: ThoughtRunRequestConfig;
+    request: {
+      maxOutputTokens: 128;
+    };
+    web: ThoughtRunWebConfig;
   };
   input: {
     thoughtSpec: ThoughtRunSpec;
@@ -43,11 +40,24 @@ export type ThoughtRunPayload = {
 };
 
 export const THOUGHT_MAX_OUTPUT_TOKENS = 128 as const;
-export const THOUGHT_RUN_TEMPERATURE = 0.7;
-export const THOUGHT_RUN_TOP_P = 1;
 
 export const supportsProviderWebSearch = (provider: ThoughtRunProvider) =>
   provider === "openrouter" || provider === "openai" || provider === "anthropic";
+
+export const thoughtRunWebConfig = (input: {
+  route: ThoughtRunRoute;
+  provider: ThoughtRunProvider;
+}): ThoughtRunWebConfig => {
+  const enabled = input.route !== "local" && supportsProviderWebSearch(input.provider);
+  return {
+    enabled,
+    tool: enabled
+      ? input.provider === "openrouter"
+        ? "openrouter:web_search"
+        : `${input.provider}:web_search`
+      : "unavailable",
+  };
+};
 
 export const buildThoughtRunPayload = (input: {
   route: ThoughtRunRoute;
@@ -56,25 +66,15 @@ export const buildThoughtRunPayload = (input: {
   prompt: string;
   thoughtSpec: ThoughtRunSpec;
 }): ThoughtRunPayload => {
-  const webSearch = input.route !== "local" && supportsProviderWebSearch(input.provider);
-
   return {
     config: {
       route: input.route,
       provider: input.provider,
       model: input.model,
-      capabilities: {
-        webSearch,
-        structuredOutput: false,
-        stream: false,
-      },
       request: {
         maxOutputTokens: THOUGHT_MAX_OUTPUT_TOKENS,
-        temperature: THOUGHT_RUN_TEMPERATURE,
-        topP: THOUGHT_RUN_TOP_P,
-        topK: null,
-        seed: null,
       },
+      web: thoughtRunWebConfig(input),
     },
     input: {
       thoughtSpec: input.thoughtSpec,
@@ -97,8 +97,10 @@ export const thoughtRunProvenanceConfig = (payload: ThoughtRunPayload) => ({
   route: payload.config.route,
   provider: payload.config.provider,
   model: payload.config.model,
-  capabilities: payload.config.capabilities,
-  request: payload.config.request,
+  request: {
+    maxOutputTokens: String(payload.config.request.maxOutputTokens) as "128",
+  },
+  web: payload.config.web,
   thoughtSpec: thoughtRunSpecAnchor(payload),
 });
 
@@ -109,9 +111,7 @@ export const toOpenRouterChatPayload = (payload: ThoughtRunPayload) => ({
     { role: "user", content: payload.input.prompt },
   ],
   max_tokens: payload.config.request.maxOutputTokens,
-  temperature: payload.config.request.temperature,
-  top_p: payload.config.request.topP,
-  ...(payload.config.capabilities.webSearch
+  ...(payload.config.web.enabled
     ? { tools: [{ type: "openrouter:web_search" }] }
     : {}),
 });
@@ -131,10 +131,8 @@ export const toOpenAIResponsesPayload = (payload: ThoughtRunPayload) => ({
     },
   ],
   max_output_tokens: payload.config.request.maxOutputTokens,
-  temperature: payload.config.request.temperature,
-  top_p: payload.config.request.topP,
   store: false,
-  ...(payload.config.capabilities.webSearch
+  ...(payload.config.web.enabled
     ? { tools: [{ type: "web_search" }], tool_choice: "auto" }
     : {}),
 });
@@ -143,10 +141,8 @@ export const toAnthropicMessagesPayload = (payload: ThoughtRunPayload) => ({
   model: payload.config.model,
   system: payload.input.thoughtSpec.text,
   max_tokens: payload.config.request.maxOutputTokens,
-  temperature: payload.config.request.temperature,
-  top_p: payload.config.request.topP,
   messages: [{ role: "user", content: payload.input.prompt }],
-  ...(payload.config.capabilities.webSearch
+  ...(payload.config.web.enabled
     ? {
         tools: [
           {
@@ -165,8 +161,5 @@ export const toOllamaGeneratePayload = (payload: ThoughtRunPayload) => ({
   stream: false,
   options: {
     num_predict: payload.config.request.maxOutputTokens,
-    temperature: payload.config.request.temperature,
-    top_p: payload.config.request.topP,
-    seed: payload.config.request.seed,
   },
 });

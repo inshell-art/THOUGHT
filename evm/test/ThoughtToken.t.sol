@@ -7,6 +7,7 @@ import {ThoughtToken} from "../src/ThoughtToken.sol";
 interface Vm {
     function addr(uint256 privateKey) external returns (address);
     function expectEmit(bool checkTopic1, bool checkTopic2, bool checkTopic3, bool checkData) external;
+    function expectRevert(bytes calldata revertData) external;
     function prank(address msgSender) external;
     function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
 }
@@ -92,11 +93,12 @@ contract ThoughtTokenTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 private constant USER_KEY = 0xA11CE;
     uint256 private constant OTHER_KEY = 0xB0B;
-    string private constant DEFAULT_PROVENANCE = '{"schema":"thought.provenance.v1"}';
+    string private constant DEFAULT_PROVENANCE = '{"schema":"thought.provenance.v1","route":"local"}';
     bytes32 private constant DEFAULT_SPEC_ID = keccak256("thought.md.v1");
     bytes32 private constant DEFAULT_SPEC_HASH = keccak256("THOUGHT.md fixture");
     string private constant DEFAULT_SPEC_REF = "THOUGHT.md@v1";
     string private constant DEFAULT_SPEC_TEXT = "THOUGHT.md fixture";
+    bytes32 private constant DEFAULT_PROMPT_HASH = keccak256("why we are here?");
     bytes32 private constant CONSUME_AUTHORIZATION_TYPEHASH = keccak256(
         "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 nonce,uint256 deadline)"
     );
@@ -199,15 +201,46 @@ contract ThoughtTokenTest {
         registry.registerSpec(keccak256("gas.spec.16kb"), "gas.spec.16kb", _bytesRepeat("S", 16_384), false);
     }
 
-    function testNormalizeThoughtKeepsOnlyEnglishLetters() public view {
+    function testNormalizeThoughtKeepsReadableSingleSpaces() public view {
         string memory normalized = token.normalizeThought("hello, WORLD!!! 42");
-        require(_equal(normalized, "HELLOWORLD"), "unexpected normalization");
+        require(_equal(normalized, "HELLO WORLD"), "unexpected normalization");
+    }
+
+    function testTextCodecPreviewsCanonicalText() public view {
+        (string memory normalized, bool valid, uint8 reasonCode) = token.previewText("hello, WORLD!!! 42");
+        require(_equal(normalized, "HELLO WORLD"), "unexpected preview text");
+        require(valid, "preview should be valid");
+        require(reasonCode == 0, "unexpected reason");
+        require(token.MAX_TEXT_BYTES() == 1024, "unexpected text cap");
+        require(token.isCanonicalText("HELLO WORLD"), "canonical text should be valid");
+        require(!token.isCanonicalText("hello"), "lowercase text is not canonical");
+        require(!token.isCanonicalText("HELLO  WORLD"), "repeated spaces are not canonical");
+        require(token.textHashOf("HELLO WORLD") == keccak256(bytes("HELLO WORLD")), "unexpected codec hash");
+    }
+
+    function testMintRejectsNonCanonicalText() public {
+        ConsumeAuth memory auth = _signConsume(1, USER_KEY);
+        vm.prank(user);
+        (bool ok,) = address(token).call(
+            abi.encodeWithSelector(
+                token.mint.selector,
+                "hello",
+                1,
+                DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
+                DEFAULT_PROVENANCE,
+                auth.deadline,
+                auth.signature
+            )
+        );
+        require(!ok, "mint should reject noncanonical text");
+        require(!path.thoughtConsumed(1), "noncanonical text should not consume path");
     }
 
     function testMintStoresRawTextProvenanceAndOwnership() public {
-        string memory text = "  hello, world!!! 42  ";
+        string memory text = "HELLOWORLD";
         string memory storedText = "HELLOWORLD";
-        string memory provenance = '{"schema":"thought.provenance.v1","mode":"local"}';
+        string memory provenance = '{"schema":"thought.provenance.v1","route":"local"}';
         uint256 tokenId = _mintAsUserWithProvenance(text, provenance, 1, USER_KEY);
         bytes32 textHash = keccak256(bytes(storedText));
         bytes32 provenanceHash = keccak256(bytes(provenance));
@@ -231,18 +264,29 @@ contract ThoughtTokenTest {
         require(_equal(record.rawText, storedText), "record raw text mismatch");
         require(_equal(record.provenanceJson, provenance), "record provenance mismatch");
         require(record.textHash == textHash, "record text hash mismatch");
+        require(record.promptHash == DEFAULT_PROMPT_HASH, "record prompt hash mismatch");
         require(record.provenanceHash == provenanceHash, "record provenance hash mismatch");
         require(record.thoughtSpecId == DEFAULT_SPEC_ID, "record spec mismatch");
         require(record.pathId == 1, "record path mismatch");
         require(record.minter == user, "record minter mismatch");
         require(record.mintedAt == uint64(block.timestamp), "record mintedAt mismatch");
 
-        ThoughtToken.ThoughtRecord memory storedRecord = token.recordOf(tokenId);
-        require(storedRecord.textHash == textHash, "recordOf text hash mismatch");
-        require(storedRecord.provenanceHash == provenanceHash, "recordOf provenance hash mismatch");
-        require(storedRecord.thoughtSpecId == DEFAULT_SPEC_ID, "recordOf spec mismatch");
-        require(storedRecord.pathId == 1, "recordOf path mismatch");
-        require(storedRecord.mintedAt == uint64(block.timestamp), "recordOf mintedAt mismatch");
+        (
+            bytes32 recordTextHash,
+            bytes32 recordPromptHash,
+            bytes32 recordProvenanceHash,
+            bytes32 recordSpecId,
+            uint256 recordPathId,
+            address recordMinter,
+            uint64 recordMintedAt
+        ) = token.recordOf(tokenId);
+        require(recordTextHash == textHash, "recordOf text hash mismatch");
+        require(recordPromptHash == DEFAULT_PROMPT_HASH, "recordOf prompt hash mismatch");
+        require(recordProvenanceHash == provenanceHash, "recordOf provenance hash mismatch");
+        require(recordSpecId == DEFAULT_SPEC_ID, "recordOf spec mismatch");
+        require(recordPathId == 1, "recordOf path mismatch");
+        require(recordMinter == user, "recordOf minter mismatch");
+        require(recordMintedAt == uint64(block.timestamp), "recordOf mintedAt mismatch");
     }
 
     function testRenderThoughtSvgIncludesExpectedColorsAndText() public view {
@@ -251,11 +295,11 @@ contract ThoughtTokenTest {
         require(_contains(svg, "#ffcc00"), "missing H color");
         require(_contains(svg, "#ffff00"), "missing Y color");
         require(_contains(svg, "#008080"), "missing T color");
-        require(_contains(svg, ">WHYTAG</text>"), "missing rendered text");
+        require(_contains(svg, ">WHY TAG</text>"), "missing rendered text");
     }
 
     function testTokenUriIsDataUriJson() public {
-        uint256 tokenId = _mintAsUser("hello world", 1, USER_KEY);
+        uint256 tokenId = _mintAsUser("HELLOWORLD", 1, USER_KEY);
         string memory uri = token.tokenURI(tokenId);
         require(_contains(uri, "data:application/json;base64,"), "missing json data uri prefix");
     }
@@ -270,6 +314,7 @@ contract ThoughtTokenTest {
                 "HELLO",
                 1,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -291,6 +336,7 @@ contract ThoughtTokenTest {
                 text,
                 1,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -310,6 +356,7 @@ contract ThoughtTokenTest {
                 "HELLO",
                 1,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -320,16 +367,17 @@ contract ThoughtTokenTest {
     }
 
     function testPathThoughtQuotaIsOne() public {
-        _mintAsUser("first", 1, USER_KEY);
+        _mintAsUser("FIRST", 1, USER_KEY);
 
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
         (bool ok,) = address(token).call(
             abi.encodeWithSelector(
                 token.mint.selector,
-                "second",
+                "SECOND",
                 1,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -341,7 +389,7 @@ contract ThoughtTokenTest {
 
     function testDuplicateCanonicalTextRevertsEvenWithDifferentProvenance() public {
         string memory text = "HELLO";
-        _mintAsUserWithProvenance("  hello123  ", '{"schema":"thought.provenance.v1","run":"a"}', 1, USER_KEY);
+        _mintAsUserWithProvenance("HELLO", '{"schema":"thought.provenance.v1","run":"a"}', 1, USER_KEY);
         bytes32 textHash = keccak256(bytes(text));
         require(token.isThoughtMinted(textHash), "canonical text should be marked minted");
         require(_equal(token.thoughtText(1), text), "stored text should be canonical");
@@ -351,9 +399,10 @@ contract ThoughtTokenTest {
         (bool ok,) = address(token).call(
             abi.encodeWithSelector(
                 token.mint.selector,
-                "h-e-l-l-o",
+                "HELLO",
                 2,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 '{"schema":"thought.provenance.v1","run":"b"}',
                 auth.deadline,
                 auth.signature
@@ -366,8 +415,8 @@ contract ThoughtTokenTest {
 
     function testSameProvenanceWithDifferentCanonicalTextIsAllowed() public {
         string memory provenance = '{"schema":"thought.provenance.v1","run":"same"}';
-        uint256 firstTokenId = _mintAsUserWithProvenance("hello", provenance, 1, USER_KEY);
-        uint256 secondTokenId = _mintAsUserWithProvenance("world!", provenance, 2, USER_KEY);
+        uint256 firstTokenId = _mintAsUserWithProvenance("HELLO", provenance, 1, USER_KEY);
+        uint256 secondTokenId = _mintAsUserWithProvenance("WORLD", provenance, 2, USER_KEY);
 
         require(firstTokenId == 1, "unexpected first token");
         require(secondTokenId == 2, "unexpected second token");
@@ -375,9 +424,9 @@ contract ThoughtTokenTest {
     }
 
     function testDifferentEnglishLettersAreDifferentTexts() public {
-        _mintAsUser("hello", 1, USER_KEY);
-        _mintAsUser("helloo", 2, USER_KEY);
-        _mintAsUser("helloworld", 3, USER_KEY);
+        _mintAsUser("HELLO", 1, USER_KEY);
+        _mintAsUser("HELLOO", 2, USER_KEY);
+        _mintAsUser("HELLOWORLD", 3, USER_KEY);
 
         require(token.totalSupply() == 3, "distinct stored titles should mint");
     }
@@ -391,6 +440,7 @@ contract ThoughtTokenTest {
                 "",
                 1,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -407,6 +457,7 @@ contract ThoughtTokenTest {
                 " \n\t ",
                 2,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 whitespaceAuth.deadline,
                 whitespaceAuth.signature
@@ -423,6 +474,7 @@ contract ThoughtTokenTest {
                 "12345!!!",
                 3,
                 DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 numberAuth.deadline,
                 numberAuth.signature
@@ -436,7 +488,16 @@ contract ThoughtTokenTest {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
         (bool ok,) = address(token).call(
-            abi.encodeWithSelector(token.mint.selector, "hello", 1, DEFAULT_SPEC_ID, "", auth.deadline, auth.signature)
+            abi.encodeWithSelector(
+                token.mint.selector,
+                "HELLO",
+                1,
+                DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
+                "",
+                auth.deadline,
+                auth.signature
+            )
         );
         require(!ok, "empty provenance should fail");
         require(!path.thoughtConsumed(1), "empty provenance should not consume path");
@@ -449,9 +510,10 @@ contract ThoughtTokenTest {
         (bool ok,) = address(token).call(
             abi.encodeWithSelector(
                 token.mint.selector,
-                "hello",
+                "HELLO",
                 1,
                 unknownSpecId,
+                DEFAULT_PROMPT_HASH,
                 DEFAULT_PROVENANCE,
                 auth.deadline,
                 auth.signature
@@ -461,22 +523,18 @@ contract ThoughtTokenTest {
         require(!path.thoughtConsumed(1), "unknown spec should not consume path");
     }
 
-    function testOversizeRawTextReverts() public {
-        string memory text = _repeat("A", token.MAX_RAW_TEXT_BYTES() + 1);
+    function testOversizeTextReverts() public {
+        string memory text = _repeat("A", token.MAX_TEXT_BYTES() + 1);
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
+        vm.expectRevert(
             abi.encodeWithSelector(
-                token.mint.selector,
-                text,
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
+                ThoughtToken.ThoughtTextTooLarge.selector,
+                bytes(text).length,
+                token.MAX_TEXT_BYTES()
             )
         );
-        require(!ok, "oversize raw text should fail");
+        token.mint(text, 1, DEFAULT_SPEC_ID, DEFAULT_PROMPT_HASH, DEFAULT_PROVENANCE, auth.deadline, auth.signature);
         require(!path.thoughtConsumed(1), "oversize text should not consume path");
     }
 
@@ -485,38 +543,43 @@ contract ThoughtTokenTest {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
         (bool ok,) = address(token).call(
-            abi.encodeWithSelector(token.mint.selector, "hello", 1, DEFAULT_SPEC_ID, provenance, auth.deadline, auth.signature)
+            abi.encodeWithSelector(
+                token.mint.selector,
+                "HELLO",
+                1,
+                DEFAULT_SPEC_ID,
+                DEFAULT_PROMPT_HASH,
+                provenance,
+                auth.deadline,
+                auth.signature
+            )
         );
         require(!ok, "oversize provenance should fail");
         require(!path.thoughtConsumed(1), "oversize provenance should not consume path");
     }
 
     function testGas_mint_provenance_512b() public {
-        _mintAsUserWithProvenance("gasfiveonetwo", _repeat("P", 512), 1, USER_KEY);
+        _mintAsUserWithProvenance("GASFIVEONETWO", _repeat("P", 512), 1, USER_KEY);
     }
 
     function testGas_mint_provenance_700b() public {
-        _mintAsUserWithProvenance("gassevenhundred", _repeat("P", 700), 1, USER_KEY);
+        _mintAsUserWithProvenance("GASSEVENHUNDRED", _repeat("P", 700), 1, USER_KEY);
     }
 
     function testGas_mint_provenance_900b() public {
-        _mintAsUserWithProvenance("gasninehundred", _repeat("P", 900), 1, USER_KEY);
+        _mintAsUserWithProvenance("GASNINEHUNDRED", _repeat("P", 900), 1, USER_KEY);
     }
 
-    function testGas_mint_provenance_1024b() public {
-        _mintAsUserWithProvenance("gasonetwentyfour", _repeat("P", 1024), 1, USER_KEY);
+    function testGas_mint_provenance_2048b() public {
+        _mintAsUserWithProvenance("GASTWENTYFORTYEIGHT", _repeat("P", 2048), 1, USER_KEY);
     }
 
-    function testGas_revert_provenance_1500b() public {
-        _assertOversizeProvenanceReverts(_repeat("P", 1500), 1);
-    }
-
-    function testGas_revert_provenance_2048b() public {
-        _assertOversizeProvenanceReverts(_repeat("P", 2048), 1);
+    function testGas_revert_provenance_2049b() public {
+        _assertOversizeProvenanceReverts(_repeat("P", 2049), 1);
     }
 
     function testMintEventIncludesProvenanceFields() public {
-        string memory text = "  hello  ";
+        string memory text = "HELLO";
         string memory storedText = "HELLO";
         string memory provenance = '{"schema":"thought.provenance.v1","event":"yes"}';
         bytes32 textHash = keccak256(bytes(storedText));
@@ -545,7 +608,7 @@ contract ThoughtTokenTest {
     ) private returns (uint256 tokenId) {
         ConsumeAuth memory auth = _signConsume(pathId, privateKey);
         vm.prank(user);
-        return token.mint(text, pathId, DEFAULT_SPEC_ID, provenance, auth.deadline, auth.signature);
+        return token.mint(text, pathId, DEFAULT_SPEC_ID, DEFAULT_PROMPT_HASH, provenance, auth.deadline, auth.signature);
     }
 
     function _signConsume(uint256 pathId, uint256 privateKey) private returns (ConsumeAuth memory auth) {
@@ -573,18 +636,22 @@ contract ThoughtTokenTest {
     function _assertOversizeProvenanceReverts(string memory provenance, uint256 pathId) private {
         ConsumeAuth memory auth = _signConsume(pathId, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
+        vm.expectRevert(
             abi.encodeWithSelector(
-                token.mint.selector,
-                "oversize",
-                pathId,
-                DEFAULT_SPEC_ID,
-                provenance,
-                auth.deadline,
-                auth.signature
+                ThoughtToken.ProvenanceTooLarge.selector,
+                bytes(provenance).length,
+                token.MAX_PROVENANCE_BYTES()
             )
         );
-        require(!ok, "oversize provenance should fail");
+        token.mint(
+            "OVERSIZE",
+            pathId,
+            DEFAULT_SPEC_ID,
+            DEFAULT_PROMPT_HASH,
+            provenance,
+            auth.deadline,
+            auth.signature
+        );
         require(!path.thoughtConsumed(pathId), "oversize provenance should not consume path");
     }
 
