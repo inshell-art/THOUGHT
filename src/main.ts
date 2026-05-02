@@ -1671,7 +1671,12 @@ const loadActiveThoughtSpec = async () => {
   return spec;
 };
 
-const ensureActiveThoughtSpec = async () => {
+const ensureActiveThoughtSpec = async (options: { force?: boolean } = {}) => {
+  if (options.force) {
+    activeThoughtSpec = null;
+    activeThoughtSpecPromise = null;
+  }
+
   if (activeThoughtSpec) {
     return activeThoughtSpec;
   }
@@ -4144,7 +4149,7 @@ const toggleThoughtDetailSpec = async () => {
   syncThoughtDetailEmbeddedHeights();
 
   try {
-    await ensureActiveThoughtSpec();
+    await ensureActiveThoughtSpec({ force: true });
     if (!activeThoughtSpec || !activeSpecMatchesThoughtDetail(currentThoughtDetail, activeThoughtSpec)) {
       thoughtDetailSpecText.textContent = "spec unavailable.";
       syncThoughtDetailEmbeddedHeights();
@@ -5839,7 +5844,7 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
   let thoughtRunPayload: ThoughtRunPayload | null = null;
 
   try {
-    await ensureActiveThoughtSpec();
+    await ensureActiveThoughtSpec({ force: true });
     if (!isCurrentRunSession(runId)) {
       return;
     }
@@ -7593,7 +7598,7 @@ const thoughtInstructionsUsageLines = (
 
 const outputCliThoughtInstructions = async (topic: string) => {
   try {
-    await ensureActiveThoughtSpec();
+    await ensureActiveThoughtSpec({ force: true });
     syncThoughtInstructionsControls();
   } catch (error) {
     appendCliOutput(
