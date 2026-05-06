@@ -306,6 +306,11 @@ contract ThoughtToken {
         return _buildSvg(_thoughts[tokenId].rawText);
     }
 
+    function svgOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+        return _buildSvg(_thoughts[tokenId].rawText);
+    }
+
     function setMintPrice(uint256 newMintPrice) external onlyOwner {
         mintPrice = newMintPrice;
     }
@@ -433,7 +438,27 @@ contract ThoughtToken {
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
 
-        return _buildSvg(_thoughts[tokenId].rawText);
+        ThoughtRecord storage record = _thoughts[tokenId];
+        string memory textHash = _bytes32ToHex(record.textHash);
+        string memory provenanceHash = _bytes32ToHex(record.provenanceHash);
+        string memory thoughtSpecId = _bytes32ToHex(record.thoughtSpecId);
+        string memory svg = _buildSvg(record.rawText);
+        string memory metadata = string.concat(
+            '{"name":"THOUGHT #',
+            _toString(tokenId),
+            '","description":"One THOUGHT minted with one PATH.',
+            '","image":"data:image/svg+xml;base64,',
+            _base64Encode(bytes(svg)),
+            '","attributes":',
+            _tokenAttributes(record, textHash, provenanceHash, thoughtSpecId),
+            ',"properties":',
+            _tokenProperties(record, textHash, provenanceHash, thoughtSpecId),
+            ',"thought":',
+            _tokenThought(record.rawText, record.provenanceJson),
+            "}"
+        );
+
+        return string.concat("data:application/json;base64,", _base64Encode(bytes(metadata)));
     }
 
     function _tokenAttributes(
@@ -602,7 +627,9 @@ contract ThoughtToken {
         bytes memory chars = bytes(text);
         bytes memory body = abi.encodePacked(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 960' shape-rendering='crispEdges'>",
-            "<rect width='960' height='960' fill='#050505'/>"
+            "<defs><clipPath id='canvasClip'><rect x='0' y='0' width='960' height='960'/></clipPath></defs>",
+            "<rect width='960' height='960' fill='#050505'/>",
+            "<g clip-path='url(#canvasClip)'>"
         );
 
         if (chars.length > 0) {
@@ -618,18 +645,18 @@ contract ThoughtToken {
             }
 
             uint256 rowWidth = (chars.length * imageSize) + (chars.length > 1 ? (chars.length - 1) * gap : 0);
-            uint256 xStart = (CANVAS_SIZE - rowWidth) / 2;
+            int256 xStart = (int256(CANVAS_SIZE) - int256(rowWidth)) / 2;
             uint256 yStart = (CANVAS_SIZE - imageSize) / 2;
 
             for (uint256 i = 0; i < chars.length; i++) {
                 if (chars[i] == bytes1(uint8(32))) {
                     continue;
                 }
-                uint256 x = xStart + (i * (imageSize + gap));
+                int256 x = xStart + int256(i * (imageSize + gap));
                 body = abi.encodePacked(
                     body,
                     "<rect x='",
-                    _toString(x),
+                    _toSignedString(x),
                     "' y='",
                     _toString(yStart),
                     "' width='",
@@ -654,7 +681,7 @@ contract ThoughtToken {
             );
         }
 
-        return string(abi.encodePacked(body, "</svg>"));
+        return string(abi.encodePacked(body, "</g></svg>"));
     }
 
     function _textSize(uint256 charCount) private pure returns (uint256) {
@@ -771,6 +798,48 @@ contract ThoughtToken {
         return string.concat('"', _jsonEscape(value), '"');
     }
 
+    function _base64Encode(bytes memory data) private pure returns (string memory) {
+        if (data.length == 0) {
+            return "";
+        }
+
+        string memory table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        uint256 encodedLength = 4 * ((data.length + 2) / 3);
+        string memory result = new string(encodedLength);
+
+        assembly {
+            let tablePtr := add(table, 1)
+            let dataPtr := data
+            let endPtr := add(dataPtr, mload(data))
+            let resultPtr := add(result, 32)
+
+            for {} lt(dataPtr, endPtr) {} {
+                dataPtr := add(dataPtr, 3)
+                let input := mload(dataPtr)
+
+                mstore8(resultPtr, mload(add(tablePtr, and(shr(18, input), 0x3f))))
+                resultPtr := add(resultPtr, 1)
+                mstore8(resultPtr, mload(add(tablePtr, and(shr(12, input), 0x3f))))
+                resultPtr := add(resultPtr, 1)
+                mstore8(resultPtr, mload(add(tablePtr, and(shr(6, input), 0x3f))))
+                resultPtr := add(resultPtr, 1)
+                mstore8(resultPtr, mload(add(tablePtr, and(input, 0x3f))))
+                resultPtr := add(resultPtr, 1)
+            }
+
+            switch mod(mload(data), 3)
+            case 1 {
+                mstore8(sub(resultPtr, 1), 0x3d)
+                mstore8(sub(resultPtr, 2), 0x3d)
+            }
+            case 2 {
+                mstore8(sub(resultPtr, 1), 0x3d)
+            }
+        }
+
+        return result;
+    }
+
     function _jsonEscape(string memory value) private pure returns (string memory) {
         bytes memory input = bytes(value);
         uint256 outputLen = 0;
@@ -849,6 +918,13 @@ contract ThoughtToken {
             output[3 + i * 2] = HEX_DIGITS[charCode & 0x0f];
         }
         return string(output);
+    }
+
+    function _toSignedString(int256 value) private pure returns (string memory) {
+        if (value >= 0) {
+            return _toString(uint256(value));
+        }
+        return string.concat("-", _toString(uint256(-value)));
     }
 
     function _toString(uint256 value) private pure returns (string memory) {

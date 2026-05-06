@@ -2,7 +2,7 @@
   "rpcUrl": "http://192.168.0.104:8545",
   "chainId": 31337,
   "pathNft": {
-    "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    "address": "0x18E317A7D70d8fBf8e6E893616b52390EbBdb629"
   },
   "pathMovement": {
     "name": "THOUGHT",
@@ -18,13 +18,13 @@
     "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
   },
   "seedGenerator": {
-    "address": "0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0"
+    "address": "0xfaAddC93baf78e89DCf37bA67943E1bE8F37Bb8c"
   },
   "thoughtPreviewer": {
-    "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+    "address": "0x276C216D241856199A83bf27b2286659e5b877D3"
   },
   "thoughtSpecRegistry": {
-    "address": "0x9A676e781A523b5d0C0e43731313A708CB607508"
+    "address": "0x3347B4d90ebe72BeFb30444C9966B2B990aE9FcB"
   },
   "thoughtSpec": {
     "id": "0x8fc42f89db7b496e5402316bc66a1c9d003050e256accadaa81adb6967306380",
@@ -32,6 +32,6 @@
     "ref": "THOUGHT.md@v1"
   },
   "thoughtToken": {
-    "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1"
+    "address": "0x5bf5b11053e734690269C6B9D438F8C9d48F528A"
   }
 }

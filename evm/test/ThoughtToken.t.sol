@@ -295,14 +295,26 @@ contract ThoughtTokenTest {
         require(_contains(svg, "#ffcc00"), "missing H color");
         require(_contains(svg, "#ffff00"), "missing Y color");
         require(_contains(svg, "#008080"), "missing T color");
+        require(_contains(svg, "<clipPath id='canvasClip'>"), "missing canvas clip");
+        require(_contains(svg, "<g clip-path='url(#canvasClip)'>"), "missing clipped content group");
         require(_contains(svg, ">WHY TAG</text>"), "missing rendered text");
     }
 
-    function testTokenUriIsRawSvg() public {
+    function testRenderThoughtSvgIncludesCanvasClip() public view {
+        string memory svg = token.renderThoughtSvg("HELLO");
+        require(_contains(svg, "<clipPath id='canvasClip'>"), "missing canvas clip");
+        require(_contains(svg, "<g clip-path='url(#canvasClip)'>"), "missing clipped content group");
+        require(_contains(svg, ">HELLO</text>"), "missing rendered text");
+    }
+
+    function testTokenUriIsMetadataJsonWithOnchainSvgImage() public {
         uint256 tokenId = _mintAsUser("HELLOWORLD", 1, USER_KEY);
         string memory uri = token.tokenURI(tokenId);
-        require(_contains(uri, "<svg"), "missing svg root");
-        require(_contains(uri, ">HELLOWORLD</text>"), "missing rendered text");
+        string memory svg = token.svgOf(tokenId);
+        require(_contains(uri, "data:application/json;base64,"), "missing metadata data uri");
+        require(_contains(svg, "<svg"), "missing svg root");
+        require(_contains(svg, ">HELLOWORLD</text>"), "missing rendered text");
+        require(_equal(svg, token.renderTokenSvg(tokenId)), "svg helper mismatch");
     }
 
     function testMintPriceIsEnforced() public {

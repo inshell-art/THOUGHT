@@ -4563,9 +4563,11 @@ const getMinimumHeight = (displayWidth: number) => displayWidth;
 
 const resizeCanvas = (displayWidth: number, height: number) => {
   const deviceScale = window.devicePixelRatio || 1;
+  const frameStyles = window.getComputedStyle(thoughtCanvasFrame);
+  const frameTopInset = readPx(frameStyles.paddingTop) + readPx(frameStyles.borderTopWidth);
   const cliHeight = isStackedOperatorLayout()
     ? Math.max(STACKED_MIN_CLI_HEIGHT, getStackedOperatorAvailableHeight() - displayWidth)
-    : height + 8;
+    : height + frameTopInset;
 
   canvas.width = Math.round(displayWidth * deviceScale);
   canvas.height = Math.round(height * deviceScale);

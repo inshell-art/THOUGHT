@@ -179,7 +179,7 @@ body {
   --main-area-width: 1120px;
   --thought-detail-width: var(--main-area-width);
   --thought-canvas-outer-height: 620px;
-  --thought-cli-height: calc(var(--thought-canvas-outer-height) + 8px);
+  --thought-cli-height: calc(var(--thought-canvas-outer-height) + 16px);
 }
 
 body.frontpage {
@@ -1525,9 +1525,9 @@ body.frontpage:has(.frontpage-stage:not(.is-hidden)) .frontpage-side {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0 0;
-  margin: 0;
+  gap: 0;
+  padding: 0;
+  margin: auto 0 0;
 }
 
 .color-font-footer .frontpage-note {
@@ -1548,7 +1548,7 @@ body.frontpage:has(.frontpage-stage:not(.is-hidden)) .frontpage-side {
   text-decoration: none;
   color: rgba(0, 0, 0, 0.05);
   position: relative;
-  font-size: 16px;
+  font-size: 13px;
   line-height: 1;
   letter-spacing: 0.1em;
 }

@@ -13,6 +13,8 @@ describe("svg raw renderer", () => {
     expect(svg).toContain('viewBox="0 0 960 960"');
     expect(svg).toContain('preserveAspectRatio="xMidYMid meet"');
     expect(svg).toContain('<title>THOUGHT 1</title>');
+    expect(svg).toContain('<clipPath id="canvasClip">');
+    expect(svg).toContain('<g clip-path="url(#canvasClip)">');
     expect(svg).toContain('<rect id="background" x="0" y="0" width="960" height="960" fill="#050505"/>');
     expect(svg).toContain('<g id="rects">');
     expect(svg).toContain('<g id="text">');
