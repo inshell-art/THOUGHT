@@ -1,6 +1,6 @@
-export type ThoughtRunRoute = "connect" | "direct" | "local";
+export type ThoughtRunRoute = "connect" | "direct" | "local" | "my-brain";
 
-export type ThoughtRunProvider = "openrouter" | "openai" | "anthropic" | "ollama";
+export type ThoughtRunProvider = "openrouter" | "openai" | "anthropic" | "ollama" | "me";
 
 export type ThoughtRunProvenanceRequestConfig = {
   maxOutputTokens: "128";

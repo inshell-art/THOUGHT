@@ -103,6 +103,29 @@ describe("thought run payload", () => {
     });
   });
 
+  it("supports my-brain as a manual model route without web tools", () => {
+    const payload = buildThoughtRunPayload({
+      route: "my-brain",
+      provider: "me",
+      model: "my-brain",
+      prompt: "manual prompt",
+      thoughtSpec,
+    });
+
+    expect(payload.config).toEqual({
+      route: "my-brain",
+      provider: "me",
+      model: "my-brain",
+      request: {
+        maxOutputTokens: THOUGHT_MAX_OUTPUT_TOKENS,
+      },
+      web: {
+        enabled: false,
+        tool: "unavailable",
+      },
+    });
+  });
+
   it("records hidden request config in provenance without full spec text", () => {
     const payload = buildThoughtRunPayload({
       route: "direct",

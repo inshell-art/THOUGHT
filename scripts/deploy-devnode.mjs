@@ -12,6 +12,8 @@ const privateKey =
 const pathEvmDir = process.env.PATH_EVM_DIR ?? "/Users/bigu/Projects/path/evm";
 const addressesFile = path.join(rootDir, "evm", "addresses.anvil.json");
 const thoughtSpecRef = "THOUGHT.md@v1";
+const devPathCount = BigInt(process.env.DEV_PATH_COUNT ?? "10");
+const explorerUrl = (process.env.THOUGHT_EXPLORER_URL ?? process.env.THOUGHT_INDEXER_URL ?? "").trim();
 
 const readArtifact = async (artifactPath) => {
   const artifact = JSON.parse(await fs.readFile(artifactPath, "utf8"));
@@ -50,7 +52,9 @@ const main = async () => {
   const pathNftAddress = await pathNft.getAddress();
   const minterRole = ethers.id("MINTER_ROLE");
   await (await pathNft.grantRole(minterRole, deployerAddress)).wait();
-  await (await pathNft.safeMint(deployerAddress, 1n, "0x")).wait();
+  for (let tokenId = 1n; tokenId <= devPathCount; tokenId++) {
+    await (await pathNft.safeMint(deployerAddress, tokenId, "0x")).wait();
+  }
 
   const seedGenerator = await deploy(
     deployer,
@@ -91,9 +95,15 @@ const main = async () => {
   const payload = {
     rpcUrl,
     chainId: Number(network.chainId),
+    ...(explorerUrl ? { explorerUrl } : {}),
     pathNft: { address: pathNftAddress },
     pathMovement: { name: "THOUGHT", quota: 1 },
     devPathToken: { id: 1, owner: deployerAddress },
+    devPathTokens: {
+      firstId: 1,
+      lastId: Number(devPathCount),
+      owner: deployerAddress,
+    },
     seedGenerator: { address: await seedGenerator.getAddress() },
     thoughtPreviewer: { address: await thoughtPreviewer.getAddress() },
     thoughtSpecRegistry: { address: thoughtSpecRegistryAddress },

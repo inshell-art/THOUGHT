@@ -104,6 +104,33 @@ describe("thought works", () => {
     });
   });
 
+  it("keeps my-brain manual route work records", () => {
+    const work = makeWork(1, "MANUAL");
+    const manual = {
+      ...work,
+      route: "my-brain",
+      provider: "me",
+      model: "my-brain",
+      runContext: {
+        ...runContext,
+        mode: "my-brain",
+        provider: "me",
+        model: "my-brain",
+      },
+    };
+
+    expect(sanitizeWorkRecord(manual)).toMatchObject({
+      route: "my-brain",
+      provider: "me",
+      model: "my-brain",
+      runContext: {
+        mode: "my-brain",
+        provider: "me",
+        model: "my-brain",
+      },
+    });
+  });
+
   it("reads only valid records from session storage", () => {
     const storage = createMemoryStorage();
     storage.setItem("thought-works", JSON.stringify([

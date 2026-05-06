@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>THOUGHT SVG Lab</title>
+  </head>
+  <body>
+    <main class="svg-lab">
+      <header class="svg-lab__header">
+        <h1 class="svg-lab__title">SVG LAB</h1>
+        <p class="svg-lab__note">
+          Local raw SVG refinement. No wallet, no RPC, no devnode state. Use this to tighten the
+          token SVG shape before porting it back to the contract.
+        </p>
+      </header>
+
+      <section class="svg-lab__grid">
+        <div class="svg-lab__preview-frame">
+          <div id="svg-preview" class="svg-lab__preview" aria-label="SVG preview"></div>
+        </div>
+
+        <aside class="svg-lab__panel">
+          <section class="svg-lab__section">
+            <label class="svg-lab__section-title" for="svg-text">text</label>
+            <textarea id="svg-text" class="svg-lab__textarea" spellcheck="false"></textarea>
+          </section>
+
+          <section class="svg-lab__section svg-lab__controls">
+            <label class="svg-lab__label">
+              token id
+              <input id="svg-token-id" class="svg-lab__input" />
+            </label>
+            <label class="svg-lab__label">
+              block size
+              <input id="svg-block-size" class="svg-lab__input" type="number" min="1" />
+            </label>
+            <label class="svg-lab__label">
+              block gap
+              <input id="svg-block-gap" class="svg-lab__input" type="number" min="0" />
+            </label>
+            <label class="svg-lab__label">
+              block y
+              <input id="svg-block-y" class="svg-lab__input" type="number" />
+            </label>
+            <label class="svg-lab__label">
+              text y
+              <input id="svg-text-y" class="svg-lab__input" type="number" />
+            </label>
+            <label class="svg-lab__label">
+              font size
+              <input id="svg-font-size" class="svg-lab__input" type="number" min="1" />
+            </label>
+            <label class="svg-lab__label">
+              text color
+              <span class="svg-lab__color-row">
+                <input id="svg-text-color-picker" class="svg-lab__color" type="color" />
+                <input id="svg-text-color" class="svg-lab__input" />
+              </span>
+            </label>
+            <label class="svg-lab__label">
+              text opacity
+              <input
+                id="svg-text-opacity"
+                class="svg-lab__input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+              />
+            </label>
+          </section>
+
+          <section class="svg-lab__section">
+            <div class="svg-lab__button-row">
+              <button id="svg-copy" class="svg-lab__button" type="button">[ copy raw ]</button>
+              <button id="svg-reset" class="svg-lab__button" type="button">[ reset ]</button>
+            </div>
+            <p id="svg-meta" class="svg-lab__meta"></p>
+          </section>
+
+          <section class="svg-lab__section">
+            <label class="svg-lab__section-title">font compare</label>
+            <div id="svg-font-compare" class="svg-lab__font-compare"></div>
+          </section>
+
+          <section class="svg-lab__section svg-lab__raw-section">
+            <label class="svg-lab__section-title" for="svg-raw">raw</label>
+            <pre id="svg-raw" class="svg-lab__raw"></pre>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="/src/svg-lab.ts"></script>
+  </body>
+</html>

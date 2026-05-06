@@ -362,43 +362,33 @@
         </div>
         <aside class="thought-detail__rail" aria-label="THOUGHT record">
           <section class="thought-detail__section">
-            <h2>text</h2>
-            <p id="thought-detail-canonical-title" class="thought-detail__text">-</p>
-            <button id="thought-detail-text-hash-line" class="thought-detail__disclosure" type="button" aria-expanded="false">hash - ▸</button>
-            <div id="thought-detail-text-hash-panel" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-text-hash-text" class="thought-detail__json"></pre>
-            </div>
+            <h2>prompt</h2>
+            <p id="thought-detail-prompt" class="thought-detail__text">-</p>
           </section>
 
           <section class="thought-detail__section">
-            <h2>prompt</h2>
-            <p id="thought-detail-prompt" class="thought-detail__text">-</p>
-            <button id="thought-detail-prompt-hash" class="thought-detail__disclosure" type="button" aria-expanded="false">hash - ▸</button>
-            <div id="thought-detail-prompt-hash-panel" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-prompt-hash-text" class="thought-detail__json"></pre>
-            </div>
+            <h2>spec</h2>
+            <a id="thought-detail-spec-ref" class="thought-detail__value thought-detail__value-link" href="#">THOUGHT.md@v1 ↗</a>
+          </section>
+
+          <section class="thought-detail__section">
+            <h2>model</h2>
+            <p id="thought-detail-model" class="thought-detail__value">-</p>
           </section>
 
           <section class="thought-detail__section">
             <h2>model return</h2>
             <p id="thought-detail-model-return" class="thought-detail__text">-</p>
-            <button id="thought-detail-model-return-hash" class="thought-detail__disclosure" type="button" aria-expanded="false">hash - ▸</button>
-            <div id="thought-detail-model-return-hash-panel" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-model-return-hash-text" class="thought-detail__json"></pre>
-            </div>
+          </section>
+
+          <section class="thought-detail__section">
+            <h2>text</h2>
+            <p id="thought-detail-canonical-title" class="thought-detail__text">-</p>
           </section>
 
           <section class="thought-detail__section">
             <h2>$PATH</h2>
-            <p id="thought-detail-path" class="thought-detail__value">-</p>
-            <div class="thought-detail__actions">
-              <a id="thought-detail-view-path" class="thought-detail__action" href="#">[ view $PATH ]</a>
-              <button id="thought-detail-fetch-path" class="thought-detail__action" type="button">[ fetch $PATH ]</button>
-            </div>
-            <div id="thought-detail-path-evidence" class="thought-detail__viewer is-hidden">
-              <p class="thought-detail__viewer-title">fetch $PATH evidence</p>
-              <pre id="thought-detail-path-evidence-text" class="thought-detail__json"></pre>
-            </div>
+            <a id="thought-detail-path" class="thought-detail__value thought-detail__path-link" href="#">-</a>
           </section>
 
           <section class="thought-detail__section">
@@ -406,7 +396,7 @@
             <dl class="thought-detail__fields">
               <div>
                 <dt>minter</dt>
-                <dd><button id="thought-detail-minter" class="thought-detail__disclosure" type="button" aria-expanded="false">- ▸</button></dd>
+                <dd id="thought-detail-minter">-</dd>
               </div>
               <div>
                 <dt>minted</dt>
@@ -414,57 +404,17 @@
               </div>
               <div>
                 <dt>tx</dt>
-                <dd><button id="thought-detail-tx" class="thought-detail__disclosure" type="button" aria-expanded="false">- ▸</button></dd>
+                <dd><a id="thought-detail-view-tx" class="thought-detail__value-link" href="#">-</a></dd>
               </div>
             </dl>
-            <div class="thought-detail__actions">
-              <a id="thought-detail-view-tx" class="thought-detail__action" href="#">[ view tx ]</a>
-            </div>
-            <div id="thought-detail-mint-evidence" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-mint-evidence-text" class="thought-detail__json"></pre>
-            </div>
-          </section>
-
-          <section class="thought-detail__section">
-            <h2>spec</h2>
-            <p id="thought-detail-spec-ref" class="thought-detail__value">THOUGHT.md@v1</p>
-            <button id="thought-detail-spec" class="thought-detail__disclosure" type="button" aria-expanded="false">hash - ▸</button>
-            <div class="thought-detail__actions">
-              <button id="thought-detail-view-spec" class="thought-detail__action" type="button">[ view spec ]</button>
-              <button id="thought-detail-fetch-spec" class="thought-detail__action" type="button">[ fetch spec ]</button>
-            </div>
-            <div id="thought-detail-spec-hash-panel" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-spec-hash-text" class="thought-detail__json"></pre>
-            </div>
-            <div id="thought-detail-spec-viewer" class="thought-detail__viewer is-hidden">
-              <p id="thought-detail-spec-viewer-title" class="thought-detail__viewer-title">THOUGHT.md@v1</p>
-              <p id="thought-detail-spec-viewer-hash" class="thought-detail__value">hash -</p>
-              <pre id="thought-detail-spec-text" class="thought-detail__json"></pre>
-            </div>
-            <div id="thought-detail-spec-evidence" class="thought-detail__viewer is-hidden">
-              <p class="thought-detail__viewer-title">fetch spec</p>
-              <pre id="thought-detail-spec-evidence-text" class="thought-detail__json"></pre>
-            </div>
           </section>
 
           <section class="thought-detail__section">
             <h2>provenance</h2>
-            <p id="thought-detail-provenance-bytes" class="thought-detail__value">-</p>
-            <button id="thought-detail-provenance-hash-line" class="thought-detail__disclosure" type="button" aria-expanded="false">hash - ▸</button>
-            <div class="thought-detail__actions">
-              <button id="thought-detail-toggle-json" class="thought-detail__action" type="button">[ view json ]</button>
-              <button id="thought-detail-fetch-provenance" class="thought-detail__action" type="button">[ fetch provenance ]</button>
-            </div>
-            <div id="thought-detail-provenance-hash-panel" class="thought-detail__viewer is-hidden">
-              <pre id="thought-detail-provenance-hash-text" class="thought-detail__json"></pre>
-            </div>
+            <a id="thought-detail-provenance-bytes" class="thought-detail__value thought-detail__value-link" href="#">-</a>
             <div id="thought-detail-json-panel" class="thought-detail__viewer is-hidden">
-              <p class="thought-detail__viewer-title">provenance json</p>
+              <p id="thought-detail-provenance-viewer-title" class="thought-detail__viewer-title">provenance json</p>
               <pre id="thought-detail-provenance-json" class="thought-detail__json"></pre>
-            </div>
-            <div id="thought-detail-provenance-evidence" class="thought-detail__viewer is-hidden">
-              <p class="thought-detail__viewer-title">fetch provenance</p>
-              <pre id="thought-detail-provenance-evidence-text" class="thought-detail__json"></pre>
             </div>
           </section>
 
@@ -508,9 +458,9 @@
     </div>
     <div id="mint-sheet-flow" class="mint-sheet-flow" aria-label="mint flow">
       <span data-step="select">select $PATH</span>
-      <span aria-hidden="true">·</span>
+      <span aria-hidden="true">/</span>
       <span data-step="authorize">authorize</span>
-      <span aria-hidden="true">·</span>
+      <span aria-hidden="true">/</span>
       <span data-step="confirm">confirm</span>
     </div>
   </section>

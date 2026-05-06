@@ -92,7 +92,12 @@ const isWorkRunContext = (value: unknown): value is WorkRunContext => {
 
   const candidate = value as Partial<WorkRunContext>;
   return (
-    (candidate.mode === "connect" || candidate.mode === "direct" || candidate.mode === "local") &&
+    (
+      candidate.mode === "connect" ||
+      candidate.mode === "direct" ||
+      candidate.mode === "local" ||
+      candidate.mode === "my-brain"
+    ) &&
     typeof candidate.provider === "string" &&
     typeof candidate.model === "string" &&
     typeof candidate.prompt === "string" &&

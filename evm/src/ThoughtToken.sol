@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Base64} from "./Base64.sol";
-
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
         external
@@ -435,29 +433,7 @@ contract ThoughtToken {
     function tokenURI(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
 
-        ThoughtRecord storage record = _thoughts[tokenId];
-        string memory textHash = _bytes32ToHex(record.textHash);
-        string memory provenanceHash = _bytes32ToHex(record.provenanceHash);
-        string memory thoughtSpecId = _bytes32ToHex(record.thoughtSpecId);
-        string memory svg = _buildSvg(record.rawText);
-        string memory image = string.concat("data:image/svg+xml;base64,", Base64.encode(bytes(svg)));
-        string memory json = string.concat(
-            '{"name":"THOUGHT #',
-            _toString(tokenId),
-            '","description":',
-            _jsonString(record.rawText),
-            ',"attributes":',
-            _tokenAttributes(record, textHash, provenanceHash, thoughtSpecId),
-            ',"thought":',
-            _tokenThought(record.rawText, record.provenanceJson),
-            ',"properties":',
-            _tokenProperties(record, textHash, provenanceHash, thoughtSpecId),
-            ',"image":"',
-            image,
-            '"}'
-        );
-
-        return string.concat("data:application/json;base64,", Base64.encode(bytes(json)));
+        return _buildSvg(_thoughts[tokenId].rawText);
     }
 
     function _tokenAttributes(

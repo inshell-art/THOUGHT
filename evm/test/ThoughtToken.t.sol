@@ -298,10 +298,11 @@ contract ThoughtTokenTest {
         require(_contains(svg, ">WHY TAG</text>"), "missing rendered text");
     }
 
-    function testTokenUriIsDataUriJson() public {
+    function testTokenUriIsRawSvg() public {
         uint256 tokenId = _mintAsUser("HELLOWORLD", 1, USER_KEY);
         string memory uri = token.tokenURI(tokenId);
-        require(_contains(uri, "data:application/json;base64,"), "missing json data uri prefix");
+        require(_contains(uri, "<svg"), "missing svg root");
+        require(_contains(uri, ">HELLOWORLD</text>"), "missing rendered text");
     }
 
     function testMintPriceIsEnforced() public {

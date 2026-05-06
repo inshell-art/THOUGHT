@@ -139,7 +139,7 @@ Use `config local endpoint <url>` when Ollama is exposed somewhere other than th
 route: connect
 delegated cloud access.
 service: openrouter
-authorization: linked
+openrouter: linked
 use:
 config connect authorize
 config connect disconnect
