@@ -378,6 +378,7 @@ body.frontpage:has(.frontpage-stage:not(.is-hidden)) .frontpage-main {
   border: 0;
   border-radius: 0;
   background: var(--panel);
+  position: relative;
 }
 
 .thought-grid {
@@ -386,6 +387,25 @@ body.frontpage:has(.frontpage-stage:not(.is-hidden)) .frontpage-main {
   height: auto;
   border-radius: 0;
   background: #050505;
+}
+
+.thought-grid.is-hidden {
+  visibility: hidden;
+}
+
+.thought-svg-preview {
+  position: absolute;
+  inset: 16px;
+  display: block;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  border-radius: 0;
+  background: #050505;
+  object-fit: contain;
+}
+
+.thought-svg-preview.is-hidden {
+  display: none;
 }
 
 .frontpage-side {

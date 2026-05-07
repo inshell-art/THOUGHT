@@ -11,7 +11,7 @@ const privateKey =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const pathEvmDir = process.env.PATH_EVM_DIR ?? "/Users/bigu/Projects/path/evm";
 const addressesFile = path.join(rootDir, "evm", "addresses.anvil.json");
-const thoughtSpecRef = "THOUGHT.md@v1";
+const thoughtSpecRef = "THOUGHT.v1.md";
 const devPathCount = BigInt(process.env.DEV_PATH_COUNT ?? "10");
 const explorerUrl = (process.env.THOUGHT_EXPLORER_URL ?? process.env.THOUGHT_INDEXER_URL ?? "").trim();
 
@@ -41,7 +41,7 @@ const main = async () => {
   const network = await provider.getNetwork();
   const thoughtSpecText = await fs.readFile(path.join(rootDir, "THOUGHT.md"), "utf8");
   const thoughtSpecBytes = ethers.toUtf8Bytes(thoughtSpecText);
-  const thoughtSpecId = ethers.id("thought.md.v1");
+  const thoughtSpecId = ethers.id("THOUGHT.v1.md");
   const thoughtSpecHash = ethers.keccak256(thoughtSpecBytes);
 
   const pathNft = await deploy(
@@ -77,17 +77,17 @@ const main = async () => {
     )
   ).wait();
   const thoughtSpecRegistryAddress = await thoughtSpecRegistry.getAddress();
-  const thoughtToken = await deploy(
+  const thoughtNft = await deploy(
     deployer,
-    path.join(rootDir, "evm", "out", "ThoughtToken.sol", "ThoughtToken.json"),
+    path.join(rootDir, "evm", "out", "ThoughtNFT.sol", "ThoughtNFT.json"),
     [pathNftAddress, thoughtSpecRegistryAddress],
   );
-  const thoughtTokenAddress = await thoughtToken.getAddress();
+  const thoughtNftAddress = await thoughtNft.getAddress();
 
   await (
     await pathNft.setMovementConfig(
       ethers.encodeBytes32String("THOUGHT"),
-      thoughtTokenAddress,
+      thoughtNftAddress,
       1,
     )
   ).wait();
@@ -112,7 +112,7 @@ const main = async () => {
       hash: thoughtSpecHash,
       ref: thoughtSpecRef,
     },
-    thoughtToken: { address: thoughtTokenAddress },
+    thoughtNft: { address: thoughtNftAddress },
   };
 
   await fs.writeFile(addressesFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");

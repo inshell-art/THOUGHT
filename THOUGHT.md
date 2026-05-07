@@ -1,6 +1,6 @@
 # THOUGHT.md
 
-Version: draft 0.8
+Version: v1
 
 ## Public Context
 
@@ -30,33 +30,37 @@ People now think with AI. A human does not only write thought directly. A human 
 
 The human writes a prompt. The chosen model reads this file and the prompt. The model returns one text response.
 
-The returned text is the model return.
+The returned text is the model return. It is the candidate source.
 
-If the human chooses to mint, the THOUGHT contract canonicalizes and validates the returned text before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
+If the human chooses to mint, the THOUGHT contract canonicalizes and validates the model return through contract preview before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
 
 The stored canonical text is the source. The contract-generated SVG is the visible form.
 
-The returned text is both content and possible source. It carries meaning, and after canonicalization it may become the form that carries meaning.
+The pre-mint preview SVG and the minted token image are produced by the same contract renderer.
 
-A response can be read as language, canonicalized as source, stored as an onchain text record, rendered as color font, exposed as contract-generated SVG, and recorded as provenance.
+A model return can be read as language, canonicalized as source, stored as an onchain text record, rendered as color font, exposed as contract-generated SVG, and recorded as provenance.
 
 The main visual language is the color font. The visible supporting text, prompt, model return, metadata, and provenance can support the artifact, but the color rectangle sequence is the primary glyph system.
 
 ## The Color Font Medium
 
-THOUGHT is rendered as a one-line color-font work.
+THOUGHT is rendered as a bounded one-line color-font work.
 
 The color rectangle is the glyph. The color font is the typeface.
 
 Each valid A-Z letter becomes one fixed color rectangle. Single spaces between words can become gaps. Repeated or messy spacing is normalized as text hygiene, not as a separate visual trick.
 
+Valid canonical text contains only A-Z letters and single spaces between words.
+
 All valid characters are placed on one horizontal line. More characters make the line denser and visually thinner. Fewer characters become larger, more direct, and more iconic.
 
 The color font has its own aesthetic. Letter choice becomes color choice. Word length becomes rhythm. Spaces become gaps. Total length changes scale. Repeated letters create repeated colors. Dense text creates dense visual fields. Short text becomes larger and more direct. Long text becomes smaller, denser, and more textual.
 
-There is no artistic length limit in this file. Length is a visual scale decision.
+The canonical text must be 128 canonical characters or fewer after contract normalization.
 
-The contract may reject technically excessive text for storage and rendering safety. That limit is not an aesthetic rule.
+This boundary is part of the medium. It keeps the line inside the intended visible field and keeps the onchain SVG renderer bounded.
+
+Choose a concise one-line work.
 
 If the model wants the color font image to express a visual color, rhythm, density, contrast, temperature, gap, or pattern, it may choose letters and spacing with the color font mapping in mind.
 
@@ -105,27 +109,35 @@ Return one concise text response only.
 
 Do not explain. Do not provide alternatives. Do not include commentary around the answer.
 
-Choose text that can become a one-line color-font work. Choose for meaning, rhythm, density, and visual consequence.
+Choose text that can become a bounded one-line color-font work. Choose for meaning, rhythm, density, and visual consequence.
 
 The returned text may be canonicalized by the contract before mint. The canonical text is the final source of the minted work.
+
+Keep the returned text short enough that the canonicalized result is 128 canonical characters or fewer.
 
 Only return text you are willing to have canonicalized, stored, visualized, and potentially minted.
 
 ## Contract Canonicalization
 
-The contract is the final authority for canonical THOUGHT text.
+The contract is the final authority for canonical THOUGHT text and SVG rendering.
 
-The frontend may preview the contract canonicalization, but the contract enforces the canonical text rules at mint.
+After a model return, the contract preview function canonicalizes and validates the returned text, then renders the contract SVG preview.
+
+The contract uppercases letters, trims outer spacing, collapses repeated spaces, and rejects characters outside A-Z and space.
+
+The pre-mint preview SVG and the minted token image are produced by the same contract renderer.
+
+The mint transaction accepts canonical text only. It revalidates the text before mint and does not silently change the text the picker confirmed.
 
 Canonicalization and validation are text hygiene and source discipline. They are not a second model round.
 
 ## Uniqueness
 
-Only a canonical text result that does not duplicate an existing minted artifact can be minted as a new THOUGHT artifact.
+Each canonical THOUGHT text can exist onchain only once.
 
-Each canonical THOUGHT text can exist only once in the collection.
+Mint uniqueness is determined by canonical text after contract normalization, not by the raw model return, prompt, provider, or provenance.
 
-Uniqueness shapes the identity of the work.
+If two different model returns normalize to the same canonical text, they are treated as the same THOUGHT for minting purposes.
 
 ## Provenance
 

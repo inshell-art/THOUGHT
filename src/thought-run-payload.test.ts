@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  THOUGHT_LOCAL_MAX_OUTPUT_TOKENS,
   THOUGHT_MAX_OUTPUT_TOKENS,
+  buildThoughtRuntimePrompt,
   buildThoughtRunPayload,
   thoughtRunProvenanceConfig,
   toAnthropicMessagesPayload,
@@ -11,8 +13,8 @@ import {
 } from "./thought-run-payload";
 
 const thoughtSpec = {
-  id: "thought.md.v1",
-  ref: "THOUGHT.md@v1",
+  id: "THOUGHT.v1.md",
+  ref: "THOUGHT.v1.md",
   hash: "0xspec",
   text: "FULL THOUGHT.md TEXT",
 };
@@ -33,6 +35,7 @@ describe("thought run payload", () => {
       model: "meta-llama/llama-3.3-70b-instruct:free",
       request: {
         maxOutputTokens: THOUGHT_MAX_OUTPUT_TOKENS,
+        stop: "\n",
       },
       web: {
         enabled: true,
@@ -58,17 +61,18 @@ describe("thought run payload", () => {
       model: "model-a",
       messages: [
         { role: "system", content: thoughtSpec.text },
-        { role: "user", content: "user prompt" },
+        { role: "user", content: buildThoughtRuntimePrompt("user prompt") },
       ],
-      max_tokens: 128,
+      max_tokens: 48,
+      stop: ["\n"],
       tools: [{ type: "openrouter:web_search" }],
     });
 
     expect(toOpenAIResponsesPayload({ ...payload, config: { ...payload.config, provider: "openai" } })).toMatchObject({
       model: "model-a",
       instructions: thoughtSpec.text,
-      input: [{ role: "user", content: [{ type: "input_text", text: "user prompt" }] }],
-      max_output_tokens: 128,
+      input: [{ role: "user", content: [{ type: "input_text", text: buildThoughtRuntimePrompt("user prompt") }] }],
+      max_output_tokens: 48,
       tools: [{ type: "web_search" }],
       tool_choice: "auto",
     });
@@ -76,10 +80,14 @@ describe("thought run payload", () => {
     expect(toAnthropicMessagesPayload({ ...payload, config: { ...payload.config, provider: "anthropic" } })).toMatchObject({
       model: "model-a",
       system: thoughtSpec.text,
-      messages: [{ role: "user", content: "user prompt" }],
-      max_tokens: 128,
+      messages: [{ role: "user", content: buildThoughtRuntimePrompt("user prompt") }],
+      max_tokens: 48,
+      stop_sequences: ["\n"],
       tools: [{ type: "web_search_20250305", name: "web_search" }],
     });
+
+    expect(buildThoughtRuntimePrompt("user prompt")).toContain("Return one THOUGHT candidate only.");
+    expect(buildThoughtRuntimePrompt("user prompt")).toContain("128 characters max after normalization");
   });
 
   it("keeps local Ollama honest about web search and maps options", () => {
@@ -95,10 +103,11 @@ describe("thought run payload", () => {
     expect(toOllamaGeneratePayload(payload)).toEqual({
       model: "llama3.2:1b",
       system: thoughtSpec.text,
-      prompt: "local prompt",
+      prompt: buildThoughtRuntimePrompt("local prompt"),
       stream: false,
       options: {
-        num_predict: 128,
+        num_predict: THOUGHT_LOCAL_MAX_OUTPUT_TOKENS,
+        stop: ["\n"],
       },
     });
   });
@@ -117,7 +126,8 @@ describe("thought run payload", () => {
       provider: "me",
       model: "my-brain",
       request: {
-        maxOutputTokens: THOUGHT_MAX_OUTPUT_TOKENS,
+        maxOutputTokens: null,
+        stop: null,
       },
       web: {
         enabled: false,
@@ -140,15 +150,16 @@ describe("thought run payload", () => {
       provider: "openai",
       model: "gpt-5-mini",
       request: {
-        maxOutputTokens: "128",
+        maxOutputTokens: "48",
+        stop: "\\n",
       },
       web: {
         enabled: true,
         tool: "openai:web_search",
       },
       thoughtSpec: {
-        id: "thought.md.v1",
-        ref: "THOUGHT.md@v1",
+        id: "THOUGHT.v1.md",
+        ref: "THOUGHT.v1.md",
         hash: "0xspec",
       },
     });

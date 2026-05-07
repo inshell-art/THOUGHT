@@ -32,6 +32,7 @@ const makeInput = (title: string, createdAt = "2026-04-29T00:00:00.000Z"): Thoug
   title,
   rawOutput: title.toLowerCase(),
   image: `data:image/svg+xml,${title}`,
+  svg: `<svg>${title}</svg>`,
   route: runContext.mode,
   provider: runContext.provider,
   model: runContext.model,
@@ -47,6 +48,7 @@ const makeWork = (id: number, title = `WORK ${id}`): ThoughtWorkRecord => ({
   title,
   rawOutput: title.toLowerCase(),
   image: `data:image/svg+xml,${title}`,
+  svg: `<svg>${title}</svg>`,
   route: runContext.mode,
   provider: runContext.provider,
   model: runContext.model,
@@ -164,6 +166,13 @@ describe("thought works", () => {
     expect(works).toHaveLength(THOUGHT_WORKS_LIMIT);
     expect(works[0]?.id).toBe(3);
     expect(works.at(-1)?.id).toBe(THOUGHT_WORKS_LIMIT + 2);
+  });
+
+  it("preserves the contract SVG for generated works", () => {
+    const appended = appendThoughtWork([], makeInput("HELLO"));
+
+    expect(appended.work.svg).toBe("<svg>HELLO</svg>");
+    expect(sanitizeWorkRecord(appended.work)?.svg).toBe("<svg>HELLO</svg>");
   });
 
   it("parses work ids with or without #", () => {

@@ -135,7 +135,7 @@ type EvmAddresses = {
   thoughtSpecRegistry?: {
     address?: string;
   };
-  thoughtToken?: {
+  thoughtNft?: {
     address?: string;
   };
 };
@@ -328,7 +328,7 @@ type ThoughtRunContext = {
   };
 };
 
-type ThoughtTokenMetadata = {
+type ThoughtNFTMetadata = {
   name?: string;
   image?: string;
   thought?: {
@@ -348,8 +348,8 @@ type ThoughtTokenMetadata = {
   };
 };
 
-type ThoughtTokenUriPayload = {
-  metadata: ThoughtTokenMetadata;
+type ThoughtNFTUriPayload = {
+  metadata: ThoughtNFTMetadata;
   image: string;
 };
 
@@ -507,15 +507,21 @@ const NOTICE_FLASH_MS = 2400;
 const AGENT_REQUEST_TIMEOUT_MS = 45000;
 const PREFLIGHT_REQUEST_TIMEOUT_MS = 15000;
 const WALLET_TX_SUBMIT_TIMEOUT_MS = 60000;
+const MINT_RECEIPT_TIMEOUT_MS = 120000;
+const MINT_RECEIPT_POLL_MS = 1000;
 const CLI_COMMAND_HISTORY_LIMIT = 80;
 const APP_VERSION = "0.0.2";
 const APP_BUILD = typeof import.meta.env.VITE_APP_BUILD === "string" && import.meta.env.VITE_APP_BUILD
   ? import.meta.env.VITE_APP_BUILD
   : "dev";
 const IS_DEV_MODE = import.meta.env.DEV || import.meta.env.MODE === "development";
-const MAX_TEXT_BYTES = 1024;
+const MAX_RAW_RETURN_BYTES = 512;
+const MAX_TEXT_BYTES = 128;
 const MAX_PROVENANCE_BYTES = 2048;
 const COLOR_FONT_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const SVG_TEXT_MIN_SIZE = 9;
+const SVG_TEXT_MAX_SIZE = 18;
+const SVG_TEXT_CHAR_ADVANCE = 0.6;
 const CANVAS_TEXT_FAMILY =
   '"Roboto Mono Variable", "Roboto Mono", "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 const OPENROUTER_PREFERRED_MODELS = [
@@ -558,7 +564,7 @@ const PATH_MINT_URL =
       ? "http://localhost:5173"
       : "https://inshell.art";
 const THOUGHT_SPEC_REGISTRY_ADDRESS = EVM_ADDRESSES.thoughtSpecRegistry?.address?.trim() ?? "";
-const THOUGHT_TOKEN_ADDRESS = EVM_ADDRESSES.thoughtToken?.address?.trim() ?? "";
+const THOUGHT_NFT_ADDRESS = EVM_ADDRESSES.thoughtNft?.address?.trim() ?? "";
 const THOUGHT_CHAIN_NAME =
   THOUGHT_CHAIN_ID === 31337 ? "Anvil Local" : THOUGHT_CHAIN_ID === 11155111 ? "Sepolia" : "THOUGHT";
 const configuredExplorerBaseUrl =
@@ -589,20 +595,22 @@ const PRESELECTED_PATH_ID = /^[1-9]\d*$/.test(RAW_PRESELECTED_PATH_ID) ? RAW_PRE
 const IS_GALLERY_PAGE =
   ROUTE_SEARCH_PARAMS.get("gallery") === "1" ||
   window.location.hash === "#gallery";
-const RAW_ROUTE_THOUGHT_TOKEN_ID = ROUTE_SEARCH_PARAMS.get("thought")?.trim() ?? "";
-const ROUTE_THOUGHT_TOKEN_ID = /^[1-9]\d*$/.test(RAW_ROUTE_THOUGHT_TOKEN_ID)
-  ? Number(RAW_ROUTE_THOUGHT_TOKEN_ID)
+const RAW_ROUTE_THOUGHT_NFT_ID = ROUTE_SEARCH_PARAMS.get("thought")?.trim() ?? "";
+const ROUTE_THOUGHT_NFT_ID = /^[1-9]\d*$/.test(RAW_ROUTE_THOUGHT_NFT_ID)
+  ? Number(RAW_ROUTE_THOUGHT_NFT_ID)
   : null;
-const GALLERY_TARGET_TOKEN_ID = IS_GALLERY_PAGE ? ROUTE_THOUGHT_TOKEN_ID : null;
-const IS_THOUGHT_PAGE = !IS_GALLERY_PAGE && ROUTE_THOUGHT_TOKEN_ID !== null;
+const GALLERY_TARGET_TOKEN_ID = IS_GALLERY_PAGE ? ROUTE_THOUGHT_NFT_ID : null;
+const IS_THOUGHT_PAGE = !IS_GALLERY_PAGE && ROUTE_THOUGHT_NFT_ID !== null;
 const THOUGHT_MINTED_TOPIC = id(
   "ThoughtMinted(uint256,address,uint256,bytes32,bytes32,bytes32,uint64)",
 );
 const TOKEN_URI_CALL_GAS_LIMIT = 100_000_000n;
-const THOUGHT_TOKEN_ABI = [
+const THOUGHT_NFT_ABI = [
   "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
   "function mintPrice() view returns (uint256)",
   "function previewText(string input) pure returns (string normalized, bool valid, uint8 reasonCode)",
+  "function previewWork(string rawReturn) pure returns (bool ok, string text, string svg, uint8 reasonCode)",
+  "function renderThoughtSvg(string canonicalText) pure returns (string)",
   "function textHashOf(string canonicalText) pure returns (bytes32)",
   "function tokenOfThought(bytes32 textHash) view returns (uint256)",
   "function tokenURI(uint256 tokenId) view returns (string)",
@@ -765,6 +773,7 @@ const thoughtDetailProvenanceViewerTitle = document.getElementById(
 const thoughtDetailProvenanceJson = document.getElementById("thought-detail-provenance-json") as HTMLElement | null;
 const thoughtDetailCopyStatus = document.getElementById("thought-detail-copy-status") as HTMLElement | null;
 const canvas = document.getElementById("thought-grid") as HTMLCanvasElement | null;
+const thoughtSvgPreview = document.getElementById("thought-svg-preview") as HTMLImageElement | null;
 const mintSheetBackdrop = document.getElementById("mint-sheet-backdrop") as HTMLElement | null;
 const mintSheet = document.getElementById("mint-sheet") as HTMLElement | null;
 const mintSheetTitle = document.getElementById("mint-sheet-title") as HTMLElement | null;
@@ -867,6 +876,7 @@ if (
   !thoughtDetailProvenanceJson ||
   !thoughtDetailCopyStatus ||
   !canvas ||
+  !thoughtSvgPreview ||
   !mintSheetBackdrop ||
   !mintSheet ||
   !mintSheetTitle ||
@@ -897,7 +907,9 @@ let statusTimer: number | null = null;
 let warningTimer: number | null = null;
 let panelWarningMessage = "";
 let panelWarningLevel: PanelWarningLevel = "error";
+let lastRunErrorCliLines: string[] = [];
 let currentOutputText = "";
+let currentWorkSvg = "";
 let runInFlight = false;
 let runState: ThoughtRunState = "idle";
 let currentWorkId: number | null = null;
@@ -1098,7 +1110,7 @@ let activeThoughtSpecPromise: Promise<ActiveThoughtSpec> | null = null;
 let thoughtDetailSpecJsonUrl = "";
 let thoughtDetailProvenanceJsonUrl = "";
 let readProvider: JsonRpcProvider | null = null;
-let readThoughtToken: Contract | null = null;
+let readThoughtNFT: Contract | null = null;
 let readThoughtSpecRegistry: Contract | null = null;
 let readPathNft: Contract | null = null;
 let walletListenersBound = false;
@@ -1515,17 +1527,17 @@ const getReadProvider = () => {
   return readProvider;
 };
 
-const getReadThoughtToken = () => {
+const getReadThoughtNFT = () => {
   const provider = getReadProvider();
-  if (!provider || !THOUGHT_TOKEN_ADDRESS) {
+  if (!provider || !THOUGHT_NFT_ADDRESS) {
     return null;
   }
 
-  if (!readThoughtToken) {
-    readThoughtToken = new Contract(THOUGHT_TOKEN_ADDRESS, THOUGHT_TOKEN_ABI, provider);
+  if (!readThoughtNFT) {
+    readThoughtNFT = new Contract(THOUGHT_NFT_ADDRESS, THOUGHT_NFT_ABI, provider);
   }
 
-  return readThoughtToken;
+  return readThoughtNFT;
 };
 
 const getReadThoughtSpecRegistry = () => {
@@ -1584,29 +1596,226 @@ const hashText = (value: string) => keccak256(toUtf8Bytes(value));
 
 const canonicalThoughtTitle = (value: string) => value.replace(/[^A-Za-z]+/g, " ").trim().replace(/\s+/g, " ").toUpperCase();
 
-const previewCanonicalThoughtText = async (value: string) => {
-  const token = getReadThoughtToken();
-  if (!token) {
-    throw new Error("text preview unavailable.");
+type ContractWorkPreview = {
+  ok: boolean;
+  text: string;
+  svg: string;
+  reasonCode: number;
+};
+
+type LastRejectedRun = {
+  kind: "rejected-run";
+  reasonCode: number;
+  reasonLabel: string;
+  prompt: string;
+  modelReturn: string;
+  normalizedCandidate?: string;
+  normalizedLength?: number;
+  maxTextLength: typeof MAX_TEXT_BYTES;
+  route: Mode;
+  provider: ThoughtRunProvider;
+  model: string;
+  thoughtSpecRef: string;
+  createdAt: string;
+  repeatedCount: number;
+};
+
+type LastPreviewRetryContext = {
+  payload: ThoughtRunPayload;
+  modelReturn: string;
+};
+
+type ContractWorkPreviewError = Error & {
+  previewReasonCode?: number;
+  cliLines?: string[];
+  kind?: "model-return-rejected" | "contract-preview-unavailable";
+};
+
+const previewWorkReasonLabel = (reasonCode: number) => {
+  if (reasonCode === 1) {
+    return "empty after normalization";
+  }
+  if (reasonCode === 2) {
+    return "raw return too large";
+  }
+  if (reasonCode === 3) {
+    return "text too long";
+  }
+  if (reasonCode === 4) {
+    return "unsupported characters";
+  }
+  if (reasonCode === 5) {
+    return "not canonical";
+  }
+  return "unknown preview error";
+};
+
+const createContractPreviewUnavailableError = (cause: unknown) => {
+  const message = cause instanceof Error ? cause.message : "";
+  const lines = /wallet not connected/i.test(message)
+    ? ["wallet not connected.", "use: wallet connect"]
+    : [
+        "contract preview unavailable.",
+        "wallet/RPC could not return the SVG.",
+        "",
+        "work is not finalized.",
+        "mint is blocked until contract preview succeeds.",
+        "",
+        "use: preview retry",
+        "use: wallet",
+      ];
+  const error = new Error(lines.join(" ")) as ContractWorkPreviewError;
+  error.kind = "contract-preview-unavailable";
+  error.cliLines = lines;
+  return error;
+};
+
+let lastRejectedRun: LastRejectedRun | null = null;
+let lastPreviewRetryContext: LastPreviewRetryContext | null = null;
+
+const sameRejectedRunContext = (
+  previous: LastRejectedRun,
+  payload: ThoughtRunPayload,
+  reasonCode: number,
+) =>
+  previous.prompt === payload.input.prompt &&
+  previous.route === payload.config.route &&
+  previous.provider === payload.config.provider &&
+  previous.model === payload.config.model &&
+  previous.reasonCode === reasonCode;
+
+const rememberRejectedRun = (
+  payload: ThoughtRunPayload,
+  preview: ContractWorkPreview,
+  modelReturn: string,
+): LastRejectedRun => {
+  const repeatedCount =
+    lastRejectedRun && sameRejectedRunContext(lastRejectedRun, payload, preview.reasonCode)
+      ? lastRejectedRun.repeatedCount + 1
+      : 1;
+  const normalizedCandidate = preview.text || undefined;
+  const rejectedRun: LastRejectedRun = {
+    kind: "rejected-run",
+    reasonCode: preview.reasonCode,
+    reasonLabel: previewWorkReasonLabel(preview.reasonCode),
+    prompt: payload.input.prompt,
+    modelReturn,
+    normalizedCandidate,
+    normalizedLength: normalizedCandidate ? normalizedCandidate.length : undefined,
+    maxTextLength: MAX_TEXT_BYTES,
+    route: payload.config.route,
+    provider: payload.config.provider,
+    model: payload.config.model,
+    thoughtSpecRef: payload.input.thoughtSpec.ref,
+    createdAt: new Date().toISOString(),
+    repeatedCount,
+  };
+  lastRejectedRun = rejectedRun;
+  return rejectedRun;
+};
+
+const rejectedRunReasonLines = (rejected: LastRejectedRun) => {
+  if (rejected.reasonCode === 1) {
+    return ["canonical text is empty after normalization."];
+  }
+  if (rejected.reasonCode === 2) {
+    const rawLength = byteLength(rejected.modelReturn);
+    return [
+      "raw model return too large to process.",
+      `model return: ${rawLength} / ${MAX_RAW_RETURN_BYTES} bytes before normalization.`,
+      "",
+      "this model ignored the output rules.",
+    ];
+  }
+  if (rejected.reasonCode === 3) {
+    return [
+      `canonical text: ${rejected.normalizedLength ?? 0} / ${MAX_TEXT_BYTES} characters.`,
+      "",
+      "this model returned too much text.",
+    ];
+  }
+  if (rejected.reasonCode === 4) {
+    return ["unsupported characters in model return.", "letters and spaces only."];
+  }
+  if (rejected.reasonCode === 5) {
+    return ["text is not canonical."];
+  }
+  return ["model return did not fit THOUGHT rules."];
+};
+
+const rejectedRunCliLines = (rejected: LastRejectedRun, previousWorkId: number | null) => {
+  const lines = [
+    "model return rejected.",
+    ...rejectedRunReasonLines(rejected),
+    "",
+    previousWorkId ? "no new work created." : "no work created.",
+    ...(previousWorkId ? [`current work remains #${previousWorkId}.`] : []),
+  ];
+
+  if (rejected.repeatedCount >= 2) {
+    lines.push(
+      "",
+      "same rejection repeated.",
+      "this model may not follow THOUGHT output rules.",
+      "try another model or use my-brain.",
+    );
   }
 
-  const [normalized, valid, reasonCode] = await token.previewText(value) as [string, boolean, bigint | number];
-  if (!valid) {
-    const code = Number(reasonCode);
-    if (code === 1) {
-      throw new Error("provider returned empty text.");
-    }
-    if (code === 2) {
-      throw new Error("THOUGHT too large.");
-    }
-    throw new Error("THOUGHT text invalid.");
+  lines.push(
+    "",
+    "use: prompt <text>",
+    "use: config",
+    "use: config my-brain",
+  );
+
+  return lines;
+};
+
+const createRejectedRunError = (
+  rejected: LastRejectedRun,
+  previousWorkId: number | null,
+) => {
+  const lines = rejectedRunCliLines(rejected, previousWorkId);
+  const error = new Error(lines.join(" ")) as ContractWorkPreviewError;
+  error.kind = "model-return-rejected";
+  error.previewReasonCode = rejected.reasonCode;
+  error.cliLines = lines;
+  return error;
+};
+
+const isContractWorkPreviewError = (error: unknown): error is ContractWorkPreviewError =>
+  error instanceof Error && Array.isArray((error as ContractWorkPreviewError).cliLines);
+
+const previewWorkViaWallet = async (rawReturn: string): Promise<ContractWorkPreview> => {
+  if (!THOUGHT_NFT_ADDRESS) {
+    throw new Error("contract preview unavailable.");
   }
 
-  return normalized;
+  const ethereum = getEthereumProvider();
+  if (!ethereum || !walletState.address) {
+    throw new Error("wallet not connected.");
+  }
+
+  const provider = new BrowserProvider(ethereum);
+  const signer = await provider.getSigner();
+  const token = new Contract(THOUGHT_NFT_ADDRESS, THOUGHT_NFT_ABI, signer);
+  const [ok, text, svg, reasonCode] = await token.previewWork(rawReturn) as [
+    boolean,
+    string,
+    string,
+    bigint | number,
+  ];
+
+  return {
+    ok: Boolean(ok),
+    text: String(text),
+    svg: String(svg),
+    reasonCode: Number(reasonCode),
+  };
 };
 
 const textHashFromContract = async (canonicalText: string) => {
-  const token = getReadThoughtToken();
+  const token = getReadThoughtNFT();
   if (!token) {
     throw new Error("text hash unavailable.");
   }
@@ -1729,7 +1938,7 @@ const thoughtSpecCachePayload = (spec: ActiveThoughtSpec) => ({
 const specJsonFilename = (spec: ActiveThoughtSpec) =>
   `${(spec.ref || "THOUGHT.md").replace(/[^A-Za-z0-9._-]+/g, "-")}.${shortHex(spec.specId, 8, 6)}.json`;
 
-const specLinkText = (ref?: string) => `${ref || "THOUGHT.md@v1"} ↗`;
+const specLinkText = (ref?: string) => `${ref || "THOUGHT.v1.md"} ↗`;
 
 const setThoughtDetailSpecJsonLink = (spec: ActiveThoughtSpec) => {
   revokeThoughtDetailSpecJsonUrl();
@@ -1759,7 +1968,7 @@ const setThoughtDetailProvenanceJsonLink = (detail: ThoughtDetail, byteCount: nu
   thoughtDetailProvenanceBytes.href = thoughtDetailProvenanceJsonUrl;
   thoughtDetailProvenanceBytes.target = "_blank";
   thoughtDetailProvenanceBytes.rel = "noopener noreferrer";
-  thoughtDetailProvenanceBytes.title = `Open local provenance bytes from ThoughtToken.provenanceOf(${detail.tokenId})`;
+  thoughtDetailProvenanceBytes.title = `Open local provenance bytes from ThoughtNFT.provenanceOf(${detail.tokenId})`;
 };
 
 const clearThoughtDetailProvenanceJsonLink = (text = "provenance unavailable.") => {
@@ -2024,6 +2233,7 @@ const buildThoughtRunPayloadFromContext = (context: ThoughtRunContext) => {
 
 const provenanceRequestConfig = (request?: ThoughtRunProvenanceRequestConfig | { maxOutputTokens?: unknown }) => ({
   maxOutputTokens: String(request?.maxOutputTokens ?? THOUGHT_MAX_OUTPUT_TOKENS),
+  stop: "stop" in (request ?? {}) ? String((request as { stop?: unknown }).stop ?? "none") : "none",
 });
 
 const provenanceWebConfig = (context: ThoughtRunContext, payload: ThoughtRunPayload): ThoughtRunWebConfig => {
@@ -2071,7 +2281,7 @@ const buildProvenanceJson = (
     ? {
         chainId: String(THOUGHT_CHAIN_ID),
         pathNFT: PATH_NFT_ADDRESS,
-        thoughtToken: THOUGHT_TOKEN_ADDRESS,
+        thoughtNft: THOUGHT_NFT_ADDRESS,
       }
     : undefined;
   const mintContext = mint
@@ -2217,7 +2427,7 @@ const signPathConsumeAuthorization = async (
         pathId,
         PATH_MOVEMENT_THOUGHT,
         claimer,
-        THOUGHT_TOKEN_ADDRESS,
+        THOUGHT_NFT_ADDRESS,
         nonce,
         deadline,
       ],
@@ -2428,7 +2638,7 @@ const getActionPresentation = (): ActionPresentation => {
   }
 
   if (hasOutput) {
-    if (!THOUGHT_RPC_URL || !THOUGHT_TOKEN_ADDRESS) {
+    if (!THOUGHT_RPC_URL || !THOUGHT_NFT_ADDRESS) {
       action = {
         primaryLabel: "[ mint ]",
         primaryDisabled: true,
@@ -2892,7 +3102,7 @@ const refreshMintPreflight = async () => {
   walletState.preflightError = "";
   syncPrimaryCtaAvailability();
 
-  const token = getReadThoughtToken();
+  const token = getReadThoughtNFT();
   const provider = getReadProvider();
 
   if (!token || !provider) {
@@ -3100,15 +3310,15 @@ const switchWalletChain = async () => {
   setStatus("chain ready.", { flashMs: NOTICE_FLASH_MS });
 };
 
-const extractMintedTokenId = (receipt: { logs?: Array<{ topics: string[]; data: string }> }) => {
-  const contract = getReadThoughtToken();
+const extractMintedTokenId = (receipt: { logs?: readonly { topics: readonly string[]; data: string }[] }) => {
+  const contract = getReadThoughtNFT();
   if (!contract) {
     return null;
   }
 
   for (const log of receipt.logs ?? []) {
     try {
-      const parsed = contract.interface.parseLog(log);
+      const parsed = contract.interface.parseLog({ topics: [...log.topics], data: log.data });
       if (parsed?.name === "ThoughtMinted") {
         return Number(parsed.args[0]);
       }
@@ -3133,6 +3343,12 @@ const handlePendingTx = async () => {
 
 const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
   if (!currentOutputText) {
+    return;
+  }
+
+  if (!hasCurrentContractWorkSvg()) {
+    setMintFlowError("contract SVG missing.", "thought");
+    syncInterface();
     return;
   }
 
@@ -3182,7 +3398,7 @@ const openMintSheet = async (uiMode: MintFlowUiMode = "sheet") => {
   }
   mintFlowData.provenanceJson = provenanceJson;
 
-  const token = getReadThoughtToken();
+  const token = getReadThoughtNFT();
   if (!token) {
     setMintFlowError("mint unavailable.", "thought");
     syncInterface();
@@ -3223,7 +3439,7 @@ const checkPathEligibility = async () => {
   walletState.txState = "idle";
   walletState.txError = "";
 
-  if (!PATH_NFT_ADDRESS || !THOUGHT_TOKEN_ADDRESS) {
+  if (!PATH_NFT_ADDRESS || !THOUGHT_NFT_ADDRESS) {
     setMintFlowError("mint unavailable.", "thought");
     syncInterface();
     return;
@@ -3286,7 +3502,7 @@ const checkPathEligibility = async () => {
       return;
     }
 
-    if (authorizedMinter.toLowerCase() !== THOUGHT_TOKEN_ADDRESS.toLowerCase()) {
+    if (authorizedMinter.toLowerCase() !== THOUGHT_NFT_ADDRESS.toLowerCase()) {
       setMintFlowError(`$PATH #${pathId.toString()} not ready for THOUGHT.`, "path_not_ready");
       syncInterface();
       return;
@@ -3376,6 +3592,10 @@ type MintTransactionResponse = {
   wait: () => Promise<{ logs?: Array<{ topics: string[]; data: string }> } | null>;
 };
 
+type MintReceipt = {
+  logs?: readonly { topics: readonly string[]; data: string }[];
+};
+
 const mintErrorMessage = (error: unknown) => {
   const shortMessage =
     typeof error === "object" && error !== null && "shortMessage" in error
@@ -3395,10 +3615,50 @@ const mintErrorMessage = (error: unknown) => {
   return shortMessage || message || "mint failed.";
 };
 
+const sleep = (ms: number) => new Promise((resolve) => {
+  window.setTimeout(resolve, ms);
+});
+
+const waitForMintReceiptByHash = async (tx: MintTransactionResponse): Promise<MintReceipt | null> => {
+  const provider = getReadProvider();
+  const deadline = Date.now() + MINT_RECEIPT_TIMEOUT_MS;
+
+  if (provider) {
+    while (Date.now() < deadline) {
+      const receipt = await provider.getTransactionReceipt(tx.hash);
+      if (receipt) {
+        return receipt;
+      }
+      await sleep(MINT_RECEIPT_POLL_MS);
+    }
+  }
+
+  return tx.wait();
+};
+
+const resolveMintedTokenId = async (receipt: MintReceipt | null) => {
+  const fromReceipt = extractMintedTokenId(receipt ?? { logs: [] });
+  if (fromReceipt !== null) {
+    return fromReceipt;
+  }
+
+  if (!mintFlowData.textHash) {
+    return null;
+  }
+
+  try {
+    const token = getReadThoughtNFT();
+    const tokenId = token ? ((await token.tokenOfThought(mintFlowData.textHash)) as bigint) : 0n;
+    return tokenId === 0n ? null : Number(tokenId);
+  } catch {
+    return null;
+  }
+};
+
 const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliResult: boolean) => {
   try {
-    const receipt = await tx.wait();
-    const mintedTokenId = extractMintedTokenId(receipt ?? { logs: [] });
+    const receipt = await waitForMintReceiptByHash(tx);
+    const mintedTokenId = await resolveMintedTokenId(receipt);
 
     walletState.txState = "idle";
     walletState.txError = "";
@@ -3414,9 +3674,11 @@ const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliRe
       const consumedPathId = selectedCliPathId();
       appendCliOutput([
         "minted.",
+        mintedTokenId !== null ? `THOUGHT: #${mintedTokenId}` : "THOUGHT: minted",
         consumedPathId ? `$PATH #${consumedPathId} consumed for THOUGHT.` : "",
         "use: view tx",
         viewThoughtUseLine(mintedTokenId),
+        "use: gallery",
       ].filter(Boolean));
     }
   } catch (error) {
@@ -3553,8 +3815,8 @@ const confirmMint = async (options?: { appendCliResult?: boolean }) => {
     const nonceProvider = getReadProvider() ?? browserProvider;
     const nonce = await nonceProvider.getTransactionCount(signerAddress, "pending");
     const mintPrice =
-      walletState.mintPrice ?? ((await getReadThoughtToken()?.mintPrice()) as bigint | undefined) ?? 0n;
-    const writableToken = new Contract(THOUGHT_TOKEN_ADDRESS, THOUGHT_TOKEN_ABI, signer);
+      walletState.mintPrice ?? ((await getReadThoughtNFT()?.mintPrice()) as bigint | undefined) ?? 0n;
+    const writableToken = new Contract(THOUGHT_NFT_ADDRESS, THOUGHT_NFT_ABI, signer);
 
     mintFlowState = "minting";
     walletState.txState = "awaiting_signature";
@@ -3747,13 +4009,13 @@ const handleViewTx = async () => {
 };
 
 const handleViewThought = async (tokenId?: number | null) => {
-  const thoughtTokenId = tokenId ?? walletState.mintedTokenId ?? mintFlowData.existingTokenId;
-  if (thoughtTokenId === null || thoughtTokenId === undefined) {
+  const thoughtNftId = tokenId ?? walletState.mintedTokenId ?? mintFlowData.existingTokenId;
+  if (thoughtNftId === null || thoughtNftId === undefined) {
     setStatus("THOUGHT unavailable.", { flashMs: NOTICE_FLASH_MS });
     return;
   }
 
-  window.location.href = thoughtDetailUrl(thoughtTokenId);
+  window.location.href = thoughtDetailUrl(thoughtNftId);
 };
 
 const galleryUrl = (targetTokenId?: number | null) => {
@@ -3775,7 +4037,7 @@ const thoughtDetailUrl = (tokenId: number) => {
   return url.toString();
 };
 
-const parseThoughtTokenIdInput = (input: string) => {
+const parseThoughtNFTIdInput = (input: string) => {
   const trimmed = input.trim();
   if (!/^[1-9]\d*$/.test(trimmed)) {
     return null;
@@ -3810,19 +4072,19 @@ const decodeDataUriText = (uri: string) => {
   return header.includes(";base64") ? decodeBase64Utf8(payload) : decodeURIComponent(payload);
 };
 
-const readTokenMetadata = (uri: string): ThoughtTokenMetadata => {
+const readTokenMetadata = (uri: string): ThoughtNFTMetadata => {
   const decoded = decodeDataUriText(uri);
   const parsed = JSON.parse(decoded) as unknown;
   if (!parsed || typeof parsed !== "object") {
     return {};
   }
-  return parsed as ThoughtTokenMetadata;
+  return parsed as ThoughtNFTMetadata;
 };
 
 const svgToImageUri = (svg: string) =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
-const readTokenUriPayload = (uri: string): ThoughtTokenUriPayload => {
+const readTokenUriPayload = (uri: string): ThoughtNFTUriPayload => {
   const trimmed = uri.trim();
   if (!trimmed) {
     return { metadata: {}, image: "" };
@@ -3908,7 +4170,7 @@ const shortDetailAddress = (value: string) => shortHex(value, 18, 10);
 const parseThoughtDetailSpec = (thought: GalleryThought): ThoughtDetailSpec => {
   const fallback = {
     id: thought.thoughtSpecId,
-    ref: "THOUGHT.md@v1",
+    ref: "THOUGHT.v1.md",
     hash: thought.thoughtSpecId,
     text: "",
   };
@@ -4163,12 +4425,22 @@ const galleryThumbnailUri = (rawText: string) => {
     const x = xStart + index * (imageSize + gap);
     return `<rect x="${x}" y="${yStart}" width="${imageSize}" height="${imageSize}" fill="${colorForCharacter(char)}"/>`;
   }).join("");
-  const textSize = chars.length > 90 ? 9 : chars.length > 64 ? 10 : chars.length > 48 ? 12 : chars.length > 32 ? 14 : 18;
+  const textSize = contractLikeSvgTextSize(chars.length);
   const label = title
     ? `<text x="${CANVAS_WIDTH / 2}" y="${CANVAS_WIDTH - CANVAS_PADDING}" font-family="monospace" font-size="${textSize}" font-weight="100" text-anchor="middle" fill="#E8EDF7" fill-opacity="0.72">${escapeSvgText(title)}</text>`
     : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CANVAS_WIDTH} ${CANVAS_WIDTH}" shape-rendering="crispEdges"><rect width="${CANVAS_WIDTH}" height="${CANVAS_WIDTH}" fill="${BACKGROUND_FILL}"/>${blocks}${label}</svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
+const contractLikeSvgTextSize = (charCount: number) => {
+  if (charCount <= 0) {
+    return SVG_TEXT_MAX_SIZE;
+  }
+
+  const availableWidth = CANVAS_WIDTH - 2 * CANVAS_PADDING;
+  const fitSize = Math.floor(availableWidth / (charCount * SVG_TEXT_CHAR_ADVANCE));
+  return Math.max(SVG_TEXT_MIN_SIZE, Math.min(SVG_TEXT_MAX_SIZE, fitSize));
 };
 
 const renderGalleryCard = (thought: GalleryThought) => {
@@ -4214,13 +4486,13 @@ const isGalleryThought = (value: GalleryThought | null): value is GalleryThought
 
 const readGalleryThoughts = async (): Promise<GalleryThought[] | null> => {
   const provider = getReadProvider();
-  const token = getReadThoughtToken();
-  if (!provider || !token || !THOUGHT_TOKEN_ADDRESS) {
+  const token = getReadThoughtNFT();
+  if (!provider || !token || !THOUGHT_NFT_ADDRESS) {
     return null;
   }
 
   const logs = await provider.getLogs({
-    address: THOUGHT_TOKEN_ADDRESS,
+    address: THOUGHT_NFT_ADDRESS,
     fromBlock: 0,
     toBlock: "latest",
     topics: [THOUGHT_MINTED_TOPIC],
@@ -4242,7 +4514,7 @@ const readGalleryThoughts = async (): Promise<GalleryThought[] | null> => {
         const thoughtSpecId = String(parsed.args[5]);
         const eventMintedAt = Number(parsed.args[6] as bigint);
         let tokenUri = "";
-        let metadata: ThoughtTokenMetadata = {};
+        let metadata: ThoughtNFTMetadata = {};
         let tokenImage = "";
         try {
           tokenUri = (await token.tokenURI(tokenId, { gasLimit: TOKEN_URI_CALL_GAS_LIMIT })) as string;
@@ -4343,14 +4615,14 @@ const loadThoughtGallery = async () => {
 };
 
 const loadThoughtDetail = async () => {
-  if (ROUTE_THOUGHT_TOKEN_ID === null) {
+  if (ROUTE_THOUGHT_NFT_ID === null) {
     thoughtDetailStatus.textContent = "THOUGHT unavailable.";
     return;
   }
 
-  thoughtDetailTitleToken.textContent = ROUTE_THOUGHT_TOKEN_ID.toString();
+  thoughtDetailTitleToken.textContent = ROUTE_THOUGHT_NFT_ID.toString();
   thoughtDetailBody.classList.add("is-hidden");
-  thoughtDetailStatus.textContent = `loading THOUGHT #${ROUTE_THOUGHT_TOKEN_ID}...`;
+  thoughtDetailStatus.textContent = `loading THOUGHT #${ROUTE_THOUGHT_NFT_ID}...`;
   currentThoughtDetail = null;
   thoughtDetailJsonPanel.classList.add("is-hidden");
   clearThoughtDetailSpecJsonLink();
@@ -4365,9 +4637,9 @@ const loadThoughtDetail = async () => {
       return;
     }
 
-    const thought = thoughts.find((item) => item.tokenId === ROUTE_THOUGHT_TOKEN_ID);
+    const thought = thoughts.find((item) => item.tokenId === ROUTE_THOUGHT_NFT_ID);
     if (!thought) {
-      thoughtDetailStatus.textContent = `THOUGHT #${ROUTE_THOUGHT_TOKEN_ID} not found.`;
+      thoughtDetailStatus.textContent = `THOUGHT #${ROUTE_THOUGHT_NFT_ID} not found.`;
       return;
     }
 
@@ -4405,7 +4677,7 @@ const loadThoughtDetail = async () => {
       clearThoughtDetailProvenanceJsonLink();
     }
     thoughtDetailProvenanceJson.textContent = formatProvenanceJson(detail.provenanceJson);
-    thoughtDetailProvenanceViewerTitle.textContent = `source: ThoughtToken.provenanceOf(${detail.tokenId})`;
+    thoughtDetailProvenanceViewerTitle.textContent = `source: ThoughtNFT.provenanceOf(${detail.tokenId})`;
     thoughtDetailViewTx.href = txUrl || "#";
     thoughtDetailViewTx.textContent = detail.txHash ? `${shortHex(detail.txHash, 22, 14)} ↗` : "-";
     thoughtDetailViewTx.title = detail.txHash;
@@ -4618,12 +4890,39 @@ const fitImagesToRow = (count: number, displayWidth: number) => {
   return { imageSize, gap, rowWidth };
 };
 
-const renderCanvas = (rawText: string) => {
-  const previewText = canonicalThoughtTitle(rawText);
-  const chars = Array.from(previewText);
+const resizeWorkSurface = () => {
   const displayWidth = getDisplayWidth();
   const height = getMinimumHeight(displayWidth);
   resizeCanvas(displayWidth, height);
+  return { displayWidth, height };
+};
+
+const hideContractSvgPreview = () => {
+  thoughtSvgPreview.removeAttribute("src");
+  thoughtSvgPreview.classList.add("is-hidden");
+  canvas.classList.remove("is-hidden");
+};
+
+const showContractSvgPreview = (svg: string) => {
+  resizeWorkSurface();
+  thoughtSvgPreview.src = svgToImageUri(svg);
+  thoughtSvgPreview.classList.remove("is-hidden");
+  canvas.classList.add("is-hidden");
+};
+
+const syncCurrentWorkVisual = (options?: { suppressWarning?: boolean }) => {
+  if (currentWorkSvg) {
+    showContractSvgPreview(currentWorkSvg);
+    return;
+  }
+
+  syncOutputToCanvas(currentOutputText, options);
+};
+
+const renderCanvas = (rawText: string) => {
+  const previewText = canonicalThoughtTitle(rawText);
+  const chars = Array.from(previewText);
+  const { displayWidth, height } = resizeWorkSurface();
 
   context.clearRect(0, 0, displayWidth, height);
   context.fillStyle = BACKGROUND_FILL;
@@ -4674,6 +4973,8 @@ const renderCanvas = (rawText: string) => {
 const syncOutputToCanvas = (raw: string, options?: { suppressWarning?: boolean }) => {
   const title = canonicalThoughtTitle(raw);
 
+  hideContractSvgPreview();
+
   if (!options?.suppressWarning && byteLength(title) > MAX_TEXT_BYTES) {
     setWarning(`work exceeds the ${MAX_TEXT_BYTES}-byte mint limit.`, {
       flashMs: NOTICE_FLASH_MS,
@@ -4686,13 +4987,16 @@ const syncOutputToCanvas = (raw: string, options?: { suppressWarning?: boolean }
   renderCanvas(raw);
 };
 
-const setAgentOutput = (text: string) => {
+const setAgentOutput = (text: string, rawOutput: string, svg: string) => {
   resetMintRuntimeState();
-  currentOutputText = canonicalThoughtTitle(text);
-  syncOutputToCanvas(currentOutputText);
-  currentWorkId = recordCurrentWork(text);
+  currentOutputText = text;
+  currentWorkSvg = svg;
+  showContractSvgPreview(svg);
+  currentWorkId = recordCurrentWork(rawOutput);
   writeCurrentOutputSession();
 };
+
+const hasCurrentContractWorkSvg = () => currentWorkSvg.trim().startsWith("<svg");
 
 const workRunContextToThoughtRunContext = (work: ThoughtWorkRecord) =>
   isThoughtRunContext(work.runContext)
@@ -4715,7 +5019,8 @@ const recordCurrentWork = (rawOutput: string) => {
     text: currentOutputText,
     title: currentOutputText,
     rawOutput,
-    image: galleryThumbnailUri(currentOutputText),
+    image: currentWorkSvg ? svgToImageUri(currentWorkSvg) : galleryThumbnailUri(currentOutputText),
+    svg: currentWorkSvg,
     route: currentRunContext.mode,
     provider: currentRunContext.provider,
     model: currentRunContext.model,
@@ -4740,10 +5045,11 @@ const recordCurrentWork = (rawOutput: string) => {
 const loadWorkRecord = (work: ThoughtWorkRecord) => {
   resetMintRuntimeState();
   currentOutputText = canonicalThoughtTitle(work.text || work.title);
+  currentWorkSvg = work.svg ?? "";
   currentRunContext = workRunContextToThoughtRunContext(work);
   currentWorkId = work.id;
   runState = "output_ready";
-  syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+  syncCurrentWorkVisual({ suppressWarning: true });
   writeCurrentOutputSession();
   syncInterface();
 };
@@ -4776,7 +5082,7 @@ const readCurrentOutputSession = () => {
       return null;
     }
 
-    const candidate = parsed as { output?: unknown; runContext?: unknown; workId?: unknown };
+    const candidate = parsed as { output?: unknown; svg?: unknown; runContext?: unknown; workId?: unknown };
     const output = typeof candidate.output === "string" ? canonicalThoughtTitle(candidate.output) : "";
     if (!output) {
       return null;
@@ -4784,6 +5090,7 @@ const readCurrentOutputSession = () => {
 
     return {
       output,
+      svg: typeof candidate.svg === "string" ? candidate.svg : "",
       runContext: isThoughtRunContext(candidate.runContext) ? candidate.runContext : null,
       workId: Number.isSafeInteger(candidate.workId) && Number(candidate.workId) > 0
         ? Number(candidate.workId)
@@ -4804,6 +5111,7 @@ const writeCurrentOutputSession = () => {
     THOUGHT_OUTPUT_STORAGE_KEY,
     JSON.stringify({
       output: currentOutputText,
+      svg: currentWorkSvg,
       runContext: currentRunContext,
       workId: currentWorkId,
     }),
@@ -4817,10 +5125,11 @@ const restoreCurrentOutputSession = () => {
   }
 
   currentOutputText = stored.output;
+  currentWorkSvg = stored.svg;
   currentRunContext = stored.runContext;
   currentWorkId = stored.workId;
   runState = "output_ready";
-  syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+  syncCurrentWorkVisual({ suppressWarning: true });
 };
 
 const recordThoughtRun = (
@@ -4869,6 +5178,7 @@ const resetThought = (options?: { preserveStoredOutput?: boolean }) => {
   walletConnectInFlight = false;
   pendingMyBrainRunPayload = null;
   currentOutputText = "";
+  currentWorkSvg = "";
   currentRunContext = null;
   currentWorkId = null;
   if (!options?.preserveStoredOutput) {
@@ -5952,18 +6262,27 @@ const completeThoughtRunFromModelReturn = async (
   thoughtRunPayload: ThoughtRunPayload,
   modelReturn: string,
 ) => {
-  if (!modelReturn.trim()) {
-    throw new Error("model returned no text.");
+  let preview: ContractWorkPreview;
+  try {
+    preview = await previewWorkViaWallet(modelReturn);
+  } catch (error) {
+    lastPreviewRetryContext = {
+      payload: thoughtRunPayload,
+      modelReturn,
+    };
+    throw createContractPreviewUnavailableError(error);
   }
 
-  const thoughtTitle = await previewCanonicalThoughtText(modelReturn);
-
-  if (!thoughtTitle) {
-    throw new Error("model returned no text.");
+  if (!preview.ok || !preview.svg || !preview.text) {
+    lastPreviewRetryContext = null;
+    const rejected = rememberRejectedRun(thoughtRunPayload, preview, modelReturn);
+    throw createRejectedRunError(rejected, currentWorkId);
   }
 
-  recordThoughtRun(thoughtRunPayload, modelReturn, thoughtTitle);
-  setAgentOutput(thoughtTitle);
+  lastRejectedRun = null;
+  lastPreviewRetryContext = null;
+  recordThoughtRun(thoughtRunPayload, modelReturn, preview.text);
+  setAgentOutput(preview.text, modelReturn, preview.svg);
   runState = "output_ready";
   walletState.txState = "idle";
   walletState.txError = "";
@@ -5977,7 +6296,7 @@ const completeThoughtRunFromModelReturn = async (
   setWarning("");
 };
 
-const runAgent = async (options?: { forceGenerate?: boolean }) => {
+const runAgent = async (options?: { forceGenerate?: boolean; cli?: boolean }) => {
   if (!options?.forceGenerate) {
     if (isDebugCtaOverrideActive()) {
       setStatus("debug CTA only.", { flashMs: NOTICE_FLASH_MS });
@@ -6019,6 +6338,18 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
     return;
   }
 
+  if (!walletState.address) {
+    setWarning("wallet not connected.", { level: "warn" });
+    setStatus("");
+    return;
+  }
+
+  if (walletState.chainId !== THOUGHT_CHAIN_ID) {
+    setWarning("wallet on wrong network.", { level: "warn" });
+    setStatus("");
+    return;
+  }
+
   if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
     setWarning("authorize openrouter first.", { level: "warn" });
     setStatus("");
@@ -6045,6 +6376,8 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
 
   const runId = startRunSession();
   let thoughtRunPayload: ThoughtRunPayload | null = null;
+  lastRunErrorCliLines = [];
+  lastPreviewRetryContext = null;
 
   try {
     await ensureActiveThoughtSpec({ force: true });
@@ -6059,6 +6392,7 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
     }
     const message = formatThoughtSpecError(error);
     runState = "run_failed";
+    lastRunErrorCliLines = ["run failed.", message, "", "use: THOUGHT.md"];
     setWarning(message);
     setStatus("");
     syncInterface();
@@ -6099,6 +6433,10 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
       return;
     }
 
+    if (options?.cli) {
+      appendCliOutput(["model return received.", "previewing by contract..."]);
+    }
+
     await completeThoughtRunFromModelReturn(thoughtRunPayload, text);
   } catch (error) {
     if (!isCurrentRunSession(runId)) {
@@ -6106,7 +6444,13 @@ const runAgent = async (options?: { forceGenerate?: boolean }) => {
     }
     runState = "run_failed";
     const message = error instanceof Error ? error.message : "agent request failed.";
-    setWarning(message);
+    lastRunErrorCliLines = isContractWorkPreviewError(error)
+      ? error.cliLines ?? ["run failed.", message, "use: retry run"]
+      : ["run failed.", message, "", "use: retry run"];
+    if (!isContractWorkPreviewError(error) || error.kind !== "model-return-rejected") {
+      lastRejectedRun = null;
+    }
+    setWarning(lastRunErrorCliLines[0] ?? message);
     setStatus("");
   } finally {
     if (isCurrentRunSession(runId)) {
@@ -6435,12 +6779,15 @@ const cliCompletionCommandCatalog = () => {
     "run",
     "rerun",
     "retry run",
+    "preview retry",
     "work",
     "work current",
     "work list",
+    "work clear",
     "work previous",
     "work next",
     "work latest",
+    "works clear",
     "thought",
     "thought list",
     "mint",
@@ -6642,7 +6989,7 @@ const startCliRunProgress = () => {
     "running...",
     "one model round.",
     "prompt + THOUGHT.md in.",
-    "canvas out.",
+    "contract SVG out.",
   ]);
 };
 
@@ -6839,8 +7186,19 @@ const getCliSuggestions = (): CliSuggestion[] => {
   }
 
   if (runState === "run_failed") {
+    if (lastRejectedRun) {
+      return [
+        { label: "prompt <text>", command: "prompt " },
+        { label: "config", command: "config" },
+        { label: "config my-brain", command: "config my-brain" },
+        { label: "current", command: "current" },
+      ];
+    }
+
     return [
-      { label: "retry run", command: "retry run" },
+      lastPreviewRetryContext
+        ? { label: "preview retry", command: "preview retry" }
+        : { label: "retry run", command: "retry run" },
       { label: "current", command: "current" },
       { label: "help", command: "help" },
     ];
@@ -6941,9 +7299,10 @@ const initializeCliTranscript = () => {
     "",
     "one model round.",
     "prompt + THOUGHT.md in.",
-    "canvas out.",
+    "contract SVG out.",
     "",
     "quick start:",
+    "wallet connect",
     "config",
     "prompt <text>",
     "run",
@@ -7290,6 +7649,7 @@ const buildCliCurrentLines = () => {
   lines.push(
     `wallet: ${walletState.address ? `connected ${formatCliAddress(walletState.address)}` : "not connected"}`,
     `work: ${cliCurrentWorkState()}`,
+    `preview: ${hasCurrentContractWorkSvg() ? "contract SVG" : "missing"}`,
     `provenance: ${provenance ? `${provenance.bytes} bytes` : "empty"}`,
   );
 
@@ -7298,6 +7658,18 @@ const buildCliCurrentLines = () => {
   }
   lines.push(`THOUGHT: ${tokenId !== null ? `#${tokenId}` : "empty"}`);
   lines.push(`tx: ${walletState.txHash ? shortHex(walletState.txHash, 10, 8) : "empty"}`);
+
+  if (lastRejectedRun) {
+    lines.push(
+      "",
+      "last run: rejected",
+      `reason: ${lastRejectedRun.reasonLabel}`,
+    );
+    if (lastRejectedRun.reasonCode === 3) {
+      lines.push(`canonical text: ${lastRejectedRun.normalizedLength ?? 0} / ${MAX_TEXT_BYTES} characters`);
+    }
+    lines.push(currentWorkId ? "current work unchanged." : "work: none");
+  }
 
   return lines;
 };
@@ -8024,7 +8396,8 @@ const currentWorkRecord = (): ThoughtWorkRecord | null => {
     text: currentOutputText,
     title: currentOutputText,
     rawOutput: currentRunContext.returnedText ?? "",
-    image: galleryThumbnailUri(currentOutputText),
+    image: currentWorkSvg ? svgToImageUri(currentWorkSvg) : galleryThumbnailUri(currentOutputText),
+    svg: currentWorkSvg,
     route: currentRunContext.mode,
     provider: currentRunContext.provider,
     model: currentRunContext.model,
@@ -8058,6 +8431,7 @@ const outputCliWorkList = () => {
     "",
     "use: work <id>",
     "use: work current",
+    "use: work clear",
     "use: work previous",
     "use: work next",
     "use: work latest",
@@ -8072,6 +8446,7 @@ const outputCliWorkUsage = () => {
     "",
     "use: work current",
     "use: work list",
+    "use: work clear",
     "use: work <id>",
     "use: work previous",
     "use: work next",
@@ -8079,10 +8454,28 @@ const outputCliWorkUsage = () => {
   ]);
 };
 
+const clearWorkHistoryFromCli = () => {
+  const count = readThoughtWorks(sessionStorage).length;
+  writeThoughtWorks(sessionStorage, []);
+  currentWorkId = null;
+  writeCurrentOutputSession();
+  appendCliOutput([
+    count ? `cleared ${count} stored work${count === 1 ? "" : "s"}.` : "stored works already empty.",
+    "current work unchanged.",
+    "use: reset",
+    "use: run",
+  ]);
+};
+
 const loadWorkFromCli = (input: string) => {
   const normalized = input.trim();
   if (!normalized || normalized.toLowerCase() === "help") {
     outputCliWorkUsage();
+    return;
+  }
+
+  if (normalized.toLowerCase() === "clear") {
+    clearWorkHistoryFromCli();
     return;
   }
 
@@ -8257,14 +8650,16 @@ const returnMyBrainModelTextFromCli = async (returnInput: string) => {
 
   try {
     const payload = pendingMyBrainRunPayload.payload;
-    appendCliOutput(["model return received.", "leaving my-brain...", "canonicalizing via contract preview..."]);
+    appendCliOutput(["model return received.", "leaving my-brain...", "previewing by contract..."]);
     await completeThoughtRunFromModelReturn(payload, modelReturn);
     pendingMyBrainRunPayload = null;
-    appendCliOutput(["canvas out.", "", ...cliWorkReadyLines()]);
+    appendCliOutput(["contract SVG out.", "", ...cliWorkReadyLines()]);
   } catch (error) {
     const message = error instanceof Error ? error.message : "model return failed.";
     if (/provenance too large/i.test(message)) {
       appendCliError(["work blocked.", "provenance too large.", "use: return <text>", "use: cancel"]);
+    } else if (isContractWorkPreviewError(error)) {
+      appendCliError(error.cliLines ?? ["model return rejected.", message, "use: return <text>", "use: cancel"]);
     } else {
       appendCliError(["model return rejected.", message, "use: return <text>", "use: cancel"]);
     }
@@ -8287,6 +8682,35 @@ const cancelMyBrainRunFromCli = () => {
   appendCliOutput(["my-brain canceled.", "no work created.", "", "use: run"]);
 };
 
+const retryContractPreviewFromCli = async () => {
+  if (!lastPreviewRetryContext) {
+    appendCliError(["preview retry unavailable.", "no saved model return.", "use: run"]);
+    return;
+  }
+
+  appendCliOutput(["previewing by contract..."]);
+
+  try {
+    await completeThoughtRunFromModelReturn(
+      lastPreviewRetryContext.payload,
+      lastPreviewRetryContext.modelReturn,
+    );
+    const lines = cliWorkReadyLines();
+    if (lines[0] === "work blocked.") {
+      appendCliError(lines);
+      return;
+    }
+    appendCliOutput(lines);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "contract preview unavailable.";
+    if (isContractWorkPreviewError(error)) {
+      appendCliError(error.cliLines ?? ["contract preview unavailable.", "use: preview retry"]);
+    } else {
+      appendCliError(["contract preview unavailable.", message, "use: preview retry"]);
+    }
+  }
+};
+
 const runFromCli = async () => {
   if (!sessionState.prompt.trim()) {
     appendCliError(["run failed.", "prompt empty.", "next: prompt <text>"]);
@@ -8295,6 +8719,16 @@ const runFromCli = async () => {
 
   if (!getCurrentModelValue().trim()) {
     appendCliError(["run failed.", "model empty.", `use: ${configModelCommandPrefix()} list`]);
+    return;
+  }
+
+  if (!walletState.address) {
+    appendCliError(["run failed.", "wallet not connected.", "use: wallet connect"]);
+    return;
+  }
+
+  if (walletState.chainId !== THOUGHT_CHAIN_ID) {
+    appendCliError(["run failed.", ...cliWrongNetworkLines()]);
     return;
   }
 
@@ -8329,7 +8763,7 @@ const runFromCli = async () => {
 
   startCliRunProgress();
   try {
-    await runAgent({ forceGenerate: true });
+    await runAgent({ forceGenerate: true, cli: true });
   } finally {
     stopCliProgress();
   }
@@ -8348,7 +8782,13 @@ const runFromCli = async () => {
     return;
   }
 
-  appendCliError(panelWarningMessage ? ["run failed.", panelWarningMessage, "use: retry run"] : ["run failed."]);
+  appendCliError(
+    lastRunErrorCliLines.length
+      ? lastRunErrorCliLines
+      : panelWarningMessage
+        ? ["run failed.", panelWarningMessage, "use: retry run"]
+        : ["run failed."],
+  );
 };
 
 const switchMintFlowToCli = () => {
@@ -8454,13 +8894,17 @@ const buildCliMintStateLines = () => {
     const token = mintFlowData.existingTokenId;
     return [
       "already minted.",
-      token ? `THOUGHT #${token} exists.` : "THOUGHT exists.",
+      token ? `this exact text is already THOUGHT #${token}.` : "this exact text is already a THOUGHT.",
+      "same canonical text cannot be minted twice.",
+      "",
       viewThoughtUseLine(token),
       "",
       "to mint another:",
-      "run makes a new work.",
-      "use: run",
-    ].filter(Boolean);
+      "change the input or choose another work.",
+      "use: prompt <text>",
+      "use: config",
+      "use: work list",
+    ];
   }
   if (mintFlowState === "error") {
     if (mintFlowData.error.includes("provenance too large")) {
@@ -8486,12 +8930,17 @@ const appendCliMintState = () => {
     return;
   }
 
-  appendCliOutput(lines);
+  appendCliOutput(lines, mintFlowState === "text_taken" ? { preserveSpacing: true } : undefined);
 };
 
 const startCliMint = async () => {
   if (!currentOutputText) {
     appendCliError(["no work to mint.", "use: run"]);
+    return;
+  }
+
+  if (!hasCurrentContractWorkSvg()) {
+    appendCliError(["mint blocked.", "contract SVG missing.", "use: run"]);
     return;
   }
 
@@ -8513,6 +8962,11 @@ const ensureCliMintFlow = async () => {
 
   if (!currentOutputText) {
     appendCliError(["no work to mint.", "use: run"]);
+    return false;
+  }
+
+  if (!hasCurrentContractWorkSvg()) {
+    appendCliError(["mint blocked.", "contract SVG missing.", "use: run"]);
     return false;
   }
 
@@ -8543,7 +8997,7 @@ const cliPathAvailability = async (
   authorizedMinter: string,
   movementQuota: bigint,
 ) => {
-  if (authorizedMinter.toLowerCase() !== THOUGHT_TOKEN_ADDRESS.toLowerCase() || movementQuota === 0n) {
+  if (authorizedMinter.toLowerCase() !== THOUGHT_NFT_ADDRESS.toLowerCase() || movementQuota === 0n) {
     return "not ready";
   }
 
@@ -8573,7 +9027,7 @@ const listCliPaths = async () => {
 
   const provider = getReadProvider();
   const pathNft = getReadPathNft();
-  if (!provider || !pathNft || !PATH_NFT_ADDRESS || !THOUGHT_TOKEN_ADDRESS) {
+  if (!provider || !pathNft || !PATH_NFT_ADDRESS || !THOUGHT_NFT_ADDRESS) {
     appendCliOutput([
       "wallet $PATHs for THOUGHT mint.",
       "",
@@ -8733,10 +9187,10 @@ const authorizeFromCli = async () => {
 const cliMintPriceLine = async () => {
   try {
     const mintPrice =
-      walletState.mintPrice ?? ((await getReadThoughtToken()?.mintPrice()) as bigint | undefined) ?? null;
-    return mintPrice === null ? "price: unknown" : `price: ${formatEther(mintPrice)} ETH`;
+      walletState.mintPrice ?? ((await getReadThoughtNFT()?.mintPrice()) as bigint | undefined) ?? null;
+    return mintPrice === null ? "THOUGHT mint price: unknown" : `THOUGHT mint price: ${formatEther(mintPrice)} ETH`;
   } catch {
-    return "price: unknown";
+    return "THOUGHT mint price: unknown";
   }
 };
 
@@ -8758,9 +9212,9 @@ const cliConfirmPreviewLines = async () => {
     provenanceBytes === null ? "provenance: unknown" : formatProvenanceBytes(provenanceBytes),
     `spec: ${specLabel}`,
     await cliMintPriceLine(),
-    "spends gas.",
+    "network gas: paid by wallet.",
     "publishes prompt + model return + provenance.",
-    "consumes this $PATH for THOUGHT.",
+    `$PATH: #${pathId} consumed for THOUGHT.`,
     "confirm in wallet...",
   ];
 };
@@ -8875,16 +9329,19 @@ const cliCommandsHelpLines = () => [
   "THOUGHT.md",
   "THOUGHT.md text",
   "",
-  "run",
-  "rerun",
-  "retry run",
+    "run",
+    "rerun",
+    "retry run",
+    "preview retry",
   "work",
   "work current",
   "work list",
+  "work clear",
   "work <id>",
   "work previous",
   "work next",
   "work latest",
+  "works clear",
   "thought",
   "thought list",
   "",
@@ -8943,6 +9400,8 @@ const cliHelpLines = (topic = "") => {
       "provenance",
       "gallery",
       "my-brain",
+      "clear",
+      "reset",
     ];
   }
 
@@ -8963,7 +9422,7 @@ const cliHelpLines = (topic = "") => {
       "3 run",
       "  one model round.",
       "  prompt + THOUGHT.md in.",
-      "  canvas out.",
+      "  contract SVG out.",
       "",
       "4 mint",
       "  one THOUGHT needs one $PATH.",
@@ -9057,7 +9516,7 @@ const cliHelpLines = (topic = "") => {
       "THOUGHT.md is the generation spec.",
       "",
       "prompt + THOUGHT.md in.",
-      "canvas out.",
+      "contract SVG out.",
       "",
       "use:",
       "spec",
@@ -9072,7 +9531,7 @@ const cliHelpLines = (topic = "") => {
       "run sends prompt + THOUGHT.md to the selected model.",
       "",
       "one model round.",
-      "canvas out.",
+      "contract SVG out.",
       "",
       "use:",
       "run",
@@ -9103,16 +9562,46 @@ const cliHelpLines = (topic = "") => {
       "work is generated by the selected model.",
       "",
       "each work stores the canvas text,",
-      "image thumbnail, and run context.",
+      "contract SVG, and run context.",
       "",
       "use:",
       "work",
       "work current",
       "work list",
+      "work clear",
       "work <id>",
       "work previous",
       "work next",
       "work latest",
+    ];
+  }
+
+  if (normalizedTopic === "reset") {
+    return [
+      "reset clears the current work.",
+      "",
+      "clears canvas, prompt, mint state,",
+      "and current output session.",
+      "",
+      "does not clear stored work history.",
+      "",
+      "use:",
+      "reset",
+      "work clear",
+    ];
+  }
+
+  if (normalizedTopic === "clear") {
+    return [
+      "clear empties the console transcript.",
+      "",
+      "does not clear current work,",
+      "stored work history, or wallet state.",
+      "",
+      "use:",
+      "clear",
+      "reset",
+      "work clear",
     ];
   }
 
@@ -9336,14 +9825,26 @@ const executeCliCommand = async (rawCommand: string) => {
     } else if (lowerHead === "thought") {
       await outputCliThoughtWorks(lowerRest);
     } else if (lowerHead === "works") {
-      outputCliWorkList();
+      if (lowerRest === "clear") {
+        clearWorkHistoryFromCli();
+      } else {
+        outputCliWorkList();
+      }
     } else if (lowerHead === "work" || lowerHead === "output") {
       if (lowerRest === "list") {
         outputCliWorkList();
       } else {
         loadWorkFromCli(rest);
       }
+    } else if (lowerHead === "preview" && lowerRest === "retry") {
+      await retryContractPreviewFromCli();
     } else if (lowerHead === "run" || lowerHead === "rerun" || command.toLowerCase() === "retry run") {
+      if (command.toLowerCase() === "retry run" && lastRejectedRun) {
+        appendCliOutput([
+          "last run was rejected by the THOUGHT rules.",
+          "retry may repeat the same failure unless prompt or config changes.",
+        ]);
+      }
       await runFromCli();
     } else if (lowerHead === "provenance") {
       await outputCliProvenance(lowerRest === "--json");
@@ -9372,7 +9873,7 @@ const executeCliCommand = async (rawCommand: string) => {
     } else if (lowerHead === "view" && second.toLowerCase() === "thought") {
       const tokenIdInput = command.split(/\s+/).slice(2).join(" ");
       const tokenId = tokenIdInput
-        ? parseThoughtTokenIdInput(tokenIdInput)
+        ? parseThoughtNFTIdInput(tokenIdInput)
         : (walletState.mintedTokenId ?? mintFlowData.existingTokenId);
       if (tokenIdInput && tokenId === null) {
         appendCliError(["THOUGHT id invalid.", "use: view THOUGHT <id>"]);
@@ -9731,7 +10232,7 @@ thoughtDetailProvenanceBytes.addEventListener("click", (event) => {
 });
 
 const handleViewportResize = () => {
-  syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+  syncCurrentWorkVisual({ suppressWarning: true });
   syncThoughtDetailTextBlocks();
   syncThoughtDetailEmbeddedHeights();
 };
@@ -9849,7 +10350,7 @@ const initFrontpage = async () => {
     });
 
   void document.fonts.load(`100 12px ${CANVAS_TEXT_FAMILY}`).then(() => {
-    syncOutputToCanvas(currentOutputText, { suppressWarning: true });
+    syncCurrentWorkVisual({ suppressWarning: true });
   });
 };
 

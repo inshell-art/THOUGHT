@@ -6,7 +6,8 @@ export type WorkRunContext = {
   returnedText?: string;
   clientGeneratedAt: string;
   request?: {
-    maxOutputTokens: 128 | "128";
+    maxOutputTokens: 48 | 32 | "48" | "32" | "none";
+    stop?: "\\n" | "none";
   };
   web?: {
     enabled: boolean;
@@ -27,6 +28,7 @@ export type ThoughtWorkRecord = {
   title: string;
   rawOutput: string;
   image: string;
+  svg?: string;
   route: string;
   provider: string;
   model: string;
@@ -57,6 +59,7 @@ export type ThoughtWorkInput = {
   title: string;
   rawOutput: string;
   image: string;
+  svg?: string;
   route?: string;
   provider?: string;
   model?: string;
@@ -135,7 +138,7 @@ export const sanitizeWorkRecord = (value: unknown): ThoughtWorkRecord | null => 
     : candidate.rawOutput;
   const prompt = typeof candidate.prompt === "string" ? candidate.prompt : runContext.prompt;
 
-  return {
+  const record: ThoughtWorkRecord = {
     id,
     prompt,
     returnedText,
@@ -146,20 +149,34 @@ export const sanitizeWorkRecord = (value: unknown): ThoughtWorkRecord | null => 
     route: typeof candidate.route === "string" ? candidate.route : runContext.mode,
     provider: typeof candidate.provider === "string" ? candidate.provider : runContext.provider,
     model: typeof candidate.model === "string" ? candidate.model : runContext.model,
-    thoughtSpec: candidate.thoughtSpec ?? runContext.thoughtSpec,
     normalizer: candidate.normalizer ?? {
       id: "thought.normalize.v1",
       source: "contract-view",
     },
-    provenanceJson: typeof candidate.provenanceJson === "string" ? candidate.provenanceJson : undefined,
-    provenanceBytes: typeof candidate.provenanceBytes === "number" ? candidate.provenanceBytes : undefined,
-    hashes: candidate.hashes,
     runContext: {
       ...runContext,
       returnedText: runContext.returnedText ?? returnedText,
     },
     createdAt: candidate.createdAt,
   };
+
+  if (typeof candidate.svg === "string") {
+    record.svg = candidate.svg;
+  }
+  if (candidate.thoughtSpec ?? runContext.thoughtSpec) {
+    record.thoughtSpec = candidate.thoughtSpec ?? runContext.thoughtSpec;
+  }
+  if (typeof candidate.provenanceJson === "string") {
+    record.provenanceJson = candidate.provenanceJson;
+  }
+  if (typeof candidate.provenanceBytes === "number") {
+    record.provenanceBytes = candidate.provenanceBytes;
+  }
+  if (candidate.hashes) {
+    record.hashes = candidate.hashes;
+  }
+
+  return record;
 };
 
 export const readThoughtWorks = (
@@ -214,6 +231,7 @@ export const appendThoughtWork = (
     title: input.title,
     rawOutput: input.rawOutput,
     image: input.image,
+    svg: input.svg,
     route: input.route ?? input.runContext.mode,
     provider: input.provider ?? input.runContext.provider,
     model: input.model ?? input.runContext.model,

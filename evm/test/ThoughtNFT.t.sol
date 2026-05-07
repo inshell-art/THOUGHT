@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ThoughtSpecRegistry} from "../src/ThoughtSpecRegistry.sol";
-import {ThoughtToken} from "../src/ThoughtToken.sol";
+import {ThoughtNFT} from "../src/ThoughtNFT.sol";
 
 interface Vm {
     function addr(uint256 privateKey) external returns (address);
@@ -89,14 +89,14 @@ contract MockPathNFT {
     }
 }
 
-contract ThoughtTokenTest {
+contract ThoughtNFTTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 private constant USER_KEY = 0xA11CE;
     uint256 private constant OTHER_KEY = 0xB0B;
     string private constant DEFAULT_PROVENANCE = '{"schema":"thought.provenance.v1","route":"local"}';
-    bytes32 private constant DEFAULT_SPEC_ID = keccak256("thought.md.v1");
+    bytes32 private constant DEFAULT_SPEC_ID = keccak256("THOUGHT.v1.md");
     bytes32 private constant DEFAULT_SPEC_HASH = keccak256("THOUGHT.md fixture");
-    string private constant DEFAULT_SPEC_REF = "THOUGHT.md@v1";
+    string private constant DEFAULT_SPEC_REF = "THOUGHT.v1.md";
     string private constant DEFAULT_SPEC_TEXT = "THOUGHT.md fixture";
     bytes32 private constant DEFAULT_PROMPT_HASH = keccak256("why we are here?");
     bytes32 private constant CONSUME_AUTHORIZATION_TYPEHASH = keccak256(
@@ -115,7 +115,7 @@ contract ThoughtTokenTest {
 
     MockPathNFT private path;
     ThoughtSpecRegistry private registry;
-    ThoughtToken private token;
+    ThoughtNFT private token;
     address private user;
 
     function setUp() public {
@@ -123,7 +123,7 @@ contract ThoughtTokenTest {
         path = new MockPathNFT();
         registry = new ThoughtSpecRegistry();
         registry.registerSpec(DEFAULT_SPEC_ID, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT), true);
-        token = new ThoughtToken(address(path), address(registry));
+        token = new ThoughtNFT(address(path), address(registry));
         path.setAuthorizedMinter(address(token));
         for (uint256 pathId = 1; pathId <= 32; pathId++) {
             path.mintPath(user, pathId);
@@ -151,6 +151,22 @@ contract ThoughtTokenTest {
         require(registry.validateSpec(DEFAULT_SPEC_ID), "spec validation failed");
         require(_equal(registry.specText(DEFAULT_SPEC_ID), DEFAULT_SPEC_TEXT), "spec text mismatch");
         require(token.thoughtSpecRegistry() == address(registry), "token registry mismatch");
+
+        (
+            bytes32 tokenSpecId,
+            bytes32 tokenSpecHash,
+            string memory tokenSpecRef,
+            address tokenSpecPointer,
+            uint32 tokenSpecByteLength,
+            ,
+            bool tokenSpecExists
+        ) = token.activeSpecMeta();
+        require(tokenSpecExists, "token active spec should exist");
+        require(tokenSpecId == DEFAULT_SPEC_ID, "token active spec id mismatch");
+        require(tokenSpecHash == DEFAULT_SPEC_HASH, "token active spec hash mismatch");
+        require(_equal(tokenSpecRef, DEFAULT_SPEC_REF), "token active spec ref mismatch");
+        require(tokenSpecPointer == pointer, "token active spec pointer mismatch");
+        require(tokenSpecByteLength == byteLength, "token active spec byte length mismatch");
     }
 
     function testRegisterSameThoughtSpecIdReverts() public {
@@ -211,11 +227,47 @@ contract ThoughtTokenTest {
         require(_equal(normalized, "HELLO WORLD"), "unexpected preview text");
         require(valid, "preview should be valid");
         require(reasonCode == 0, "unexpected reason");
-        require(token.MAX_TEXT_BYTES() == 1024, "unexpected text cap");
+        require(token.MAX_RAW_RETURN_BYTES() == 512, "unexpected raw return cap");
+        require(token.MAX_TEXT_BYTES() == 128, "unexpected text cap");
         require(token.isCanonicalText("HELLO WORLD"), "canonical text should be valid");
         require(!token.isCanonicalText("hello"), "lowercase text is not canonical");
         require(!token.isCanonicalText("HELLO  WORLD"), "repeated spaces are not canonical");
         require(token.textHashOf("HELLO WORLD") == keccak256(bytes("HELLO WORLD")), "unexpected codec hash");
+    }
+
+    function testPreviewWorkNormalizesAndRenders() public view {
+        (bool ok, string memory text, string memory svg, uint8 reasonCode) = token.previewWork("cat");
+        require(ok, "preview should pass");
+        require(_equal(text, "CAT"), "unexpected preview text");
+        require(bytes(svg).length > 0, "missing preview svg");
+        require(reasonCode == token.ERR_NONE(), "unexpected reason");
+        require(_equal(svg, token.renderThoughtSvg("CAT")), "preview svg should match renderer");
+    }
+
+    function testPreviewWorkAccepts128CanonicalChars() public view {
+        string memory rawReturn = _repeat("A", 128);
+        (bool ok, string memory text, string memory svg, uint8 reasonCode) = token.previewWork(rawReturn);
+        require(ok, "128 chars should pass");
+        require(bytes(text).length == 128, "unexpected text length");
+        require(bytes(svg).length > 0, "missing svg");
+        require(reasonCode == token.ERR_NONE(), "unexpected reason");
+    }
+
+    function testPreviewWorkRejects129CanonicalChars() public view {
+        (bool ok, string memory text, string memory svg, uint8 reasonCode) = token.previewWork(_repeat("A", 129));
+        require(!ok, "129 chars should fail");
+        require(bytes(text).length == 129, "should return normalized text");
+        require(bytes(svg).length == 0, "failed preview should not render");
+        require(reasonCode == token.ERR_TEXT_TOO_LONG(), "unexpected reason");
+    }
+
+    function testPreviewWorkRejectsOversizeRawReturn() public view {
+        (bool ok, string memory text, string memory svg, uint8 reasonCode) =
+            token.previewWork(_repeat("A", token.MAX_RAW_RETURN_BYTES() + 1));
+        require(!ok, "oversize raw return should fail");
+        require(bytes(text).length == 0, "oversize raw return should not normalize");
+        require(bytes(svg).length == 0, "oversize raw return should not render");
+        require(reasonCode == token.ERR_RAW_RETURN_TOO_LONG(), "unexpected reason");
     }
 
     function testMintRejectsNonCanonicalText() public {
@@ -260,7 +312,7 @@ contract ThoughtTokenTest {
         require(token.pathSerialOf(tokenId) == 0, "unexpected path serial");
         require(path.thoughtConsumed(1), "path thought was not consumed");
 
-        ThoughtToken.ThoughtRecord memory record = token.getThought(tokenId);
+        ThoughtNFT.ThoughtRecord memory record = token.getThought(tokenId);
         require(_equal(record.rawText, storedText), "record raw text mismatch");
         require(_equal(record.provenanceJson, provenance), "record provenance mismatch");
         require(record.textHash == textHash, "record text hash mismatch");
@@ -290,7 +342,7 @@ contract ThoughtTokenTest {
     }
 
     function testRenderThoughtSvgIncludesExpectedColorsAndText() public view {
-        string memory svg = token.renderThoughtSvg("  why 42 <tag>  ");
+        string memory svg = token.renderThoughtSvg("WHY TAG");
         require(_contains(svg, "#f5deb3"), "missing W color");
         require(_contains(svg, "#ffcc00"), "missing H color");
         require(_contains(svg, "#ffff00"), "missing Y color");
@@ -300,11 +352,29 @@ contract ThoughtTokenTest {
         require(_contains(svg, ">WHY TAG</text>"), "missing rendered text");
     }
 
+    function testRenderThoughtSvgRejectsNonCanonicalText() public {
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonCanonicalThoughtText.selector));
+        token.renderThoughtSvg("cat");
+    }
+
     function testRenderThoughtSvgIncludesCanvasClip() public view {
         string memory svg = token.renderThoughtSvg("HELLO");
         require(_contains(svg, "<clipPath id='canvasClip'>"), "missing canvas clip");
         require(_contains(svg, "<g clip-path='url(#canvasClip)'>"), "missing clipped content group");
         require(_contains(svg, ">HELLO</text>"), "missing rendered text");
+    }
+
+    function testRenderThoughtSvgUsesLargestFittingTextSize() public view {
+        string memory shortSvg = token.renderThoughtSvg("HELLO");
+        string memory mediumSvg = token.renderThoughtSvg(_repeat("A", 64));
+        string memory longSvg = token.renderThoughtSvg(_repeat("A", 100));
+        string memory maxSvg = token.renderThoughtSvg(_repeat("A", token.MAX_TEXT_BYTES()));
+
+        require(_contains(shortSvg, "font-size='18'"), "short text should use max font");
+        require(_contains(mediumSvg, "font-size='18'"), "medium text should keep max font");
+        require(_contains(longSvg, "font-size='15'"), "long text should use fitted font");
+        require(_contains(maxSvg, "font-size='11'"), "max text should use fitted font");
+        require(_contains(maxSvg, _repeat("A", token.MAX_TEXT_BYTES())), "max text should render fully");
     }
 
     function testTokenUriIsMetadataJsonWithOnchainSvgImage() public {
@@ -315,6 +385,9 @@ contract ThoughtTokenTest {
         require(_contains(svg, "<svg"), "missing svg root");
         require(_contains(svg, ">HELLOWORLD</text>"), "missing rendered text");
         require(_equal(svg, token.renderTokenSvg(tokenId)), "svg helper mismatch");
+        (, string memory previewText_, string memory previewSvg,) = token.previewWork("HELLOWORLD");
+        require(_equal(previewText_, "HELLOWORLD"), "unexpected preview text");
+        require(_equal(svg, previewSvg), "token svg should match preview svg");
     }
 
     function testMintPriceIsEnforced() public {
@@ -542,7 +615,7 @@ contract ThoughtTokenTest {
         vm.prank(user);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ThoughtToken.ThoughtTextTooLarge.selector,
+                ThoughtNFT.ThoughtTextTooLarge.selector,
                 bytes(text).length,
                 token.MAX_TEXT_BYTES()
             )
@@ -651,7 +724,7 @@ contract ThoughtTokenTest {
         vm.prank(user);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ThoughtToken.ProvenanceTooLarge.selector,
+                ThoughtNFT.ProvenanceTooLarge.selector,
                 bytes(provenance).length,
                 token.MAX_PROVENANCE_BYTES()
             )

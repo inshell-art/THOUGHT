@@ -31,7 +31,7 @@ interface IThoughtSpecRegistry {
         );
 }
 
-contract ThoughtToken {
+contract ThoughtNFT {
     error ApprovalCallerNotOwnerNorApproved();
     error ApprovalToCurrentOwner();
     error BalanceQueryForZeroAddress();
@@ -85,16 +85,26 @@ contract ThoughtToken {
     string public constant name = "THOUGHT";
     string public constant symbol = "THOUGHT";
 
-    uint256 public constant MAX_TEXT_BYTES = 1024;
+    uint256 public constant MAX_RAW_RETURN_BYTES = 512;
+    uint256 public constant MAX_TEXT_BYTES = 128;
     uint256 public constant MAX_PROVENANCE_BYTES = 2048;
+    uint8 public constant ERR_NONE = 0;
+    uint8 public constant ERR_EMPTY_TEXT = 1;
+    uint8 public constant ERR_RAW_RETURN_TOO_LONG = 2;
+    uint8 public constant ERR_TEXT_TOO_LONG = 3;
+    uint8 public constant ERR_INVALID_CHARACTER = 4;
+    uint8 public constant ERR_NOT_CANONICAL = 5;
     bytes32 public constant PATH_MOVEMENT_THOUGHT = bytes32("THOUGHT");
-    bytes32 public constant DEFAULT_THOUGHT_SPEC_ID = keccak256("thought.md.v1");
+    bytes32 public constant DEFAULT_THOUGHT_SPEC_ID = keccak256("THOUGHT.v1.md");
     uint256 private constant CANVAS_SIZE = 960;
     uint256 private constant CANVAS_PADDING = 28;
     uint256 private constant IMAGE_SIZE = 29;
     uint256 private constant IMAGE_GAP = 6;
     uint256 private constant TEXT_Y = 932;
     uint256 private constant SCALE_BPS = 10_000;
+    uint256 private constant TEXT_MIN_SIZE = 9;
+    uint256 private constant TEXT_MAX_SIZE = 18;
+    uint256 private constant TEXT_CHAR_ADVANCE_BPS = 6_000;
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
     address public immutable owner;
@@ -243,6 +253,24 @@ contract ThoughtToken {
         );
     }
 
+    function activeSpecMeta()
+        external
+        view
+        returns (
+            bytes32 specId,
+            bytes32 specHash,
+            string memory ref,
+            address pointer,
+            uint32 byteLength,
+            uint64 registeredAt,
+            bool exists
+        )
+    {
+        specId = DEFAULT_THOUGHT_SPEC_ID;
+        (specHash, ref, pointer, byteLength, registeredAt, exists) =
+            IThoughtSpecRegistry(thoughtSpecRegistry).specMeta(specId);
+    }
+
     function normalizeThought(string calldata rawText) external pure returns (string memory) {
         return _canonicalizeThought(rawText);
     }
@@ -271,15 +299,39 @@ contract ThoughtToken {
         pure
         returns (string memory normalized, bool valid, uint8 reasonCode)
     {
+        if (bytes(input).length > MAX_RAW_RETURN_BYTES) {
+            return ("", false, ERR_RAW_RETURN_TOO_LONG);
+        }
         normalized = _canonicalizeThought(input);
         bytes memory normalizedBytes = bytes(normalized);
         if (normalizedBytes.length == 0) {
-            return (normalized, false, 1);
+            return (normalized, false, ERR_EMPTY_TEXT);
         }
         if (normalizedBytes.length > MAX_TEXT_BYTES) {
-            return (normalized, false, 2);
+            return (normalized, false, ERR_TEXT_TOO_LONG);
         }
-        return (normalized, true, 0);
+        return (normalized, true, ERR_NONE);
+    }
+
+    function previewWork(string calldata rawReturn)
+        external
+        pure
+        returns (bool ok, string memory text, string memory svg, uint8 reasonCode)
+    {
+        if (bytes(rawReturn).length > MAX_RAW_RETURN_BYTES) {
+            return (false, "", "", ERR_RAW_RETURN_TOO_LONG);
+        }
+
+        text = _canonicalizeThought(rawReturn);
+        bytes memory textBytes = bytes(text);
+        if (textBytes.length == 0) {
+            return (false, text, "", ERR_EMPTY_TEXT);
+        }
+        if (textBytes.length > MAX_TEXT_BYTES) {
+            return (false, text, "", ERR_TEXT_TOO_LONG);
+        }
+
+        return (true, text, _renderSvg(text), ERR_NONE);
     }
 
     function textHashOf(string calldata canonicalText) external pure returns (bytes32) {
@@ -297,18 +349,28 @@ contract ThoughtToken {
         return keccak256(input);
     }
 
-    function renderThoughtSvg(string calldata rawText) external pure returns (string memory) {
-        return _buildSvg(_canonicalizeThought(rawText));
+    function renderThoughtSvg(string calldata canonicalText) external pure returns (string memory) {
+        bytes memory input = bytes(canonicalText);
+        if (input.length == 0) {
+            revert EmptyThoughtText();
+        }
+        if (input.length > MAX_TEXT_BYTES) {
+            revert ThoughtTextTooLarge(input.length, MAX_TEXT_BYTES);
+        }
+        if (keccak256(bytes(_canonicalizeThought(canonicalText))) != keccak256(input)) {
+            revert NonCanonicalThoughtText();
+        }
+        return _renderSvg(canonicalText);
     }
 
     function renderTokenSvg(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
-        return _buildSvg(_thoughts[tokenId].rawText);
+        return _renderSvg(_thoughts[tokenId].rawText);
     }
 
     function svgOf(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
-        return _buildSvg(_thoughts[tokenId].rawText);
+        return _renderSvg(_thoughts[tokenId].rawText);
     }
 
     function setMintPrice(uint256 newMintPrice) external onlyOwner {
@@ -442,7 +504,7 @@ contract ThoughtToken {
         string memory textHash = _bytes32ToHex(record.textHash);
         string memory provenanceHash = _bytes32ToHex(record.provenanceHash);
         string memory thoughtSpecId = _bytes32ToHex(record.thoughtSpecId);
-        string memory svg = _buildSvg(record.rawText);
+        string memory svg = _renderSvg(record.rawText);
         string memory metadata = string.concat(
             '{"name":"THOUGHT #',
             _toString(tokenId),
@@ -623,7 +685,7 @@ contract ThoughtToken {
         return string(output);
     }
 
-    function _buildSvg(string memory text) private pure returns (string memory) {
+    function _renderSvg(string memory text) private pure returns (string memory) {
         bytes memory chars = bytes(text);
         bytes memory body = abi.encodePacked(
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 960 960' shape-rendering='crispEdges'>",
@@ -685,19 +747,20 @@ contract ThoughtToken {
     }
 
     function _textSize(uint256 charCount) private pure returns (uint256) {
-        if (charCount > 90) {
-            return 9;
+        if (charCount == 0) {
+            return TEXT_MAX_SIZE;
         }
-        if (charCount > 64) {
-            return 10;
+
+        uint256 availableWidth = CANVAS_SIZE - (CANVAS_PADDING * 2);
+        uint256 fitSize = (availableWidth * SCALE_BPS) / (charCount * TEXT_CHAR_ADVANCE_BPS);
+
+        if (fitSize > TEXT_MAX_SIZE) {
+            return TEXT_MAX_SIZE;
         }
-        if (charCount > 48) {
-            return 12;
+        if (fitSize < TEXT_MIN_SIZE) {
+            return TEXT_MIN_SIZE;
         }
-        if (charCount > 32) {
-            return 14;
-        }
-        return 18;
+        return fitSize;
     }
 
     function _colorHex(bytes1 char_) private pure returns (string memory) {

@@ -4,7 +4,7 @@ Date: 2026-05-02
 
 This document explains the current `thought.provenance.v1` JSON record used by THOUGHT.
 
-Provenance is a compact run and mint context record. It is stored onchain by `ThoughtToken.provenanceOf(tokenId)` and anchored by `recordOf(tokenId).provenanceHash`.
+Provenance is a compact run and mint context record. It is stored onchain by `ThoughtNFT.provenanceOf(tokenId)` and anchored by `recordOf(tokenId).provenanceHash`.
 
 It is not a cryptographic proof that a provider actually generated the work. It is the canonical context the app publishes with the minted THOUGHT.
 
@@ -46,7 +46,7 @@ MAX_TEXT_BYTES = 1024
   "chain": {
     "chainId": "31337",
     "pathNFT": "0x...",
-    "thoughtToken": "0x..."
+    "thoughtNft": "0x..."
   },
   "client": {
     "generatedAt": "2026-05-02T00:00:00.000Z"
@@ -78,7 +78,7 @@ MAX_TEXT_BYTES = 1024
   "thoughtSpec": {
     "hash": "0x...",
     "id": "0x...",
-    "ref": "THOUGHT.md@v1"
+    "ref": "THOUGHT.v1.md"
   },
   "web": {
     "enabled": true,
@@ -202,7 +202,7 @@ Anchor for the THOUGHT.md spec used as the system instruction.
 Fields:
 
 - `id`: spec id used by the contract registry.
-- `ref`: human-readable spec reference, for example `THOUGHT.md@v1`.
+- `ref`: human-readable spec reference, for example `THOUGHT.v1.md`.
 - `hash`: hash of the THOUGHT.md spec text.
 
 Verification:
@@ -292,7 +292,7 @@ Verification:
 keccak256(utf8Bytes(prompt)) == hashes.promptHash
 ```
 
-The same hash is passed to `ThoughtToken.mint(...)` and stored in `recordOf(tokenId).promptHash`.
+The same hash is passed to `ThoughtNFT.mint(...)` and stored in `recordOf(tokenId).promptHash`.
 
 ### `hashes.returnedTextHash`
 
@@ -326,13 +326,13 @@ Fields:
 
 - `chainId`: EVM chain id as a string.
 - `pathNFT`: `$PATH` contract address.
-- `thoughtToken`: THOUGHT token contract address.
+- `thoughtNft`: THOUGHT NFT contract address.
 
 This section is absent for pre-mint browser-session works.
 
 ### `mint`
 
-Mint context added when provenance is rebuilt immediately before calling `ThoughtToken.mint(...)`.
+Mint context added when provenance is rebuilt immediately before calling `ThoughtNFT.mint(...)`.
 
 Fields:
 
@@ -346,7 +346,7 @@ This section is absent for pre-mint browser-session works.
 
 For a minted THOUGHT, contract state is the authority for token anchors.
 
-`ThoughtToken.recordOf(tokenId)` returns:
+`ThoughtNFT.recordOf(tokenId)` returns:
 
 ```text
 textHash
@@ -358,7 +358,7 @@ minter
 mintedAt
 ```
 
-`ThoughtToken.provenanceOf(tokenId)` returns:
+`ThoughtNFT.provenanceOf(tokenId)` returns:
 
 ```text
 provenanceJson
