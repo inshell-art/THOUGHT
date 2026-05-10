@@ -47,23 +47,26 @@ trap 'rm -f "$tmp_seed" "$tmp_previewer" "$tmp_registry" "$tmp_token"' EXIT
 
 (
   cd "$EVM_DIR"
-  forge create src/SeedGenerator.sol:SeedGenerator \
+  forge create \
+    --broadcast \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
-    --broadcast \
-    --json >"$tmp_seed"
+    --json \
+    src/SeedGenerator.sol:SeedGenerator >"$tmp_seed"
 
-  forge create src/ThoughtPreviewer.sol:ThoughtPreviewer \
+  forge create \
+    --broadcast \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
-    --broadcast \
-    --json >"$tmp_previewer"
+    --json \
+    src/ThoughtPreviewer.sol:ThoughtPreviewer >"$tmp_previewer"
 
-  forge create src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry \
+  forge create \
+    --broadcast \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
-    --broadcast \
-    --json >"$tmp_registry"
+    --json \
+    src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry >"$tmp_registry"
 )
 
 REGISTRY_ADDRESS="$(python3 - "$tmp_registry" <<'PY'
@@ -84,12 +87,13 @@ cast send "$REGISTRY_ADDRESS" \
 
 (
   cd "$EVM_DIR"
-  forge create src/ThoughtNFT.sol:ThoughtNFT \
+  forge create \
+    --broadcast \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
-    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" \
-    --broadcast \
-    --json >"$tmp_token"
+    --json \
+    src/ThoughtNFT.sol:ThoughtNFT \
+    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" >"$tmp_token"
 )
 
 SEED_ADDRESS="$(python3 - "$tmp_seed" <<'PY'

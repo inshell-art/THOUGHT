@@ -12,7 +12,6 @@ import {
   BrowserProvider,
   Contract,
   JsonRpcProvider,
-  formatEther,
   getBytes,
   id,
   keccak256,
@@ -23,7 +22,14 @@ import {
 import thoughtInstructions from "../THOUGHT.md?raw";
 import thoughtInstructionsUrl from "../THOUGHT.md?url";
 import colorFontRaw from "../colorFontJSON/colorfont.byToolv2.json?raw";
+import colorFontText from "../spec/COLOR_FONT.v1.txt?raw";
 import addresses from "../evm/addresses.anvil.json";
+import {
+  COLOR_FONT_DOC_FORMAT,
+  buildColorFontPlainText,
+  validateColorFontDataShape,
+  type ColorFontDoc,
+} from "./color-font-doc";
 import {
   appendThoughtWork,
   getLatestWork,
@@ -34,6 +40,7 @@ import {
   readThoughtWorks,
   writeThoughtWorks,
   type ThoughtWorkRecord,
+  type WorkStorage,
 } from "./works";
 import {
   THOUGHT_MAX_OUTPUT_TOKENS,
@@ -107,6 +114,7 @@ type ThoughtInstructionsOverride = {
 };
 
 type ThoughtSessionState = {
+  routeConfigured: boolean;
   mode: Mode;
   prompt: string;
   connect: {
@@ -444,6 +452,63 @@ const MY_BRAIN_MODEL_SOURCE_ID = "my-brain";
 const MY_BRAIN_MODEL = "my-brain";
 const MY_BRAIN_PROVIDER = "me";
 const MY_BRAIN_DESCRIPTION = "human model route. you write the model return.";
+const getStorageOrNull = (storage: () => Storage | null | undefined) => {
+  try {
+    const resolved = storage();
+    resolved?.getItem("__thought_storage_probe__");
+    return resolved ?? null;
+  } catch {
+    return null;
+  }
+};
+
+const getSharedBrowserStorage = () =>
+  getStorageOrNull(() => window.localStorage) ??
+  getStorageOrNull(() => window.sessionStorage);
+
+const getSessionStorage = () => getStorageOrNull(() => window.sessionStorage);
+
+const readSharedBrowserItem = (key: string) => {
+  const shared = getSharedBrowserStorage();
+  const raw = shared?.getItem(key) ?? null;
+  if (raw !== null) {
+    return raw;
+  }
+
+  const session = getSessionStorage();
+  const legacy = session?.getItem(key) ?? null;
+  if (legacy !== null && shared && shared !== session) {
+    shared.setItem(key, legacy);
+  }
+  return legacy;
+};
+
+const writeSharedBrowserItem = (key: string, value: string) => {
+  const shared = getSharedBrowserStorage();
+  if (!shared) return;
+  shared.setItem(key, value);
+  const session = getSessionStorage();
+  if (session && shared !== session) {
+    session.removeItem(key);
+  }
+};
+
+const removeSharedBrowserItem = (key: string) => {
+  getSharedBrowserStorage()?.removeItem(key);
+  getSessionStorage()?.removeItem(key);
+};
+
+const thoughtBrowserStorage: WorkStorage = {
+  getItem: readSharedBrowserItem,
+  setItem: writeSharedBrowserItem,
+  removeItem: removeSharedBrowserItem,
+};
+
+const readStoredThoughtWorks = () => readThoughtWorks(thoughtBrowserStorage);
+
+const writeStoredThoughtWorks = (works: ThoughtWorkRecord[]) => {
+  writeThoughtWorks(thoughtBrowserStorage, works);
+};
 const ROUTE_COPY: Record<Mode, {
   provider: string;
   defaultModelLabel: string;
@@ -590,22 +655,31 @@ const CONSUME_AUTHORIZATION_TYPEHASH = id(
 );
 const PATH_CONSUME_AUTH_TTL_SECONDS = 3600n;
 const ROUTE_SEARCH_PARAMS = new URLSearchParams(window.location.search);
+const IS_COLOR_FONT_PAGE = window.location.pathname.replace(/\/+$/, "") === "/color-font";
 const RAW_PRESELECTED_PATH_ID = ROUTE_SEARCH_PARAMS.get("path")?.trim() ?? "";
 const PRESELECTED_PATH_ID = /^[1-9]\d*$/.test(RAW_PRESELECTED_PATH_ID) ? RAW_PRESELECTED_PATH_ID : "";
 const IS_GALLERY_PAGE =
-  ROUTE_SEARCH_PARAMS.get("gallery") === "1" ||
-  window.location.hash === "#gallery";
+  !IS_COLOR_FONT_PAGE &&
+  (ROUTE_SEARCH_PARAMS.get("gallery") === "1" || window.location.hash === "#gallery");
 const RAW_ROUTE_THOUGHT_NFT_ID = ROUTE_SEARCH_PARAMS.get("thought")?.trim() ?? "";
 const ROUTE_THOUGHT_NFT_ID = /^[1-9]\d*$/.test(RAW_ROUTE_THOUGHT_NFT_ID)
   ? Number(RAW_ROUTE_THOUGHT_NFT_ID)
   : null;
 const GALLERY_TARGET_TOKEN_ID = IS_GALLERY_PAGE ? ROUTE_THOUGHT_NFT_ID : null;
-const IS_THOUGHT_PAGE = !IS_GALLERY_PAGE && ROUTE_THOUGHT_NFT_ID !== null;
+const IS_THOUGHT_PAGE = !IS_COLOR_FONT_PAGE && !IS_GALLERY_PAGE && ROUTE_THOUGHT_NFT_ID !== null;
 const THOUGHT_MINTED_TOPIC = id(
   "ThoughtMinted(uint256,address,uint256,bytes32,bytes32,bytes32,uint64)",
 );
 const TOKEN_URI_CALL_GAS_LIMIT = 100_000_000n;
 const THOUGHT_NFT_ABI = [
+  "error EmptyProvenance()",
+  "error EmptyThoughtText()",
+  "error NonCanonicalThoughtText()",
+  "error ProvenanceTooLarge(uint256 size, uint256 max)",
+  "error ThoughtAlreadyMinted(bytes32 textHash, uint256 tokenId)",
+  "error ThoughtTextTooLarge(uint256 actual, uint256 max)",
+  "error UnknownThoughtSpec(bytes32 thoughtSpecId)",
+  "error WrongPayment()",
   "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
   "function mintPrice() view returns (uint256)",
   "function previewText(string input) pure returns (string normalized, bool valid, uint8 reasonCode)",
@@ -620,6 +694,13 @@ const THOUGHT_NFT_ABI = [
   "function totalSupply() view returns (uint256)",
   "function thoughtText(uint256 tokenId) view returns (string)",
   "function authorOf(uint256 tokenId) view returns (address)",
+  "function colorFontId() pure returns (string)",
+  "function colorFontVersion() pure returns (string)",
+  "function colorFontLength() pure returns (uint8)",
+  "function colorFontData() pure returns (string)",
+  "function colorFontHash() pure returns (bytes32)",
+  "function colorFontGlyph(uint8 index) pure returns (string letter, uint8 ordinal, string aliasTerm, string hexColor)",
+  "function colorFontGlyphOf(bytes1 letter) pure returns (uint8 ordinal, string aliasTerm, string hexColor)",
   "event ThoughtMinted(uint256 indexed tokenId, address indexed minter, uint256 indexed pathId, bytes32 textHash, bytes32 provenanceHash, bytes32 thoughtSpecId, uint64 mintedAt)",
 ] as const;
 const PATH_NFT_ABI = [
@@ -747,6 +828,16 @@ const thoughtGalleryLink = document.getElementById("thought-gallery-link") as HT
 const galleryPage = document.getElementById("gallery-page") as HTMLElement | null;
 const galleryStatus = document.getElementById("gallery-status") as HTMLElement | null;
 const galleryGrid = document.getElementById("gallery-grid") as HTMLElement | null;
+const colorFontPage = document.getElementById("color-font-page") as HTMLElement | null;
+const colorFontSource = document.getElementById("color-font-source") as HTMLElement | null;
+const colorFontId = document.getElementById("color-font-id") as HTMLElement | null;
+const colorFontVersion = document.getElementById("color-font-version") as HTMLElement | null;
+const colorFontChain = document.getElementById("color-font-chain") as HTMLElement | null;
+const colorFontContract = document.getElementById("color-font-contract") as HTMLElement | null;
+const colorFontHash = document.getElementById("color-font-hash") as HTMLElement | null;
+const colorFontRawBlock = document.getElementById("color-font-raw") as HTMLElement | null;
+const colorFontOpenRaw = document.getElementById("color-font-open-raw") as HTMLAnchorElement | null;
+const colorFontStatus = document.getElementById("color-font-status") as HTMLElement | null;
 const thoughtPage = document.getElementById("thought-page") as HTMLElement | null;
 const thoughtDetailTitleToken = document.getElementById("thought-detail-token-id") as HTMLElement | null;
 const thoughtDetailGalleryLink = document.getElementById("thought-detail-gallery-link") as HTMLAnchorElement | null;
@@ -762,6 +853,8 @@ const thoughtDetailPath = document.getElementById("thought-detail-path") as HTML
 const thoughtDetailMinter = document.getElementById("thought-detail-minter") as HTMLElement | null;
 const thoughtDetailMinted = document.getElementById("thought-detail-minted") as HTMLElement | null;
 const thoughtDetailSpecRef = document.getElementById("thought-detail-spec-ref") as HTMLAnchorElement | null;
+const thoughtDetailColorFont = document.getElementById("thought-detail-color-font") as HTMLAnchorElement | null;
+const thoughtDetailColorFontStatus = document.getElementById("thought-detail-color-font-status") as HTMLElement | null;
 const thoughtDetailViewTx = document.getElementById("thought-detail-view-tx") as HTMLAnchorElement | null;
 const thoughtDetailProvenanceBytes = document.getElementById(
   "thought-detail-provenance-bytes",
@@ -854,6 +947,16 @@ if (
   !galleryPage ||
   !galleryStatus ||
   !galleryGrid ||
+  !colorFontPage ||
+  !colorFontSource ||
+  !colorFontId ||
+  !colorFontVersion ||
+  !colorFontChain ||
+  !colorFontContract ||
+  !colorFontHash ||
+  !colorFontRawBlock ||
+  !colorFontOpenRaw ||
+  !colorFontStatus ||
   !thoughtPage ||
   !thoughtDetailTitleToken ||
   !thoughtDetailGalleryLink ||
@@ -869,6 +972,8 @@ if (
   !thoughtDetailMinter ||
   !thoughtDetailMinted ||
   !thoughtDetailSpecRef ||
+  !thoughtDetailColorFont ||
+  !thoughtDetailColorFontStatus ||
   !thoughtDetailViewTx ||
   !thoughtDetailProvenanceBytes ||
   !thoughtDetailJsonPanel ||
@@ -1108,7 +1213,9 @@ let currentRunContext: ThoughtRunContext | null = null;
 let activeThoughtSpec: ActiveThoughtSpec | null = null;
 let activeThoughtSpecPromise: Promise<ActiveThoughtSpec> | null = null;
 let thoughtDetailSpecJsonUrl = "";
+let thoughtDetailColorFontUrl = "";
 let thoughtDetailProvenanceJsonUrl = "";
+let colorFontPageRawUrl = "";
 let readProvider: JsonRpcProvider | null = null;
 let readThoughtNFT: Contract | null = null;
 let readThoughtSpecRegistry: Contract | null = null;
@@ -1134,6 +1241,7 @@ let activeRunId = 0;
 let pendingMyBrainRunPayload: PendingMyBrainRound | null = null;
 
 const getDefaultSessionState = (): ThoughtSessionState => ({
+  routeConfigured: false,
   mode: "connect",
   prompt: "",
   connect: {
@@ -1217,6 +1325,13 @@ const parseModeInput = (value: string): Mode | null => {
 const isDirectProviderId = (value: unknown): value is DirectProviderId =>
   value === "openai" || value === "openrouter" || value === "anthropic";
 
+const isRouteConfigured = () => sessionState.routeConfigured;
+
+const routeRequiredLines = () => [
+  "config route not selected.",
+  "use: config route <local|connect|direct|my-brain>",
+];
+
 function normalizeOllamaEndpoint(value: string) {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -1261,6 +1376,7 @@ const migrateLegacyState = (
     legacyProviders.ollama?.model ?? legacyProviders.harness?.model ?? fallback.local.model;
 
   return {
+    routeConfigured: true,
     mode:
       parsed.authMode === "connect"
         ? "connect"
@@ -1310,8 +1426,23 @@ const readSessionState = (): ThoughtSessionState => {
     };
     const local = (parsed.local ?? {}) as Partial<ThoughtSessionState["local"]>;
     const directProvider = isDirectProviderId(direct.provider) ? direct.provider : fallback.direct.provider;
+    const hasAnyDirectApiKey =
+      typeof direct.apiKey === "string" && direct.apiKey.trim().length > 0 ||
+      (typeof direct.apiKeys === "object" &&
+        direct.apiKeys !== null &&
+        Object.values(direct.apiKeys).some((value) => typeof value === "string" && value.trim().length > 0));
+    const routeConfigured =
+      typeof parsed.routeConfigured === "boolean"
+        ? parsed.routeConfigured
+        : isMode(parsed.mode) && (
+            parsed.mode !== "connect" ||
+            (typeof connect.apiKey === "string" && connect.apiKey.trim().length > 0) ||
+            hasAnyDirectApiKey ||
+            typeof local.available === "boolean"
+          );
 
     return {
+      routeConfigured,
       mode: isMode(parsed.mode) ? parsed.mode : fallback.mode,
       prompt: typeof parsed.prompt === "string" ? parsed.prompt : "",
       connect: {
@@ -1909,6 +2040,15 @@ const revokeThoughtDetailSpecJsonUrl = () => {
   thoughtDetailSpecJsonUrl = "";
 };
 
+const revokeThoughtDetailColorFontUrl = () => {
+  if (!thoughtDetailColorFontUrl) {
+    return;
+  }
+
+  URL.revokeObjectURL(thoughtDetailColorFontUrl);
+  thoughtDetailColorFontUrl = "";
+};
+
 const revokeThoughtDetailProvenanceJsonUrl = () => {
   if (!thoughtDetailProvenanceJsonUrl) {
     return;
@@ -1916,6 +2056,174 @@ const revokeThoughtDetailProvenanceJsonUrl = () => {
 
   URL.revokeObjectURL(thoughtDetailProvenanceJsonUrl);
   thoughtDetailProvenanceJsonUrl = "";
+};
+
+const clearThoughtDetailColorFontFallback = () => {
+  delete thoughtDetailColorFont.dataset.blobReady;
+  thoughtDetailColorFont.href = "#";
+  thoughtDetailColorFont.removeAttribute("target");
+  thoughtDetailColorFont.removeAttribute("rel");
+  thoughtDetailColorFontStatus.textContent = "";
+};
+
+const revokeColorFontPageRawUrl = () => {
+  if (!colorFontPageRawUrl) {
+    return;
+  }
+
+  URL.revokeObjectURL(colorFontPageRawUrl);
+  colorFontPageRawUrl = "";
+};
+
+const setColorFontPageRawLink = (raw: string) => {
+  revokeColorFontPageRawUrl();
+  colorFontPageRawUrl = URL.createObjectURL(new Blob([raw], { type: "text/plain;charset=utf-8" }));
+  colorFontOpenRaw.href = colorFontPageRawUrl;
+  colorFontOpenRaw.target = "_blank";
+  colorFontOpenRaw.rel = "noopener noreferrer";
+};
+
+const renderColorFontPage = (input: {
+  source: string;
+  id: string;
+  version: string;
+  chain: string;
+  contract: string;
+  hash: string;
+  data: string;
+  status: string;
+}) => {
+  colorFontSource.textContent = input.source;
+  colorFontId.textContent = input.id;
+  colorFontVersion.textContent = input.version;
+  colorFontChain.textContent = input.chain;
+  colorFontContract.textContent = input.contract;
+  colorFontHash.textContent = input.hash;
+  colorFontRawBlock.textContent = input.data;
+  colorFontStatus.textContent = input.status;
+  setColorFontPageRawLink(input.data);
+};
+
+const loadColorFontPage = async () => {
+  colorFontStatus.textContent = "loading color font...";
+  colorFontRawBlock.textContent = "loading color font...";
+
+  try {
+    const doc = await fetchColorFontDoc();
+    renderColorFontPage({
+      source: "onchain ABI",
+      id: doc.id,
+      version: doc.version,
+      chain: doc.chainName ? `${doc.chainName} (${doc.chainId})` : doc.chainId.toString(),
+      contract: doc.contractAddress,
+      hash: doc.hash,
+      data: doc.data,
+      status: "source: ThoughtNFT.colorFontData()",
+    });
+  } catch {
+    const fallbackText = colorFontText.trim();
+    renderColorFontPage({
+      source: "bundled mirror",
+      id: "THOUGHT_COLOR_FONT",
+      version: "v1",
+      chain: "-",
+      contract: "-",
+      hash: keccak256(toUtf8Bytes(fallbackText)),
+      data: fallbackText,
+      status: "onchain color font unavailable; showing bundled mirror.",
+    });
+  }
+};
+
+const fetchColorFontDoc = async (): Promise<ColorFontDoc> => {
+  const token = getReadThoughtNFT();
+  if (!THOUGHT_NFT_ADDRESS || !token) {
+    throw new Error("THOUGHT contract not configured for this network.");
+  }
+
+  try {
+    const [id, version, hash, data] = await Promise.all([
+      token.colorFontId() as Promise<string>,
+      token.colorFontVersion() as Promise<string>,
+      token.colorFontHash() as Promise<`0x${string}`>,
+      token.colorFontData() as Promise<string>,
+    ]);
+
+    if (!validateColorFontDataShape(data)) {
+      throw new Error("contract read failed.");
+    }
+
+    return {
+      id,
+      version,
+      chainId: THOUGHT_CHAIN_ID,
+      chainName: THOUGHT_CHAIN_NAME,
+      contractAddress: THOUGHT_NFT_ADDRESS as `0x${string}`,
+      hash,
+      format: COLOR_FONT_DOC_FORMAT,
+      data,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message === "contract read failed.") {
+      throw error;
+    }
+    throw new Error("contract read failed.");
+  }
+};
+
+const openColorFontDocument = async (options?: {
+  appendCliResult?: boolean;
+  raw?: boolean;
+  rawDocument?: boolean;
+}) => {
+  const shouldAppendCliResult = options?.appendCliResult ?? false;
+  clearThoughtDetailColorFontFallback();
+
+  try {
+    const doc = await fetchColorFontDoc();
+    if (options?.raw) {
+      if (shouldAppendCliResult) {
+        appendCliOutput(doc.data.split("\n"), { preserveSpacing: true });
+      }
+      return doc;
+    }
+
+    const plainText = options?.rawDocument ? doc.data : buildColorFontPlainText(doc);
+    revokeThoughtDetailColorFontUrl();
+    thoughtDetailColorFontUrl = URL.createObjectURL(new Blob([plainText], { type: "text/plain;charset=utf-8" }));
+    const opened = window.open(thoughtDetailColorFontUrl, "_blank");
+    if (opened) {
+      opened.opener = null;
+    }
+
+    if (!opened) {
+      thoughtDetailColorFont.href = thoughtDetailColorFontUrl;
+      thoughtDetailColorFont.target = "_blank";
+      thoughtDetailColorFont.rel = "noopener noreferrer";
+      thoughtDetailColorFont.dataset.blobReady = "true";
+      thoughtDetailColorFontStatus.textContent = "popup blocked. click title again.";
+    }
+
+    if (shouldAppendCliResult) {
+      appendCliOutput([
+        "opening THOUGHT Color Font v1.",
+        "source: onchain ABI.",
+        opened ? "" : "popup blocked. click color font title again.",
+      ].filter(Boolean));
+    }
+
+    return doc;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "contract read failed.";
+    const lines = message.includes("not configured")
+      ? ["color font unavailable.", "THOUGHT contract not configured for this network."]
+      : ["color font unavailable.", "contract read failed."];
+    thoughtDetailColorFontStatus.textContent = lines.join(" ");
+    if (shouldAppendCliResult) {
+      appendCliError(lines);
+    }
+    return null;
+  }
 };
 
 const thoughtSpecCachePayload = (spec: ActiveThoughtSpec) => ({
@@ -2501,6 +2809,10 @@ const getWalletDotState = (): WalletDotState => {
 };
 
 const hasModelAccess = () => {
+  if (!isRouteConfigured()) {
+    return false;
+  }
+
   if (sessionState.mode === MY_BRAIN_MODE) {
     return true;
   }
@@ -2667,6 +2979,18 @@ const getActionPresentation = (): ActionPresentation => {
       primaryDisabled: !hasModelAccess(),
       primaryAction: hasModelAccess() ? "retry_run" : "none",
       status: "generation failed",
+      secondaryLabel: "",
+      secondaryAction: "none",
+    };
+    return applyDebugStatusOverride(action);
+  }
+
+  if (!isRouteConfigured()) {
+    action = {
+      primaryLabel: "[ run ]",
+      primaryDisabled: true,
+      primaryAction: "none",
+      status: "config needed",
       secondaryLabel: "",
       secondaryAction: "none",
     };
@@ -3597,12 +3921,19 @@ type MintReceipt = {
 };
 
 const mintErrorMessage = (error: unknown) => {
+  const errorName =
+    typeof error === "object" && error !== null && "errorName" in error
+      ? String((error as { errorName?: unknown }).errorName ?? "")
+      : "";
   const shortMessage =
     typeof error === "object" && error !== null && "shortMessage" in error
       ? String((error as { shortMessage?: unknown }).shortMessage ?? "")
       : "";
   const message = error instanceof Error ? error.message : shortMessage;
 
+  if (errorName === "ThoughtAlreadyMinted" || /ThoughtAlreadyMinted/i.test(message)) {
+    return "this exact text is already minted.";
+  }
   if (/expired/i.test(message)) {
     return "authorization expired.";
   }
@@ -3611,6 +3942,15 @@ const mintErrorMessage = (error: unknown) => {
   }
   if (/not submitted|timed out|timeout/i.test(message)) {
     return "wallet transaction not submitted.";
+  }
+  if (/BAD_MOVEMENT_ORDER|QUOTA_EXHAUSTED/i.test(message)) {
+    return "$PATH already consumed.";
+  }
+  if (/BAD_CONSUME_AUTH/i.test(message)) {
+    return "authorization expired.";
+  }
+  if (/ERR_NOT_OWNER/i.test(message)) {
+    return "wallet does not hold this $PATH.";
   }
   return shortMessage || message || "mint failed.";
 };
@@ -3655,6 +3995,75 @@ const resolveMintedTokenId = async (receipt: MintReceipt | null) => {
   }
 };
 
+const resolveExistingThoughtTokenId = async () => {
+  if (!mintFlowData.textHash) {
+    return null;
+  }
+
+  try {
+    const token = getReadThoughtNFT();
+    const tokenId = token ? ((await token.tokenOfThought(mintFlowData.textHash)) as bigint) : 0n;
+    return tokenId === 0n ? null : Number(tokenId);
+  } catch {
+    return null;
+  }
+};
+
+const selectedPathAlreadyConsumed = async () => {
+  const pathId = mintFlowData.pathId;
+  const pathNft = getReadPathNft();
+  if (pathId === null || !pathNft) {
+    return false;
+  }
+
+  try {
+    const [stage, stageMinted, movementQuota] = await Promise.all([
+      pathNft.getStage(pathId) as Promise<bigint>,
+      pathNft.getStageMinted(pathId) as Promise<bigint>,
+      pathNft.getMovementQuota(PATH_MOVEMENT_THOUGHT) as Promise<bigint>,
+    ]);
+    return stage !== 0n || (movementQuota !== 0n && stageMinted >= movementQuota);
+  } catch {
+    return false;
+  }
+};
+
+const recoverMintStateAfterRevert = async (shouldAppendCliResult: boolean) => {
+  const existingTokenId = await resolveExistingThoughtTokenId();
+  if (existingTokenId !== null) {
+    walletState.txState = "idle";
+    walletState.txError = "";
+    walletState.mintedTokenId = existingTokenId;
+    mintFlowData.existingTokenId = existingTokenId;
+    mintFlowState = "minted";
+    pendingMyBrainRunPayload = null;
+    await refreshMintPreflight();
+    syncInterface();
+
+    if (shouldAppendCliResult) {
+      const consumedPathId = selectedCliPathId();
+      appendCliOutput([
+        "already minted.",
+        `THOUGHT: #${existingTokenId}`,
+        consumedPathId ? `$PATH #${consumedPathId} already consumed for THOUGHT.` : "",
+        walletState.txHash || mintFlowData.txHash ? "use: view tx" : "",
+        viewThoughtUseLine(existingTokenId),
+        "use: gallery",
+      ].filter(Boolean));
+    }
+    return true;
+  }
+
+  if (await selectedPathAlreadyConsumed()) {
+    const pathId = selectedCliPathId();
+    setMintFlowError(pathId ? `$PATH #${pathId} already consumed.` : "$PATH already consumed.", "path_consumed");
+    syncInterface();
+    return true;
+  }
+
+  return false;
+};
+
 const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliResult: boolean) => {
   try {
     const receipt = await waitForMintReceiptByHash(tx);
@@ -3682,6 +4091,10 @@ const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliRe
       ].filter(Boolean));
     }
   } catch (error) {
+    if (await recoverMintStateAfterRevert(shouldAppendCliResult)) {
+      return;
+    }
+
     const message = mintErrorMessage(error);
     setMintFlowError(
       message,
@@ -3858,6 +4271,11 @@ const confirmMint = async (options?: { appendCliResult?: boolean }) => {
     }
     return tx.hash;
   } catch (error) {
+    if (await recoverMintStateAfterRevert(shouldAppendCliResult)) {
+      setStatus("");
+      return walletState.txHash || mintFlowData.txHash || null;
+    }
+
     const message = mintErrorMessage(error);
     txTimedOut = message.includes("not submitted");
     setMintFlowError(message, message.includes("expired") ? "signature" : "mint");
@@ -4626,6 +5044,8 @@ const loadThoughtDetail = async () => {
   currentThoughtDetail = null;
   thoughtDetailJsonPanel.classList.add("is-hidden");
   clearThoughtDetailSpecJsonLink();
+  revokeThoughtDetailColorFontUrl();
+  clearThoughtDetailColorFontFallback();
   clearThoughtDetailProvenanceJsonLink();
   syncThoughtDetailEmbeddedHeights();
   showThoughtDetailStatus("");
@@ -4670,6 +5090,8 @@ const loadThoughtDetail = async () => {
     thoughtDetailMinter.title = detail.minter;
     thoughtDetailMinted.textContent = detailTime(detail.mintedAt);
     thoughtDetailSpecRef.textContent = specLinkText(detail.thoughtSpec.ref);
+    thoughtDetailColorFont.textContent = "THOUGHT Color Font v1 ↗";
+    thoughtDetailColorFont.title = "Open local raw color-font mapping from ThoughtNFT color-font ABI";
     clearThoughtDetailSpecJsonLink("Loading local cached spec JSON...");
     if (detail.provenanceJson) {
       setThoughtDetailProvenanceJsonLink(detail, provenanceBytes);
@@ -4732,7 +5154,7 @@ const getActionStatusKind = (status: string): "info" | "success" | "warn" | "err
     return "success";
   }
 
-  if (status === "model access needed") {
+  if (status === "model access needed" || status === "config needed") {
     return "warn";
   }
 
@@ -5011,7 +5433,7 @@ const recordCurrentWork = (rawOutput: string) => {
     return currentWorkId;
   }
 
-  const existingWorks = readThoughtWorks(sessionStorage);
+  const existingWorks = readStoredThoughtWorks();
   const provenance = getProvenanceSummary();
   const result = appendThoughtWork(existingWorks, {
     prompt: currentRunContext.prompt,
@@ -5038,7 +5460,7 @@ const recordCurrentWork = (rawOutput: string) => {
     },
     runContext: currentRunContext,
   });
-  writeThoughtWorks(sessionStorage, result.works);
+  writeStoredThoughtWorks(result.works);
   return result.work.id;
 };
 
@@ -5071,7 +5493,7 @@ const isThoughtRunContext = (value: unknown): value is ThoughtRunContext => {
 };
 
 const readCurrentOutputSession = () => {
-  const raw = sessionStorage.getItem(THOUGHT_OUTPUT_STORAGE_KEY);
+  const raw = readSharedBrowserItem(THOUGHT_OUTPUT_STORAGE_KEY);
   if (!raw) {
     return null;
   }
@@ -5103,11 +5525,11 @@ const readCurrentOutputSession = () => {
 
 const writeCurrentOutputSession = () => {
   if (!currentOutputText) {
-    sessionStorage.removeItem(THOUGHT_OUTPUT_STORAGE_KEY);
+    removeSharedBrowserItem(THOUGHT_OUTPUT_STORAGE_KEY);
     return;
   }
 
-  sessionStorage.setItem(
+  writeSharedBrowserItem(
     THOUGHT_OUTPUT_STORAGE_KEY,
     JSON.stringify({
       output: currentOutputText,
@@ -5685,6 +6107,7 @@ const exchangeOpenRouterCode = async (code: string) => {
 
   sessionStorage.removeItem(OPENROUTER_PKCE_VERIFIER_KEY);
   sessionState.mode = "connect";
+  sessionState.routeConfigured = true;
   sessionState.connect.apiKey = key;
   sessionState.connect.model =
     sessionState.connect.model || DIRECT_PROVIDERS.openrouter.defaultModel;
@@ -6017,7 +6440,7 @@ const getSelectedModelValue = () => {
 };
 
 const syncConnectControls = () => {
-  const isConnectMode = sessionState.mode === "connect";
+  const isConnectMode = isRouteConfigured() && sessionState.mode === "connect";
   const hasCredential = sessionState.connect.apiKey.trim().length > 0;
   const connectSupported = isOpenRouterConnectSupported();
 
@@ -6036,9 +6459,9 @@ const syncConnectControls = () => {
 };
 
 const syncModeControls = () => {
-  const isConnectMode = sessionState.mode === "connect";
-  const isDirectMode = sessionState.mode === "direct";
-  const isLocalMode = sessionState.mode === "local";
+  const isConnectMode = isRouteConfigured() && sessionState.mode === "connect";
+  const isDirectMode = isRouteConfigured() && sessionState.mode === "direct";
+  const isLocalMode = isRouteConfigured() && sessionState.mode === "local";
 
   modeConnectButton.classList.toggle("is-active", isConnectMode);
   modeDirectButton.classList.toggle("is-active", isDirectMode);
@@ -6075,6 +6498,11 @@ const syncPromptField = () => {
 };
 
 const syncModelControls = () => {
+  if (!isRouteConfigured()) {
+    disableModelControls("select route");
+    return;
+  }
+
   const sourceId = getCurrentModelSourceId();
 
   if (sourceId === "ollama" && sessionState.local.available === false) {
@@ -6200,9 +6628,12 @@ const loadModelOptionsForSource = async (
 };
 
 const refreshCurrentModels = (options?: { silent?: boolean }) =>
-  loadModelOptionsForSource(getCurrentModelSourceId(), options);
+  isRouteConfigured()
+    ? loadModelOptionsForSource(getCurrentModelSourceId(), options)
+    : Promise.resolve();
 
 const setMode = (mode: Mode) => {
+  sessionState.routeConfigured = true;
   sessionState.mode = mode;
   pendingMyBrainRunPayload = null;
   resetMintRuntimeState();
@@ -6321,6 +6752,12 @@ const runAgent = async (options?: { forceGenerate?: boolean; cli?: boolean }) =>
     if (primaryActionState === "none") {
       return;
     }
+  }
+
+  if (!isRouteConfigured()) {
+    setWarning("config route is required.", { level: "warn" });
+    setStatus("");
+    return;
   }
 
   const prompt = sessionState.prompt.trim();
@@ -6470,7 +6907,7 @@ const isCliEntryKind = (value: unknown): value is CliEntryKind =>
   value === "intro" || value === "command" || value === "output" || value === "error";
 
 const readStoredCliTranscript = () => {
-  const raw = sessionStorage.getItem(THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY);
+  const raw = readSharedBrowserItem(THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY);
   if (!raw) {
     return [];
   }
@@ -6506,7 +6943,7 @@ const readStoredCliTranscript = () => {
 };
 
 const writeCliTranscript = () => {
-  sessionStorage.setItem(
+  writeSharedBrowserItem(
     THOUGHT_CLI_TRANSCRIPT_STORAGE_KEY,
     JSON.stringify(cliEntries.slice(-80)),
   );
@@ -6668,7 +7105,7 @@ const shouldRecordCliCommand = (command: string) => {
 };
 
 const readStoredCliCommandHistory = () => {
-  const raw = sessionStorage.getItem(THOUGHT_CLI_HISTORY_STORAGE_KEY);
+  const raw = readSharedBrowserItem(THOUGHT_CLI_HISTORY_STORAGE_KEY);
   if (!raw) {
     return [];
   }
@@ -6690,7 +7127,7 @@ const readStoredCliCommandHistory = () => {
 };
 
 const writeCliCommandHistory = () => {
-  sessionStorage.setItem(
+  writeSharedBrowserItem(
     THOUGHT_CLI_HISTORY_STORAGE_KEY,
     JSON.stringify(cliCommandHistory.slice(-CLI_COMMAND_HISTORY_LIMIT)),
   );
@@ -6776,6 +7213,8 @@ const cliCompletionCommandCatalog = () => {
     "spec text",
     "THOUGHT.md",
     "THOUGHT.md text",
+    "color-font",
+    "color-font raw",
     "run",
     "rerun",
     "retry run",
@@ -7078,6 +7517,15 @@ const getCliSuggestions = (): CliSuggestion[] => {
   }
 
   if (cliSuggestionContext === "config") {
+    if (!isRouteConfigured()) {
+      return [
+        { label: "config route local", command: "config route local" },
+        { label: "config route connect", command: "config route connect" },
+        { label: "config route direct", command: "config route direct" },
+        { label: "config route my-brain", command: "config route my-brain" },
+      ];
+    }
+
     if (sessionState.mode === "connect" && !sessionState.connect.apiKey.trim()) {
       return [
         { label: "config connect authorize", command: "config connect authorize" },
@@ -7210,6 +7658,15 @@ const getCliSuggestions = (): CliSuggestion[] => {
       { label: "prompt <text>", command: "prompt " },
       { label: "run", command: "run" },
       { label: "mint", command: "mint" },
+    ];
+  }
+
+  if (!isRouteConfigured()) {
+    return [
+      { label: "config route local", command: "config route local" },
+      { label: "config route connect", command: "config route connect" },
+      { label: "config route direct", command: "config route direct" },
+      { label: "current", command: "current" },
     ];
   }
 
@@ -7401,9 +7858,16 @@ const currentSpecLabel = () => activeThoughtSpec?.ref || getActiveThoughtInstruc
 
 const cliRouteLabel = (mode: Mode) => mode;
 
-const configModelCommandPrefix = (mode: Mode = sessionState.mode) => `config ${mode} model`;
+const currentRouteLabel = () => isRouteConfigured() ? cliRouteLabel(sessionState.mode) : "empty";
+
+const configModelCommandPrefix = (mode?: Mode) =>
+  mode || isRouteConfigured() ? `config ${mode ?? sessionState.mode} model` : "config <route> model";
 
 const routeProviderLabel = (mode: Mode = sessionState.mode) => {
+  if (!isRouteConfigured() && mode === sessionState.mode) {
+    return "empty";
+  }
+
   if (mode === "direct") {
     return sessionState.direct.provider;
   }
@@ -7412,16 +7876,25 @@ const routeProviderLabel = (mode: Mode = sessionState.mode) => {
 };
 
 const routeModelLabel = (mode: Mode = sessionState.mode) =>
-  mode === MY_BRAIN_MODE ? MY_BRAIN_MODEL : getCurrentModelValue().trim() || "empty";
+  !isRouteConfigured() && mode === sessionState.mode
+    ? "empty"
+    : mode === MY_BRAIN_MODE ? MY_BRAIN_MODEL : getCurrentModelValue().trim() || "empty";
 
 const routeTableLines = () =>
   (["local", "connect", "direct", MY_BRAIN_MODE] as Mode[]).map(
     (route) => `${route.padEnd(9)} ${ROUTE_COPY[route].brief}`,
   );
 
-const routeUseLines = (mode: Mode = sessionState.mode) => ROUTE_COPY[mode].useLines;
+const routeUseLines = (mode: Mode = sessionState.mode) =>
+  !isRouteConfigured() && mode === sessionState.mode
+    ? ["config route <local|connect|direct|my-brain>"]
+    : ROUTE_COPY[mode].useLines;
 
 const routeStateLabel = (mode: Mode = sessionState.mode) => {
+  if (!isRouteConfigured() && mode === sessionState.mode) {
+    return "route not selected";
+  }
+
   if (mode === "local") {
     return `ollama ${cliLocalStatus()}`;
   }
@@ -7602,7 +8075,7 @@ const cliCurrentWorkState = () => {
     return "empty";
   }
 
-  const work = getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+  const work = getWorkById(readStoredThoughtWorks(), currentWorkId);
   if (!work) {
     return `#${currentWorkId}`;
   }
@@ -7622,24 +8095,27 @@ const buildCliCurrentLines = () => {
   const spec = cliSpecStatus();
   const tokenId = walletState.mintedTokenId ?? mintFlowData.existingTokenId;
 
-  const lines = [`route: ${cliRouteLabel(sessionState.mode)}`];
+  const lines = [`route: ${currentRouteLabel()}`];
 
-  if (sessionState.mode === "connect") {
+  if (!isRouteConfigured()) {
+    lines.push("provider: empty");
+  }
+  if (isRouteConfigured() && sessionState.mode === "connect") {
     lines.push("provider: openrouter");
     lines.push(`openrouter ${cliAuthorizationState()}`);
   }
-  if (sessionState.mode === "direct") {
+  if (isRouteConfigured() && sessionState.mode === "direct") {
     lines.push(`provider: ${sessionState.direct.provider}`);
     lines.push(`api key: ${cliApiKeyState()}`);
   }
-  if (sessionState.mode === "local") {
+  if (isRouteConfigured() && sessionState.mode === "local") {
     lines.push("provider: ollama", `ollama: ${cliLocalStatus()}`, `endpoint: ${getOllamaEndpoint()}`);
   }
-  if (sessionState.mode === MY_BRAIN_MODE) {
+  if (isRouteConfigured() && sessionState.mode === MY_BRAIN_MODE) {
     lines.push(`provider: ${MY_BRAIN_PROVIDER}`);
   }
 
-  lines.push(`model: ${getCurrentModelValue().trim() || "empty"}`, `prompt: ${cliPromptValue()}`, `THOUGHT.md: ${spec.state}`);
+  lines.push(`model: ${isRouteConfigured() ? getCurrentModelValue().trim() || "empty" : "empty"}`, `prompt: ${cliPromptValue()}`, `THOUGHT.md: ${spec.state}`);
 
   if (isMyBrainShellActive()) {
     lines.push("work: waiting for model return", "mint: idle", "", "use: return <text>", "use: cancel");
@@ -7675,6 +8151,13 @@ const buildCliCurrentLines = () => {
 };
 
 const listModelsForCli = () => {
+  if (!isRouteConfigured()) {
+    return [
+      "model list unavailable.",
+      ...routeRequiredLines(),
+    ];
+  }
+
   if (sessionState.mode === MY_BRAIN_MODE) {
     return [
       "model fixed.",
@@ -7705,6 +8188,11 @@ const listModelsForCli = () => {
 };
 
 const setCliModel = (modelId: string) => {
+  if (!isRouteConfigured()) {
+    appendCliError(["model unavailable.", ...routeRequiredLines()]);
+    return;
+  }
+
   if (sessionState.mode === MY_BRAIN_MODE) {
     appendCliOutput(listModelsForCli());
     return;
@@ -7771,6 +8259,7 @@ const setCliProvider = (providerId: string) => {
   resetMintRuntimeState();
   pendingMyBrainRunPayload = null;
   sessionState.mode = "direct";
+  sessionState.routeConfigured = true;
   sessionState.direct.provider = normalizedProviderId;
   sessionState.direct.model = DIRECT_PROVIDERS[normalizedProviderId].defaultModel;
   writeSessionState();
@@ -7814,6 +8303,7 @@ const setCliApiKey = (keyInput: string) => {
   resetMintRuntimeState();
   pendingMyBrainRunPayload = null;
   sessionState.mode = "direct";
+  sessionState.routeConfigured = true;
   setDirectApiKey(key);
   writeSessionState();
   syncInterface();
@@ -7888,9 +8378,10 @@ const outputCliConfigSummary = () => {
   const lines = [
     "config sets route, provider, and model for one round.",
     "",
-    `route: ${sessionState.mode}`,
+    `route: ${currentRouteLabel()}`,
     `provider: ${routeProviderLabel()}`,
     `model: ${routeModelLabel()}`,
+    `state: ${routeStateLabel()}`,
     "",
     "routes:",
     ...routeTableLines(),
@@ -7907,7 +8398,7 @@ const outputCliConfigSummary = () => {
 };
 
 const startOpenRouterConnectFromCli = async () => {
-  if (sessionState.mode !== "connect") {
+  if (!isRouteConfigured() || sessionState.mode !== "connect") {
     setMode("connect");
   }
   if (sessionState.connect.apiKey.trim()) {
@@ -7941,7 +8432,7 @@ const outputCliLocalDetectionResult = () => {
 };
 
 const outputCliRouteModel = async (mode: Mode, modelInput: string) => {
-  if (sessionState.mode !== mode) {
+  if (!isRouteConfigured() || sessionState.mode !== mode) {
     setMode(mode);
   }
 
@@ -7977,6 +8468,7 @@ const outputCliLocalConfig = async (localInput: string) => {
 
   if (lowerHead === "detect" || lowerHead === "retry") {
     pendingMyBrainRunPayload = null;
+    sessionState.routeConfigured = true;
     sessionState.mode = "local";
     sessionState.local.available = null;
     writeSessionState();
@@ -8001,6 +8493,7 @@ const outputCliLocalConfig = async (localInput: string) => {
 
     try {
       sessionState.mode = "local";
+      sessionState.routeConfigured = true;
       pendingMyBrainRunPayload = null;
       sessionState.local.endpoint = normalizeOllamaEndpoint(rest);
       sessionState.local.available = null;
@@ -8084,7 +8577,7 @@ const outputCliConnectConfig = async (connectInput: string) => {
 };
 
 const outputCliMyBrainConfig = async (myBrainInput: string) => {
-  if (sessionState.mode !== MY_BRAIN_MODE) {
+  if (!isRouteConfigured() || sessionState.mode !== MY_BRAIN_MODE) {
     setMode(MY_BRAIN_MODE);
   }
 
@@ -8135,7 +8628,7 @@ const outputCliConfig = async (configInput: string) => {
       appendCliOutput([
         "route selects how THOUGHT reaches a model.",
         "",
-        `route: ${sessionState.mode}`,
+        `route: ${currentRouteLabel()}`,
         "",
         "routes:",
         ...routeTableLines(),
@@ -8282,6 +8775,14 @@ const outputCliThoughtInstructions = async (topic: string) => {
   ]);
 };
 
+const outputCliColorFont = async (topic: string) => {
+  const normalizedTopic = topic.trim().toLowerCase();
+  await openColorFontDocument({
+    appendCliResult: true,
+    raw: normalizedTopic === "raw" || normalizedTopic === "text" || normalizedTopic === "show",
+  });
+};
+
 const formatMintedThoughtLine = (thought: GalleryThought) => {
   const title = canonicalThoughtTitle(thought.rawText) || "UNTITLED";
   return `#${thought.tokenId} ${quoteCliText(title, 40)} $PATH #${thought.pathId}`;
@@ -8379,7 +8880,7 @@ const workDetailLines = (work: ThoughtWorkRecord) => {
 
 const currentWorkRecord = (): ThoughtWorkRecord | null => {
   if (currentWorkId !== null) {
-    const stored = getWorkById(readThoughtWorks(sessionStorage), currentWorkId);
+    const stored = getWorkById(readStoredThoughtWorks(), currentWorkId);
     if (stored) {
       return stored;
     }
@@ -8419,7 +8920,7 @@ const currentWorkRecord = (): ThoughtWorkRecord | null => {
 };
 
 const outputCliWorkList = () => {
-  const works = readThoughtWorks(sessionStorage);
+  const works = readStoredThoughtWorks();
   if (!works.length) {
     appendCliOutput(["generated works from run.", "empty.", "next: run"]);
     return;
@@ -8455,8 +8956,8 @@ const outputCliWorkUsage = () => {
 };
 
 const clearWorkHistoryFromCli = () => {
-  const count = readThoughtWorks(sessionStorage).length;
-  writeThoughtWorks(sessionStorage, []);
+  const count = readStoredThoughtWorks().length;
+  writeStoredThoughtWorks([]);
   currentWorkId = null;
   writeCurrentOutputSession();
   appendCliOutput([
@@ -8510,7 +9011,7 @@ const loadWorkFromCli = (input: string) => {
     return;
   }
 
-  const work = getWorkById(readThoughtWorks(sessionStorage), id);
+  const work = getWorkById(readStoredThoughtWorks(), id);
   if (!work) {
     appendCliError([`work #${id} not found.`, "use: work list"]);
     return;
@@ -8521,7 +9022,7 @@ const loadWorkFromCli = (input: string) => {
 };
 
 const loadPreviousWorkFromCli = () => {
-  const work = getPreviousWork(readThoughtWorks(sessionStorage), currentWorkId);
+  const work = getPreviousWork(readStoredThoughtWorks(), currentWorkId);
   if (!work) {
     appendCliError(currentWorkId ? ["no previous work.", "use: work list"] : ["no work found.", "next: run"]);
     return;
@@ -8532,7 +9033,7 @@ const loadPreviousWorkFromCli = () => {
 };
 
 const loadNextWorkFromCli = () => {
-  const work = getNextWork(readThoughtWorks(sessionStorage), currentWorkId);
+  const work = getNextWork(readStoredThoughtWorks(), currentWorkId);
   if (!work) {
     appendCliError(currentWorkId ? ["no next work.", "use: work list"] : ["no work found.", "next: run"]);
     return;
@@ -8543,7 +9044,7 @@ const loadNextWorkFromCli = () => {
 };
 
 const loadLatestWorkFromCli = () => {
-  const work = getLatestWork(readThoughtWorks(sessionStorage));
+  const work = getLatestWork(readStoredThoughtWorks());
   if (!work) {
     appendCliError(["no work found.", "next: run"]);
     return;
@@ -8712,6 +9213,11 @@ const retryContractPreviewFromCli = async () => {
 };
 
 const runFromCli = async () => {
+  if (!isRouteConfigured()) {
+    appendCliError(["run failed.", ...routeRequiredLines()]);
+    return;
+  }
+
   if (!sessionState.prompt.trim()) {
     appendCliError(["run failed.", "prompt empty.", "next: prompt <text>"]);
     return;
@@ -9184,14 +9690,9 @@ const authorizeFromCli = async () => {
   }
 };
 
-const cliMintPriceLine = async () => {
-  try {
-    const mintPrice =
-      walletState.mintPrice ?? ((await getReadThoughtNFT()?.mintPrice()) as bigint | undefined) ?? null;
-    return mintPrice === null ? "THOUGHT mint price: unknown" : `THOUGHT mint price: ${formatEther(mintPrice)} ETH`;
-  } catch {
-    return "THOUGHT mint price: unknown";
-  }
+const formatCliSpecLabel = (ref: string) => {
+  const match = ref.match(/^THOUGHT\.v(.+)\.md$/i);
+  return match ? `THOUGHT.md@v${match[1]}` : ref;
 };
 
 const cliConfirmPreviewLines = async () => {
@@ -9201,7 +9702,9 @@ const cliConfirmPreviewLines = async () => {
   const prompt = currentRunContext?.prompt || sessionState.prompt;
   const returnedText = currentRunContext?.returnedText ?? "";
   const provenanceBytes = mintFlowData.provenanceJson ? byteLength(mintFlowData.provenanceJson) : null;
-  const specLabel = activeThoughtSpec?.ref ?? (shortHex(mintFlowData.thoughtSpecId || "", 10, 8) || "unknown");
+  const specLabel = activeThoughtSpec?.ref
+    ? formatCliSpecLabel(activeThoughtSpec.ref)
+    : shortHex(mintFlowData.thoughtSpecId || "", 10, 8) || "unknown";
 
   return [
     "confirm THOUGHT mint.",
@@ -9211,8 +9714,10 @@ const cliConfirmPreviewLines = async () => {
     `$PATH: #${pathId}`,
     provenanceBytes === null ? "provenance: unknown" : formatProvenanceBytes(provenanceBytes),
     `spec: ${specLabel}`,
-    await cliMintPriceLine(),
-    "network gas: paid by wallet.",
+    "",
+    "mint fee: none",
+    "network gas: shown in wallet.",
+    "",
     "publishes prompt + model return + provenance.",
     `$PATH: #${pathId} consumed for THOUGHT.`,
     "confirm in wallet...",
@@ -9230,7 +9735,7 @@ const confirmFromCli = async () => {
   }
 
   try {
-    appendCliOutput(await cliConfirmPreviewLines());
+    appendCliOutput(await cliConfirmPreviewLines(), { preserveSpacing: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "mint unavailable.";
     if (message.includes("provenance too large")) {
@@ -9328,6 +9833,8 @@ const cliCommandsHelpLines = () => [
   "spec text",
   "THOUGHT.md",
   "THOUGHT.md text",
+  "color-font",
+  "color-font raw",
   "",
     "run",
     "rerun",
@@ -9393,6 +9900,7 @@ const cliHelpLines = (topic = "") => {
       "config",
       "prompt",
       "THOUGHT.md",
+      "color-font",
       "work",
       "mint",
       "wallet",
@@ -9523,6 +10031,19 @@ const cliHelpLines = (topic = "") => {
       "spec text",
       "THOUGHT.md",
       "THOUGHT.md text",
+    ];
+  }
+
+  if (normalizedTopic === "color-font" || normalizedTopic === "font") {
+    return [
+      "color-font opens the onchain THOUGHT color font.",
+      "",
+      "source: ThoughtNFT color-font ABI.",
+      "format: LETTER:INDEX:ALIAS_TERM:HEX",
+      "",
+      "use:",
+      "color-font",
+      "color-font raw",
     ];
   }
 
@@ -9822,6 +10343,8 @@ const executeCliCommand = async (rawCommand: string) => {
       setCliPrompt(rest);
     } else if (isThoughtInstructionsCommand(lowerHead)) {
       await outputCliThoughtInstructions(lowerRest);
+    } else if (lowerHead === "color-font" || lowerHead === "font") {
+      await outputCliColorFont(lowerRest);
     } else if (lowerHead === "thought") {
       await outputCliThoughtWorks(lowerRest);
     } else if (lowerHead === "works") {
@@ -10225,6 +10748,15 @@ thoughtDetailSpecRef.addEventListener("click", (event) => {
   }
 });
 
+thoughtDetailColorFont.addEventListener("click", (event) => {
+  if (thoughtDetailColorFont.dataset.blobReady === "true" && thoughtDetailColorFont.getAttribute("href") !== "#") {
+    return;
+  }
+
+  event.preventDefault();
+  void openColorFontDocument({ rawDocument: true });
+});
+
 thoughtDetailProvenanceBytes.addEventListener("click", (event) => {
   if (thoughtDetailProvenanceBytes.getAttribute("href") === "#") {
     event.preventDefault();
@@ -10247,6 +10779,7 @@ window.addEventListener("beforeunload", () => {
     markInterruptedCliRun();
   }
   revokeThoughtInstructionsObjectUrl();
+  revokeColorFontPageRawUrl();
 });
 window.addEventListener("focus", () => {
   const canSoftRefresh =
@@ -10291,12 +10824,22 @@ document.addEventListener("keydown", (event) => {
 
 const initFrontpage = async () => {
   configureGalleryLink();
-  document.title = IS_GALLERY_PAGE ? "Gallery" : IS_THOUGHT_PAGE ? "THOUGHT" : "THOUGHT";
+  document.title = IS_COLOR_FONT_PAGE ? "THOUGHT Color Font" : IS_GALLERY_PAGE ? "Gallery" : "THOUGHT";
+
+  if (IS_COLOR_FONT_PAGE) {
+    frontpageStage.classList.add("is-hidden");
+    galleryPage.classList.add("is-hidden");
+    thoughtPage.classList.add("is-hidden");
+    colorFontPage.classList.remove("is-hidden");
+    await loadColorFontPage();
+    return;
+  }
 
   if (IS_GALLERY_PAGE) {
     frontpageStage.classList.add("is-hidden");
     galleryPage.classList.remove("is-hidden");
     thoughtPage.classList.add("is-hidden");
+    colorFontPage.classList.add("is-hidden");
     await loadThoughtGallery();
     return;
   }
@@ -10305,6 +10848,7 @@ const initFrontpage = async () => {
     frontpageStage.classList.add("is-hidden");
     galleryPage.classList.add("is-hidden");
     thoughtPage.classList.remove("is-hidden");
+    colorFontPage.classList.add("is-hidden");
     await loadThoughtDetail();
     return;
   }
@@ -10312,6 +10856,7 @@ const initFrontpage = async () => {
   frontpageStage.classList.remove("is-hidden");
   galleryPage.classList.add("is-hidden");
   thoughtPage.classList.add("is-hidden");
+  colorFontPage.classList.add("is-hidden");
   loadCliTranscript();
   markInterruptedCliRun();
   loadCliCommandHistory();

@@ -1,0 +1,33 @@
+{
+  "id": "thought.colorfont.v1",
+  "version": "v1",
+  "format": "LETTER:INDEX:ALIAS_TERM:HEX",
+  "glyphs": [
+    { "letter": "A", "index": 1, "aliasTerm": "aqua", "hex": "#00ffff" },
+    { "letter": "B", "index": 2, "aliasTerm": "blue", "hex": "#0000ff" },
+    { "letter": "C", "index": 3, "aliasTerm": "coffee", "hex": "#6f4e37" },
+    { "letter": "D", "index": 4, "aliasTerm": "denim", "hex": "#6699ff" },
+    { "letter": "E", "index": 5, "aliasTerm": "eggshell", "hex": "#fff9e3" },
+    { "letter": "F", "index": 6, "aliasTerm": "fuchsia", "hex": "#ff00ff" },
+    { "letter": "G", "index": 7, "aliasTerm": "green", "hex": "#008000" },
+    { "letter": "H", "index": 8, "aliasTerm": "honey", "hex": "#ffcc00" },
+    { "letter": "I", "index": 9, "aliasTerm": "indigo", "hex": "#4b0082" },
+    { "letter": "J", "index": 10, "aliasTerm": "jade green", "hex": "#00a86b" },
+    { "letter": "K", "index": 11, "aliasTerm": "khaki", "hex": "#c3b091" },
+    { "letter": "L", "index": 12, "aliasTerm": "lime", "hex": "#00ff00" },
+    { "letter": "M", "index": 13, "aliasTerm": "maroon", "hex": "#800000" },
+    { "letter": "N", "index": 14, "aliasTerm": "navy", "hex": "#0a1172" },
+    { "letter": "O", "index": 15, "aliasTerm": "orange", "hex": "#ffa500" },
+    { "letter": "P", "index": 16, "aliasTerm": "pink", "hex": "#ffaadd" },
+    { "letter": "Q", "index": 17, "aliasTerm": "quicksilver", "hex": "#a6a6a6" },
+    { "letter": "R", "index": 18, "aliasTerm": "red", "hex": "#ff0000" },
+    { "letter": "S", "index": 19, "aliasTerm": "salmon", "hex": "#fa8072" },
+    { "letter": "T", "index": 20, "aliasTerm": "teal", "hex": "#008080" },
+    { "letter": "U", "index": 21, "aliasTerm": "ultramarine", "hex": "#5533ff" },
+    { "letter": "V", "index": 22, "aliasTerm": "violet", "hex": "#aa55ff" },
+    { "letter": "W", "index": 23, "aliasTerm": "wheat", "hex": "#f5deb3" },
+    { "letter": "X", "index": 24, "aliasTerm": "xray", "hex": "#bbcccc" },
+    { "letter": "Y", "index": 25, "aliasTerm": "yellow", "hex": "#ffff00" },
+    { "letter": "Z", "index": 26, "aliasTerm": "zombie gray", "hex": "#778877" }
+  ]
+}

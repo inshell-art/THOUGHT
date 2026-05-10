@@ -25,7 +25,7 @@ mint
 - The input prompt is always `thought>`.
 - Clicking or typing anywhere on the THOUGHT page focuses the `thought>` input unless another editable field is active.
 - Enter runs the command currently typed after `thought>`.
-- Up and Down walk command history stored in `sessionStorage`.
+- Up and Down walk command history stored in browser-local storage and shared across tabs on the same origin.
 - Ctrl+C clears the current prompt input.
 - Secret-bearing `key <api-key>`, `config key <api-key>`, and `config direct key <api-key>` commands are masked and excluded from command history.
 - The transcript scrolls to the bottom after each command.
@@ -210,11 +210,12 @@ thought> view THOUGHT
 
 ## Storage
 
-- Console transcript is stored in `sessionStorage` and survives page refresh.
+- Console transcript is stored in browser-local storage and survives page refresh or same-origin tabs.
 - `clear` resets the visible transcript and starts a fresh intro.
-- The current generated THOUGHT output and run context are stored in `sessionStorage` so the canvas can be restored after refresh.
-- Session works are stored in `sessionStorage`; they survive refresh but not browser-session clearing.
-- Command history is stored in `sessionStorage`.
+- The current generated THOUGHT output and run context are stored in browser-local storage so the canvas can be restored after refresh or from another same-origin tab.
+- Session works are stored in browser-local storage and shared across tabs on the same origin.
+- Command history is stored in browser-local storage and shared across tabs on the same origin.
+- Provider credentials and OAuth verifier state remain in `sessionStorage`.
 - Prompt, route, model, provider, and OpenRouter connect credential are session-scoped browser state.
 - Direct API keys are session-only, stored per direct provider, and never shown by usage output.
 - No backend receives provider keys from this app path.

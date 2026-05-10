@@ -1,37 +1,28 @@
 {
-  "rpcUrl": "http://192.168.0.104:8545",
+  "rpcUrl": "http://127.0.0.1:8545",
   "chainId": 31337,
   "pathNft": {
-    "address": "0xb185E9f6531BA9877741022C92CE858cDCc5760E"
+    "address": "0x33E45b187da34826aBCEDA1039231Be46f1b05Af"
   },
   "pathMovement": {
     "name": "THOUGHT",
     "quota": 1
   },
-  "devPathToken": {
-    "id": 1,
-    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-  },
-  "devPathTokens": {
-    "firstId": 1,
-    "lastId": 10,
-    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-  },
   "seedGenerator": {
-    "address": "0x79E8AB29Ff79805025c9462a2f2F12e9A496f81d"
+    "address": "0x8ac5eE52F70AE01dB914bE459D8B3d50126fd6aE"
   },
   "thoughtPreviewer": {
-    "address": "0x0Dd99d9f56A14E9D53b2DdC62D9f0bAbe806647A"
+    "address": "0x325c8Df4CFb5B068675AFF8f62aA668D1dEc3C4B"
   },
   "thoughtSpecRegistry": {
-    "address": "0xeAd789bd8Ce8b9E94F5D0FCa99F8787c7e758817"
+    "address": "0x4eaB29997D332A666c3C366217Ab177cF9A7C436"
   },
   "thoughtSpec": {
     "id": "0xe201170ae183f114064f4492cbc4942f7d3d68b74a08d3dc4b4f61edec213d78",
-    "hash": "0x0377a92a403e22fa1f0c7d08ad6f41e8556d491fce1e18e44cb91a3513fc16db",
+    "hash": "0xe445c11396cd45b2b403a9c6facc434f9178b189247ffb5071bf50c9571d0fc5",
     "ref": "THOUGHT.v1.md"
   },
   "thoughtNft": {
-    "address": "0xd9fEc8238711935D6c8d79Bef2B9546ef23FC046"
+    "address": "0x627b9A657eac8c3463AD17009a424dFE3FDbd0b1"
   }
 }

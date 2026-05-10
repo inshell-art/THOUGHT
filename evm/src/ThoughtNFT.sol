@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+import {ColorFontV1} from "./ColorFontV1.sol";
+
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
         external
@@ -195,6 +197,42 @@ contract ThoughtNFT {
 
     function tokenOfThought(bytes32 textHash) external view returns (uint256) {
         return tokenOfTextHash[textHash];
+    }
+
+    function colorFontId() external pure returns (string memory) {
+        return ColorFontV1.id();
+    }
+
+    function colorFontVersion() external pure returns (string memory) {
+        return ColorFontV1.version();
+    }
+
+    function colorFontLength() external pure returns (uint8) {
+        return ColorFontV1.length();
+    }
+
+    function colorFontData() external pure returns (string memory) {
+        return ColorFontV1.data();
+    }
+
+    function colorFontHash() external pure returns (bytes32) {
+        return ColorFontV1.hash();
+    }
+
+    function colorFontGlyph(uint8 index)
+        external
+        pure
+        returns (string memory letter, uint8 ordinal, string memory aliasTerm, string memory hexColor)
+    {
+        return ColorFontV1.glyph(index);
+    }
+
+    function colorFontGlyphOf(bytes1 letter_)
+        external
+        pure
+        returns (uint8 ordinal, string memory aliasTerm, string memory hexColor)
+    {
+        return ColorFontV1.glyphOf(letter_);
     }
 
     function getThought(uint256 tokenId) external view returns (ThoughtRecord memory) {
@@ -725,7 +763,7 @@ contract ThoughtNFT {
                     _toString(imageSize),
                     "' height='",
                     _toString(imageSize),
-                    "' fill='#",
+                    "' fill='",
                     _colorHex(chars[i]),
                     "'/>"
                 );
@@ -764,37 +802,7 @@ contract ThoughtNFT {
     }
 
     function _colorHex(bytes1 char_) private pure returns (string memory) {
-        uint8 code = uint8(char_);
-        if (code >= 97 && code <= 122) {
-            char_ = bytes1(uint8(code - 32));
-        }
-
-        if (char_ == "A") return "00ffff";
-        if (char_ == "B") return "0000ff";
-        if (char_ == "C") return "6f4e37";
-        if (char_ == "D") return "6699ff";
-        if (char_ == "E") return "fff9e3";
-        if (char_ == "F") return "ff00ff";
-        if (char_ == "G") return "008000";
-        if (char_ == "H") return "ffcc00";
-        if (char_ == "I") return "4b0082";
-        if (char_ == "J") return "00a86b";
-        if (char_ == "K") return "c3b091";
-        if (char_ == "L") return "00ff00";
-        if (char_ == "M") return "800000";
-        if (char_ == "N") return "0a1172";
-        if (char_ == "O") return "ffa500";
-        if (char_ == "P") return "ffaadd";
-        if (char_ == "Q") return "a6a6a6";
-        if (char_ == "R") return "ff0000";
-        if (char_ == "S") return "fa8072";
-        if (char_ == "T") return "008080";
-        if (char_ == "U") return "5533ff";
-        if (char_ == "V") return "aa55ff";
-        if (char_ == "W") return "f5deb3";
-        if (char_ == "X") return "bbcccc";
-        if (char_ == "Y") return "ffff00";
-        return "778877";
+        return ColorFontV1.hexOf(char_);
     }
 
     function _xmlEscape(string memory value) private pure returns (string memory) {

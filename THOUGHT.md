@@ -68,10 +68,12 @@ If the model wants the color font image to express a visual color, rhythm, densi
 
 The color font maps A through Z to fixed colors.
 
+The deployed THOUGHT contract exposes the same color font through its color-font ABI, and the renderer uses that mapping to produce the SVG image.
+
 Format:
 
 ```text
-LETTER:INDEX:COLOR_NAME:HEX
+LETTER:INDEX:ALIAS_TERM:HEX
 ```
 
 ```text

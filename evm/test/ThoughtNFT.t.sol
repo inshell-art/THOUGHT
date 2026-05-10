@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ThoughtSpecRegistry} from "../src/ThoughtSpecRegistry.sol";
+import {ColorFontV1} from "../src/ColorFontV1.sol";
 import {ThoughtNFT} from "../src/ThoughtNFT.sol";
 
 interface Vm {
@@ -270,6 +271,56 @@ contract ThoughtNFTTest {
         require(reasonCode == token.ERR_RAW_RETURN_TOO_LONG(), "unexpected reason");
     }
 
+    function testColorFontAbiExposesCanonicalData() public view {
+        string memory data = token.colorFontData();
+        bytes memory dataBytes = bytes(data);
+
+        require(_equal(token.colorFontId(), "thought.colorfont.v1"), "unexpected color font id");
+        require(_equal(token.colorFontVersion(), "v1"), "unexpected color font version");
+        require(token.colorFontLength() == 26, "unexpected color font length");
+        require(_equal(data, _canonicalColorFontData()), "unexpected color font data");
+        require(_lineCount(data) == 26, "color font should have 26 lines");
+        require(dataBytes.length > 0 && dataBytes[dataBytes.length - 1] != 0x0a, "trailing blank line");
+        require(token.colorFontHash() == keccak256(bytes(data)), "color font hash mismatch");
+    }
+
+    function testColorFontGlyphs() public view {
+        (string memory firstLetter, uint8 firstOrdinal, string memory firstAlias, string memory firstHex) =
+            token.colorFontGlyph(1);
+        require(_equal(firstLetter, "A"), "first letter mismatch");
+        require(firstOrdinal == 1, "first ordinal mismatch");
+        require(_equal(firstAlias, "aqua"), "first alias mismatch");
+        require(_equal(firstHex, "#00ffff"), "first hex mismatch");
+
+        (string memory lastLetter, uint8 lastOrdinal, string memory lastAlias, string memory lastHex) =
+            token.colorFontGlyph(26);
+        require(_equal(lastLetter, "Z"), "last letter mismatch");
+        require(lastOrdinal == 26, "last ordinal mismatch");
+        require(_equal(lastAlias, "zombie gray"), "last alias mismatch");
+        require(_equal(lastHex, "#778877"), "last hex mismatch");
+
+        (uint8 aOrdinal, string memory aAlias, string memory aHex) = token.colorFontGlyphOf("A");
+        require(aOrdinal == 1, "A ordinal mismatch");
+        require(_equal(aAlias, "aqua"), "A alias mismatch");
+        require(_equal(aHex, "#00ffff"), "A hex mismatch");
+
+        (uint8 zOrdinal, string memory zAlias, string memory zHex) = token.colorFontGlyphOf("Z");
+        require(zOrdinal == 26, "Z ordinal mismatch");
+        require(_equal(zAlias, "zombie gray"), "Z alias mismatch");
+        require(_equal(zHex, "#778877"), "Z hex mismatch");
+    }
+
+    function testColorFontInvalidInputsRevert() public {
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontIndex.selector));
+        token.colorFontGlyph(0);
+
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontIndex.selector));
+        token.colorFontGlyph(27);
+
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontLetter.selector));
+        token.colorFontGlyphOf("a");
+    }
+
     function testMintRejectsNonCanonicalText() public {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
@@ -350,6 +401,13 @@ contract ThoughtNFTTest {
         require(_contains(svg, "<clipPath id='canvasClip'>"), "missing canvas clip");
         require(_contains(svg, "<g clip-path='url(#canvasClip)'>"), "missing clipped content group");
         require(_contains(svg, ">WHY TAG</text>"), "missing rendered text");
+    }
+
+    function testRenderThoughtSvgUsesColorFontV1ForCat() public view {
+        string memory svg = token.renderThoughtSvg("CAT");
+        require(_contains(svg, "#6f4e37"), "missing C color");
+        require(_contains(svg, "#00ffff"), "missing A color");
+        require(_contains(svg, "#008080"), "missing T color");
     }
 
     function testRenderThoughtSvgRejectsNonCanonicalText() public {
@@ -771,6 +829,51 @@ contract ThoughtNFTTest {
 
     function _bytesEqual(bytes memory left, bytes memory right) private pure returns (bool) {
         return keccak256(left) == keccak256(right);
+    }
+
+    function _lineCount(string memory value) private pure returns (uint256 count) {
+        bytes memory valueBytes = bytes(value);
+        if (valueBytes.length == 0) {
+            return 0;
+        }
+
+        count = 1;
+        for (uint256 i = 0; i < valueBytes.length; i++) {
+            if (valueBytes[i] == 0x0a) {
+                count++;
+            }
+        }
+    }
+
+    function _canonicalColorFontData() private pure returns (string memory) {
+        return string.concat(
+            "A:1:aqua:#00ffff\n",
+            "B:2:blue:#0000ff\n",
+            "C:3:coffee:#6f4e37\n",
+            "D:4:denim:#6699ff\n",
+            "E:5:eggshell:#fff9e3\n",
+            "F:6:fuchsia:#ff00ff\n",
+            "G:7:green:#008000\n",
+            "H:8:honey:#ffcc00\n",
+            "I:9:indigo:#4b0082\n",
+            "J:10:jade green:#00a86b\n",
+            "K:11:khaki:#c3b091\n",
+            "L:12:lime:#00ff00\n",
+            "M:13:maroon:#800000\n",
+            "N:14:navy:#0a1172\n",
+            "O:15:orange:#ffa500\n",
+            "P:16:pink:#ffaadd\n",
+            "Q:17:quicksilver:#a6a6a6\n",
+            "R:18:red:#ff0000\n",
+            "S:19:salmon:#fa8072\n",
+            "T:20:teal:#008080\n",
+            "U:21:ultramarine:#5533ff\n",
+            "V:22:violet:#aa55ff\n",
+            "W:23:wheat:#f5deb3\n",
+            "X:24:xray:#bbcccc\n",
+            "Y:25:yellow:#ffff00\n",
+            "Z:26:zombie gray:#778877"
+        );
     }
 
     function _bytesRepeat(string memory char_, uint256 count) private pure returns (bytes memory) {

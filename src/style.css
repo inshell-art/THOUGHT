@@ -255,6 +255,14 @@ html.gallery-route body.frontpage .frontpage-shell {
   padding: 28px clamp(18px, 4vw, 52px) 28px;
 }
 
+body.frontpage:has(.color-font-page:not(.is-hidden)) .frontpage-shell,
+html.color-font-route body.frontpage .frontpage-shell {
+  align-items: stretch;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 28px clamp(18px, 4vw, 52px) 28px;
+}
+
 html.thought-route body.frontpage .frontpage-shell {
   align-items: stretch;
   justify-content: center;
@@ -307,6 +315,10 @@ html.gallery-route .frontpage-stage {
 }
 
 html.thought-route .frontpage-stage {
+  display: none;
+}
+
+html.color-font-route .frontpage-stage {
   display: none;
 }
 
@@ -1629,6 +1641,142 @@ html.gallery-route .thought-gallery.is-hidden {
   display: flex;
 }
 
+.primitive-page {
+  width: min(var(--main-area-width), 100%);
+  min-height: calc(100vh - 56px);
+  box-sizing: border-box;
+  padding: clamp(16px, 2vh, 28px) 0;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+.primitive-page.is-hidden {
+  display: none;
+}
+
+html.color-font-route .primitive-page.is-hidden {
+  display: flex;
+}
+
+.primitive-page__header {
+  display: grid;
+  gap: 30px;
+  grid-template-columns: 1fr;
+  align-items: start;
+  justify-items: center;
+  margin-bottom: clamp(42px, 8vh, 88px);
+  text-align: center;
+}
+
+.primitive-page__title {
+  margin: 0;
+  color: var(--accent);
+  font-size: clamp(30px, 4.8vw, 56px);
+  font-weight: var(--weight-thin, 200);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+}
+
+.primitive-page__subtitle {
+  max-width: 620px;
+  margin: 14px auto 0;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.primitive-page__body {
+  display: grid;
+  gap: 24px;
+  max-width: 720px;
+  margin-left: min(220px, 19vw);
+}
+
+.primitive-page__copy {
+  display: grid;
+  gap: 16px;
+}
+
+.primitive-page__copy p,
+.primitive-page__status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.65;
+}
+
+.primitive-page__fields {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.primitive-page__fields div {
+  display: grid;
+  grid-template-columns: minmax(76px, max-content) minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}
+
+.primitive-page__fields dt {
+  margin: 0;
+  color: var(--muted-dim);
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+.primitive-page__fields dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.primitive-page__raw {
+  max-height: min(420px, 42vh);
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  box-sizing: border-box;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.primitive-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 22px;
+}
+
+.primitive-page__links a {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 300;
+  text-decoration: none;
+}
+
+.primitive-page__links a:hover,
+.primitive-page__links a:focus-visible {
+  color: var(--accent);
+  outline: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
 .thought-detail {
   width: min(var(--thought-detail-width), 100%);
   height: calc(100vh - 56px);
@@ -2212,7 +2360,9 @@ html.thought-route .thought-detail.is-hidden {
 
   body.frontpage:has(.thought-detail:not(.is-hidden)) .frontpage-shell,
   html.gallery-route body.frontpage .frontpage-shell,
-  html.thought-route body.frontpage .frontpage-shell {
+  html.thought-route body.frontpage .frontpage-shell,
+  body.frontpage:has(.color-font-page:not(.is-hidden)) .frontpage-shell,
+  html.color-font-route body.frontpage .frontpage-shell {
     padding: 18px 14px;
   }
 
@@ -2222,6 +2372,27 @@ html.thought-route .thought-detail.is-hidden {
 
   .thought-gallery {
     min-height: calc(100vh - 36px);
+  }
+
+  .primitive-page {
+    min-height: calc(100vh - 36px);
+    padding: 0;
+  }
+
+  .primitive-page__header {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 42px;
+  }
+
+  .primitive-page__body {
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .primitive-page__fields div {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .thought-detail {

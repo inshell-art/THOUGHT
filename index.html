@@ -9,7 +9,10 @@
   <script>
     (() => {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("gallery") === "1" || window.location.hash === "#gallery") {
+      const pathname = window.location.pathname.replace(/\/+$/, "");
+      if (pathname === "/color-font") {
+        document.documentElement.classList.add("color-font-route");
+      } else if (params.get("gallery") === "1" || window.location.hash === "#gallery") {
         document.documentElement.classList.add("gallery-route");
       } else if (/^[1-9]\d*$/.test(params.get("thought") || "")) {
         document.documentElement.classList.add("thought-route");
@@ -306,11 +309,9 @@
             <nav class="color-font-footer__nav" aria-label="THOUGHT links">
               <a
                 class="color-font-footer__link"
-                href="https://github.com/inshell-art/THOUGHT/blob/main/colorFontJSON/colorfont.byToolv2.json"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/color-font"
                 data-label="color font"
-                aria-label="Open the color font JSON in the THOUGHT GitHub repository"
+                aria-label="Open the THOUGHT color font page"
               >
                 ■■■■■■■■■■
               </a>
@@ -341,15 +342,72 @@
       <footer class="thought-gallery__footer">
         <a
           class="color-font-footer__link"
-          href="https://github.com/inshell-art/THOUGHT/blob/main/colorFontJSON/colorfont.byToolv2.json"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/color-font"
           data-label="color font"
-          aria-label="Open the color font JSON in the THOUGHT GitHub repository"
+          aria-label="Open the THOUGHT color font page"
         >
           ■■■■■■■■■■
         </a>
       </footer>
+    </section>
+
+    <section id="color-font-page" class="primitive-page color-font-page is-hidden" aria-labelledby="color-font-title">
+      <header class="primitive-page__header">
+        <div>
+          <h1 id="color-font-title" class="primitive-page__title">THOUGHT Color Font v1</h1>
+          <p class="primitive-page__subtitle">Contract-defined A-Z color glyph mapping.</p>
+        </div>
+      </header>
+
+      <section class="primitive-page__body" aria-label="THOUGHT color font primitive note">
+        <div class="primitive-page__copy">
+          <p>The color rectangle is the glyph. The color font is the typeface.</p>
+          <p>
+            A-Z map to fixed contract-defined colors.<br />
+            Text becomes color, rhythm, density, and gap.
+          </p>
+        </div>
+
+        <dl class="primitive-page__fields" aria-label="Color font source">
+          <div>
+            <dt>source</dt>
+            <dd id="color-font-source">loading...</dd>
+          </div>
+          <div>
+            <dt>id</dt>
+            <dd id="color-font-id">-</dd>
+          </div>
+          <div>
+            <dt>version</dt>
+            <dd id="color-font-version">-</dd>
+          </div>
+          <div>
+            <dt>chain</dt>
+            <dd id="color-font-chain">-</dd>
+          </div>
+          <div>
+            <dt>contract</dt>
+            <dd id="color-font-contract">-</dd>
+          </div>
+          <div>
+            <dt>hash</dt>
+            <dd id="color-font-hash">-</dd>
+          </div>
+        </dl>
+
+        <pre id="color-font-raw" class="primitive-page__raw" aria-label="Raw color font mapping">loading color font...</pre>
+
+        <nav class="primitive-page__links" aria-label="Color font references">
+          <a id="color-font-open-raw" href="#" target="_blank" rel="noopener noreferrer">Open raw mapping ↗</a>
+          <a
+            href="https://github.com/inshell-art/THOUGHT/blob/main/spec/COLOR_FONT.v1.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+          >View source mirror ↗</a>
+        </nav>
+
+        <p id="color-font-status" class="primitive-page__status" aria-live="polite">loading color font...</p>
+      </section>
     </section>
 
     <section id="thought-page" class="thought-detail is-hidden" aria-labelledby="thought-detail-title">
@@ -421,6 +479,12 @@
               <p id="thought-detail-provenance-viewer-title" class="thought-detail__viewer-title">provenance json</p>
               <pre id="thought-detail-provenance-json" class="thought-detail__json"></pre>
             </div>
+          </section>
+
+          <section class="thought-detail__section">
+            <h2>color font</h2>
+            <a id="thought-detail-color-font" class="thought-detail__value thought-detail__value-link" href="#">THOUGHT Color Font v1 ↗</a>
+            <p id="thought-detail-color-font-status" class="thought-detail__status" aria-live="polite"></p>
           </section>
 
           <p id="thought-detail-copy-status" class="thought-detail__status" aria-live="polite"></p>
