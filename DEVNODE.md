@@ -57,7 +57,7 @@ npm run build:evm
 RPC_URL=http://192.168.0.104:8545 npm run devnode:deploy
 ```
 
-By default this deploys the active repo `THOUGHT.md` into `ThoughtSpecRegistry`, configures the PATH `THOUGHT` movement with quota `1`, and mints dev `$PATH #1` through `$PATH #10` to `0xf39f...2266`.
+By default this deploys the active repo `THOUGHT.md` into `ThoughtSpecRegistry`, configures and freezes the PATH `THOUGHT` movement with quota `1`, and mints dev `$PATH #1` through `$PATH #10` to `0xf39f...2266`.
 
 To change the seeded PATH count:
 

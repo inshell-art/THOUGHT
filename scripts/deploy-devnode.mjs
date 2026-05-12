@@ -52,6 +52,7 @@ const main = async () => {
   const pathNftAddress = await pathNft.getAddress();
   const minterRole = ethers.id("MINTER_ROLE");
   await (await pathNft.grantRole(minterRole, deployerAddress)).wait();
+  await (await pathNft.freezePublicMinter(deployerAddress)).wait();
   for (let tokenId = 1n; tokenId <= devPathCount; tokenId++) {
     await (await pathNft.safeMint(deployerAddress, tokenId, "0x")).wait();
   }
@@ -91,13 +92,16 @@ const main = async () => {
       1,
     )
   ).wait();
+  await (
+    await pathNft.freezeMovementConfig(ethers.encodeBytes32String("THOUGHT"))
+  ).wait();
 
   const payload = {
     rpcUrl,
     chainId: Number(network.chainId),
     ...(explorerUrl ? { explorerUrl } : {}),
     pathNft: { address: pathNftAddress },
-    pathMovement: { name: "THOUGHT", quota: 1 },
+    pathMovement: { name: "THOUGHT", quota: 1, frozen: true },
     devPathToken: { id: 1, owner: deployerAddress },
     devPathTokens: {
       firstId: 1,

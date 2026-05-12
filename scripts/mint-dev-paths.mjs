@@ -52,9 +52,21 @@ const main = async () => {
   );
   const pathNft = new Contract(pathNftAddress, abi, signer);
   const minterRole = ethers.id("MINTER_ROLE");
+  const publicMinterFrozen = await pathNft.publicMinterFrozen();
 
-  if (!(await pathNft.hasRole(minterRole, minter))) {
+  if (publicMinterFrozen) {
+    const publicMinter = await pathNft.publicMinter();
+    if (publicMinter.toLowerCase() !== minter.toLowerCase()) {
+      throw new Error(`PathNFT public minter is frozen to ${publicMinter}, not ${minter}`);
+    }
+    if (!(await pathNft.hasRole(minterRole, minter))) {
+      throw new Error(`PathNFT public minter ${minter} does not have MINTER_ROLE`);
+    }
+  } else if (!(await pathNft.hasRole(minterRole, minter))) {
     await (await pathNft.grantRole(minterRole, minter)).wait();
+    await (await pathNft.freezePublicMinter(minter)).wait();
+  } else {
+    await (await pathNft.freezePublicMinter(minter)).wait();
   }
 
   const minted = [];

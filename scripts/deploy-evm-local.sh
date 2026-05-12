@@ -128,6 +128,11 @@ if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
     "$THOUGHT_MOVEMENT_QUOTA" \
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" >/dev/null
+  cast send "$PATH_NFT_ADDRESS" \
+    "freezeMovementConfig(bytes32)" \
+    "$THOUGHT_MOVEMENT" \
+    --rpc-url "$RPC_URL" \
+    --private-key "$PRIVATE_KEY" >/dev/null
 fi
 
 python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$PREVIEWER_ADDRESS" "$REGISTRY_ADDRESS" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" <<'PY'
@@ -160,8 +165,8 @@ echo "ThoughtSpecRegistry: $REGISTRY_ADDRESS"
 echo "ThoughtNFT:    $TOKEN_ADDRESS"
 echo "PathNFT:         $PATH_NFT_ADDRESS"
 if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
-  echo "Configured PATH THOUGHT movement to $TOKEN_ADDRESS with quota $THOUGHT_MOVEMENT_QUOTA"
+  echo "Configured and froze PATH THOUGHT movement to $TOKEN_ADDRESS with quota $THOUGHT_MOVEMENT_QUOTA"
 else
-  echo "Skipped PATH movement config. Run PathNFT.setMovementConfig(THOUGHT, $TOKEN_ADDRESS, $THOUGHT_MOVEMENT_QUOTA)."
+  echo "Skipped PATH movement config. Run PathNFT.setMovementConfig(THOUGHT, $TOKEN_ADDRESS, $THOUGHT_MOVEMENT_QUOTA), then PathNFT.freezeMovementConfig(THOUGHT)."
 fi
 echo "Wrote $ADDRESSES_FILE"

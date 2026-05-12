@@ -19,6 +19,6 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 ## Local frontend wiring
 - Deployment writes `addresses.anvil.json`.
 - Deployment stores bundled `THOUGHT.v1.md` in `ThoughtSpecRegistry`, marks it active, and writes the registry address plus active spec id/hash/ref.
-- The deploy script configures `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, 1)` by default. Set `CONFIGURE_PATH_MOVEMENT=0` to skip that admin call.
+- The deploy script configures `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, 1)` and then freezes that movement config by default. Set `CONFIGURE_PATH_MOVEMENT=0` to skip those admin calls.
 - `src/contracts-main.ts` reads that file and calls the preview contract over JSON-RPC.
 - `src/main.ts` fetches the active spec text from `ThoughtSpecRegistry`, validates its hash, caches it by chain/registry/spec/hash, and uses it for generation and mint provenance.
