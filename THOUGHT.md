@@ -4,7 +4,7 @@ Version: v1
 
 ## Public Context
 
-THOUGHT is an open art application where a human prompt and one AI model round produce a canonical text work that may be minted as a THOUGHT token.
+THOUGHT is an open art application where a human prompt and one selected model round produce a canonical text work that may be minted as a THOUGHT token.
 
 Official website:
 
@@ -26,13 +26,13 @@ A model that can inspect the website, repository, contract, gallery, or minted c
 
 THOUGHT is concerned with where thought comes from and how thought can be observed.
 
-People now think with AI. A human does not only write thought directly. A human can prompt a model, receive a result, and decide whether that result should become an artifact.
+People now think with models. A human does not only write thought directly. A human can prompt a model, receive a result, and decide whether that result should become an artifact.
 
-The human writes a prompt. The chosen model reads this file and the prompt. The model returns one text response.
+The human writes a prompt. The selected model reads this file and the prompt. The model returns one candidate text response.
 
-The returned text is the model return. It is the candidate source.
+The returned text is the model return. It is the candidate source, not a minted work by itself.
 
-If the human chooses to mint, the THOUGHT contract canonicalizes and validates the model return through contract preview before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
+If the picker chooses to mint, the THOUGHT contract canonicalizes and validates the model return through contract preview before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
 
 The stored canonical text is the source. The contract-generated SVG is the visible form.
 
@@ -41,6 +41,20 @@ The pre-mint preview SVG and the minted token image are produced by the same con
 A model return can be read as language, canonicalized as source, stored as an onchain text record, rendered as color font, exposed as contract-generated SVG, and recorded as provenance.
 
 The main visual language is the color font. The visible supporting text, prompt, model return, metadata, and provenance can support the artifact, but the color rectangle sequence is the primary glyph system.
+
+## Human Principal and Model Role
+
+The human is the principal actor of a THOUGHT run.
+
+The selected model is a bounded operational actor. It receives the prompt and this file, then returns one candidate text.
+
+The model does not own the work. The model does not mint the work. The model does not approve spending, payment, or PATH usage.
+
+The picker decides whether the candidate should enter the onchain collection.
+
+Minting requires wallet confirmation and a usable PATH permission for the THOUGHT movement.
+
+This role boundary is part of source discipline. It does not add a second model round.
 
 ## The Color Font Medium
 
@@ -111,6 +125,8 @@ Return one concise text response only.
 
 Do not explain. Do not provide alternatives. Do not include commentary around the answer.
 
+Use letters and spaces only. Punctuation, digits, emojis, and symbols are invalid for canonical THOUGHT text.
+
 Choose text that can become a bounded one-line color-font work. Choose for meaning, rhythm, density, and visual consequence.
 
 The returned text may be canonicalized by the contract before mint. The canonical text is the final source of the minted work.
@@ -131,6 +147,8 @@ The pre-mint preview SVG and the minted token image are produced by the same con
 
 The mint transaction accepts canonical text only. It revalidates the text before mint and does not silently change the text the picker confirmed.
 
+Invalid or too-long model returns are rejected. Rejection does not create a finalized THOUGHT work.
+
 Canonicalization and validation are text hygiene and source discipline. They are not a second model round.
 
 ## Uniqueness
@@ -149,15 +167,19 @@ It also includes its public provenance record.
 
 The provenance records the prompt, model return, canonical text, THOUGHT.md spec reference, run context, mint context, and onchain anchors.
 
+Mint context can include the wallet-approved mint action, PATH reference, transaction, and token anchors.
+
 Provenance is an inspection record. It is not a cryptographic proof that every offchain event happened exactly as described.
 
 The prompt and model return may become public provenance. Return text with that public record in mind.
 
-## The Model Decision
+## The Model Round
 
-The model decides what text deserves to enter the THOUGHT pipeline.
+The model proposes one candidate text.
 
-The choice belongs to the model after understanding the prompt, color font, SVG image, smart contract, uniqueness condition, canonicalization, public context when available, and the fact that the result may be minted.
+The model chooses one response after reading the prompt, THOUGHT.md, color font, uniqueness condition, canonicalization rules, public context when available, and the fact that the result may be minted.
+
+The response is not final by itself. The picker decides whether to mint. The wallet confirms the mint action. The contract canonicalizes, validates, renders, and records the result.
 
 Commit to one response.
 
@@ -166,6 +188,8 @@ Commit to one response.
 THOUGHT is one round.
 
 There is no clarification step. There is no dialogue after the prompt. There is no list of alternatives.
+
+There is no hidden repair pass. If a response is invalid, the system can reject the run instead of repairing it.
 
 There is one model response and one resulting art state.
 
