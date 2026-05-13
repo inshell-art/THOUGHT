@@ -170,6 +170,30 @@ contract ThoughtNFTTest {
         require(tokenSpecByteLength == byteLength, "token active spec byte length mismatch");
     }
 
+    function testConstructorPinsDependenciesAndRejectsInvalidTargets() public {
+        require(token.pathNft() == address(path), "path dependency mismatch");
+        require(token.thoughtSpecRegistry() == address(registry), "registry dependency mismatch");
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
+        new ThoughtNFT(address(0), address(registry));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
+        new ThoughtNFT(address(0x1234), address(registry));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
+        new ThoughtNFT(address(path), address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
+        new ThoughtNFT(address(path), address(0x1234));
+    }
+
+    function testSupportsMarketplaceMetadataInterfaces() public view {
+        require(token.supportsInterface(0x01ffc9a7), "missing ERC165");
+        require(token.supportsInterface(0x80ac58cd), "missing ERC721");
+        require(token.supportsInterface(0x5b5e139f), "missing ERC721 metadata");
+        require(!token.supportsInterface(0xffffffff), "invalid interface should be false");
+    }
+
     function testRegisterSameThoughtSpecIdReverts() public {
         (bool ok,) = address(registry).call(
             abi.encodeWithSelector(

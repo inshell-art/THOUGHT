@@ -22,3 +22,13 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 - The deploy script configures `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, 1)` and then freezes that movement config by default. Set `CONFIGURE_PATH_MOVEMENT=0` to skip those admin calls.
 - `src/contracts-main.ts` reads that file and calls the preview contract over JSON-RPC.
 - `src/main.ts` fetches the active spec text from `ThoughtSpecRegistry`, validates its hash, caches it by chain/registry/spec/hash, and uses it for generation and mint provenance.
+
+## Release Invariants
+
+- `ThoughtNFT` is pinned to one PATH contract and one `ThoughtSpecRegistry` at construction.
+- A successful THOUGHT mint consumes one PATH `THOUGHT` movement unit and records the returned PATH serial.
+- Failed mints must not consume PATH or reserve the canonical text hash.
+- `ThoughtSpecRegistry` must contain the active `THOUGHT.v1.md` spec before public minting.
+- The deploy script should configure PATH `THOUGHT` movement quota to `1` and freeze that movement before public use.
+- Token metadata is on-chain JSON with embedded SVG image data and provenance fields.
+- Color Font v1 is exposed through contract ABI and should be treated as a stable source of truth for frontend mirrors.
