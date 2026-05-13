@@ -61,6 +61,10 @@ const main = async () => {
     deployer,
     path.join(rootDir, "evm", "out", "SeedGenerator.sol", "SeedGenerator.json"),
   );
+  const colorFontV1 = await deploy(
+    deployer,
+    path.join(rootDir, "evm", "out", "ColorFontV1.sol", "ColorFontV1.json"),
+  );
   const thoughtPreviewer = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtPreviewer.sol", "ThoughtPreviewer.json"),
@@ -81,7 +85,7 @@ const main = async () => {
   const thoughtNft = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtNFT.sol", "ThoughtNFT.json"),
-    [pathNftAddress, thoughtSpecRegistryAddress],
+    [pathNftAddress, thoughtSpecRegistryAddress, await colorFontV1.getAddress()],
   );
   const thoughtNftAddress = await thoughtNft.getAddress();
 
@@ -109,6 +113,7 @@ const main = async () => {
       owner: deployerAddress,
     },
     seedGenerator: { address: await seedGenerator.getAddress() },
+    colorFontV1: { address: await colorFontV1.getAddress() },
     thoughtPreviewer: { address: await thoughtPreviewer.getAddress() },
     thoughtSpecRegistry: { address: thoughtSpecRegistryAddress },
     thoughtSpec: {

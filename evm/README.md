@@ -6,9 +6,10 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 
 ## Contracts
 - `SeedGenerator.sol`: deterministic `getSeed(uint256,uint64,string)` helper.
+- `ColorFontV1.sol`: immutable A-Z color glyph mapping contract plus the renderer data library.
 - `ThoughtPreviewer.sol`: `preview`, `previewWithFuel`, and `previewMetrics`.
 - `ThoughtSpecRegistry.sol`: owner-managed active `THOUGHT.md` registry. Spec bytes are stored once in contract code storage and exposed through hash-validated read helpers.
-- `ThoughtNFT.sol`: ERC-721 mint contract for front-page THOUGHT outputs. Each mint stores compact provenance JSON, typed hashes, and a registry-backed `THOUGHT.md` spec id; it enforces unique canonical text and consumes one PATH `THOUGHT` movement unit atomically before minting.
+- `ThoughtNFT.sol`: ERC-721 mint contract for front-page THOUGHT outputs. Each mint stores compact provenance JSON, typed hashes, registry-backed `THOUGHT.md` spec id, and Color Font v1 identity/hash; it enforces unique canonical text and consumes one PATH `THOUGHT` movement unit atomically before minting. THOUGHT mint is non-payable; movement permission comes from PATH.
 
 ## Commands
 - `forge build`
@@ -25,10 +26,11 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 
 ## Release Invariants
 
-- `ThoughtNFT` is pinned to one PATH contract and one `ThoughtSpecRegistry` at construction.
+- `ThoughtNFT` is pinned to one PATH contract, one `ThoughtSpecRegistry`, and one `ColorFontV1` contract at construction.
 - A successful THOUGHT mint consumes one PATH `THOUGHT` movement unit and records the returned PATH serial.
+- THOUGHT mint is non-payable. There is no `mintPrice`, `setMintPrice`, or `withdraw` path.
 - Failed mints must not consume PATH or reserve the canonical text hash.
 - `ThoughtSpecRegistry` must contain the active `THOUGHT.v1.md` spec before public minting.
 - The deploy script should configure PATH `THOUGHT` movement quota to `1` and freeze that movement before public use.
 - Token metadata is on-chain JSON with embedded SVG image data and provenance fields.
-- Color Font v1 is exposed through contract ABI and should be treated as a stable source of truth for frontend mirrors.
+- Color Font v1 is exposed through the standalone `ColorFontV1` contract ABI. `ThoughtNFT` also forwards read helpers to the pinned Color Font contract for compatibility.

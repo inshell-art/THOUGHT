@@ -146,6 +146,9 @@ type EvmAddresses = {
   thoughtNft?: {
     address?: string;
   };
+  colorFontV1?: {
+    address?: string;
+  };
 };
 
 type EthereumProvider = {
@@ -296,7 +299,6 @@ type ThoughtWalletState = {
   txState: MintTxState;
   txHash: string;
   txError: string;
-  mintPrice: bigint | null;
   balance: bigint | null;
   preflightLoading: boolean;
   preflightError: string;
@@ -630,6 +632,7 @@ const PATH_MINT_URL =
       : "https://inshell.art";
 const THOUGHT_SPEC_REGISTRY_ADDRESS = EVM_ADDRESSES.thoughtSpecRegistry?.address?.trim() ?? "";
 const THOUGHT_NFT_ADDRESS = EVM_ADDRESSES.thoughtNft?.address?.trim() ?? "";
+const COLOR_FONT_V1_ADDRESS = EVM_ADDRESSES.colorFontV1?.address?.trim() ?? "";
 const THOUGHT_CHAIN_NAME =
   THOUGHT_CHAIN_ID === 31337 ? "Anvil Local" : THOUGHT_CHAIN_ID === 11155111 ? "Sepolia" : "THOUGHT";
 const configuredExplorerBaseUrl =
@@ -679,9 +682,7 @@ const THOUGHT_NFT_ABI = [
   "error ThoughtAlreadyMinted(bytes32 textHash, uint256 tokenId)",
   "error ThoughtTextTooLarge(uint256 actual, uint256 max)",
   "error UnknownThoughtSpec(bytes32 thoughtSpecId)",
-  "error WrongPayment()",
-  "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) payable returns (uint256)",
-  "function mintPrice() view returns (uint256)",
+  "function mint(string rawText, uint256 pathId, bytes32 thoughtSpecId, bytes32 promptHash, string provenanceJson, uint256 deadline, bytes pathSignature) returns (uint256)",
   "function previewText(string input) pure returns (string normalized, bool valid, uint8 reasonCode)",
   "function previewWork(string rawReturn) pure returns (bool ok, string text, string svg, uint8 reasonCode)",
   "function renderThoughtSvg(string canonicalText) pure returns (string)",
@@ -694,14 +695,24 @@ const THOUGHT_NFT_ABI = [
   "function totalSupply() view returns (uint256)",
   "function thoughtText(uint256 tokenId) view returns (string)",
   "function authorOf(uint256 tokenId) view returns (address)",
-  "function colorFontId() pure returns (string)",
-  "function colorFontVersion() pure returns (string)",
-  "function colorFontLength() pure returns (uint8)",
-  "function colorFontData() pure returns (string)",
-  "function colorFontHash() pure returns (bytes32)",
-  "function colorFontGlyph(uint8 index) pure returns (string letter, uint8 ordinal, string aliasTerm, string hexColor)",
-  "function colorFontGlyphOf(bytes1 letter) pure returns (uint8 ordinal, string aliasTerm, string hexColor)",
+  "function colorFont() view returns (address)",
+  "function colorFontId() view returns (string)",
+  "function colorFontVersion() view returns (string)",
+  "function colorFontLength() view returns (uint8)",
+  "function colorFontData() view returns (string)",
+  "function colorFontHash() view returns (bytes32)",
+  "function colorFontGlyph(uint8 index) view returns (string letter, uint8 ordinal, string aliasTerm, string hexColor)",
+  "function colorFontGlyphOf(bytes1 letter) view returns (uint8 ordinal, string aliasTerm, string hexColor)",
   "event ThoughtMinted(uint256 indexed tokenId, address indexed minter, uint256 indexed pathId, bytes32 textHash, bytes32 provenanceHash, bytes32 thoughtSpecId, uint64 mintedAt)",
+] as const;
+const COLOR_FONT_V1_ABI = [
+  "function id() pure returns (string)",
+  "function version() pure returns (string)",
+  "function length() pure returns (uint8)",
+  "function data() pure returns (string)",
+  "function hash() pure returns (bytes32)",
+  "function glyph(uint8 index) pure returns (string letter, uint8 ordinal, string aliasTerm, string hexColor)",
+  "function glyphOf(bytes1 letter) pure returns (uint8 ordinal, string aliasTerm, string hexColor)",
 ] as const;
 const PATH_NFT_ABI = [
   "function getConsumeNonce(address claimer) view returns (uint256)",
@@ -1185,7 +1196,6 @@ const walletState: ThoughtWalletState = {
   txState: "idle",
   txHash: "",
   txError: "",
-  mintPrice: null,
   balance: null,
   preflightLoading: false,
   preflightError: "",
@@ -1218,6 +1228,7 @@ let thoughtDetailProvenanceJsonUrl = "";
 let colorFontPageRawUrl = "";
 let readProvider: JsonRpcProvider | null = null;
 let readThoughtNFT: Contract | null = null;
+let readColorFontV1: Contract | null = null;
 let readThoughtSpecRegistry: Contract | null = null;
 let readPathNft: Contract | null = null;
 let walletListenersBound = false;
@@ -1671,6 +1682,19 @@ const getReadThoughtNFT = () => {
   return readThoughtNFT;
 };
 
+const getReadColorFontV1 = () => {
+  const provider = getReadProvider();
+  if (!provider || !COLOR_FONT_V1_ADDRESS) {
+    return null;
+  }
+
+  if (!readColorFontV1) {
+    readColorFontV1 = new Contract(COLOR_FONT_V1_ADDRESS, COLOR_FONT_V1_ABI, provider);
+  }
+
+  return readColorFontV1;
+};
+
 const getReadThoughtSpecRegistry = () => {
   const provider = getReadProvider();
   if (!provider || !THOUGHT_SPEC_REGISTRY_ADDRESS) {
@@ -2118,13 +2142,13 @@ const loadColorFontPage = async () => {
       contract: doc.contractAddress,
       hash: doc.hash,
       data: doc.data,
-      status: "source: ThoughtNFT.colorFontData()",
+      status: COLOR_FONT_V1_ADDRESS ? "source: ColorFontV1.data()" : "source: ThoughtNFT.colorFontData()",
     });
   } catch {
     const fallbackText = colorFontText.trim();
     renderColorFontPage({
       source: "bundled mirror",
-      id: "THOUGHT_COLOR_FONT",
+      id: "inshell.colorfont.v1",
       version: "v1",
       chain: "-",
       contract: "-",
@@ -2136,18 +2160,31 @@ const loadColorFontPage = async () => {
 };
 
 const fetchColorFontDoc = async (): Promise<ColorFontDoc> => {
+  const colorFont = getReadColorFontV1();
   const token = getReadThoughtNFT();
-  if (!THOUGHT_NFT_ADDRESS || !token) {
-    throw new Error("THOUGHT contract not configured for this network.");
+  if (!COLOR_FONT_V1_ADDRESS && (!THOUGHT_NFT_ADDRESS || !token)) {
+    throw new Error("Color Font contract not configured for this network.");
   }
 
   try {
-    const [id, version, hash, data] = await Promise.all([
-      token.colorFontId() as Promise<string>,
-      token.colorFontVersion() as Promise<string>,
-      token.colorFontHash() as Promise<`0x${string}`>,
-      token.colorFontData() as Promise<string>,
-    ]);
+    const source = colorFont ?? token;
+    if (!source) {
+      throw new Error("contract read failed.");
+    }
+
+    const [id, version, hash, data] = colorFont
+      ? await Promise.all([
+          colorFont.id() as Promise<string>,
+          colorFont.version() as Promise<string>,
+          colorFont.hash() as Promise<`0x${string}`>,
+          colorFont.data() as Promise<string>,
+        ])
+      : await Promise.all([
+          source.colorFontId() as Promise<string>,
+          source.colorFontVersion() as Promise<string>,
+          source.colorFontHash() as Promise<`0x${string}`>,
+          source.colorFontData() as Promise<string>,
+        ]);
 
     if (!validateColorFontDataShape(data)) {
       throw new Error("contract read failed.");
@@ -2158,7 +2195,7 @@ const fetchColorFontDoc = async (): Promise<ColorFontDoc> => {
       version,
       chainId: THOUGHT_CHAIN_ID,
       chainName: THOUGHT_CHAIN_NAME,
-      contractAddress: THOUGHT_NFT_ADDRESS as `0x${string}`,
+      contractAddress: (COLOR_FONT_V1_ADDRESS || THOUGHT_NFT_ADDRESS) as `0x${string}`,
       hash,
       format: COLOR_FONT_DOC_FORMAT,
       data,
@@ -2206,7 +2243,7 @@ const openColorFontDocument = async (options?: {
 
     if (shouldAppendCliResult) {
       appendCliOutput([
-        "opening THOUGHT Color Font v1.",
+        "opening Color Font v1.",
         "source: onchain ABI.",
         opened ? "" : "popup blocked. click color font title again.",
       ].filter(Boolean));
@@ -3295,10 +3332,10 @@ const getMintSheetStatusCopy = () => {
     return `$PATH #${selectedPathId} selected.`;
   }
   if (mintFlowState === "authorizing") {
-    return "sign in wallet.";
+    return "wallet authorization pending.";
   }
   if (mintFlowState === "authorized") {
-    return selectedPathId ? `$PATH #${selectedPathId} authorized.` : "authorized.";
+    return selectedPathId ? `$PATH #${selectedPathId} authorized for this THOUGHT.` : "authorized.";
   }
   if (mintFlowState === "minting") {
     return walletState.txState === "submitted" ? "minting." : "confirm in wallet.";
@@ -3316,7 +3353,7 @@ const getMintSheetContextCopy = () => {
   const selectedPathId = mintFlowData.pathId?.toString() ?? mintFlowData.pathIdInput.trim();
 
   if (mintFlowState === "path_ready" || mintFlowState === "authorizing") {
-    return "one THOUGHT consumes one $PATH for THOUGHT.";
+    return "one THOUGHT needs one usable $PATH.";
   }
   if ((mintFlowState === "authorized" || mintFlowState === "minting") && selectedPathId) {
     return `$PATH #${selectedPathId} selected.`;
@@ -3426,11 +3463,9 @@ const refreshMintPreflight = async () => {
   walletState.preflightError = "";
   syncPrimaryCtaAvailability();
 
-  const token = getReadThoughtNFT();
   const provider = getReadProvider();
 
-  if (!token || !provider) {
-    walletState.mintPrice = null;
+  if (!provider || !THOUGHT_NFT_ADDRESS) {
     walletState.balance = null;
     walletState.preflightLoading = false;
     walletState.preflightError = "mint contract not configured.";
@@ -3440,11 +3475,9 @@ const refreshMintPreflight = async () => {
   }
 
   try {
-    walletState.mintPrice = (await token.mintPrice()) as bigint;
     walletState.balance = walletState.address ? await provider.getBalance(walletState.address) : null;
     walletState.preflightError = "";
   } catch (error) {
-    walletState.mintPrice = null;
     walletState.balance = null;
     walletState.preflightError =
       error instanceof Error ? error.message : "mint preflight failed.";
@@ -3839,17 +3872,10 @@ const checkPathEligibility = async () => {
     }
 
     if (stage !== 0n || stageMinted >= movementQuota) {
-      setMintFlowError(`$PATH #${pathId.toString()} already consumed.`, "path_consumed");
-      syncInterface();
-      return;
-    }
-
-    if (
-      walletState.mintPrice !== null &&
-      walletState.balance !== null &&
-      walletState.balance < walletState.mintPrice
-    ) {
-      setMintFlowError("not enough ETH.", "funds");
+      setMintFlowError(
+        `$PATH #${pathId.toString()} has no THOUGHT unit available.`,
+        "path_consumed",
+      );
       syncInterface();
       return;
     }
@@ -3944,7 +3970,7 @@ const mintErrorMessage = (error: unknown) => {
     return "wallet transaction not submitted.";
   }
   if (/BAD_MOVEMENT_ORDER|QUOTA_EXHAUSTED/i.test(message)) {
-    return "$PATH already consumed.";
+    return "$PATH has no THOUGHT unit available.";
   }
   if (/BAD_CONSUME_AUTH/i.test(message)) {
     return "authorization expired.";
@@ -4045,7 +4071,7 @@ const recoverMintStateAfterRevert = async (shouldAppendCliResult: boolean) => {
       appendCliOutput([
         "already minted.",
         `THOUGHT: #${existingTokenId}`,
-        consumedPathId ? `$PATH #${consumedPathId} already consumed for THOUGHT.` : "",
+        consumedPathId ? `$PATH #${consumedPathId} THOUGHT unit already consumed.` : "",
         walletState.txHash || mintFlowData.txHash ? "use: view tx" : "",
         viewThoughtUseLine(existingTokenId),
         "use: gallery",
@@ -4056,7 +4082,10 @@ const recoverMintStateAfterRevert = async (shouldAppendCliResult: boolean) => {
 
   if (await selectedPathAlreadyConsumed()) {
     const pathId = selectedCliPathId();
-    setMintFlowError(pathId ? `$PATH #${pathId} already consumed.` : "$PATH already consumed.", "path_consumed");
+    setMintFlowError(
+      pathId ? `$PATH #${pathId} has no THOUGHT unit available.` : "$PATH has no THOUGHT unit available.",
+      "path_consumed",
+    );
     syncInterface();
     return true;
   }
@@ -4084,7 +4113,7 @@ const waitForMintReceipt = async (tx: MintTransactionResponse, shouldAppendCliRe
       appendCliOutput([
         "minted.",
         mintedTokenId !== null ? `THOUGHT: #${mintedTokenId}` : "THOUGHT: minted",
-        consumedPathId ? `$PATH #${consumedPathId} consumed for THOUGHT.` : "",
+        consumedPathId ? `$PATH #${consumedPathId} THOUGHT unit consumed.` : "",
         "use: view tx",
         viewThoughtUseLine(mintedTokenId),
         "use: gallery",
@@ -4227,8 +4256,6 @@ const confirmMint = async (options?: { appendCliResult?: boolean }) => {
     const signerAddress = await signer.getAddress();
     const nonceProvider = getReadProvider() ?? browserProvider;
     const nonce = await nonceProvider.getTransactionCount(signerAddress, "pending");
-    const mintPrice =
-      walletState.mintPrice ?? ((await getReadThoughtNFT()?.mintPrice()) as bigint | undefined) ?? 0n;
     const writableToken = new Contract(THOUGHT_NFT_ADDRESS, THOUGHT_NFT_ABI, signer);
 
     mintFlowState = "minting";
@@ -4247,7 +4274,7 @@ const confirmMint = async (options?: { appendCliResult?: boolean }) => {
       mintFlowData.provenanceJson,
       mintFlowData.deadline,
       mintFlowData.signature,
-      { value: mintPrice, nonce },
+      { nonce },
     ) as Promise<MintTransactionResponse>;
 
     void txPromise.then((lateTx) => {
@@ -4888,7 +4915,7 @@ const renderGalleryCard = (thought: GalleryThought) => {
   tipBreak.className = "thought-gallery__tip-break";
   tipBreak.setAttribute("aria-hidden", "true");
   const tipPath = document.createElement("span");
-  tipPath.textContent = `$PATH #${thought.pathId} consumed`;
+  tipPath.textContent = `$PATH #${thought.pathId} THOUGHT unit consumed`;
   const tipMinted = document.createElement("span");
   tipMinted.textContent = `minted ${galleryTipTime(thought.mintedAt)}`;
   const tipMinter = document.createElement("span");
@@ -5081,16 +5108,16 @@ const loadThoughtDetail = async () => {
       thoughtDetailModelReturn,
       detail.returnedText ? detail.returnedText : "model return unavailable.",
     );
-    thoughtDetailPath.textContent = `#${detail.pathId} consumed ↗`;
+    thoughtDetailPath.textContent = `#${detail.pathId} THOUGHT unit consumed ↗`;
     thoughtDetailPath.href = txUrl || "#";
     thoughtDetailPath.title = txUrl
-      ? `Open mint transaction where $PATH #${detail.pathId} was consumed`
+      ? `Open mint transaction where $PATH #${detail.pathId} THOUGHT unit was consumed`
       : "Transaction page unavailable.";
     thoughtDetailMinter.textContent = shortDetailAddress(detail.minter);
     thoughtDetailMinter.title = detail.minter;
     thoughtDetailMinted.textContent = detailTime(detail.mintedAt);
     thoughtDetailSpecRef.textContent = specLinkText(detail.thoughtSpec.ref);
-    thoughtDetailColorFont.textContent = "THOUGHT Color Font v1 ↗";
+    thoughtDetailColorFont.textContent = "Color Font v1 ↗";
     thoughtDetailColorFont.title = "Open local raw color-font mapping from ThoughtNFT color-font ABI";
     clearThoughtDetailSpecJsonLink("Loading local cached spec JSON...");
     if (detail.provenanceJson) {
@@ -6871,7 +6898,11 @@ const runAgent = async (options?: { forceGenerate?: boolean; cli?: boolean }) =>
     }
 
     if (options?.cli) {
-      appendCliOutput(["model return received.", "previewing by contract..."]);
+      appendCliOutput([
+        "model return received.",
+        "canonicalizing via contract preview...",
+        "rendering contract SVG...",
+      ]);
     }
 
     await completeThoughtRunFromModelReturn(thoughtRunPayload, text);
@@ -7759,7 +7790,6 @@ const initializeCliTranscript = () => {
     "contract SVG out.",
     "",
     "quick start:",
-    "wallet connect",
     "config",
     "prompt <text>",
     "run",
@@ -9120,7 +9150,7 @@ const cliWorkReadyLines = () => {
     currentWorkId ? `work #${currentWorkId} is done.` : "work is done.",
     `text: ${quoteCliFullText(text)}`,
     `model return: ${formatCliModelReturnValue(returnedText, text)}`,
-    provenance ? `provenance ${provenance.bytes} bytes.` : "provenance ready.",
+    provenance ? `provenance: ${provenance.bytes} bytes.` : "provenance ready.",
     "use: mint",
     "use: provenance",
     currentWorkId ? `use: work ${currentWorkId}` : "use: work current",
@@ -9151,7 +9181,12 @@ const returnMyBrainModelTextFromCli = async (returnInput: string) => {
 
   try {
     const payload = pendingMyBrainRunPayload.payload;
-    appendCliOutput(["model return received.", "leaving my-brain...", "previewing by contract..."]);
+    appendCliOutput([
+      "model return received.",
+      "leaving my-brain...",
+      "canonicalizing via contract preview...",
+      "rendering contract SVG...",
+    ]);
     await completeThoughtRunFromModelReturn(payload, modelReturn);
     pendingMyBrainRunPayload = null;
     appendCliOutput(["contract SVG out.", "", ...cliWorkReadyLines()]);
@@ -9189,7 +9224,7 @@ const retryContractPreviewFromCli = async () => {
     return;
   }
 
-  appendCliOutput(["previewing by contract..."]);
+  appendCliOutput(["canonicalizing via contract preview...", "rendering contract SVG..."]);
 
   try {
     await completeThoughtRunFromModelReturn(
@@ -9336,7 +9371,10 @@ const cliPathRecoveryErrorLines = (fallbackPathId = "") => {
     return [pathId ? `wallet does not hold $PATH #${pathId}.` : "wallet does not hold this $PATH.", ...useLines];
   }
   if (mintFlowData.errorKind === "path_consumed") {
-    return [pathId ? `$PATH #${pathId} already consumed.` : "$PATH already consumed.", ...useLines];
+    return [
+      pathId ? `$PATH #${pathId} has no THOUGHT unit available.` : "$PATH has no THOUGHT unit available.",
+      ...useLines,
+    ];
   }
   if (mintFlowData.errorKind === "path_not_ready") {
     return [pathId ? `$PATH #${pathId} not ready for THOUGHT.` : "$PATH not ready for THOUGHT.", ...useLines];
@@ -9377,13 +9415,13 @@ const buildCliMintStateLines = () => {
     return [`checking $PATH #${pathId || "?"}...`];
   }
   if (mintFlowState === "path_ready") {
-    return [`$PATH #${pathId || "?"} selected.`, "use: authorize"];
+    return [`$PATH #${pathId || "?"} selected.`, "THOUGHT unit available.", "use: authorize"];
   }
   if (mintFlowState === "authorizing") {
-    return ["signing authorization..."];
+    return ["wallet authorization pending..."];
   }
   if (mintFlowState === "authorized") {
-    return [`$PATH #${pathId || "?"} authorized.`, "use: confirm"];
+    return [`$PATH #${pathId || "?"} authorized for this THOUGHT.`, "use: confirm"];
   }
   if (mintFlowState === "minting") {
     return ["confirming mint..."];
@@ -9391,7 +9429,7 @@ const buildCliMintStateLines = () => {
   if (mintFlowState === "minted") {
     return [
       "minted.",
-      pathId ? `$PATH #${pathId} consumed for THOUGHT.` : "",
+      pathId ? `$PATH #${pathId} THOUGHT unit consumed.` : "",
       "use: view tx",
       viewThoughtUseLine(walletState.mintedTokenId),
     ].filter(Boolean);
@@ -9453,7 +9491,7 @@ const startCliMint = async () => {
   appendCliOutput([
     "mint THOUGHT.",
     "keeps current work onchain.",
-    "one THOUGHT needs one $PATH.",
+    "one THOUGHT needs one usable $PATH.",
     "select $PATH / authorize / confirm.",
   ]);
   await openMintSheet("cli");
@@ -9485,7 +9523,7 @@ const cliPathHelpLines = () => {
   return [
     "$PATH is mint permission.",
     "",
-    "one THOUGHT needs one $PATH.",
+    "one THOUGHT needs one usable $PATH.",
     "select $PATH / authorize / confirm.",
     "",
     `current: ${currentPath ? `#${currentPath}` : "not selected"}`,
@@ -9641,7 +9679,11 @@ const checkCliPath = async (pathInput: string) => {
   stopCliProgress();
 
   if (mintFlowState === "path_ready") {
-    appendCliOutput([`$PATH #${mintFlowData.pathId?.toString() ?? trimmed} selected.`, "use: authorize"]);
+    appendCliOutput([
+      `$PATH #${mintFlowData.pathId?.toString() ?? trimmed} selected.`,
+      "THOUGHT unit available.",
+      "use: authorize",
+    ]);
   } else if (mintFlowState === "wallet_required") {
     appendCliError(["wallet not connected.", "use: wallet connect"]);
   } else if (mintFlowState === "error") {
@@ -9662,7 +9704,7 @@ const authorizeFromCli = async () => {
     const pathId = selectedCliPathId();
     appendCliError(
       mintFlowState === "authorized"
-        ? [`$PATH #${pathId || "?"} authorized.`, "use: confirm"]
+        ? [`$PATH #${pathId || "?"} authorized for this THOUGHT.`, "use: confirm"]
         : ["not ready.", "use: path <id>"],
     );
     return;
@@ -9670,17 +9712,17 @@ const authorizeFromCli = async () => {
 
   const pathId = selectedCliPathId() || "?";
   appendCliOutput([
-    `authorize $PATH #${pathId} for THOUGHT mint.`,
+    `authorize $PATH #${pathId} for this THOUGHT.`,
+    "wallet may open for authorization.",
     "no gas.",
     "does not mint.",
     `expires in ${Math.floor(Number(PATH_CONSUME_AUTH_TTL_SECONDS) / 3600)} hour.`,
-    "sign in wallet...",
   ]);
   await authorizeMint();
   stopCliProgress();
   const state = mintFlowState as MintFlowState;
   if (state === "authorized") {
-    appendCliOutput([`$PATH #${pathId} authorized.`, "use: confirm"]);
+    appendCliOutput([`$PATH #${pathId} authorized for this THOUGHT.`, "use: confirm"]);
   } else if (state === "error") {
     if (mintFlowData.error.includes("provenance too large")) {
       appendCliError(provenanceTooLargeLinesFromMessage(mintFlowData.error));
@@ -9719,7 +9761,7 @@ const cliConfirmPreviewLines = async () => {
     "network gas: shown in wallet.",
     "",
     "publishes prompt + model return + provenance.",
-    `$PATH: #${pathId} consumed for THOUGHT.`,
+    `$PATH #${pathId} THOUGHT unit will be consumed.`,
     "confirm in wallet...",
   ];
 };
@@ -10036,7 +10078,7 @@ const cliHelpLines = (topic = "") => {
 
   if (normalizedTopic === "color-font" || normalizedTopic === "font") {
     return [
-      "color-font opens the onchain THOUGHT color font.",
+      "color-font opens the onchain Color Font.",
       "",
       "source: ThoughtNFT color-font ABI.",
       "format: LETTER:INDEX:ALIAS_TERM:HEX",
@@ -10824,7 +10866,7 @@ document.addEventListener("keydown", (event) => {
 
 const initFrontpage = async () => {
   configureGalleryLink();
-  document.title = IS_COLOR_FONT_PAGE ? "THOUGHT Color Font" : IS_GALLERY_PAGE ? "Gallery" : "THOUGHT";
+  document.title = IS_COLOR_FONT_PAGE ? "Color Font" : IS_GALLERY_PAGE ? "Gallery" : "THOUGHT";
 
   if (IS_COLOR_FONT_PAGE) {
     frontpageStage.classList.add("is-hidden");

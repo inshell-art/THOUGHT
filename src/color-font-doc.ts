@@ -12,7 +12,7 @@ export type ColorFontDoc = {
 };
 
 export const buildColorFontPlainText = (doc: ColorFontDoc) => [
-  `THOUGHT Color Font ${doc.version}`,
+  `Color Font ${doc.version}`,
   "",
   "source: onchain ABI",
   `id: ${doc.id}`,

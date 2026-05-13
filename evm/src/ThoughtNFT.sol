@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {ColorFontV1} from "./ColorFontV1.sol";
+import {ColorFontV1Data, IColorFontV1} from "./ColorFontV1.sol";
 
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
@@ -10,13 +10,9 @@ interface IERC721Receiver {
 }
 
 interface IPathNFT {
-    function consumeUnit(
-        uint256 pathId,
-        bytes32 movement,
-        address claimer,
-        uint256 deadline,
-        bytes calldata signature
-    ) external returns (uint32);
+    function consumeUnit(uint256 pathId, bytes32 movement, address claimer, uint256 deadline, bytes calldata signature)
+        external
+        returns (uint32);
 }
 
 interface IThoughtSpecRegistry {
@@ -38,15 +34,14 @@ contract ThoughtNFT {
     error ApprovalToCurrentOwner();
     error BalanceQueryForZeroAddress();
     error EmptyProvenance();
+    error InvalidColorFont();
     error EmptyThoughtText();
     error InvalidPathNft();
     error InvalidReceiver();
-    error InvalidRecipient();
     error InvalidSender();
     error InvalidThoughtSpecRegistry();
     error NonexistentToken();
     error NotAuthorized();
-    error NotOwner();
     error NonCanonicalThoughtText();
     error ProvenanceTooLarge(uint256 size, uint256 max);
     error ReentrantCall();
@@ -55,7 +50,6 @@ contract ThoughtNFT {
     error UnknownThoughtSpec(bytes32 thoughtSpecId);
     error TransferToNonReceiverImplementer();
     error TransferToZeroAddress();
-    error WrongPayment();
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
@@ -109,10 +103,9 @@ contract ThoughtNFT {
     uint256 private constant TEXT_CHAR_ADVANCE_BPS = 6_000;
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
-    address public immutable owner;
     address public immutable pathNft;
     address public immutable thoughtSpecRegistry;
-    uint256 public mintPrice;
+    address public immutable colorFont;
     uint256 public totalSupply;
     mapping(bytes32 textHash => uint256 tokenId) public tokenOfTextHash;
 
@@ -123,24 +116,41 @@ contract ThoughtNFT {
     mapping(uint256 tokenId => ThoughtRecord record) private _thoughts;
     uint256 private _mintLocked;
 
-    constructor(address pathNft_, address thoughtSpecRegistry_) {
+    constructor(address pathNft_, address thoughtSpecRegistry_, address colorFont_) {
         if (pathNft_ == address(0) || pathNft_.code.length == 0) {
             revert InvalidPathNft();
         }
         if (thoughtSpecRegistry_ == address(0) || thoughtSpecRegistry_.code.length == 0) {
             revert InvalidThoughtSpecRegistry();
         }
+        if (colorFont_ == address(0) || colorFont_.code.length == 0) {
+            revert InvalidColorFont();
+        }
+        try IColorFontV1(colorFont_).id() returns (string memory pinnedColorFontId) {
+            if (keccak256(bytes(pinnedColorFontId)) != keccak256(bytes(ColorFontV1Data.id()))) {
+                revert InvalidColorFont();
+            }
+        } catch {
+            revert InvalidColorFont();
+        }
+        try IColorFontV1(colorFont_).version() returns (string memory pinnedColorFontVersion) {
+            if (keccak256(bytes(pinnedColorFontVersion)) != keccak256(bytes(ColorFontV1Data.version()))) {
+                revert InvalidColorFont();
+            }
+        } catch {
+            revert InvalidColorFont();
+        }
+        try IColorFontV1(colorFont_).hash() returns (bytes32 pinnedColorFontHash) {
+            if (pinnedColorFontHash != ColorFontV1Data.hash()) {
+                revert InvalidColorFont();
+            }
+        } catch {
+            revert InvalidColorFont();
+        }
 
-        owner = msg.sender;
         pathNft = pathNft_;
         thoughtSpecRegistry = thoughtSpecRegistry_;
-    }
-
-    modifier onlyOwner() {
-        if (msg.sender != owner) {
-            revert NotOwner();
-        }
-        _;
+        colorFont = colorFont_;
     }
 
     modifier nonReentrant() {
@@ -199,40 +209,40 @@ contract ThoughtNFT {
         return tokenOfTextHash[textHash];
     }
 
-    function colorFontId() external pure returns (string memory) {
-        return ColorFontV1.id();
+    function colorFontId() external view returns (string memory) {
+        return IColorFontV1(colorFont).id();
     }
 
-    function colorFontVersion() external pure returns (string memory) {
-        return ColorFontV1.version();
+    function colorFontVersion() external view returns (string memory) {
+        return IColorFontV1(colorFont).version();
     }
 
-    function colorFontLength() external pure returns (uint8) {
-        return ColorFontV1.length();
+    function colorFontLength() external view returns (uint8) {
+        return IColorFontV1(colorFont).length();
     }
 
-    function colorFontData() external pure returns (string memory) {
-        return ColorFontV1.data();
+    function colorFontData() external view returns (string memory) {
+        return IColorFontV1(colorFont).data();
     }
 
-    function colorFontHash() external pure returns (bytes32) {
-        return ColorFontV1.hash();
+    function colorFontHash() external view returns (bytes32) {
+        return IColorFontV1(colorFont).hash();
     }
 
     function colorFontGlyph(uint8 index)
         external
-        pure
+        view
         returns (string memory letter, uint8 ordinal, string memory aliasTerm, string memory hexColor)
     {
-        return ColorFontV1.glyph(index);
+        return IColorFontV1(colorFont).glyph(index);
     }
 
     function colorFontGlyphOf(bytes1 letter_)
         external
-        pure
+        view
         returns (uint8 ordinal, string memory aliasTerm, string memory hexColor)
     {
-        return ColorFontV1.glyphOf(letter_);
+        return IColorFontV1(colorFont).glyphOf(letter_);
     }
 
     function getThought(uint256 tokenId) external view returns (ThoughtRecord memory) {
@@ -325,11 +335,8 @@ contract ThoughtNFT {
 
         string memory normalized = _canonicalizeThought(text);
         bytes memory normalizedBytes = bytes(normalized);
-        return (
-            normalizedBytes.length != 0
-                && normalizedBytes.length <= MAX_TEXT_BYTES
-                && keccak256(normalizedBytes) == keccak256(input)
-        );
+        return (normalizedBytes.length != 0 && normalizedBytes.length <= MAX_TEXT_BYTES
+                && keccak256(normalizedBytes) == keccak256(input));
     }
 
     function previewText(string calldata input)
@@ -411,18 +418,6 @@ contract ThoughtNFT {
         return _renderSvg(_thoughts[tokenId].rawText);
     }
 
-    function setMintPrice(uint256 newMintPrice) external onlyOwner {
-        mintPrice = newMintPrice;
-    }
-
-    function withdraw(address payable recipient) external onlyOwner {
-        if (recipient == address(0)) {
-            revert InvalidRecipient();
-        }
-        (bool ok,) = recipient.call{value: address(this).balance}("");
-        require(ok, "withdraw failed");
-    }
-
     function approve(address approved, uint256 tokenId) external {
         address tokenOwner = ownerOf(tokenId);
         if (approved == tokenOwner) {
@@ -463,10 +458,7 @@ contract ThoughtNFT {
         string calldata provenanceJson,
         uint256 deadline,
         bytes calldata pathSignature
-    ) external payable nonReentrant returns (uint256 tokenId) {
-        if (msg.value != mintPrice) {
-            revert WrongPayment();
-        }
+    ) external nonReentrant returns (uint256 tokenId) {
         if (!_isThoughtSpecRegistered(thoughtSpecId)) {
             revert UnknownThoughtSpec(thoughtSpecId);
         }
@@ -506,13 +498,8 @@ contract ThoughtNFT {
         }
         bytes32 provenanceHash = keccak256(provenanceBytes);
 
-        uint32 pathSerial = IPathNFT(pathNft).consumeUnit(
-            pathId,
-            PATH_MOVEMENT_THOUGHT,
-            msg.sender,
-            deadline,
-            pathSignature
-        );
+        uint32 pathSerial =
+            IPathNFT(pathNft).consumeUnit(pathId, PATH_MOVEMENT_THOUGHT, msg.sender, deadline, pathSignature);
 
         uint64 mintedAt = uint64(block.timestamp);
         tokenId = totalSupply + 1;
@@ -579,6 +566,12 @@ contract ThoughtNFT {
             provenanceHash,
             '"},{"trait_type":"thoughtSpec","value":"',
             thoughtSpecId,
+            '"},{"trait_type":"colorFont","value":"',
+            ColorFontV1Data.id(),
+            '"},{"trait_type":"colorFontVersion","value":"',
+            ColorFontV1Data.version(),
+            '"},{"trait_type":"colorFontHash","value":"',
+            _bytes32ToHex(ColorFontV1Data.hash()),
             '"}]'
         );
     }
@@ -608,6 +601,14 @@ contract ThoughtNFT {
             thoughtSpecId,
             '","pathId":"',
             _toString(record.pathId),
+            '","colorFont":"',
+            ColorFontV1Data.id(),
+            '","colorFontVersion":"',
+            ColorFontV1Data.version(),
+            '","colorFontHash":"',
+            _bytes32ToHex(ColorFontV1Data.hash()),
+            '","colorFontContract":"',
+            _addressToHex(colorFont),
             '","minter":"',
             _addressToHex(record.minter),
             '","mintedAt":',
@@ -734,8 +735,7 @@ contract ThoughtNFT {
 
         if (chars.length > 0) {
             uint256 availableWidth = CANVAS_SIZE - (CANVAS_PADDING * 2);
-            uint256 naturalWidth =
-                (chars.length * IMAGE_SIZE) + (chars.length > 1 ? (chars.length - 1) * IMAGE_GAP : 0);
+            uint256 naturalWidth = (chars.length * IMAGE_SIZE) + (chars.length > 1 ? (chars.length - 1) * IMAGE_GAP : 0);
             uint256 scaleBps = naturalWidth > availableWidth ? (availableWidth * SCALE_BPS) / naturalWidth : SCALE_BPS;
             uint256 imageSize = (IMAGE_SIZE * scaleBps) / SCALE_BPS;
             uint256 gap = chars.length > 1 ? (IMAGE_GAP * scaleBps) / SCALE_BPS : 0;
@@ -802,7 +802,7 @@ contract ThoughtNFT {
     }
 
     function _colorHex(bytes1 char_) private pure returns (string memory) {
-        return ColorFontV1.hexOf(char_);
+        return ColorFontV1Data.hexOf(char_);
     }
 
     function _xmlEscape(string memory value) private pure returns (string memory) {
@@ -917,13 +917,7 @@ contract ThoughtNFT {
 
         for (uint256 i = 0; i < input.length; i++) {
             uint8 charCode = uint8(input[i]);
-            if (
-                input[i] == '"' ||
-                input[i] == "\\" ||
-                input[i] == "\n" ||
-                input[i] == "\r" ||
-                input[i] == "\t"
-            ) {
+            if (input[i] == '"' || input[i] == "\\" || input[i] == "\n" || input[i] == "\r" || input[i] == "\t") {
                 outputLen += 2;
             } else if (charCode < 0x20) {
                 outputLen += 6;

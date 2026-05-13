@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ThoughtSpecRegistry} from "../src/ThoughtSpecRegistry.sol";
-import {ColorFontV1} from "../src/ColorFontV1.sol";
+import {ColorFontV1, ColorFontV1Data} from "../src/ColorFontV1.sol";
 import {ThoughtNFT} from "../src/ThoughtNFT.sol";
 
 interface Vm {
@@ -33,13 +33,10 @@ contract MockPathNFT {
         ownerOf[pathId] = owner;
     }
 
-    function consumeUnit(
-        uint256 pathId,
-        bytes32 movement,
-        address claimer,
-        uint256 deadline,
-        bytes calldata signature
-    ) external returns (uint32 serial) {
+    function consumeUnit(uint256 pathId, bytes32 movement, address claimer, uint256 deadline, bytes calldata signature)
+        external
+        returns (uint32 serial)
+    {
         require(authorizedMinter != address(0) && msg.sender == authorizedMinter, "ERR_UNAUTHORIZED_MINTER");
         require(block.timestamp <= deadline, "CONSUME_AUTH_EXPIRED");
         require(ownerOf[pathId] != address(0), "ERC721: invalid token ID");
@@ -90,6 +87,30 @@ contract MockPathNFT {
     }
 }
 
+contract FakeColorFontV1 {
+    string private _id;
+    string private _version;
+    bytes32 private _hash;
+
+    constructor(string memory id_, string memory version_, bytes32 hash_) {
+        _id = id_;
+        _version = version_;
+        _hash = hash_;
+    }
+
+    function id() external view returns (string memory) {
+        return _id;
+    }
+
+    function version() external view returns (string memory) {
+        return _version;
+    }
+
+    function hash() external view returns (bytes32) {
+        return _hash;
+    }
+}
+
 contract ThoughtNFTTest {
     Vm private constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 private constant USER_KEY = 0xA11CE;
@@ -115,6 +136,7 @@ contract ThoughtNFTTest {
     );
 
     MockPathNFT private path;
+    ColorFontV1 private colorFont;
     ThoughtSpecRegistry private registry;
     ThoughtNFT private token;
     address private user;
@@ -122,9 +144,10 @@ contract ThoughtNFTTest {
     function setUp() public {
         user = vm.addr(USER_KEY);
         path = new MockPathNFT();
+        colorFont = new ColorFontV1();
         registry = new ThoughtSpecRegistry();
         registry.registerSpec(DEFAULT_SPEC_ID, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT), true);
-        token = new ThoughtNFT(address(path), address(registry));
+        token = new ThoughtNFT(address(path), address(registry), address(colorFont));
         path.setAuthorizedMinter(address(token));
         for (uint256 pathId = 1; pathId <= 32; pathId++) {
             path.mintPath(user, pathId);
@@ -158,8 +181,7 @@ contract ThoughtNFTTest {
             bytes32 tokenSpecHash,
             string memory tokenSpecRef,
             address tokenSpecPointer,
-            uint32 tokenSpecByteLength,
-            ,
+            uint32 tokenSpecByteLength,,
             bool tokenSpecExists
         ) = token.activeSpecMeta();
         require(tokenSpecExists, "token active spec should exist");
@@ -173,18 +195,42 @@ contract ThoughtNFTTest {
     function testConstructorPinsDependenciesAndRejectsInvalidTargets() public {
         require(token.pathNft() == address(path), "path dependency mismatch");
         require(token.thoughtSpecRegistry() == address(registry), "registry dependency mismatch");
+        require(token.colorFont() == address(colorFont), "color font dependency mismatch");
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
-        new ThoughtNFT(address(0), address(registry));
+        new ThoughtNFT(address(0), address(registry), address(colorFont));
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
-        new ThoughtNFT(address(0x1234), address(registry));
+        new ThoughtNFT(address(0x1234), address(registry), address(colorFont));
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0));
+        new ThoughtNFT(address(path), address(0), address(colorFont));
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0x1234));
+        new ThoughtNFT(address(path), address(0x1234), address(colorFont));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(0x1234));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(registry));
+
+        FakeColorFontV1 wrongColorFontId = new FakeColorFontV1("thought.colorfont.v1", "v1", ColorFontV1Data.hash());
+        FakeColorFontV1 wrongColorFontVersion = new FakeColorFontV1(ColorFontV1Data.id(), "v2", ColorFontV1Data.hash());
+        FakeColorFontV1 wrongColorFontHash =
+            new FakeColorFontV1(ColorFontV1Data.id(), ColorFontV1Data.version(), bytes32(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(wrongColorFontId));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(wrongColorFontVersion));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidColorFont.selector));
+        new ThoughtNFT(address(path), address(registry), address(wrongColorFontHash));
     }
 
     function testSupportsMarketplaceMetadataInterfaces() public view {
@@ -195,15 +241,12 @@ contract ThoughtNFTTest {
     }
 
     function testRegisterSameThoughtSpecIdReverts() public {
-        (bool ok,) = address(registry).call(
-            abi.encodeWithSelector(
-                registry.registerSpec.selector,
-                DEFAULT_SPEC_ID,
-                DEFAULT_SPEC_REF,
-                bytes(DEFAULT_SPEC_TEXT),
-                false
-            )
-        );
+        (bool ok,) = address(registry)
+            .call(
+                abi.encodeWithSelector(
+                    registry.registerSpec.selector, DEFAULT_SPEC_ID, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT), false
+                )
+            );
         require(!ok, "duplicate spec id should fail");
     }
 
@@ -299,13 +342,18 @@ contract ThoughtNFTTest {
         string memory data = token.colorFontData();
         bytes memory dataBytes = bytes(data);
 
-        require(_equal(token.colorFontId(), "thought.colorfont.v1"), "unexpected color font id");
+        require(_equal(token.colorFontId(), "inshell.colorfont.v1"), "unexpected color font id");
         require(_equal(token.colorFontVersion(), "v1"), "unexpected color font version");
         require(token.colorFontLength() == 26, "unexpected color font length");
         require(_equal(data, _canonicalColorFontData()), "unexpected color font data");
         require(_lineCount(data) == 26, "color font should have 26 lines");
         require(dataBytes.length > 0 && dataBytes[dataBytes.length - 1] != 0x0a, "trailing blank line");
         require(token.colorFontHash() == keccak256(bytes(data)), "color font hash mismatch");
+        require(_equal(colorFont.id(), token.colorFontId()), "standalone id mismatch");
+        require(_equal(colorFont.version(), token.colorFontVersion()), "standalone version mismatch");
+        require(colorFont.length() == token.colorFontLength(), "standalone length mismatch");
+        require(_equal(colorFont.data(), token.colorFontData()), "standalone data mismatch");
+        require(colorFont.hash() == token.colorFontHash(), "standalone hash mismatch");
     }
 
     function testColorFontGlyphs() public view {
@@ -335,31 +383,32 @@ contract ThoughtNFTTest {
     }
 
     function testColorFontInvalidInputsRevert() public {
-        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontIndex.selector));
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1Data.InvalidColorFontIndex.selector));
         token.colorFontGlyph(0);
 
-        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontIndex.selector));
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1Data.InvalidColorFontIndex.selector));
         token.colorFontGlyph(27);
 
-        vm.expectRevert(abi.encodeWithSelector(ColorFontV1.InvalidColorFontLetter.selector));
+        vm.expectRevert(abi.encodeWithSelector(ColorFontV1Data.InvalidColorFontLetter.selector));
         token.colorFontGlyphOf("a");
     }
 
     function testMintRejectsNonCanonicalText() public {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "hello",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "hello",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "mint should reject noncanonical text");
         require(!path.thoughtConsumed(1), "noncanonical text should not consume path");
     }
@@ -472,11 +521,10 @@ contract ThoughtNFTTest {
         require(_equal(svg, previewSvg), "token svg should match preview svg");
     }
 
-    function testMintPriceIsEnforced() public {
-        token.setMintPrice(0.01 ether);
+    function testMintRejectsEthValue() public {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call{value: 0}(
+        (bool ok,) = address(token).call{value: 1}(
             abi.encodeWithSelector(
                 token.mint.selector,
                 "HELLO",
@@ -488,8 +536,8 @@ contract ThoughtNFTTest {
                 auth.signature
             )
         );
-        require(!ok, "mint should fail without required value");
-        require(!path.thoughtConsumed(1), "path should not be consumed before payment passes");
+        require(!ok, "mint should reject ETH value");
+        require(!path.thoughtConsumed(1), "path should not be consumed by payable mismatch");
     }
 
     function testMintRequiresPathAuthorization() public {
@@ -498,18 +546,19 @@ contract ThoughtNFTTest {
         bytes32 textHash = keccak256(bytes(text));
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                text,
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    text,
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "mint should fail without path movement authorization");
         require(token.totalSupply() == 0, "thought should not mint after failed consume");
         require(!token.isThoughtMinted(textHash), "failed consume should not reserve text");
@@ -518,18 +567,19 @@ contract ThoughtNFTTest {
     function testMintRequiresSignedPathConsumeAuth() public {
         ConsumeAuth memory auth = _signConsume(1, OTHER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "HELLO",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "HELLO",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "mint should fail with bad consume signature");
         require(token.totalSupply() == 0, "thought should not mint after bad signature");
     }
@@ -539,18 +589,19 @@ contract ThoughtNFTTest {
 
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "SECOND",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "SECOND",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "second thought from same path should fail");
         require(token.totalSupply() == 1, "quota failure should not mint");
     }
@@ -564,18 +615,19 @@ contract ThoughtNFTTest {
 
         ConsumeAuth memory auth = _signConsume(2, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "HELLO",
-                2,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                '{"schema":"thought.provenance.v1","run":"b"}',
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "HELLO",
+                    2,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    '{"schema":"thought.provenance.v1","run":"b"}',
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "duplicate canonical text should fail");
         require(token.totalSupply() == 1, "duplicate should not mint");
         require(!path.thoughtConsumed(2), "duplicate should not consume path");
@@ -588,7 +640,9 @@ contract ThoughtNFTTest {
 
         require(firstTokenId == 1, "unexpected first token");
         require(secondTokenId == 2, "unexpected second token");
-        require(token.provenanceHashOf(firstTokenId) == token.provenanceHashOf(secondTokenId), "provenance hashes differ");
+        require(
+            token.provenanceHashOf(firstTokenId) == token.provenanceHashOf(secondTokenId), "provenance hashes differ"
+        );
     }
 
     function testDifferentEnglishLettersAreDifferentTexts() public {
@@ -602,52 +656,55 @@ contract ThoughtNFTTest {
     function testEmptyRawTextReverts() public {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "empty raw text should fail");
         require(!path.thoughtConsumed(1), "empty text should not consume path");
 
         ConsumeAuth memory whitespaceAuth = _signConsume(2, USER_KEY);
         vm.prank(user);
-        (bool whitespaceOk,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                " \n\t ",
-                2,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                whitespaceAuth.deadline,
-                whitespaceAuth.signature
-            )
-        );
+        (bool whitespaceOk,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    " \n\t ",
+                    2,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    whitespaceAuth.deadline,
+                    whitespaceAuth.signature
+                )
+            );
         require(!whitespaceOk, "whitespace-only raw text should fail");
         require(!path.thoughtConsumed(2), "whitespace-only text should not consume path");
 
         ConsumeAuth memory numberAuth = _signConsume(3, USER_KEY);
         vm.prank(user);
-        (bool numberOk,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "12345!!!",
-                3,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                numberAuth.deadline,
-                numberAuth.signature
-            )
-        );
+        (bool numberOk,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "12345!!!",
+                    3,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    numberAuth.deadline,
+                    numberAuth.signature
+                )
+            );
         require(!numberOk, "number-only raw text should fail");
         require(!path.thoughtConsumed(3), "number-only text should not consume path");
     }
@@ -655,18 +712,19 @@ contract ThoughtNFTTest {
     function testEmptyProvenanceReverts() public {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "HELLO",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                "",
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "HELLO",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    "",
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "empty provenance should fail");
         require(!path.thoughtConsumed(1), "empty provenance should not consume path");
     }
@@ -675,18 +733,19 @@ contract ThoughtNFTTest {
         bytes32 unknownSpecId = keccak256("thought.md.unknown");
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "HELLO",
-                1,
-                unknownSpecId,
-                DEFAULT_PROMPT_HASH,
-                DEFAULT_PROVENANCE,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "HELLO",
+                    1,
+                    unknownSpecId,
+                    DEFAULT_PROMPT_HASH,
+                    DEFAULT_PROVENANCE,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "unknown spec should fail");
         require(!path.thoughtConsumed(1), "unknown spec should not consume path");
     }
@@ -696,11 +755,7 @@ contract ThoughtNFTTest {
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ThoughtNFT.ThoughtTextTooLarge.selector,
-                bytes(text).length,
-                token.MAX_TEXT_BYTES()
-            )
+            abi.encodeWithSelector(ThoughtNFT.ThoughtTextTooLarge.selector, bytes(text).length, token.MAX_TEXT_BYTES())
         );
         token.mint(text, 1, DEFAULT_SPEC_ID, DEFAULT_PROMPT_HASH, DEFAULT_PROVENANCE, auth.deadline, auth.signature);
         require(!path.thoughtConsumed(1), "oversize text should not consume path");
@@ -710,18 +765,19 @@ contract ThoughtNFTTest {
         string memory provenance = _repeat("P", token.MAX_PROVENANCE_BYTES() + 1);
         ConsumeAuth memory auth = _signConsume(1, USER_KEY);
         vm.prank(user);
-        (bool ok,) = address(token).call(
-            abi.encodeWithSelector(
-                token.mint.selector,
-                "HELLO",
-                1,
-                DEFAULT_SPEC_ID,
-                DEFAULT_PROMPT_HASH,
-                provenance,
-                auth.deadline,
-                auth.signature
-            )
-        );
+        (bool ok,) = address(token)
+            .call(
+                abi.encodeWithSelector(
+                    token.mint.selector,
+                    "HELLO",
+                    1,
+                    DEFAULT_SPEC_ID,
+                    DEFAULT_PROMPT_HASH,
+                    provenance,
+                    auth.deadline,
+                    auth.signature
+                )
+            );
         require(!ok, "oversize provenance should fail");
         require(!path.thoughtConsumed(1), "oversize provenance should not consume path");
     }
@@ -768,12 +824,10 @@ contract ThoughtNFTTest {
         return _mintAsUserWithProvenance(text, DEFAULT_PROVENANCE, pathId, privateKey);
     }
 
-    function _mintAsUserWithProvenance(
-        string memory text,
-        string memory provenance,
-        uint256 pathId,
-        uint256 privateKey
-    ) private returns (uint256 tokenId) {
+    function _mintAsUserWithProvenance(string memory text, string memory provenance, uint256 pathId, uint256 privateKey)
+        private
+        returns (uint256 tokenId)
+    {
         ConsumeAuth memory auth = _signConsume(pathId, privateKey);
         vm.prank(user);
         return token.mint(text, pathId, DEFAULT_SPEC_ID, DEFAULT_PROMPT_HASH, provenance, auth.deadline, auth.signature);
@@ -806,20 +860,10 @@ contract ThoughtNFTTest {
         vm.prank(user);
         vm.expectRevert(
             abi.encodeWithSelector(
-                ThoughtNFT.ProvenanceTooLarge.selector,
-                bytes(provenance).length,
-                token.MAX_PROVENANCE_BYTES()
+                ThoughtNFT.ProvenanceTooLarge.selector, bytes(provenance).length, token.MAX_PROVENANCE_BYTES()
             )
         );
-        token.mint(
-            "OVERSIZE",
-            pathId,
-            DEFAULT_SPEC_ID,
-            DEFAULT_PROMPT_HASH,
-            provenance,
-            auth.deadline,
-            auth.signature
-        );
+        token.mint("OVERSIZE", pathId, DEFAULT_SPEC_ID, DEFAULT_PROMPT_HASH, provenance, auth.deadline, auth.signature);
         require(!path.thoughtConsumed(pathId), "oversize provenance should not consume path");
     }
 

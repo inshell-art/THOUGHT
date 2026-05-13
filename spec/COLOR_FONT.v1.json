@@ -1,5 +1,5 @@
 {
-  "id": "thought.colorfont.v1",
+  "id": "inshell.colorfont.v1",
   "version": "v1",
   "format": "LETTER:INDEX:ALIAS_TERM:HEX",
   "glyphs": [

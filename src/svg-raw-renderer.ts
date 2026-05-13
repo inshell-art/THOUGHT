@@ -24,7 +24,7 @@ const DEFAULT_FONT_WEIGHT = "200";
 const DEFAULT_TEXT_FILL = "#fff";
 const DEFAULT_TEXT_OPACITY = ".72";
 
-export const THOUGHT_COLOR_FONT: Record<string, string> = {
+export const INSHELL_COLOR_FONT: Record<string, string> = {
   A: "00ffff",
   B: "0000ff",
   C: "6f4e37",
@@ -93,7 +93,7 @@ export function buildThoughtRawSvg(options: ThoughtSvgOptions) {
       if (char === " ") {
         return "";
       }
-      const fill = THOUGHT_COLOR_FONT[char] ?? THOUGHT_COLOR_FONT.Z;
+      const fill = INSHELL_COLOR_FONT[char] ?? INSHELL_COLOR_FONT.Z;
       const x = startX + index * (blockSize + blockGap);
       return `<rect x="${svgNumber(x)}" y="${svgNumber(rectY)}" width="${svgNumber(blockSize)}" height="${svgNumber(blockSize)}" fill="#${fill}"/>`;
     })

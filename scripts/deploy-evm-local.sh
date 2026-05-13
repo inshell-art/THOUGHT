@@ -40,10 +40,11 @@ if [[ -z "$PATH_NFT_ADDRESS" ]]; then
 fi
 
 tmp_seed="$(mktemp)"
+tmp_color_font="$(mktemp)"
 tmp_previewer="$(mktemp)"
 tmp_registry="$(mktemp)"
 tmp_token="$(mktemp)"
-trap 'rm -f "$tmp_seed" "$tmp_previewer" "$tmp_registry" "$tmp_token"' EXIT
+trap 'rm -f "$tmp_seed" "$tmp_color_font" "$tmp_previewer" "$tmp_registry" "$tmp_token"' EXIT
 
 (
   cd "$EVM_DIR"
@@ -53,6 +54,13 @@ trap 'rm -f "$tmp_seed" "$tmp_previewer" "$tmp_registry" "$tmp_token"' EXIT
     --private-key "$PRIVATE_KEY" \
     --json \
     src/SeedGenerator.sol:SeedGenerator >"$tmp_seed"
+
+  forge create \
+    --broadcast \
+    --rpc-url "$RPC_URL" \
+    --private-key "$PRIVATE_KEY" \
+    --json \
+    src/ColorFontV1.sol:ColorFontV1 >"$tmp_color_font"
 
   forge create \
     --broadcast \
@@ -76,6 +84,13 @@ with open(sys.argv[1], "r", encoding="utf-8") as f:
 PY
 )"
 
+COLOR_FONT_ADDRESS="$(python3 - "$tmp_color_font" <<'PY'
+import json, sys
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    print(json.load(f)["deployedTo"])
+PY
+)"
+
 cast send "$REGISTRY_ADDRESS" \
   "registerSpec(bytes32,string,bytes,bool)" \
   "$THOUGHT_SPEC_ID" \
@@ -93,7 +108,7 @@ cast send "$REGISTRY_ADDRESS" \
     --private-key "$PRIVATE_KEY" \
     --json \
     src/ThoughtNFT.sol:ThoughtNFT \
-    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" >"$tmp_token"
+    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" "$COLOR_FONT_ADDRESS" >"$tmp_token"
 )
 
 SEED_ADDRESS="$(python3 - "$tmp_seed" <<'PY'
@@ -135,16 +150,17 @@ if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
     --private-key "$PRIVATE_KEY" >/dev/null
 fi
 
-python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$PREVIEWER_ADDRESS" "$REGISTRY_ADDRESS" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" <<'PY'
+python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$COLOR_FONT_ADDRESS" "$PREVIEWER_ADDRESS" "$REGISTRY_ADDRESS" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" <<'PY'
 import json, sys
 
-out_path, rpc_url, chain_id, seed_address, previewer_address, registry_address, token_address, path_nft_address, thought_movement_quota, thought_spec_id, thought_spec_hash, thought_spec_ref = sys.argv[1:]
+out_path, rpc_url, chain_id, seed_address, color_font_address, previewer_address, registry_address, token_address, path_nft_address, thought_movement_quota, thought_spec_id, thought_spec_hash, thought_spec_ref = sys.argv[1:]
 payload = {
     "rpcUrl": rpc_url,
     "chainId": int(chain_id),
     "pathNft": {"address": path_nft_address},
     "pathMovement": {"name": "THOUGHT", "quota": int(thought_movement_quota)},
     "seedGenerator": {"address": seed_address},
+    "colorFontV1": {"address": color_font_address},
     "thoughtPreviewer": {"address": previewer_address},
     "thoughtSpecRegistry": {"address": registry_address},
     "thoughtSpec": {
@@ -160,6 +176,7 @@ with open(out_path, "w", encoding="utf-8") as f:
 PY
 
 echo "SeedGenerator:   $SEED_ADDRESS"
+echo "ColorFontV1:     $COLOR_FONT_ADDRESS"
 echo "ThoughtPreviewer: $PREVIEWER_ADDRESS"
 echo "ThoughtSpecRegistry: $REGISTRY_ADDRESS"
 echo "ThoughtNFT:    $TOKEN_ADDRESS"

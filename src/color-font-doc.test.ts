@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import colorFontText from "../spec/COLOR_FONT.v1.txt?raw";
-import { THOUGHT_COLOR_FONT } from "./svg-raw-renderer";
+import { INSHELL_COLOR_FONT } from "./svg-raw-renderer";
 import { buildColorFontPlainText, validateColorFontDataShape, type ColorFontDoc } from "./color-font-doc";
 
 const canonicalData = [
@@ -33,7 +33,7 @@ const canonicalData = [
 ].join("\n");
 
 const doc: ColorFontDoc = {
-  id: "thought.colorfont.v1",
+  id: "inshell.colorfont.v1",
   version: "v1",
   chainId: 31337,
   chainName: "Anvil Local",
@@ -47,7 +47,7 @@ describe("color font doc", () => {
   it("builds a plain-text onchain document", () => {
     const text = buildColorFontPlainText(doc);
 
-    expect(text).toContain("THOUGHT Color Font v1");
+    expect(text).toContain("Color Font v1");
     expect(text).toContain("source: onchain ABI");
     expect(text).toContain("chain id: 31337");
     expect(text).toContain("contract: 0x0000000000000000000000000000000000000001");
@@ -65,7 +65,7 @@ describe("color font doc", () => {
     expect(colorFontText).toBe(canonicalData);
     for (const line of colorFontText.split("\n")) {
       const [letter, , , hex] = line.split(":");
-      expect(`#${THOUGHT_COLOR_FONT[letter]}`).toBe(hex);
+      expect(`#${INSHELL_COLOR_FONT[letter]}`).toBe(hex);
     }
   });
 });

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-library ColorFontV1 {
+library ColorFontV1Data {
     error InvalidColorFontIndex();
     error InvalidColorFontLetter();
 
     function id() internal pure returns (string memory) {
-        return "thought.colorfont.v1";
+        return "inshell.colorfont.v1";
     }
 
     function version() internal pure returns (string memory) {
@@ -101,5 +101,61 @@ library ColorFontV1 {
 
     function hexOf(bytes1 letter_) internal pure returns (string memory hexColor) {
         (,, hexColor) = glyphOf(letter_);
+    }
+}
+
+interface IColorFontV1 {
+    function id() external pure returns (string memory);
+    function version() external pure returns (string memory);
+    function length() external pure returns (uint8);
+    function data() external pure returns (string memory);
+    function hash() external pure returns (bytes32);
+
+    function glyph(uint8 index)
+        external
+        pure
+        returns (string memory letter, uint8 ordinal, string memory aliasTerm, string memory hexColor);
+
+    function glyphOf(bytes1 letter_)
+        external
+        pure
+        returns (uint8 ordinal, string memory aliasTerm, string memory hexColor);
+}
+
+contract ColorFontV1 {
+    function id() external pure returns (string memory) {
+        return ColorFontV1Data.id();
+    }
+
+    function version() external pure returns (string memory) {
+        return ColorFontV1Data.version();
+    }
+
+    function length() external pure returns (uint8) {
+        return ColorFontV1Data.length();
+    }
+
+    function data() external pure returns (string memory) {
+        return ColorFontV1Data.data();
+    }
+
+    function hash() external pure returns (bytes32) {
+        return ColorFontV1Data.hash();
+    }
+
+    function glyph(uint8 index)
+        external
+        pure
+        returns (string memory letter, uint8 ordinal, string memory aliasTerm, string memory hexColor)
+    {
+        return ColorFontV1Data.glyph(index);
+    }
+
+    function glyphOf(bytes1 letter_)
+        external
+        pure
+        returns (uint8 ordinal, string memory aliasTerm, string memory hexColor)
+    {
+        return ColorFontV1Data.glyphOf(letter_);
     }
 }

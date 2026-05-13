@@ -1,6 +1,6 @@
-# THOUGHT Color Font v1
+# Color Font v1
 
-The THOUGHT color font maps A-Z letters to contract-defined color glyphs.
+The Inshell color font maps A-Z letters to contract-defined color glyphs.
 
 Canonical deployed hash input is the compact LF-delimited text below, not this Markdown file and not JSON.
 
