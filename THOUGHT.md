@@ -32,7 +32,7 @@ The human writes a prompt. The selected model reads this file and the prompt. Th
 
 The returned text is the model return. It is the candidate source, not a minted work by itself.
 
-If the picker chooses to mint, the THOUGHT contract canonicalizes and validates the model return through contract preview before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
+If the curator chooses to mint, the THOUGHT contract canonicalizes and validates the model return through contract preview before mint. The canonical text is checked for uniqueness, stored as the source, rendered as SVG through the color font, and recorded with provenance.
 
 The stored canonical text is the source. The contract-generated SVG is the visible form.
 
@@ -50,7 +50,7 @@ The selected model is a bounded operational actor. It receives the prompt and th
 
 The model does not own the work. The model does not mint the work. The model does not approve spending, payment, or PATH usage.
 
-The picker decides whether the candidate should enter the onchain collection.
+The curator decides whether the candidate should enter the onchain collection.
 
 Minting requires wallet confirmation and a usable PATH permission for the THOUGHT movement.
 
@@ -145,7 +145,7 @@ The contract uppercases letters, trims outer spacing, collapses repeated spaces,
 
 The pre-mint preview SVG and the minted token image are produced by the same contract renderer.
 
-The mint transaction accepts canonical text only. It revalidates the text before mint and does not silently change the text the picker confirmed.
+The mint transaction accepts canonical text only. It revalidates the text before mint and does not silently change the text the curator confirmed.
 
 Invalid or too-long model returns are rejected. Rejection does not create a finalized THOUGHT work.
 
@@ -179,7 +179,7 @@ The model proposes one candidate text.
 
 The model chooses one response after reading the prompt, THOUGHT.md, color font, uniqueness condition, canonicalization rules, public context when available, and the fact that the result may be minted.
 
-The response is not final by itself. The picker decides whether to mint. The wallet confirms the mint action. The contract canonicalizes, validates, renders, and records the result.
+The response is not final by itself. The curator decides whether to mint. The wallet confirms the mint action. The contract canonicalizes, validates, renders, and records the result.
 
 Commit to one response.
 
