@@ -135,7 +135,21 @@ function copyDir(src, dst, filter = () => true) {
 
 function sourceSnapshot(dst) {
   fs.mkdirSync(dst, { recursive: true });
-  const archive = spawnSync("git", ["-C", root, "archive", "--format=tar", "HEAD", "--", ".", ":(exclude)artifacts"], {
+  const sourcePaths = [
+    "AGENTS.md",
+    "README.md",
+    "THOUGHT.v1.md",
+    "docs/ops/thought-signing-os-pack-book.md",
+    "evm/README.md",
+    "evm/foundry.toml",
+    "evm/src",
+    "evm/test",
+    "scripts/write-thought-signing-os-pack.mjs",
+    "spec/COLOR_FONT.v1.json",
+    "spec/COLOR_FONT.v1.md",
+    "spec/COLOR_FONT.v1.txt"
+  ];
+  const archive = spawnSync("git", ["-C", root, "archive", "--format=tar", "HEAD", "--", ...sourcePaths], {
     stdio: ["ignore", "pipe", "inherit"],
     maxBuffer: 1024 * 1024 * 200
   });
