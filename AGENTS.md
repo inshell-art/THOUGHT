@@ -18,6 +18,7 @@
 - Canonical text is uppercase A-Z plus single spaces. Non-canonical text must be rejected before PATH consumption.
 - Canonical text hashes are globally unique; the same canonical text cannot mint twice even with different provenance.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
+- `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
 - There is no active/frozen/pinned THOUGHT spec at contract level. Do not reintroduce `activeSpecId`, `freezeActiveSpec`, `specAdmin`, or a required/latest spec gate in `ThoughtNFT`.
 - `ThoughtNFT.mint` must require and store both `thoughtSpecId` and `thoughtSpecHash`; mint validates the exact registered pair before PATH consumption.
 - Multiple registered THOUGHT spec versions may coexist and remain mintable in one collection.

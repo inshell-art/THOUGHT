@@ -6,7 +6,7 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 - `SeedGenerator.sol`: deterministic `getSeed(uint256,uint64,string)` helper.
 - `ColorFontV1.sol`: immutable A-Z color glyph mapping contract plus the renderer data library.
 - `ThoughtPreviewer.sol`: `preview`, `previewWithFuel`, and `previewMetrics`.
-- `ThoughtSpecRegistry.sol`: owner-managed append-only `THOUGHT.vN.md` registry. Spec ids are computed from canonical spec names, spec hashes are computed from exact raw markdown bytes, and stored bytes are exposed through hash-validated read helpers.
+- `ThoughtSpecRegistry.sol`: owner-managed append-only `THOUGHT.vN.md` registry. Its immutable owner is an explicit constructor argument so deployer and ADMIN can be separate. Spec ids are computed from canonical spec names, spec hashes are computed from exact raw markdown bytes, and stored bytes are exposed through hash-validated read helpers.
 - `ThoughtNFT.sol`: ERC-721 mint contract for front-page THOUGHT outputs. Each mint stores compact provenance JSON, typed hashes, the registered `thoughtSpecId`/`thoughtSpecHash` pair declared for that work, and Color Font v1 identity/hash; it enforces unique canonical text and consumes one PATH `THOUGHT` movement unit atomically before minting. THOUGHT mint is non-payable; movement permission comes from PATH.
 
 ## Commands
@@ -14,6 +14,7 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 - `forge test`
 - `forge snapshot --offline`
 - `PATH_NFT_ADDRESS=<PathNFT address> ../scripts/deploy-evm-local.sh`
+- `npm run ops:bundle:sepolia` from the repo root to produce a signing-OS handoff bundle for Sepolia THOUGHT deployment and PATH movement configuration.
 
 ## Local frontend wiring
 - Deployment writes `addresses.anvil.json`.
@@ -38,6 +39,7 @@ This directory contains the Ethereum/Foundry port of the THOUGHT contracts.
 
 Constructor params:
 
+- `ThoughtSpecRegistry(owner_)`: immutable owner address. For Sepolia/mainnet, pass the Ledger-backed ADMIN address, not the deployer.
 - `pathNft`: deployed `PathNFT` address. It must contain the `THOUGHT` movement config pointing at the deployed `ThoughtNFT`.
 - `thoughtSpecRegistry`: deployed `ThoughtSpecRegistry` address containing registered raw `THOUGHT.vN.md` bytes for the spec versions intended at launch.
 - `colorFont`: deployed standalone `ColorFontV1` address. `ThoughtNFT` verifies its id, version, and hash in the constructor.
@@ -45,7 +47,7 @@ Constructor params:
 Authorization and freeze assumptions:
 
 - `ThoughtNFT` has no owner, no spec admin, and no economic/admin mint path.
-- `ThoughtSpecRegistry` is owner-managed by its deployer and append-only. Register `THOUGHT.v1.md` with exact raw bytes before public minting; later `THOUGHT.vN.md` versions may be appended without changing prior mints.
+- `ThoughtSpecRegistry` is owner-managed by its immutable constructor owner and append-only. The deployer must pass the intended long-term spec-registration authority. For Sepolia/mainnet this is `SEPOLIA_ADMIN_HW_A`, matching the PATH admin, not the deployer. Register `THOUGHT.v1.md` with exact raw bytes before public minting; later `THOUGHT.vN.md` versions may be appended without changing prior mints.
 - PATH admin configures `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, quota)` and freezes it before public use.
 - The launch quota for THOUGHT movement is currently `1` per PATH token unless a later movement policy explicitly changes it.
 
@@ -66,6 +68,37 @@ Irreversible actions:
 - Registered spec bytes are stored in immutable contract code pointers. The registry can append versions but cannot mutate a registered name/hash/ref/pointer/length.
 - There is no `ThoughtNFT` spec freeze or later spec switch. Spec selection is a per-mint typed declaration validated against the registry.
 - Color Font v1 data is contract-defined and immutable for the deployed `ColorFontV1`.
+
+## Sepolia OPS Bundle
+
+THOUGHT is deployed as a separate signing-OS bundle after PATH is deployed and qualified. The existing PATH deployment is not mutated or redeployed by the THOUGHT bundle.
+
+Generate the bundle:
+
+```bash
+npm run ops:bundle:sepolia
+```
+
+Defaults:
+
+- PATH source: `../path/artifacts/sepolia/current/fe-release`
+- output: `artifacts/sepolia/current/ops-bundles/<run-id>`
+- spec: `THOUGHT.v1.md`
+- PATH movement: `THOUGHT`
+- PATH movement quota: `1`
+- PATH admin signer ref: `SEPOLIA_ADMIN_HW_A`
+- THOUGHT deploy signer ref: `SEPOLIA_DEPLOY_SW_A`
+- THOUGHT registry owner address: PATH release admin by default
+- THOUGHT registry owner signer ref: `SEPOLIA_ADMIN_HW_A`
+
+The generated `RUNBOOK.md` gives OPS the exact signing sequence:
+
+1. Deploy `SeedGenerator`, `ColorFontV1`, `ThoughtPreviewer`, and `ThoughtSpecRegistry`.
+2. Register exact raw `THOUGHT.v1.md` bytes in `ThoughtSpecRegistry`.
+3. Deploy `ThoughtNFT(pathNft, registry, colorFont)`.
+4. With PATH admin, call `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, 1)`.
+5. With PATH admin, call `PathNFT.freezeMovementConfig(bytes32("THOUGHT"))`.
+6. Verify PATH movement minter/quota/frozen state and THOUGHT spec registration.
 
 Metadata and indexer expectations:
 

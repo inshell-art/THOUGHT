@@ -105,6 +105,7 @@ const main = async () => {
   const thoughtSpecRegistry = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtSpecRegistry.sol", "ThoughtSpecRegistry.json"),
+    [deployerAddress],
   );
   const [registeredSpecId, registeredSpecHash, specPointer] =
     await thoughtSpecRegistry.registerThoughtSpec.staticCall(
@@ -168,7 +169,7 @@ const main = async () => {
     seedGenerator: { address: await seedGenerator.getAddress() },
     colorFontV1: { address: await colorFontV1.getAddress() },
     thoughtPreviewer: { address: await thoughtPreviewer.getAddress() },
-    thoughtSpecRegistry: { address: thoughtSpecRegistryAddress },
+    thoughtSpecRegistry: { address: thoughtSpecRegistryAddress, owner: deployerAddress },
     thoughtSpecs: [
       {
         specName: thoughtSpecName,

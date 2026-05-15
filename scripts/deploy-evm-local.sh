@@ -13,6 +13,8 @@ THOUGHT_SPEC_NAME="${THOUGHT_SPEC_NAME:-THOUGHT.v1.md}"
 THOUGHT_SPEC_FILE="${THOUGHT_SPEC_FILE:-$ROOT_DIR/$THOUGHT_SPEC_NAME}"
 THOUGHT_SPEC_REF="${THOUGHT_SPEC_REF:-$THOUGHT_SPEC_NAME}"
 MAX_THOUGHT_SPEC_BYTES="${MAX_THOUGHT_SPEC_BYTES:-20000}"
+THOUGHT_REGISTRY_OWNER="${THOUGHT_REGISTRY_OWNER:-}"
+THOUGHT_REGISTRY_OWNER_PRIVATE_KEY="${THOUGHT_REGISTRY_OWNER_PRIVATE_KEY:-$PRIVATE_KEY}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -35,6 +37,16 @@ fi
 if [[ -z "$PATH_NFT_ADDRESS" ]]; then
   echo "PATH_NFT_ADDRESS is required." >&2
   echo "Deploy PATH first, then rerun with PATH_NFT_ADDRESS=<PathNFT address>." >&2
+  exit 1
+fi
+
+DEPLOYER_ADDRESS="$(cast wallet address --private-key "$PRIVATE_KEY")"
+if [[ -z "$THOUGHT_REGISTRY_OWNER" ]]; then
+  THOUGHT_REGISTRY_OWNER="$DEPLOYER_ADDRESS"
+fi
+THOUGHT_REGISTRY_OWNER_ADDRESS="$(cast wallet address --private-key "$THOUGHT_REGISTRY_OWNER_PRIVATE_KEY")"
+if [[ "${THOUGHT_REGISTRY_OWNER_ADDRESS,,}" != "${THOUGHT_REGISTRY_OWNER,,}" ]]; then
+  echo "THOUGHT_REGISTRY_OWNER_PRIVATE_KEY does not match THOUGHT_REGISTRY_OWNER." >&2
   exit 1
 fi
 
@@ -146,7 +158,8 @@ PY
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
     --json \
-    src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry >"$tmp_registry"
+    src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry \
+    --constructor-args "$THOUGHT_REGISTRY_OWNER" >"$tmp_registry"
 )
 
 REGISTRY_ADDRESS="$(python3 - "$tmp_registry" <<'PY'
@@ -169,7 +182,7 @@ cast send "$REGISTRY_ADDRESS" \
   "$THOUGHT_SPEC_REF" \
   "$THOUGHT_SPEC_BYTES" \
   --rpc-url "$RPC_URL" \
-  --private-key "$PRIVATE_KEY" >/dev/null
+  --private-key "$THOUGHT_REGISTRY_OWNER_PRIVATE_KEY" >/dev/null
 
 REGISTERED_PAIR="$(cast call "$REGISTRY_ADDRESS" \
   "isRegisteredThoughtSpec(bytes32,bytes32)(bool)" \
@@ -240,10 +253,10 @@ if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
     --private-key "$PRIVATE_KEY" >/dev/null
 fi
 
-python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$COLOR_FONT_ADDRESS" "$PREVIEWER_ADDRESS" "$REGISTRY_ADDRESS" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_NAME" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" "$THOUGHT_SPEC_BYTE_LENGTH" <<'PY'
+python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$SEED_ADDRESS" "$COLOR_FONT_ADDRESS" "$PREVIEWER_ADDRESS" "$REGISTRY_ADDRESS" "$THOUGHT_REGISTRY_OWNER" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_NAME" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" "$THOUGHT_SPEC_BYTE_LENGTH" <<'PY'
 import json, sys
 
-out_path, rpc_url, chain_id, seed_address, color_font_address, previewer_address, registry_address, token_address, path_nft_address, thought_movement_quota, thought_spec_name, thought_spec_id, thought_spec_hash, thought_spec_ref, thought_spec_byte_length = sys.argv[1:]
+out_path, rpc_url, chain_id, seed_address, color_font_address, previewer_address, registry_address, registry_owner, token_address, path_nft_address, thought_movement_quota, thought_spec_name, thought_spec_id, thought_spec_hash, thought_spec_ref, thought_spec_byte_length = sys.argv[1:]
 payload = {
     "rpcUrl": rpc_url,
     "chainId": int(chain_id),
@@ -252,7 +265,7 @@ payload = {
     "seedGenerator": {"address": seed_address},
     "colorFontV1": {"address": color_font_address},
     "thoughtPreviewer": {"address": previewer_address},
-    "thoughtSpecRegistry": {"address": registry_address},
+    "thoughtSpecRegistry": {"address": registry_address, "owner": registry_owner},
     "thoughtSpecs": [
         {
             "specName": thought_spec_name,
@@ -282,6 +295,7 @@ echo "SeedGenerator:   $SEED_ADDRESS"
 echo "ColorFontV1:     $COLOR_FONT_ADDRESS"
 echo "ThoughtPreviewer: $PREVIEWER_ADDRESS"
 echo "ThoughtSpecRegistry: $REGISTRY_ADDRESS"
+echo "ThoughtSpecRegistry owner: $THOUGHT_REGISTRY_OWNER"
 echo "ThoughtNFT:    $TOKEN_ADDRESS"
 echo "PathNFT:         $PATH_NFT_ADDRESS"
 if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then

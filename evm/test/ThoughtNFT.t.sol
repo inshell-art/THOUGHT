@@ -147,7 +147,7 @@ contract ThoughtNFTTest {
         user = vm.addr(USER_KEY);
         path = new MockPathNFT();
         colorFont = new ColorFontV1();
-        registry = new ThoughtSpecRegistry();
+        registry = new ThoughtSpecRegistry(address(this));
         (bytes32 specId, bytes32 specHash,) =
             registry.registerThoughtSpec(DEFAULT_SPEC_NAME, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT));
         require(specId == DEFAULT_SPEC_ID, "fixture spec id mismatch");
@@ -246,6 +246,20 @@ contract ThoughtNFTTest {
                 )
             );
         require(!ok, "duplicate spec id should fail");
+    }
+
+    function testRegistryConstructorPinsOwnerAndRejectsZeroOwner() public {
+        ThoughtSpecRegistry ownedRegistry = new ThoughtSpecRegistry(user);
+        require(ownedRegistry.owner() == user, "registry owner mismatch");
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtSpecRegistry.OwnerZeroAddress.selector));
+        new ThoughtSpecRegistry(address(0));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtSpecRegistry.NotOwner.selector));
+        ownedRegistry.registerThoughtSpec("THOUGHT.v2.md", "THOUGHT.v2.md", bytes("owned by user"));
+
+        vm.prank(user);
+        ownedRegistry.registerThoughtSpec("THOUGHT.v2.md", "THOUGHT.v2.md", bytes("owned by user"));
     }
 
     function testRegisterSpecAndReadExactBytesBack() public {

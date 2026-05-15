@@ -8,6 +8,7 @@ contract ThoughtSpecRegistry {
     error InvalidThoughtSpecName(string specName);
     error InvalidThoughtSpecPair(bytes32 specId, bytes32 specHash);
     error NotOwner();
+    error OwnerZeroAddress();
     error ThoughtSpecAlreadyRegistered(bytes32 specId);
     error ThoughtSpecHashMismatch(bytes32 specId, bytes32 expected, bytes32 actual);
     error ThoughtSpecNotFound(bytes32 specId);
@@ -41,8 +42,11 @@ contract ThoughtSpecRegistry {
     mapping(bytes32 specId => ThoughtSpecRecord spec) private _specs;
     bytes32[] private _specIds;
 
-    constructor() {
-        owner = msg.sender;
+    constructor(address owner_) {
+        if (owner_ == address(0)) {
+            revert OwnerZeroAddress();
+        }
+        owner = owner_;
     }
 
     modifier onlyOwner() {
