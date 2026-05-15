@@ -1,6 +1,6 @@
 # THOUGHT Signing OS Runbook
 
-Run ID: `sepolia-thought-signing-os-pack-20260515T043323Z`
+Run ID: `sepolia-thought-signing-os-pack-20260515T050730Z`
 
 ## Sequence
 
@@ -21,3 +21,11 @@ Run ID: `sepolia-thought-signing-os-pack-20260515T043323Z`
 - PATH movement admin: `SEPOLIA_ADMIN_HW_A` Ledger.
 
 The deployer does not become registry owner. `ThoughtSpecRegistry` is deployed with the ADMIN address as immutable owner.
+
+## Source Snapshot
+
+`source/` is a curated deploy source snapshot from the exact source commit. It intentionally excludes frontend/devnode/local deploy scripts. The included paths are recorded in `PACK-MANIFEST.json.source_snapshot.paths`.
+
+## Ledger Risk
+
+`bin/apply` asks the ADMIN Ledger to sign `registerThoughtSpec(string,string,bytes)`. The spec calldata is large because it embeds `THOUGHT.v1.md`. If the Ledger refuses or blind signing is not enabled, stop, keep the failed result dir, write a recovery note from `templates/recovery-note.md`, push the latest result back with `tools/push-latest-result.sh`, and do not continue to PATH movement configuration.

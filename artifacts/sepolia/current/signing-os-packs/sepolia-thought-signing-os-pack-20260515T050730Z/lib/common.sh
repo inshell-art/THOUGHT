@@ -92,7 +92,15 @@ load_env() {
 }
 
 deploy_keystore_address() {
-  jq -r '.address' "$SEPOLIA_DEPLOY_KEYSTORE_JSON" | sed 's/^0x//; s/^/0x/'
+  if [ -n "${SEPOLIA_DEPLOY_KEYSTORE_PASSWORD_FILE:-}" ]; then
+    cast wallet address \
+      --keystore "$SEPOLIA_DEPLOY_KEYSTORE_JSON" \
+      --password-file "$SEPOLIA_DEPLOY_KEYSTORE_PASSWORD_FILE"
+  else
+    cast wallet address \
+      --keystore "$SEPOLIA_DEPLOY_KEYSTORE_JSON" \
+      --password "$SEPOLIA_DEPLOY_KEYSTORE_PASSWORD"
+  fi
 }
 
 assert_deployer_address() {

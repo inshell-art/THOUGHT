@@ -3,7 +3,8 @@ set -euo pipefail
 PACK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_ID="$(jq -r '.run_id' "$PACK_ROOT/inputs.json")"
 HOST="$(hostname -s 2>/dev/null || hostname)"
-BRIDGE="/Users/bigu/Private/signing-os-bridge/incoming/$HOST/history"
+DEV_OS_SSH="${DEV_OS_SSH:-bigu@192.168.0.104}"
+DEV_OS_BRIDGE_INCOMING="${DEV_OS_BRIDGE_INCOMING:-/Users/bigu/Private/signing-os-bridge/incoming}"
 POST="$PACK_ROOT/artifacts/postconditions.json"
 [ -r "$POST" ] || { echo "missing postconditions; run bin/postconditions first"; exit 1; }
 STATUS="$(jq -r '.overall_status' "$POST")"
@@ -41,8 +42,9 @@ Known deviations: none recorded
 Required next stages: sync FE release into inshell.art and run FE smoke tests
 EOF2
 (cd "$HISTORY" && find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS.txt)
-mkdir -p "$BRIDGE"
-DEST="$BRIDGE/$RUN_ID"
-rm -rf "$DEST"
-cp -R "$HISTORY" "$DEST"
+command -v ssh >/dev/null 2>&1 || { echo "missing required tool: ssh"; exit 1; }
+command -v rsync >/dev/null 2>&1 || { echo "missing required tool: rsync"; exit 1; }
+ssh "$DEV_OS_SSH" "mkdir -p '$DEV_OS_BRIDGE_INCOMING/$HOST'"
+DEST="$DEV_OS_SSH:$DEV_OS_BRIDGE_INCOMING/$HOST/$RUN_ID/"
+rsync -a --delete "$HISTORY/" "$DEST"
 echo "pushed deployment history to $DEST"

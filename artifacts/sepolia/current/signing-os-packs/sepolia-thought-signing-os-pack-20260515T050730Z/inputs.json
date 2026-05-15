@@ -2,7 +2,7 @@
   "schema_version": 1,
   "network": "sepolia",
   "chain_id": 11155111,
-  "run_id": "sepolia-thought-signing-os-pack-20260515T043323Z",
+  "run_id": "sepolia-thought-signing-os-pack-20260515T050730Z",
   "path": {
     "runId": "sepolia-deploy-20260514T122153Z-safe-treasury-curator",
     "releaseRepoCommit": "e078ac33a354ae0783ba382fddb7ecde29d931de",
@@ -17,7 +17,7 @@
     "movementQuota": 1
   },
   "thought": {
-    "repoCommit": "791f61144cd24350aee347dde3e1b7ff1a9d0caa",
+    "repoCommit": "38ff52d289372a4b5a87c925d4fbe69de3e691f6",
     "repoRemote": "https://github.com/inshell-art/THOUGHT.git",
     "deploySignerRef": "SEPOLIA_DEPLOY_SW_A",
     "deploySignerExpectedAddress": "0x3e4fA9f09d8EDe66561145E1ef3bc127F80ED396",

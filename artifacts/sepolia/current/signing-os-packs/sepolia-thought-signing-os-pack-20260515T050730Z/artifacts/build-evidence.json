@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_commit": "791f61144cd24350aee347dde3e1b7ff1a9d0caa",
+  "source_commit": "38ff52d289372a4b5a87c925d4fbe69de3e691f6",
   "foundry_profile": "default",
   "contracts": [
     "SeedGenerator",
