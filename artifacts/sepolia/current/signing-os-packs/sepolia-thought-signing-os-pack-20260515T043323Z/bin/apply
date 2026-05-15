@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+start_result apply
+need_tool jq
+need_tool cast
+need_tool forge
+need_tool python3
+load_env
+assert_deployer_address
+assert_chain
+require_approval
+sha256_check
+PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
+MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
+SPEC_NAME="$(jq -r '.thought.spec.name' "$INPUTS_JSON")"
+SPEC_REF="$(jq -r '.thought.spec.ref' "$INPUTS_JSON")"
+SPEC_FILE="$PACK_ROOT/source/$SPEC_NAME"
+ADMIN="$ADMIN_ADDRESS"
+DEPLOY_AUTH=(--keystore "$SEPOLIA_DEPLOY_KEYSTORE_JSON")
+if [ -n "${SEPOLIA_DEPLOY_KEYSTORE_PASSWORD_FILE:-}" ]; then
+  DEPLOY_AUTH+=(--password-file "$SEPOLIA_DEPLOY_KEYSTORE_PASSWORD_FILE")
+else
+  DEPLOY_AUTH+=(--password "$SEPOLIA_DEPLOY_KEYSTORE_PASSWORD")
+fi
+ADMIN_AUTH=(--ledger --sender "$ADMIN")
+cd "$PACK_ROOT/source/evm"
+
+deploy_contract() {
+  local name="$1"
+  local target="$2"
+  shift 2
+  echo "deploying $name"
+  forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "${DEPLOY_AUTH[@]}" --json "$target" "$@" | tee "$RESULT_DIR/${name}.json"
+}
+
+deploy_contract seed-generator src/SeedGenerator.sol:SeedGenerator
+SEED_GENERATOR="$(jq -r '.deployedTo' "$RESULT_DIR/seed-generator.json")"
+deploy_contract color-font-v1 src/ColorFontV1.sol:ColorFontV1
+COLOR_FONT="$(jq -r '.deployedTo' "$RESULT_DIR/color-font-v1.json")"
+deploy_contract thought-previewer src/ThoughtPreviewer.sol:ThoughtPreviewer
+THOUGHT_PREVIEWER="$(jq -r '.deployedTo' "$RESULT_DIR/thought-previewer.json")"
+deploy_contract thought-spec-registry src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry --constructor-args "$ADMIN"
+REGISTRY="$(jq -r '.deployedTo' "$RESULT_DIR/thought-spec-registry.json")"
+SPEC_BYTES="$(hex_file "$SPEC_FILE")"
+echo "registering spec with ADMIN Ledger"
+cast send --json --rpc-url "$SEPOLIA_RPC_URL" "${ADMIN_AUTH[@]}" "$REGISTRY"   'registerThoughtSpec(string,string,bytes)' "$SPEC_NAME" "$SPEC_REF" "$SPEC_BYTES" | tee "$RESULT_DIR/register-spec.json"
+deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY" "$COLOR_FONT"
+THOUGHT_NFT="$(jq -r '.deployedTo' "$RESULT_DIR/thought-nft.json")"
+echo "configuring PATH movement with ADMIN Ledger"
+cast send --json --rpc-url "$SEPOLIA_RPC_URL" "${ADMIN_AUTH[@]}" "$PATH_NFT"   'setMovementConfig(bytes32,address,uint32)' "$MOVEMENT" "$THOUGHT_NFT" 1 | tee "$RESULT_DIR/path-set-movement.json"
+cast send --json --rpc-url "$SEPOLIA_RPC_URL" "${ADMIN_AUTH[@]}" "$PATH_NFT"   'freezeMovementConfig(bytes32)' "$MOVEMENT" | tee "$RESULT_DIR/path-freeze-movement.json"
+cd "$PACK_ROOT"
+mkdir -p artifacts
+python3 - "$RESULT_DIR" "$PATH_NFT" "$ADMIN" "$SEED_GENERATOR" "$COLOR_FONT" "$THOUGHT_PREVIEWER" "$REGISTRY" "$THOUGHT_NFT" <<'PY'
+import json, pathlib, sys
+result = pathlib.Path(sys.argv[1])
+path_nft, admin, seed, color, previewer, registry, thought = sys.argv[2:]
+def load(name):
+    return json.loads((result / name).read_text())
+def tx(name):
+    data = load(name)
+    return data.get('transactionHash') or data.get('hash') or data.get('txHash') or data.get('tx_hash')
+addresses = {
+  'network': 'sepolia',
+  'chain_id': 11155111,
+  'path_nft': path_nft,
+  'admin': admin,
+  'seed_generator': seed,
+  'color_font_v1': color,
+  'thought_previewer': previewer,
+  'thought_spec_registry': registry,
+  'thought_spec_registry_owner': admin,
+  'thought_nft': thought,
+}
+txs = {
+  'seed_generator': tx('seed-generator.json'),
+  'color_font_v1': tx('color-font-v1.json'),
+  'thought_previewer': tx('thought-previewer.json'),
+  'thought_spec_registry': tx('thought-spec-registry.json'),
+  'register_spec': tx('register-spec.json'),
+  'thought_nft': tx('thought-nft.json'),
+  'path_set_movement': tx('path-set-movement.json'),
+  'path_freeze_movement': tx('path-freeze-movement.json'),
+}
+art = pathlib.Path('artifacts')
+(art / 'addresses.sepolia.json').write_text(json.dumps(addresses, indent=2) + '\n')
+(art / 'txs.json').write_text(json.dumps(txs, indent=2) + '\n')
+(art / 'deployment.sepolia-thought.json').write_text(json.dumps({'addresses': addresses, 'txs': txs}, indent=2) + '\n')
+PY
+finish PASS "run bin/postconditions"

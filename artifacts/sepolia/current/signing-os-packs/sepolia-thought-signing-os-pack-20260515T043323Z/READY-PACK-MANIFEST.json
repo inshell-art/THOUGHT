@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "run_id": "sepolia-thought-signing-os-pack-20260515T043323Z",
+  "ready_for": "signing-os-sepolia-ops-review",
+  "pack_hash": "0xfa08cb36261b1eba986115d62cea0c2e6306a08d79f3c0bb7c7565d59c99b108",
+  "inputs_sha256": "0x14d79bde04edfbea48278200199b8d43f76c4bdf7e94dec6e55172018cd8f55a",
+  "authority_model": {
+    "deployer": "SEPOLIA_DEPLOY_SW_A",
+    "registry_owner": "SEPOLIA_ADMIN_HW_A",
+    "path_admin": "SEPOLIA_ADMIN_HW_A"
+  },
+  "required_sequence": [
+    "bin/preflight",
+    "bin/verify",
+    "bin/approve",
+    "bin/apply",
+    "bin/postconditions"
+  ]
+}

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+start_result approve
+sha256_check
+BUNDLE_HASH="$(jq -r '.pack_hash' "$PACK_ROOT/PACK-MANIFEST.json")"
+INPUT_HASH="$(sha256_file "$INPUTS_JSON")"
+SHORT_BUNDLE="$(short_hash "$BUNDLE_HASH")"
+SHORT_INPUT="$(short_hash "$INPUT_HASH")"
+EXPECTED="APPROVE sepolia thought $SHORT_BUNDLE $SHORT_INPUT"
+cat <<EOF2
+run id: $RUN_ID
+network: sepolia / 11155111
+PATH NFT: $(jq -r '.path.pathNft' "$INPUTS_JSON")
+PATH admin: $(jq -r '.path.admin' "$INPUTS_JSON") ($(jq -r '.path.adminSignerRef' "$INPUTS_JSON"))
+deploy signer: $(jq -r '.thought.deploySignerRef' "$INPUTS_JSON") -> $DEPLOYER_EXPECTED
+registry owner: $(jq -r '.thought.registryOwner' "$INPUTS_JSON") ($(jq -r '.thought.registryOwnerSignerRef' "$INPUTS_JSON"))
+contracts: SeedGenerator, ColorFontV1, ThoughtPreviewer, ThoughtSpecRegistry, ThoughtNFT
+spec: $(jq -r '.thought.spec.name' "$INPUTS_JSON")
+spec id: $(jq -r '.thought.spec.id' "$INPUTS_JSON")
+spec hash: $(jq -r '.thought.spec.hash' "$INPUTS_JSON")
+spec sha256: $(jq -r '.thought.spec.sha256' "$INPUTS_JSON")
+movement: THOUGHT -> ThoughtNFT, quota 1, freeze after config
+
+Type exactly:
+$EXPECTED
+EOF2
+printf '> '
+read -r CONFIRMATION
+[ "$CONFIRMATION" = "$EXPECTED" ] || fail "approval phrase mismatch"
+mkdir -p "$PACK_ROOT/.approval"
+printf '%s
+' "$CONFIRMATION" > "$PACK_ROOT/.approval/${RUN_ID}.approved"
+finish PASS "run bin/apply"

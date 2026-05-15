@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+start_result verify
+need_tool python3
+need_tool jq
+need_tool cast
+load_env
+assert_deployer_address
+assert_chain
+sha256_check
+assert_path_dependency
+jq -e '.network == "sepolia" and .chain_id == 11155111 and .path.movement == "THOUGHT" and .path.movementQuota == 1' "$INPUTS_JSON" >/dev/null || fail "inputs schema check failed"
+PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
+MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
+CODE="$(cast code --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT")"
+[ "$CODE" != "0x" ] || fail "no code at PATH NFT $PATH_NFT"
+DEFAULT_ADMIN_ROLE="0x0000000000000000000000000000000000000000000000000000000000000000"
+ADMIN_HAS_ROLE="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'hasRole(bytes32,address)(bool)' "$DEFAULT_ADMIN_ROLE" "$ADMIN_ADDRESS")"
+[ "$ADMIN_HAS_ROLE" = "true" ] || fail "PATH admin $ADMIN_ADDRESS does not hold DEFAULT_ADMIN_ROLE"
+MINTER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getAuthorizedMinter(bytes32)(address)' "$MOVEMENT")"
+QUOTA="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getMovementQuota(bytes32)(uint32)' "$MOVEMENT")"
+FROZEN="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'isMovementFrozen(bytes32)(bool)' "$MOVEMENT")"
+if [ "${ALLOW_RECOVERY_PACK:-0}" != "1" ]; then
+  [ "$(lower "$MINTER")" = "0x0000000000000000000000000000000000000000" ] || fail "PATH THOUGHT movement already has minter: $MINTER"
+  [ "$QUOTA" = "0" ] || fail "PATH THOUGHT movement already has quota: $QUOTA"
+  [ "$FROZEN" = "false" ] || fail "PATH THOUGHT movement already frozen: $FROZEN"
+fi
+DEPLOYER="$(deploy_keystore_address)"
+DEPLOYER_BALANCE="$(cast balance --rpc-url "$SEPOLIA_RPC_URL" "$DEPLOYER")"
+ADMIN_BALANCE="$(cast balance --rpc-url "$SEPOLIA_RPC_URL" "$ADMIN_ADDRESS")"
+MIN_DEPLOYER_BALANCE_WEI="${MIN_DEPLOYER_BALANCE_WEI:-100000000000000000}"
+MIN_ADMIN_BALANCE_WEI="${MIN_ADMIN_BALANCE_WEI:-1000000000000000}"
+python3 - "$DEPLOYER_BALANCE" "$MIN_DEPLOYER_BALANCE_WEI" "$ADMIN_BALANCE" "$MIN_ADMIN_BALANCE_WEI" <<'PY' || exit 1
+import sys
+bal, min_bal, admin_bal, min_admin = map(int, sys.argv[1:])
+if bal < min_bal:
+    raise SystemExit(f"deployer balance too low: {bal} < {min_bal}")
+if admin_bal < min_admin:
+    raise SystemExit(f"admin balance too low: {admin_bal} < {min_admin}")
+PY
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks detect --no-git --redact --source "$PACK_ROOT"
+else
+  if find "$PACK_ROOT" -type f \( -name '*.env' -o -name '*.pem' -o -name '*.key' \) | grep -q .; then
+    fail "secret-like files present in pack"
+  fi
+fi
+echo "PATH admin role: $ADMIN_HAS_ROLE"
+echo "PATH prestate: minter=$MINTER quota=$QUOTA frozen=$FROZEN"
+echo "balances: deployer=$DEPLOYER_BALANCE admin=$ADMIN_BALANCE"
+finish PASS "run bin/approve"

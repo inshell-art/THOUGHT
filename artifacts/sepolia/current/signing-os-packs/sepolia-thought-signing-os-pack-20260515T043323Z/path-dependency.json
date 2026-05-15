@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "network": "sepolia",
+  "chain_id": 11155111,
+  "path_run_id": "sepolia-deploy-20260514T122153Z-safe-treasury-curator",
+  "path_release_repo_commit": "e078ac33a354ae0783ba382fddb7ecde29d931de",
+  "path_qualified_repo_commit": "8ac1638e88f07ff2fb94745c20f081abb427aa7d",
+  "path_nft": "0x84915746a1f06850CF41a3E90C60c2DcA3fa116D",
+  "path_pulse_adapter": "0x8Cd52b431F4e932c5fDd8E49073c2c5bc1bfabF2",
+  "pulse_auction": "0x1071e99928Bdf020794a5E3e5B9c920450Ac9b39",
+  "admin": "0xa31Fe4bC2A9A4EeA01275A6c4b4be2Aa994A0981",
+  "movement_to_configure": "THOUGHT",
+  "movement_bytes32": "0x54484f5547485400000000000000000000000000000000000000000000000000",
+  "movement_quota": 1
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "source_commit": "791f61144cd24350aee347dde3e1b7ff1a9d0caa",
+  "foundry_profile": "default",
+  "contracts": [
+    "SeedGenerator",
+    "ColorFontV1",
+    "ThoughtPreviewer",
+    "ThoughtSpecRegistry",
+    "ThoughtNFT"
+  ]
+}

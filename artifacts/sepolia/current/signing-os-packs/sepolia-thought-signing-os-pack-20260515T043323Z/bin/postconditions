@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+start_result postconditions
+need_tool jq
+need_tool cast
+need_tool python3
+load_env
+assert_chain
+PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
+MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
+EXPECTED_SPEC_ID="$(jq -r '.thought.spec.id' "$INPUTS_JSON")"
+EXPECTED_SPEC_HASH="$(jq -r '.thought.spec.hash' "$INPUTS_JSON")"
+ADDRESSES="$PACK_ROOT/artifacts/addresses.sepolia.json"
+TXS="$PACK_ROOT/artifacts/txs.json"
+[ -r "$ADDRESSES" ] || fail "missing deployment addresses: $ADDRESSES"
+THOUGHT_NFT="$(jq -r '.thought_nft' "$ADDRESSES")"
+REGISTRY="$(jq -r '.thought_spec_registry' "$ADDRESSES")"
+COLOR_FONT="$(jq -r '.color_font_v1' "$ADDRESSES")"
+PREVIEWER="$(jq -r '.thought_previewer' "$ADDRESSES")"
+SEED="$(jq -r '.seed_generator' "$ADDRESSES")"
+MINTER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getAuthorizedMinter(bytes32)(address)' "$MOVEMENT")"
+QUOTA="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getMovementQuota(bytes32)(uint32)' "$MOVEMENT")"
+FROZEN="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'isMovementFrozen(bytes32)(bool)' "$MOVEMENT")"
+NFT_PATH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'pathNft()(address)')"
+NFT_REGISTRY="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'thoughtSpecRegistry()(address)')"
+REGISTRY_OWNER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$REGISTRY" 'owner()(address)')"
+SPEC_REGISTERED="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$REGISTRY" 'isRegisteredThoughtSpec(bytes32,bytes32)(bool)' "$EXPECTED_SPEC_ID" "$EXPECTED_SPEC_HASH")"
+[ "$(lower "$MINTER")" = "$(lower "$THOUGHT_NFT")" ] || fail "PATH movement minter mismatch: $MINTER != $THOUGHT_NFT"
+[ "$QUOTA" = "1" ] || fail "PATH movement quota mismatch: $QUOTA"
+[ "$FROZEN" = "true" ] || fail "PATH movement not frozen"
+[ "$(lower "$NFT_PATH")" = "$(lower "$PATH_NFT")" ] || fail "ThoughtNFT.pathNft mismatch"
+[ "$(lower "$NFT_REGISTRY")" = "$(lower "$REGISTRY")" ] || fail "ThoughtNFT registry mismatch"
+[ "$(lower "$REGISTRY_OWNER")" = "$(lower "$ADMIN_ADDRESS")" ] || fail "registry owner mismatch"
+[ "$SPEC_REGISTERED" = "true" ] || fail "expected THOUGHT spec is not registered"
+for addr in "$SEED" "$COLOR_FONT" "$PREVIEWER" "$REGISTRY" "$THOUGHT_NFT"; do
+  code="$(cast code --rpc-url "$SEPOLIA_RPC_URL" "$addr")"
+  [ "$code" != "0x" ] || fail "no code at deployed THOUGHT address $addr"
+done
+mkdir -p "$PACK_ROOT/artifacts/fe-release/abi"
+python3 - "$PACK_ROOT" "$MINTER" "$QUOTA" "$FROZEN" "$NFT_PATH" "$NFT_REGISTRY" "$REGISTRY_OWNER" "$SPEC_REGISTERED" <<'PY'
+import hashlib, json, pathlib, shutil, sys
+root = pathlib.Path(sys.argv[1])
+minter, quota, frozen, nft_path, nft_registry, owner, spec_registered = sys.argv[2:]
+inputs = json.loads((root / 'inputs.json').read_text())
+addresses = json.loads((root / 'artifacts/addresses.sepolia.json').read_text())
+txs = json.loads((root / 'artifacts/txs.json').read_text())
+post = {
+  'network': 'sepolia',
+  'chain_id': 11155111,
+  'path_movement_minter': minter,
+  'path_movement_quota': int(quota),
+  'path_movement_frozen': frozen == 'true',
+  'thought_nft_path_nft': nft_path,
+  'thought_nft_registry': nft_registry,
+  'registry_owner': owner,
+  'spec_registered': spec_registered == 'true',
+  'overall_status': 'PASS',
+}
+art = root / 'artifacts'
+(art / 'postconditions.json').write_text(json.dumps(post, indent=2) + '\n')
+(art / 'checks.thought.post.json').write_text(json.dumps({'checks': post}, indent=2) + '\n')
+(art / 'post_state.json').write_text(json.dumps({'addresses': addresses, 'txs': txs, 'postconditions': post}, indent=2) + '\n')
+fe = art / 'fe-release'
+fe.mkdir(exist_ok=True)
+(fe / 'abi').mkdir(exist_ok=True)
+fe_addresses = {
+  'network': 'sepolia',
+  'chain_id': 11155111,
+  'path_nft': addresses['path_nft'],
+  'thought_nft': addresses['thought_nft'],
+  'thought_spec_registry': addresses['thought_spec_registry'],
+  'thought_spec_registry_owner': addresses['thought_spec_registry_owner'],
+  'color_font_v1': addresses['color_font_v1'],
+  'thought_previewer': addresses['thought_previewer'],
+  'seed_generator': addresses['seed_generator'],
+}
+(fe / 'addresses.sepolia.json').write_text(json.dumps(fe_addresses, indent=2) + '\n')
+protocol = {
+  'schema_version': 1,
+  'protocol': 'thought',
+  'network': 'sepolia',
+  'chain_id': 11155111,
+  'release_tier': 'candidate',
+  'path_dependency': inputs['path'],
+  'contracts': fe_addresses,
+  'movement': {
+    'name': inputs['path']['movement'],
+    'bytes32': inputs['path']['movementBytes32'],
+    'quota': inputs['path']['movementQuota'],
+    'frozen': True,
+  },
+  'recommended_thought_spec': inputs['thought']['spec'],
+  'deploy_txs': txs,
+}
+(fe / 'protocol-release.sepolia.json').write_text(json.dumps(protocol, indent=2) + '\n')
+(fe / 'env.sepolia.example').write_text('VITE_NETWORK=sepolia\nVITE_EXPECTED_CHAIN_ID=0xaa36a7\n# Set VITE_ETH_RPC outside this public artifact.\n')
+for contract in ['ThoughtNFT', 'ThoughtSpecRegistry', 'ThoughtPreviewer', 'ColorFontV1']:
+    artifact = json.loads((root / f'artifacts/contracts/{contract}.json').read_text())
+    (fe / f'abi/{contract}.json').write_text(json.dumps({'abi': artifact['abi']}, indent=2) + '\n')
+checksums = {}
+for p in sorted(fe.rglob('*')):
+    if p.is_file() and p.name != 'checksums.json':
+        checksums[str(p.relative_to(fe))] = '0x' + hashlib.sha256(p.read_bytes()).hexdigest()
+(fe / 'checksums.json').write_text(json.dumps(checksums, indent=2) + '\n')
+PY
+finish PASS "run tools/push-deployment-history.sh after review"

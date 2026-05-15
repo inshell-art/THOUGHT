@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+start_result preflight
+need_tool python3
+need_tool jq
+need_tool cast
+need_tool forge
+if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then fail "missing sha256sum or shasum"; fi
+load_env
+assert_deployer_address
+assert_chain
+sha256_check
+assert_path_dependency
+[ -d "$PACK_ROOT/source/evm/src" ] || fail "source snapshot missing"
+[ -r "$PACK_ROOT/artifacts/contracts/ThoughtNFT.json" ] || fail "compiled ThoughtNFT artifact missing"
+echo "deploy signer: $(deploy_keystore_address)"
+echo "admin signer: $ADMIN_ADDRESS"
+finish PASS "run bin/verify"
