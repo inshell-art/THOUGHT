@@ -195,12 +195,12 @@ The deployer txs must use the env keystore, not a raw private key.
 The ADMIN txs must use Ledger signing by default:
 
 ```sh
---ledger --sender 0xa31Fe4bC2A9A4EeA01275A6c4b4be2Aa994A0981
+--ledger --from 0xa31Fe4bC2A9A4EeA01275A6c4b4be2Aa994A0981
 ```
 
 If a different ADMIN signing mode is supported, it must be explicitly documented and must not be the default for serious runs.
 
-The `registerThoughtSpec(string,string,bytes)` ADMIN call carries large calldata because it embeds the pinned spec bytes. Operators must rehearse or explicitly accept Ledger blind-signing behavior before a serious run. If the Ledger refuses the transaction, stop, preserve the result dir, write a recovery note, push the failed result back to Dev OS, and do not continue to PATH movement config.
+The `registerThoughtSpec(string,string,bytes)` ADMIN call carries large calldata because it embeds the pinned spec bytes. Before `apply`, the operator must open the Ledger Ethereum app and enable blind signing. If the Ledger refuses the transaction, stop, preserve the result dir, write a recovery note, push the failed result back to Dev OS, and do not continue to PATH movement config.
 
 `apply` must write:
 
@@ -244,7 +244,7 @@ Must push the latest result dir back to Dev OS bridge incoming over SSH/rsync, n
 Required default knobs:
 
 ```sh
-DEV_OS_SSH="${DEV_OS_SSH:-bigu@192.168.0.104}"
+DEV_OS_SSH="${DEV_OS_SSH:-bigu@bigUs-MacBook-Pro.local}"
 DEV_OS_BRIDGE_INCOMING="${DEV_OS_BRIDGE_INCOMING:-/Users/bigu/Private/signing-os-bridge/incoming}"
 ```
 

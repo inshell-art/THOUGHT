@@ -472,7 +472,7 @@ if [ -n "\${SEPOLIA_DEPLOY_KEYSTORE_PASSWORD_FILE:-}" ]; then
 else
   DEPLOY_AUTH+=(--password "$SEPOLIA_DEPLOY_KEYSTORE_PASSWORD")
 fi
-ADMIN_AUTH=(--ledger --sender "$ADMIN")
+ADMIN_AUTH=(--ledger --from "$ADMIN")
 cd "$PACK_ROOT/source/evm"
 
 deploy_contract() {
@@ -660,7 +660,7 @@ function pushLatestScript() {
 set -euo pipefail
 PACK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 HOST="$(hostname -s 2>/dev/null || hostname)"
-DEV_OS_SSH="\${DEV_OS_SSH:-bigu@192.168.0.104}"
+DEV_OS_SSH="\${DEV_OS_SSH:-bigu@bigUs-MacBook-Pro.local}"
 DEV_OS_BRIDGE_INCOMING="\${DEV_OS_BRIDGE_INCOMING:-/Users/bigu/Private/signing-os-bridge/incoming}"
 LATEST="$(ls -td "$PACK_ROOT"/results/* 2>/dev/null | head -1 || true)"
 [ -n "$LATEST" ] || { echo "no results found"; exit 1; }
@@ -679,7 +679,7 @@ set -euo pipefail
 PACK_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUN_ID="$(jq -r '.run_id' "$PACK_ROOT/inputs.json")"
 HOST="$(hostname -s 2>/dev/null || hostname)"
-DEV_OS_SSH="\${DEV_OS_SSH:-bigu@192.168.0.104}"
+DEV_OS_SSH="\${DEV_OS_SSH:-bigu@bigUs-MacBook-Pro.local}"
 DEV_OS_BRIDGE_INCOMING="\${DEV_OS_BRIDGE_INCOMING:-/Users/bigu/Private/signing-os-bridge/incoming}"
 POST="$PACK_ROOT/artifacts/postconditions.json"
 [ -r "$POST" ] || { echo "missing postconditions; run bin/postconditions first"; exit 1; }
@@ -732,7 +732,7 @@ function renderReadme(runId) {
 }
 
 function renderRunbook(runId) {
-  return `# THOUGHT Signing OS Runbook\n\nRun ID: \`${runId}\`\n\n## Sequence\n\n1. Put this whole pack directory on Signing OS.\n2. Ensure \`~/.opsec/path/env/sepolia.env\` exists and points to the Sepolia deploy keystore.\n3. Run \`bin/preflight\`.\n4. Run \`bin/verify\`.\n5. Connect ADMIN Ledger only for ADMIN actions.\n6. Run \`bin/approve\` and type the exact approval phrase.\n7. Run \`bin/apply\`.\n8. Run \`bin/postconditions\`.\n9. Run \`tools/push-latest-result.sh\` or \`tools/push-deployment-history.sh\` as needed.\n\n## Signers\n\n- Deployer: \`SEPOLIA_DEPLOY_SW_A\` from canonical keystore env.\n- Registry owner/admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n- PATH movement admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n\nThe deployer does not become registry owner. \`ThoughtSpecRegistry\` is deployed with the ADMIN address as immutable owner.\n\n## Source Snapshot\n\n\`source/\` is a curated deploy source snapshot from the exact source commit. It intentionally excludes frontend/devnode/local deploy scripts. The included paths are recorded in \`PACK-MANIFEST.json.source_snapshot.paths\`.\n\n## Ledger Risk\n\n\`bin/apply\` asks the ADMIN Ledger to sign \`registerThoughtSpec(string,string,bytes)\`. The spec calldata is large because it embeds \`THOUGHT.v1.md\`. If the Ledger refuses or blind signing is not enabled, stop, keep the failed result dir, write a recovery note from \`templates/recovery-note.md\`, push the latest result back with \`tools/push-latest-result.sh\`, and do not continue to PATH movement configuration.\n`;
+  return `# THOUGHT Signing OS Runbook\n\nRun ID: \`${runId}\`\n\n## Sequence\n\n1. Put this whole pack directory on Signing OS.\n2. Ensure \`~/.opsec/path/env/sepolia.env\` exists and points to the Sepolia deploy keystore.\n3. Run \`bin/preflight\`.\n4. Run \`bin/verify\`.\n5. Connect ADMIN Ledger only for ADMIN actions.\n6. Open the Ethereum app on the ADMIN Ledger and enable blind signing before apply.\n7. Run \`bin/approve\` and type the exact approval phrase.\n8. Run \`bin/apply\`.\n9. Run \`bin/postconditions\`.\n10. Run \`tools/push-latest-result.sh\` or \`tools/push-deployment-history.sh\` as needed.\n\n## Signers\n\n- Deployer: \`SEPOLIA_DEPLOY_SW_A\` from canonical keystore env.\n- Registry owner/admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n- PATH movement admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n\nThe deployer does not become registry owner. \`ThoughtSpecRegistry\` is deployed with the ADMIN address as immutable owner.\n\n## Source Snapshot\n\n\`source/\` is a curated deploy source snapshot from the exact source commit. It intentionally excludes frontend/devnode/local deploy scripts. The included paths are recorded in \`PACK-MANIFEST.json.source_snapshot.paths\`.\n\n## Ledger Risk\n\n\`bin/apply\` asks the ADMIN Ledger to sign \`registerThoughtSpec(string,string,bytes)\`. The spec calldata is large because it embeds \`THOUGHT.v1.md\`. Blind signing must be enabled in the Ledger Ethereum app before \`bin/apply\`. If the Ledger refuses, stop, keep the failed result dir, write a recovery note from \`templates/recovery-note.md\`, push the latest result back with \`tools/push-latest-result.sh\`, and do not continue to PATH movement configuration.\n`;
 }
 
 function main() {

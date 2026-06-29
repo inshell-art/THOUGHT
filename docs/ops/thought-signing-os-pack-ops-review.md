@@ -89,7 +89,7 @@ Required fix:
 Use rsync over SSH, matching the existing PATH pack bridge shape:
 
 ```sh
-DEV_OS_SSH="${DEV_OS_SSH:-bigu@192.168.0.104}"
+DEV_OS_SSH="${DEV_OS_SSH:-bigu@bigUs-MacBook-Pro.local}"
 DEV_OS_BRIDGE_INCOMING="${DEV_OS_BRIDGE_INCOMING:-/Users/bigu/Private/signing-os-bridge/incoming}"
 HOST="$(hostname -s 2>/dev/null || hostname)"
 
@@ -118,7 +118,7 @@ This can be acceptable, but the manifest should explicitly say it is a curated d
 registerThoughtSpec(string,string,bytes)
 ```
 
-The spec bytes are about 8.5 KB. This may work with Ledger blind signing enabled, but it is a real operator risk.
+The spec bytes are about 8.5 KB. The Signing OS rehearsal showed this requires Ledger Ethereum blind signing to be enabled before `bin/apply`; without it, the Ledger rejected the ADMIN registration transaction.
 
 If this is not rehearsed, consider either:
 
