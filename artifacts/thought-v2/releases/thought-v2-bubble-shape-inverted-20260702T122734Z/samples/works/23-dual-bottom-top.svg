@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+
+  <defs>
+    <clipPath id="agent-line-clip">
+      <rect x="88" y="365" width="784" height="96" rx="14"/>
+    </clipPath>
+    <clipPath id="prompt-line-clip">
+      <rect x="166" y="868" width="628" height="44" rx="8"/>
+    </clipPath>
+  </defs>
+
+  <g id="agent-line-area">
+    <rect id="agent-line-bg" x="72" y="365" width="816" height="96" rx="14" fill="#ffffff"/>
+    <path id="agent-line-tail" d="M 470 461 L 480 478 L 490 461 Z" fill="#ffffff"/>
+    <g id="agent-line-carousel">
+      <text id="agent-line-text" x="88" y="413" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#000000" clip-path="url(#agent-line-clip)">center band motion should not collide with the lower prompt line during repeat<animate attributeName="x" values="88;-2130" dur="28s" repeatCount="indefinite"/></text>
+      <text id="agent-line-text-copy" x="2306" y="413" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#000000" clip-path="url(#agent-line-clip)">center band motion should not collide with the lower prompt line during repeat<animate attributeName="x" values="2306;88" dur="28s" repeatCount="indefinite"/></text>
+    </g>
+  </g>
+
+  <g id="prompt-line-area">
+    <rect id="prompt-line-bg" x="150" y="868" width="660" height="44" rx="8" fill="#000000" stroke="#ffffff" stroke-width="1"/>
+    <g id="prompt-line-carousel">
+      <text id="prompt-line-text" x="166" y="890" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">bottom prompt motion and central agent motion should remain visually separate throughout the loop<animate attributeName="x" values="166;-964" dur="15s" repeatCount="indefinite"/></text>
+      <text id="prompt-line-text-copy" x="1296" y="890" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">bottom prompt motion and central agent motion should remain visually separate throughout the loop<animate attributeName="x" values="1296;166" dur="15s" repeatCount="indefinite"/></text>
+    </g>
+  </g>
+</svg>
