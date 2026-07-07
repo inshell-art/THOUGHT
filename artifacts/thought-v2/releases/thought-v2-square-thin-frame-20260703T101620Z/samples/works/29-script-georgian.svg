@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+
+  <defs>
+    <clipPath id="agent-line-clip">
+      <rect x="88" y="365" width="784" height="96" rx="0"/>
+    </clipPath>
+    <clipPath id="prompt-line-clip">
+      <rect x="166" y="868" width="628" height="44" rx="0"/>
+    </clipPath>
+  </defs>
+
+  <g id="agent-line-area">
+    <rect id="agent-line-bg" x="72" y="365" width="816" height="96" rx="0" fill="#000000" stroke="#ffffff" stroke-width="1"/>
+    <path id="agent-line-tail" d="M 470 461 L 480 478 L 490 461 Z" fill="#000000" stroke="#ffffff" stroke-width="1"/>
+    <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">წყნარი პასუხი</text>
+  </g>
+
+  <g id="prompt-line-area">
+    <rect id="prompt-line-bg" x="150" y="868" width="660" height="44" rx="0" fill="#000000" stroke="#ffffff" stroke-width="1"/>
+    <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">მშვიდი სიგნალი</text>
+  </g>
+</svg>

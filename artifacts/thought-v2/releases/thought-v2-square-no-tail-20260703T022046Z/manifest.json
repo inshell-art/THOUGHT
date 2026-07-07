@@ -1,0 +1,297 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "thought-v2-render-artifact",
+  "artifact_id": "thought-v2-square-no-tail-20260703T022046Z",
+  "channel": "experimental",
+  "package": {
+    "name": "thought",
+    "version": "0.0.2"
+  },
+  "generated_at": "2026-07-03T02:20:51.646Z",
+  "source": {
+    "repo_remote": "https://github.com/inshell-art/THOUGHT.git",
+    "branch": "codex/thought-v2-bubble-shape",
+    "commit": "a4c8aabacd7822c88116ece7f2cd6360fc5784bd",
+    "dirty": true,
+    "status": [
+      "M .gitignore",
+      " M package.json",
+      " M src/style.css",
+      " M src/svg-lab.css",
+      "?? THOUGHT_V2_FE_TIGHTENING_ARTIFACT.md",
+      "?? evm/src/ThoughtNFTV2.sol",
+      "?? evm/src/ThoughtSpecRegistryV2.sol",
+      "?? evm/test/ThoughtNFTV2.t.sol",
+      "?? scripts/build-thought-v2-artifacts.mjs",
+      "?? scripts/deploy-evm-v2-local.sh",
+      "?? specs/",
+      "?? src/thought-v2-fixtures.test.ts",
+      "?? src/thought-v2-fixtures.ts",
+      "?? src/thought-v2-lab.ts",
+      "?? src/thought-v2-renderer.test.ts",
+      "?? src/thought-v2-renderer.ts",
+      "?? thought-v2-lab.html"
+    ]
+  },
+  "entrypoints": {
+    "handoff": "handoff.md",
+    "render_contract": "render-contract.json",
+    "fixtures": "fixtures.json",
+    "renderer_source": "reference/thought-v2-renderer.ts",
+    "fixture_source": "reference/thought-v2-fixtures.ts",
+    "default_svg": "samples/default.svg",
+    "samples_index": "samples/index.json"
+  },
+  "files": [
+    {
+      "path": "fixtures.json",
+      "bytes": 22526,
+      "sha256": "571851c64285ccee55bb0e4f07b6ddf19e8dfa72df8efcbbf8e1df2a0864c8bb"
+    },
+    {
+      "path": "handoff.md",
+      "bytes": 9889,
+      "sha256": "182749c6bc645f3b760f4b424a604d34460023175ba4cf04b0df8123ab03e735"
+    },
+    {
+      "path": "README.md",
+      "bytes": 932,
+      "sha256": "98ca699b9adf8e08e65e9a5f418e1ffc098da6b04cc55537afcbce751cd15543"
+    },
+    {
+      "path": "reference/thought-v2-fixtures.ts",
+      "bytes": 10447,
+      "sha256": "b21d29494b21f17c016068ea2dc2d3a53bbbf1a2d1c64f209667343ee7234206"
+    },
+    {
+      "path": "reference/thought-v2-renderer.ts",
+      "bytes": 12639,
+      "sha256": "ec3c670b375a3fc25b04233e6317bf4f8653f1a81a807be8517af3c111fff3f0"
+    },
+    {
+      "path": "render-contract.json",
+      "bytes": 1892,
+      "sha256": "3bb78b17cbd3eb6cddfaf8e90285f2610a2a3c429eccf4ebf2e73e11b5bcfffb"
+    },
+    {
+      "path": "samples/default.svg",
+      "bytes": 1501,
+      "sha256": "ab5a17689264b7a78ac4c9b76b19941e06090d6f125739a827cee5b3b53aa3d7"
+    },
+    {
+      "path": "samples/index.json",
+      "bytes": 23081,
+      "sha256": "b5fd7cffe3d499452f8cab78ce50c92c4adb4ddf01c10ccfecf283949edf400e"
+    },
+    {
+      "path": "samples/works/01-mixed-script-default.svg",
+      "bytes": 1502,
+      "sha256": "f7a84cbd233bb4dd6f25c188368269be8df6c7352752af419c1a188c970ffda6"
+    },
+    {
+      "path": "samples/works/02-ascii-minimal.svg",
+      "bytes": 1484,
+      "sha256": "c53f1be3a83803f73f0801fee7dbbdcdd7c329620534fd712e9c309dd95d4dde"
+    },
+    {
+      "path": "samples/works/03-cjk.svg",
+      "bytes": 1490,
+      "sha256": "82c1e0338c0e64d9af3ae033055419b131048bde0c44b49fb1a0cb8a3b7bf894"
+    },
+    {
+      "path": "samples/works/04-arabic-hebrew.svg",
+      "bytes": 1488,
+      "sha256": "f2efbf3e6ee133fdf32f4c38f05c6dd8a1e06f7254acb721f2c8f6225688cb6d"
+    },
+    {
+      "path": "samples/works/05-indic-thai.svg",
+      "bytes": 1515,
+      "sha256": "dab068dca22702372771d5a0da124f873b09fd40a0c84b897656077fe6318eac"
+    },
+    {
+      "path": "samples/works/06-punctuation.svg",
+      "bytes": 1502,
+      "sha256": "03cf6ab02038262ecf04120e39993d6f099f8c1487dcee072cb934c76d3a1972"
+    },
+    {
+      "path": "samples/works/07-agent-carousel-basic.svg",
+      "bytes": 2148,
+      "sha256": "a67322ac889c9e382a4202e88d6a121e77e91b842265e6dfe45a7216b66c5204"
+    },
+    {
+      "path": "samples/works/08-agent-end-start.svg",
+      "bytes": 2115,
+      "sha256": "0b4a891dcb1b0681c055584146068f9e3df2ab29a011a72c3cbd62906409989a"
+    },
+    {
+      "path": "samples/works/09-agent-observation.svg",
+      "bytes": 2154,
+      "sha256": "11e8cc82d9d2aa688012387ed154f30d1e103f52e3ba60091c3b95ebc394db24"
+    },
+    {
+      "path": "samples/works/10-agent-memory-route.svg",
+      "bytes": 2146,
+      "sha256": "7dfcaf91be5a8481046f047ef67e73f5078dfad74362c0eccdbdffe91f74fc99"
+    },
+    {
+      "path": "samples/works/11-agent-quiet-window.svg",
+      "bytes": 2124,
+      "sha256": "d9cc77a8833f581552d4ef7bbc3e8c9f453e9ca46733b89e68eece9912b97039"
+    },
+    {
+      "path": "samples/works/12-agent-edge-repeat.svg",
+      "bytes": 2137,
+      "sha256": "d88bca3d38d9af9f74a9490e02ec734b6441e398e6a3a9689f01efae5034aa54"
+    },
+    {
+      "path": "samples/works/13-prompt-carousel-basic.svg",
+      "bytes": 2273,
+      "sha256": "b99e6f43d1fdcac0581a0c8d541e8a662444785cac74ce0a21ed7b9a76d44d74"
+    },
+    {
+      "path": "samples/works/14-prompt-full-request.svg",
+      "bytes": 2266,
+      "sha256": "8ac910a83503e36ad2d028a51d41b129c57b4c7a0169600aec693e4ed763bfd9"
+    },
+    {
+      "path": "samples/works/15-prompt-first-last.svg",
+      "bytes": 2251,
+      "sha256": "f67687b90673eb686d9fc790427f1599f2c540ac534e9743240bd88148ab466d"
+    },
+    {
+      "path": "samples/works/16-prompt-mixed-language.svg",
+      "bytes": 2203,
+      "sha256": "d6c1b03e1225d237953454e7d695abbca746825b8175a191fbf12355c35a68e4"
+    },
+    {
+      "path": "samples/works/17-prompt-proof-window.svg",
+      "bytes": 2209,
+      "sha256": "f4d2e5ce22643d4301c28a07c4f1d9587d1b2d1331cb8476c617e73f66b803d1"
+    },
+    {
+      "path": "samples/works/18-prompt-no-compression.svg",
+      "bytes": 2215,
+      "sha256": "1932773c3c1f3e905cc1605dc97718476578f756f5862134183dd7533865b73e"
+    },
+    {
+      "path": "samples/works/19-dual-clean-spacing.svg",
+      "bytes": 2909,
+      "sha256": "65bd81c2576326c7f01c5325e5779401a42863d58f1e77426845991198e65bfb"
+    },
+    {
+      "path": "samples/works/20-dual-multilingual.svg",
+      "bytes": 2927,
+      "sha256": "530bcda6985678d58ce44ce65b9aa19e2ea6a67919becae2c4886afa46b604e3"
+    },
+    {
+      "path": "samples/works/21-dual-marketplace.svg",
+      "bytes": 2902,
+      "sha256": "b53b3ee39f2bb25bca6b9c6f085765c7cadb267a42cae8d1d957cc2f1c7964bf"
+    },
+    {
+      "path": "samples/works/22-dual-saved-svg.svg",
+      "bytes": 2865,
+      "sha256": "848be901fa9a5d680a6569912b56d047bf3b4816e87cca2b108f85745670f9ab"
+    },
+    {
+      "path": "samples/works/23-dual-bottom-top.svg",
+      "bytes": 2883,
+      "sha256": "dcf2da48beb12a0a45820b6345a05e0385e208ce081a78a2c685cb5188a446f7"
+    },
+    {
+      "path": "samples/works/24-dual-human-check.svg",
+      "bytes": 2877,
+      "sha256": "c52df372a0e7b4a34c577b349d77cf4ed416df71e46fddcb0667078451945552"
+    },
+    {
+      "path": "samples/works/25-script-greek.svg",
+      "bytes": 1506,
+      "sha256": "9e8e70c9c7752f0948d6b411415e72f3eb22578411b870e3297cce2f4d208b23"
+    },
+    {
+      "path": "samples/works/26-script-cyrillic.svg",
+      "bytes": 1512,
+      "sha256": "2aa7579fce536f7fa965695d564ea7bfac34ec94e05b3f95e7d8375dee62372c"
+    },
+    {
+      "path": "samples/works/27-script-korean.svg",
+      "bytes": 1492,
+      "sha256": "5297b6f82394dfdc9d7c75d55036cb164541f6c574030ecad503a4c28fff7e20"
+    },
+    {
+      "path": "samples/works/28-script-armenian.svg",
+      "bytes": 1516,
+      "sha256": "782ac2f4104489598b57e82ec20e5c143a6c2aa655ee09c47e8c4dec62ac6ce8"
+    },
+    {
+      "path": "samples/works/29-script-georgian.svg",
+      "bytes": 1537,
+      "sha256": "88c2f1e9a552d4130143ce041ad585fcea51d39f08e55e9ced6837a47fdead48"
+    },
+    {
+      "path": "samples/works/30-script-ethiopic.svg",
+      "bytes": 1511,
+      "sha256": "e3374e83c58f5342c99b933411f5eabac4a3c351fcee7a1ffc4a6b6279ff28e1"
+    },
+    {
+      "path": "samples/works/31-script-khmer.svg",
+      "bytes": 1523,
+      "sha256": "aa4c7f64c3419413922eb0940c470ee7717b442f1bc9911cb6ceb95cf61197ef"
+    },
+    {
+      "path": "samples/works/32-script-lao.svg",
+      "bytes": 1523,
+      "sha256": "de3e2239d4018c2547c90c7036a6dda8e68f39846e42b77da98a811fb0ce6d52"
+    },
+    {
+      "path": "samples/works/33-script-tibetan.svg",
+      "bytes": 1517,
+      "sha256": "2f09d78d611d2d258ece9e447842bb7caeafef9e8c1b1c985597e10808213480"
+    },
+    {
+      "path": "samples/works/34-script-tamil.svg",
+      "bytes": 1537,
+      "sha256": "a602fb666b0a0242f7bfc6a4ae862b06c9eb31ee1f45a71f0c989cac46effc26"
+    },
+    {
+      "path": "samples/works/35-script-bengali.svg",
+      "bytes": 1519,
+      "sha256": "74fa90ff54c20255c13fd5dd030fd052e509295361dc42c1ace4a4221a6fac53"
+    },
+    {
+      "path": "samples/works/36-script-vietnamese.svg",
+      "bytes": 1499,
+      "sha256": "9bda4c0388c27a048419fa55cd4a455a1920f4b6bbd8351bf4799c915fbdc134"
+    },
+    {
+      "path": "samples/works/37-script-myanmar.svg",
+      "bytes": 1561,
+      "sha256": "66e8040af582ea2cbfd5453a51aac2265c4fe3a647587a31820d0135ca5ccb1c"
+    },
+    {
+      "path": "samples/works/38-script-sinhala.svg",
+      "bytes": 1531,
+      "sha256": "3a071df57a8c04d641cd89ac5b2122ad0d7a34398d68dbafe933ba5a9f2e8960"
+    },
+    {
+      "path": "samples/works/39-script-cherokee.svg",
+      "bytes": 1507,
+      "sha256": "a07a79460d4dab91a3d81186c99e07a56893f0149aefef15ba62fcba77ca044b"
+    },
+    {
+      "path": "samples/works/40-script-inuktitut.svg",
+      "bytes": 1537,
+      "sha256": "f2df1d6064fcdba8b5980750310aa3377371243a512376e7eaeda3081cf6b46f"
+    },
+    {
+      "path": "samples/works/41-script-turkish.svg",
+      "bytes": 1486,
+      "sha256": "70cdea7321101fbb15fa85aa00b097f2c4e0b6a612796f1b9c9fab612a68db27"
+    },
+    {
+      "path": "samples/works/42-script-polish.svg",
+      "bytes": 1492,
+      "sha256": "3ea0331644bff03f4866c8363b1dbff813365f2b68cf688c5bb9332c4b92b0e3"
+    }
+  ]
+}

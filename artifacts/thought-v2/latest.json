@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "thought-v2-render-artifact-channel",
+  "channel": "latest",
+  "artifact_id": "thought-v2-thin-line-frames-20260703T024833Z",
+  "generated_at": "2026-07-03T02:48:41.186Z",
+  "manifest_path": "artifacts/thought-v2/releases/thought-v2-thin-line-frames-20260703T024833Z/manifest.json",
+  "manifest_sha256": "c309e69e96e82f45b1b992933aa1e679ada29961599a8c7d7689b19816546b9e",
+  "release_base_path": "artifacts/thought-v2/releases/thought-v2-thin-line-frames-20260703T024833Z",
+  "source": {
+    "repo_remote": "https://github.com/inshell-art/THOUGHT.git",
+    "branch": "codex/thought-v2-bubble-shape",
+    "commit": "a4c8aabacd7822c88116ece7f2cd6360fc5784bd",
+    "dirty": true,
+    "status": [
+      "M .gitignore",
+      " M package.json",
+      " M src/style.css",
+      " M src/svg-lab.css",
+      "?? THOUGHT_V2_FE_TIGHTENING_ARTIFACT.md",
+      "?? evm/src/ThoughtNFTV2.sol",
+      "?? evm/src/ThoughtSpecRegistryV2.sol",
+      "?? evm/test/ThoughtNFTV2.t.sol",
+      "?? scripts/build-thought-v2-artifacts.mjs",
+      "?? scripts/deploy-evm-v2-local.sh",
+      "?? specs/",
+      "?? src/thought-v2-fixtures.test.ts",
+      "?? src/thought-v2-fixtures.ts",
+      "?? src/thought-v2-lab.ts",
+      "?? src/thought-v2-renderer.test.ts",
+      "?? src/thought-v2-renderer.ts",
+      "?? thought-v2-lab.html"
+    ]
+  },
+  "source_channel": "experimental"
+}
