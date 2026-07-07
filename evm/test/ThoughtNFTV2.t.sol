@@ -10,6 +10,7 @@ interface VmV2 {
     function expectRevert(bytes calldata revertData) external;
     function prank(address msgSender) external;
     function sign(uint256 privateKey, bytes32 digest) external returns (uint8 v, bytes32 r, bytes32 s);
+    function warp(uint256 newTimestamp) external;
 }
 
 contract MockPathNFTV2 {
@@ -85,6 +86,88 @@ contract MockPathNFTV2 {
         }
 
         return ecrecover(digest, v, r, s);
+    }
+}
+
+contract RecordingERC721ReceiverV2 {
+    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
+
+    address public lastOperator;
+    address public lastFrom;
+    uint256 public lastTokenId;
+    bytes32 public lastDataHash;
+    uint256 public callCount;
+
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external
+        returns (bytes4)
+    {
+        lastOperator = operator;
+        lastFrom = from;
+        lastTokenId = tokenId;
+        lastDataHash = keccak256(data);
+        callCount += 1;
+        return _ERC721_RECEIVED;
+    }
+}
+
+contract RejectingERC721ReceiverV2 {
+    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+        return 0xffffffff;
+    }
+}
+
+contract RevertingERC721ReceiverV2 {
+    function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+        revert("REJECT_ERC721");
+    }
+}
+
+contract ReentrantPathNFTV2 {
+    ThoughtNFTV2 public token;
+    bytes32 public specId;
+    bytes32 public specHash;
+    bool public reentrantBlocked;
+    uint256 public consumeCallCount;
+    bool private _entered;
+
+    function configure(ThoughtNFTV2 token_, bytes32 specId_, bytes32 specHash_) external {
+        token = token_;
+        specId = specId_;
+        specHash = specHash_;
+    }
+
+    function consumeUnit(uint256, bytes32, address, uint256, bytes calldata) external returns (uint256 serial) {
+        consumeCallCount += 1;
+
+        if (!_entered) {
+            _entered = true;
+            ThoughtNFTV2.MintThoughtV2Input memory input = ThoughtNFTV2.MintThoughtV2Input({
+                promptLine: "nested prompt",
+                agentLine: "NESTED AGENT",
+                pathId: 77,
+                thoughtSpecId: specId,
+                thoughtSpecHash: specHash,
+                provenanceJson: '{"app":"THOUGHT","test":"reentrant"}',
+                deadline: block.timestamp + 1 hours,
+                pathSignature: ""
+            });
+
+            try token.mint(input) returns (uint256) {
+                revert("REENTRANT_MINT_SUCCEEDED");
+            } catch (bytes memory data) {
+                bytes4 selector;
+                if (data.length >= 4) {
+                    assembly {
+                        selector := mload(add(data, 32))
+                    }
+                }
+                reentrantBlocked = selector == ThoughtNFTV2.ReentrantCall.selector;
+            }
+            require(reentrantBlocked, "REENTRANT_NOT_BLOCKED");
+        }
+
+        return 777;
     }
 }
 
@@ -194,6 +277,196 @@ contract ThoughtNFTV2Test {
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.InvalidThoughtSpecRegistry.selector));
         new ThoughtNFTV2(address(path), address(0x1234));
+    }
+
+    function testMarketplaceInterfacesAndNonexistentTokenReadsRevert() public {
+        require(_equal(token.name(), "THOUGHT"), "name getter mismatch");
+        require(_equal(token.symbol(), "THOUGHT"), "symbol getter mismatch");
+        require(token.supportsInterface(0x01ffc9a7), "ERC165 unsupported");
+        require(token.supportsInterface(0x80ac58cd), "ERC721 unsupported");
+        require(token.supportsInterface(0x5b5e139f), "ERC721Metadata unsupported");
+        require(!token.supportsInterface(0xffffffff), "invalid interface supported");
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.BalanceQueryForZeroAddress.selector));
+        token.balanceOf(address(0));
+
+        uint256 missingTokenId = 404;
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.ownerOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.promptLineOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.agentLineOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.provenanceOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.workHashOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.recordOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.thoughtSpecOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.svgOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NonexistentToken.selector));
+        token.tokenURI(missingTokenId);
+    }
+
+    function testRegistryEnumerationDuplicateAndUnknownSpecReads() public {
+        require(registry.thoughtSpecCount() == 1, "unexpected initial spec count");
+        require(registry.thoughtSpecIdAt(0) == defaultSpecId, "spec id at zero mismatch");
+        require(registry.latestThoughtSpecId() == defaultSpecId, "latest spec mismatch");
+        require(registry.validateThoughtSpec(defaultSpecId, defaultSpecHash), "registered spec should validate");
+        require(registry.validateSpec(defaultSpecId), "legacy validateSpec wrapper failed");
+        require(!registry.validateThoughtSpec(defaultSpecId, bytes32(0)), "zero spec hash validated");
+        require(!registry.validateThoughtSpec(bytes32(uint256(0xCAFE)), defaultSpecHash), "unknown spec validated");
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtSpecRegistryV2.ThoughtSpecAlreadyRegistered.selector, defaultSpecId));
+        registry.registerThoughtSpec(DEFAULT_SPEC_NAME, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT));
+
+        bytes32 missingSpecId = keccak256("THOUGHT.v404.md");
+        vm.expectRevert(abi.encodeWithSelector(ThoughtSpecRegistryV2.ThoughtSpecNotFound.selector, missingSpecId));
+        registry.thoughtSpecBytes(missingSpecId);
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtSpecRegistryV2.EmptyThoughtSpec.selector));
+        registry.registerThoughtSpec("THOUGHT.v3.md", "THOUGHT.v3.md", bytes(""));
+
+        string memory oversizeSpec = _repeat("x", registry.MAX_THOUGHT_SPEC_BYTES() + 1);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ThoughtSpecRegistryV2.ThoughtSpecTooLarge.selector,
+                bytes(oversizeSpec).length,
+                registry.MAX_THOUGHT_SPEC_BYTES()
+            )
+        );
+        registry.registerThoughtSpec("THOUGHT.v4.md", "THOUGHT.v4.md", bytes(oversizeSpec));
+    }
+
+    function testErc721ApprovalsTransfersAndApprovalClearing() public {
+        address other = vm.addr(OTHER_KEY);
+        uint256 tokenId = _mintAsUser("transfer prompt", "TRANSFER AGENT", 1);
+
+        require(token.ownerOf(tokenId) == user, "owner mismatch before transfer");
+        require(token.balanceOf(user) == 1, "user balance before transfer mismatch");
+        require(token.balanceOf(other) == 0, "other balance before transfer mismatch");
+
+        vm.prank(other);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.NotAuthorized.selector));
+        token.transferFrom(user, other, tokenId);
+
+        vm.prank(user);
+        token.approve(other, tokenId);
+        require(token.getApproved(tokenId) == other, "approval missing");
+
+        vm.prank(other);
+        token.transferFrom(user, other, tokenId);
+        require(token.ownerOf(tokenId) == other, "owner mismatch after approved transfer");
+        require(token.balanceOf(user) == 0, "user balance after transfer mismatch");
+        require(token.balanceOf(other) == 1, "other balance after transfer mismatch");
+        require(token.getApproved(tokenId) == address(0), "token approval not cleared");
+
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.InvalidSender.selector));
+        token.transferFrom(user, user, tokenId);
+
+        vm.prank(other);
+        token.setApprovalForAll(user, true);
+        require(token.isApprovedForAll(other, user), "operator approval missing");
+
+        vm.prank(user);
+        token.transferFrom(other, user, tokenId);
+        require(token.ownerOf(tokenId) == user, "owner mismatch after operator transfer");
+
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.ApprovalToCurrentOwner.selector));
+        token.approve(user, tokenId);
+
+        vm.prank(other);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.ApprovalCallerNotOwnerNorApproved.selector));
+        token.approve(other, tokenId);
+    }
+
+    function testSafeTransfersRequireReceiverMagicAndRollbackOnFailure() public {
+        RecordingERC721ReceiverV2 receiver = new RecordingERC721ReceiverV2();
+        RejectingERC721ReceiverV2 rejectingReceiver = new RejectingERC721ReceiverV2();
+        RevertingERC721ReceiverV2 revertingReceiver = new RevertingERC721ReceiverV2();
+        bytes memory payload = "receiver payload";
+
+        uint256 acceptedTokenId = _mintAsUser("safe accepted", "SAFE ACCEPTED", 1);
+        vm.prank(user);
+        token.safeTransferFrom(user, address(receiver), acceptedTokenId, payload);
+        require(token.ownerOf(acceptedTokenId) == address(receiver), "safe transfer receiver owner mismatch");
+        require(receiver.lastOperator() == user, "receiver operator mismatch");
+        require(receiver.lastFrom() == user, "receiver from mismatch");
+        require(receiver.lastTokenId() == acceptedTokenId, "receiver token mismatch");
+        require(receiver.lastDataHash() == keccak256(payload), "receiver payload mismatch");
+        require(receiver.callCount() == 1, "receiver call count mismatch");
+
+        uint256 rejectedTokenId = _mintAsUser("safe rejected", "SAFE REJECTED", 2);
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.TransferToNonReceiverImplementer.selector));
+        token.safeTransferFrom(user, address(rejectingReceiver), rejectedTokenId, payload);
+        require(token.ownerOf(rejectedTokenId) == user, "bad receiver transfer did not roll back");
+
+        uint256 revertedTokenId = _mintAsUser("safe reverted", "SAFE REVERTED", 3);
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.TransferToNonReceiverImplementer.selector));
+        token.safeTransferFrom(user, address(revertingReceiver), revertedTokenId, payload);
+        require(token.ownerOf(revertedTokenId) == user, "reverting receiver transfer did not roll back");
+    }
+
+    function testPathSignatureFailuresDoNotMintConsumeOrReserve() public {
+        ThoughtNFTV2.MintThoughtV2Input memory badSigner = _input("wrong signer", "WRONG SIGNER", 1, OTHER_KEY);
+        _expectMintStringRevert(badSigner, "BAD_CONSUME_AUTH");
+        require(token.totalSupply() == 0, "wrong signer minted");
+        require(path.consumeCallCount() == 0, "wrong signer consumed path");
+        require(!path.thoughtConsumed(1), "wrong signer marked path consumed");
+
+        ThoughtNFTV2.MintThoughtV2Input memory expired = _input("expired auth", "EXPIRED AUTH", 2, USER_KEY);
+        expired.deadline = block.timestamp + 1;
+        vm.warp(expired.deadline + 1);
+        _expectMintStringRevert(expired, "CONSUME_AUTH_EXPIRED");
+        require(token.totalSupply() == 0, "expired auth minted");
+        require(path.consumeCallCount() == 0, "expired auth consumed path");
+        require(!path.thoughtConsumed(2), "expired auth marked path consumed");
+
+        ThoughtNFTV2.MintThoughtV2Input memory original = _input("replay source", "REPLAY SOURCE", 3, USER_KEY);
+        vm.prank(user);
+        token.mint(original);
+        require(token.totalSupply() == 1, "first mint failed");
+
+        ThoughtNFTV2.MintThoughtV2Input memory replay = original;
+        replay.promptLine = "replay target";
+        replay.agentLine = "REPLAY TARGET";
+        _expectMintStringRevert(replay, "QUOTA_EXHAUSTED");
+        require(token.totalSupply() == 1, "replay minted");
+        require(token.tokenOfWorkHash(token.workHash(keccak256(bytes(replay.promptLine)), keccak256(bytes(replay.agentLine)))) == 0, "replay reserved work");
+    }
+
+    function testMintRejectsReentrantPathCallbackAndStillMintsOuterWork() public {
+        ReentrantPathNFTV2 reentrantPath = new ReentrantPathNFTV2();
+        ThoughtNFTV2 reentrantToken = new ThoughtNFTV2(address(reentrantPath), address(registry));
+        reentrantPath.configure(reentrantToken, defaultSpecId, defaultSpecHash);
+
+        ThoughtNFTV2.MintThoughtV2Input memory input = ThoughtNFTV2.MintThoughtV2Input({
+            promptLine: "outer prompt",
+            agentLine: "OUTER AGENT",
+            pathId: 1,
+            thoughtSpecId: defaultSpecId,
+            thoughtSpecHash: defaultSpecHash,
+            provenanceJson: DEFAULT_PROVENANCE,
+            deadline: block.timestamp + 1 hours,
+            pathSignature: ""
+        });
+
+        vm.prank(user);
+        uint256 tokenId = reentrantToken.mint(input);
+
+        require(tokenId == 1, "outer mint token id mismatch");
+        require(reentrantToken.totalSupply() == 1, "reentrant mint changed supply");
+        require(reentrantToken.ownerOf(tokenId) == user, "outer mint owner mismatch");
+        require(reentrantPath.consumeCallCount() == 1, "unexpected consume calls");
+        require(reentrantPath.reentrantBlocked(), "reentrant callback was not blocked");
+        require(reentrantToken.pathSerialOf(tokenId) == 777, "path serial not stored");
     }
 
     function testMintStoresRecordHashesAndEmitsEvents() public {
@@ -579,6 +852,12 @@ contract ThoughtNFTV2Test {
     function _expectMintRevert(ThoughtNFTV2.MintThoughtV2Input memory input, bytes memory revertData) private {
         vm.prank(user);
         vm.expectRevert(revertData);
+        token.mint(input);
+    }
+
+    function _expectMintStringRevert(ThoughtNFTV2.MintThoughtV2Input memory input, string memory reason) private {
+        vm.prank(user);
+        vm.expectRevert(bytes(reason));
         token.mint(input);
     }
 
