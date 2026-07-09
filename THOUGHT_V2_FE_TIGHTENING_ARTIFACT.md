@@ -81,7 +81,7 @@ Top-level SVG shape:
 
 `work-frame` is part of the SVG artifact itself. FE should not recreate this frame with CSS or page chrome.
 
-The agent line renders as a square-corner framed block. The prompt line renders as a square-corner block near the bottom.
+The agent line renders as a hollow rounded frame. Its default fill matches the canvas background, so it is not a white block. The prompt line renders as a rounded hollow frame near the bottom.
 
 ## Fixed Local Lab Values
 
@@ -91,10 +91,10 @@ The local lab intentionally removed the style controls. It fixes these values:
 {
   agentFontSize: 44,
   promptFontSize: 16,
-  agentTextColor: "#000000",
+  agentTextColor: "#ffffff",
   promptTextColor: "#ffffff",
-  agentBgColor: "#ffffff",
-  agentFrameColor: "#000000",
+  agentBgColor: "#000000",
+  agentFrameColor: "#ffffff",
   canvasBgColor: "#000000"
 }
 ```
@@ -124,14 +124,15 @@ agent bg x = 87
 agent bg y = 378
 agent bg width = 786
 agent bg height = 70
-agent bg rx = 0
-agent bg fill = agentBgColor
+agent bg rx = 8
+agent bg fill = agentBgColor (defaults to canvas bg)
 agent bg stroke = agentFrameColor
 agent bg stroke width = AGENT_FRAME_STROKE_WIDTH = 1
 agent clip x = 88
 agent clip y = 378
 agent clip width = 784
 agent clip height = 70
+agent clip rx = 8
 agent text x = 480
 agent text y = 413
 ```
@@ -143,11 +144,12 @@ prompt bg x = 165
 prompt bg y = 868
 prompt bg width = 630
 prompt bg height = 44
-prompt bg rx = 0
+prompt bg rx = 8
 prompt bg stroke width = 1
 prompt clip x = 166
 prompt clip y = 868
 prompt clip width = 628
+prompt clip rx = 8
 prompt clip height = 44
 prompt text x = 480
 prompt text y = 890
@@ -378,7 +380,7 @@ broad script coverage including Greek, Cyrillic, Korean, Armenian, Georgian, Eth
 6. If animated SVG is risky for marketplaces, define a deterministic static fallback.
 7. Add browser QA for fallback font behavior on macOS, Windows, and common mobile browsers.
 8. Keep `dominant-baseline="middle"` everywhere in V2 SVG output.
-9. Keep prompt line with the small square-corner background unless product direction changes.
+9. Keep prompt line with the small rounded hollow frame unless product direction changes.
 10. Keep page shell dark/light mode responsive to `prefers-color-scheme`.
 
 ## Verification Commands
