@@ -1,0 +1,241 @@
+@import "@fontsource/source-code-pro/200.css";
+@import "@fontsource/source-code-pro/400.css";
+@import "@fontsource/source-code-pro/600.css";
+
+:root {
+  --page-bg: #eeeeee;
+  --text: #526071;
+  --title: #006100;
+  --meta: #626a78;
+  --meta-strong: #475161;
+  --focus: #006100;
+  color: var(--text);
+  background: var(--page-bg);
+  color-scheme: light dark;
+  font-family: "Source Code Pro", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--page-bg);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--page-bg);
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.thought-v2-lab {
+  width: min(1640px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: 44px 0 72px;
+}
+
+.thought-v2-lab__header {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 42px;
+}
+
+.thought-v2-lab__title {
+  margin: 0;
+  color: var(--title);
+  font-size: clamp(52px, 7vw, 112px);
+  font-weight: 200;
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.thought-v2-lab__subline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 16px;
+  margin: 0;
+  color: var(--meta);
+  font-size: 12px;
+  font-weight: 200;
+  line-height: 1.5;
+}
+
+.thought-v2-lab__subline code {
+  color: var(--meta-strong);
+  font: inherit;
+}
+
+.thought-v2-lab__detail {
+  margin: 0 0 68px;
+}
+
+.thought-detail-work {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.thought-detail-work__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: transparent;
+}
+
+.thought-detail-work__caption-slot {
+  min-height: 54px;
+}
+
+.thought-detail-work__caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin: 16px 0 0;
+  color: var(--meta);
+  font-size: 12px;
+  font-weight: 200;
+  line-height: 1.45;
+}
+
+.thought-detail-work__caption-title,
+.thought-detail-work__caption-agent,
+.thought-detail-work__caption-provenance {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.thought-detail-work__caption-provenance {
+  color: var(--meta);
+  text-decoration: none;
+}
+
+.thought-detail-work__caption-provenance:focus-visible,
+.thought-detail-work__caption-provenance:hover {
+  color: var(--title);
+}
+
+.thought-v2-lab__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 46px 34px;
+}
+
+.thought-work {
+  min-width: 0;
+  margin: 0;
+}
+
+.thought-work__link {
+  display: block;
+  color: inherit;
+  outline: none;
+  text-decoration: none;
+}
+
+.thought-work__link:focus-visible .thought-work__image,
+.thought-work__link[aria-current="true"] .thought-work__image {
+  outline: 1px solid var(--focus);
+  outline-offset: 6px;
+}
+
+.thought-work__image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: transparent;
+}
+
+.thought-work__caption {
+  display: grid;
+  gap: 4px;
+  margin: 13px 0 0;
+  color: var(--meta);
+  font-size: 12px;
+  font-weight: 200;
+  line-height: 1.45;
+}
+
+.thought-work__caption-title,
+.thought-work__caption-agent,
+.thought-work__caption-provenance {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.thought-work__caption-provenance {
+  color: var(--meta);
+  text-decoration: none;
+}
+
+.thought-work__caption-provenance:focus-visible,
+.thought-work__caption-provenance:hover {
+  color: var(--title);
+}
+
+.thought-v2-lab__empty {
+  max-width: 720px;
+  margin: 80px auto 0;
+  color: var(--meta);
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #0f0f0f;
+    --text: #9aa2b1;
+    --title: #006100;
+    --meta: #4f5663;
+    --meta-strong: #7c8492;
+    --focus: #006100;
+  }
+}
+
+@media (max-width: 1120px) {
+  .thought-v2-lab__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .thought-detail-work {
+    width: min(960px, 100%);
+  }
+}
+
+@media (max-width: 680px) {
+  .thought-v2-lab {
+    width: min(100vw - 28px, 560px);
+    padding: 30px 0 48px;
+  }
+
+  .thought-v2-lab__header {
+    margin-bottom: 28px;
+  }
+
+  .thought-v2-lab__detail {
+    margin-bottom: 44px;
+  }
+
+  .thought-detail-work__caption {
+    display: grid;
+    gap: 4px;
+  }
+
+  .thought-v2-lab__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 34px;
+  }
+}
