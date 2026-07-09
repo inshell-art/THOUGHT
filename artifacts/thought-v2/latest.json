@@ -2,24 +2,17 @@
   "schema_version": 1,
   "artifact_kind": "thought-v2-render-artifact-channel",
   "channel": "latest",
-  "artifact_id": "thought-v2-main-20260709T075639Z",
-  "generated_at": "2026-07-09T07:56:39.396Z",
-  "manifest_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T075639Z/manifest.json",
-  "manifest_sha256": "218e8acb8107e514abf9b6b588853f65a4177ab90caf05587affbb78031853fc",
-  "release_base_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T075639Z",
+  "artifact_id": "thought-v2-main-20260709T082437Z",
+  "generated_at": "2026-07-09T08:24:37.709Z",
+  "manifest_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T082437Z/manifest.json",
+  "manifest_sha256": "43b118a71c5e5d49d35cf6033cc98b97737f06c9d503c63242e347cd477cf653",
+  "release_base_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T082437Z",
   "source": {
     "repo_remote": "https://github.com/inshell-art/THOUGHT.git",
     "branch": "main",
-    "commit": "71b7d2103361bb96e2e789221149b0767943f9f8",
-    "dirty": true,
-    "status": [
-      "M evm/src/ThoughtNFTV2.sol",
-      " M evm/test/ThoughtNFTV2.t.sol",
-      " M src/thought-v2-lab.ts",
-      "?? THOUGHT_V2_FE_TIGHTENING_ARTIFACT.md",
-      "?? src/thought-v2-fixtures.ts",
-      "?? src/thought-v2-renderer.ts"
-    ]
+    "commit": "ba0d45c5f44f53c00033f2c4f871bb2721dbe301",
+    "dirty": false,
+    "status": []
   },
-  "source_channel": "experimental"
+  "source_channel": "latest"
 }
