@@ -1,0 +1,286 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "thought-v2-render-artifact",
+  "artifact_id": "thought-v2-main-20260709T075639Z",
+  "channel": "experimental",
+  "package": {
+    "name": "thought",
+    "version": "0.0.2"
+  },
+  "generated_at": "2026-07-09T07:56:39.396Z",
+  "source": {
+    "repo_remote": "https://github.com/inshell-art/THOUGHT.git",
+    "branch": "main",
+    "commit": "71b7d2103361bb96e2e789221149b0767943f9f8",
+    "dirty": true,
+    "status": [
+      "M evm/src/ThoughtNFTV2.sol",
+      " M evm/test/ThoughtNFTV2.t.sol",
+      " M src/thought-v2-lab.ts",
+      "?? THOUGHT_V2_FE_TIGHTENING_ARTIFACT.md",
+      "?? src/thought-v2-fixtures.ts",
+      "?? src/thought-v2-renderer.ts"
+    ]
+  },
+  "entrypoints": {
+    "handoff": "handoff.md",
+    "render_contract": "render-contract.json",
+    "fixtures": "fixtures.json",
+    "renderer_source": "reference/thought-v2-renderer.ts",
+    "fixture_source": "reference/thought-v2-fixtures.ts",
+    "default_svg": "samples/default.svg",
+    "samples_index": "samples/index.json"
+  },
+  "files": [
+    {
+      "path": "fixtures.json",
+      "bytes": 22526,
+      "sha256": "571851c64285ccee55bb0e4f07b6ddf19e8dfa72df8efcbbf8e1df2a0864c8bb"
+    },
+    {
+      "path": "handoff.md",
+      "bytes": 10244,
+      "sha256": "382f41b727ecd3bdad70f20691e55e761a83e832e4a4ad1e19f54490b992759e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 897,
+      "sha256": "8b8d4d561ef6f814f1708deeeed79fa169dcad9b20b6cb1e27c81d22320a0ed4"
+    },
+    {
+      "path": "reference/thought-v2-fixtures.ts",
+      "bytes": 10447,
+      "sha256": "b21d29494b21f17c016068ea2dc2d3a53bbbf1a2d1c64f209667343ee7234206"
+    },
+    {
+      "path": "reference/thought-v2-renderer.ts",
+      "bytes": 13503,
+      "sha256": "dd262b39d79ba05430ea243ec81afc6beaafe93de06d9b10fd1c867558f518dc"
+    },
+    {
+      "path": "render-contract.json",
+      "bytes": 2098,
+      "sha256": "e1e92ef5f61aba49b8f917b24aaec0b38e2d7b47aaf8beb02c7b406b87926162"
+    },
+    {
+      "path": "samples/default.svg",
+      "bytes": 1686,
+      "sha256": "4223ae321eb27dffdd218a69c82b431d2a9b5fcd3a8371268af034def98f426f"
+    },
+    {
+      "path": "samples/index.json",
+      "bytes": 23081,
+      "sha256": "b5fd7cffe3d499452f8cab78ce50c92c4adb4ddf01c10ccfecf283949edf400e"
+    },
+    {
+      "path": "samples/works/01-mixed-script-default.svg",
+      "bytes": 1687,
+      "sha256": "4d258c3fd8ad98499645b680b02e187bfc796b0c2894940c58c9b4b79b710ded"
+    },
+    {
+      "path": "samples/works/02-ascii-minimal.svg",
+      "bytes": 1669,
+      "sha256": "13a8445dc934e1fa93b5f71fea5b9d21a72e4e370767d37e7768264da3b5a3e8"
+    },
+    {
+      "path": "samples/works/03-cjk.svg",
+      "bytes": 1675,
+      "sha256": "a5275468121873739125237633cecd8b82177d2f98c0f5a6b9af1a96791022d3"
+    },
+    {
+      "path": "samples/works/04-arabic-hebrew.svg",
+      "bytes": 1673,
+      "sha256": "c60d799a1a6476c2dd952df02df1fafca63ae2895765ec060db394f9e7b2f751"
+    },
+    {
+      "path": "samples/works/05-indic-thai.svg",
+      "bytes": 1700,
+      "sha256": "e23b7d9ed187e7cc1c0bd1afc51ddd05c3337e72c638064f883cbb92cf28c759"
+    },
+    {
+      "path": "samples/works/06-punctuation.svg",
+      "bytes": 1687,
+      "sha256": "561d8e4baf60f113639fb0f90c4595929c66be609a63f31b8ab2837ebc1baaf2"
+    },
+    {
+      "path": "samples/works/07-agent-carousel-basic.svg",
+      "bytes": 2339,
+      "sha256": "a4b1754aee12171734ada31adb2f7575845c44a7f1232489d1964143dcae6dcc"
+    },
+    {
+      "path": "samples/works/08-agent-end-start.svg",
+      "bytes": 2306,
+      "sha256": "3286ee2bff1dc551244320dcb10b4987e52cfe73c79f0e25799c8ace716ddab5"
+    },
+    {
+      "path": "samples/works/09-agent-observation.svg",
+      "bytes": 2345,
+      "sha256": "8d7e650c1490ad1761a11a37030dfeff87c7da65c0f61814ff45ccf14756cc1d"
+    },
+    {
+      "path": "samples/works/10-agent-memory-route.svg",
+      "bytes": 2337,
+      "sha256": "a4cde243ddb360951872427a54e868777d5d017fe345a6243d33c673da003866"
+    },
+    {
+      "path": "samples/works/11-agent-quiet-window.svg",
+      "bytes": 2315,
+      "sha256": "43f8e5293bbf418e463c32e58977e798d0648eff39ffbc2a7ee79d8237834ad4"
+    },
+    {
+      "path": "samples/works/12-agent-edge-repeat.svg",
+      "bytes": 2328,
+      "sha256": "c27448d0e0cebdff66d934ec75e6ae7279d9f151d643f327ef7c8efd69cab415"
+    },
+    {
+      "path": "samples/works/13-prompt-carousel-basic.svg",
+      "bytes": 2464,
+      "sha256": "d616d215cbc75ebf858a0d327eb1ec0da9b93bb6a873e23bec591e63ca3e8902"
+    },
+    {
+      "path": "samples/works/14-prompt-full-request.svg",
+      "bytes": 2457,
+      "sha256": "17d2f6cd57f86fbbca4e7538f83c4fc495c61052e58cec167d1baaedcff8ffd2"
+    },
+    {
+      "path": "samples/works/15-prompt-first-last.svg",
+      "bytes": 2442,
+      "sha256": "a232ae6e22d6a9efb6c803c78a05695eda529dcf5b8bff07595b25a7e6e3586c"
+    },
+    {
+      "path": "samples/works/16-prompt-mixed-language.svg",
+      "bytes": 2394,
+      "sha256": "ba83ca390e3d7091600933129db22927592151b76fc4502c32e59fdf96be3492"
+    },
+    {
+      "path": "samples/works/17-prompt-proof-window.svg",
+      "bytes": 2400,
+      "sha256": "cee38dfdf1da12b9e3685e7885efa32954a68afcda7c6cef6a6eaa6832d1d2b0"
+    },
+    {
+      "path": "samples/works/18-prompt-no-compression.svg",
+      "bytes": 2406,
+      "sha256": "c9a03516fa7f5722ebe3fa93adfd908fc5ebb62aecadf6f489fc4e9704165196"
+    },
+    {
+      "path": "samples/works/19-dual-clean-spacing.svg",
+      "bytes": 3106,
+      "sha256": "aade86cc870483d672c51f75a3a36d721d8b103ef4c0e7461c73b40617727594"
+    },
+    {
+      "path": "samples/works/20-dual-multilingual.svg",
+      "bytes": 3124,
+      "sha256": "ada87f059ba81ba12db3fd764cb9bdddb5a92e9e7e95e810fcb0c26e9888d154"
+    },
+    {
+      "path": "samples/works/21-dual-marketplace.svg",
+      "bytes": 3099,
+      "sha256": "c76b36967e076a7ff2e2be4131c281d9141ba35d62e65e8d6f066b13c8a91169"
+    },
+    {
+      "path": "samples/works/22-dual-saved-svg.svg",
+      "bytes": 3062,
+      "sha256": "cb195df0e6ebd840337133207161245009d3d4ceee15a4357fbda8d498f5914f"
+    },
+    {
+      "path": "samples/works/23-dual-bottom-top.svg",
+      "bytes": 3080,
+      "sha256": "93b9370396b5f89b63c193c97191e68b779820c122637cca5a2420f10c6b2727"
+    },
+    {
+      "path": "samples/works/24-dual-human-check.svg",
+      "bytes": 3074,
+      "sha256": "091331da4265d146f30c4561fc5f7cf7b6da9d050f92e8f92d9d7518a0730f70"
+    },
+    {
+      "path": "samples/works/25-script-greek.svg",
+      "bytes": 1691,
+      "sha256": "de4932db94f506123eb9723e82b78f76eafb77351aab7d7b8e383eb7b4c826a4"
+    },
+    {
+      "path": "samples/works/26-script-cyrillic.svg",
+      "bytes": 1697,
+      "sha256": "496e3f12eb82ec550c7d73d361f6c6c6ceed543843d85560e4dd145c4b220a57"
+    },
+    {
+      "path": "samples/works/27-script-korean.svg",
+      "bytes": 1677,
+      "sha256": "02bb6eccd56efca2d48baecd34fd95b526240aa28da4e916551639ef18169073"
+    },
+    {
+      "path": "samples/works/28-script-armenian.svg",
+      "bytes": 1701,
+      "sha256": "ee022e3f80155cd4088441d28ad2f168d9529167f1e8d90082ef52f94eaffc79"
+    },
+    {
+      "path": "samples/works/29-script-georgian.svg",
+      "bytes": 1722,
+      "sha256": "805b6f938a2290884cab215889c84b3caf7cecc2eede83cff5a39755e6604ddb"
+    },
+    {
+      "path": "samples/works/30-script-ethiopic.svg",
+      "bytes": 1696,
+      "sha256": "89d0e7253d3ec5d69f3a1df006456007d0e865e01475f6d517981d82fcd8c0bc"
+    },
+    {
+      "path": "samples/works/31-script-khmer.svg",
+      "bytes": 1708,
+      "sha256": "ae74c2202103bc74808c4ea744d4723f73a5ac06c6ab8002ad4b640fceb3d328"
+    },
+    {
+      "path": "samples/works/32-script-lao.svg",
+      "bytes": 1708,
+      "sha256": "f0909fa7fffd76922d411412ce9727612ef10ea1b2a1d5a83c94501e8be444bf"
+    },
+    {
+      "path": "samples/works/33-script-tibetan.svg",
+      "bytes": 1702,
+      "sha256": "3bbe06abc4108f215353561f4ec7cb9abed50dd2fc7498682a7fe40db623ab28"
+    },
+    {
+      "path": "samples/works/34-script-tamil.svg",
+      "bytes": 1722,
+      "sha256": "41b47315a06d0ff322818f74dd6b6dd431235c5d82a5912bc7583a85e857f965"
+    },
+    {
+      "path": "samples/works/35-script-bengali.svg",
+      "bytes": 1704,
+      "sha256": "a742aa51aac09f28745a653ac2b9a8083578f56b2a0893be8cf67cc898dc878c"
+    },
+    {
+      "path": "samples/works/36-script-vietnamese.svg",
+      "bytes": 1684,
+      "sha256": "5c8afde1ec0b9241d44045fb449611256442b6ef7faaf52aaff288572cdf7e55"
+    },
+    {
+      "path": "samples/works/37-script-myanmar.svg",
+      "bytes": 1746,
+      "sha256": "15c65fd4e64202076b959ae54cc94b6d408553dbf061a503d5399b892c5d6ef9"
+    },
+    {
+      "path": "samples/works/38-script-sinhala.svg",
+      "bytes": 1716,
+      "sha256": "70e02dbcf6c3a617c5f6f12379d70ad4eb7a195f6c5f5eb37093b5573c126271"
+    },
+    {
+      "path": "samples/works/39-script-cherokee.svg",
+      "bytes": 1692,
+      "sha256": "5a3dad311789be33b5389093386b16aab1ccbdd7edd052e28dbdad5dc8dc171b"
+    },
+    {
+      "path": "samples/works/40-script-inuktitut.svg",
+      "bytes": 1722,
+      "sha256": "2fefbfb941552a6a52fc03d3d30ac67413cd2b79727fbcf01924f15848fad815"
+    },
+    {
+      "path": "samples/works/41-script-turkish.svg",
+      "bytes": 1671,
+      "sha256": "de5efc300cc1ffe61d55f67a84d9286b7b50007199a24d40bebb0ab904b54d21"
+    },
+    {
+      "path": "samples/works/42-script-polish.svg",
+      "bytes": 1677,
+      "sha256": "a7528e4dd81ef7bf80e6cc4722363cea668906740b9eb93f005a9428e65a707a"
+    }
+  ]
+}

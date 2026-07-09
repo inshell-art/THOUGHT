@@ -64,7 +64,6 @@ type WorkView = {
   index: number;
   sample: ThoughtSample;
   sourceSvg: string;
-  displaySvg: string;
   svgDownloadName: string;
   svgSha256: string | null;
   provenanceJson: string;
@@ -104,36 +103,6 @@ const byteLength = (value: string) => new TextEncoder().encode(value).length;
 
 const dataUrl = (mime: string, value: string) =>
   `data:${mime};charset=utf-8,${encodeURIComponent(value)}`;
-
-const WORK_FRAME_SIZE = 16;
-const WORK_FRAME_COLOR = "#202020";
-const WORK_FRAME_CANVAS_SIZE = 960;
-const WORK_FRAME_INNER_SIZE = WORK_FRAME_CANVAS_SIZE - WORK_FRAME_SIZE * 2;
-const WORK_FRAME_SCALE = WORK_FRAME_INNER_SIZE / WORK_FRAME_CANVAS_SIZE;
-
-const indentSvg = (svg: string, prefix: string) =>
-  svg
-    .split("\n")
-    .map((line) => (line ? `${prefix}${line}` : line))
-    .join("\n");
-
-const withWorkFrame = (svg: string) => {
-  const openTag = svg.match(/^<svg\b[^>]*>/)?.[0];
-  const closeTagIndex = svg.lastIndexOf("</svg>");
-  if (!openTag || closeTagIndex < openTag.length) {
-    return svg;
-  }
-
-  const body = svg.slice(openTag.length, closeTagIndex).trim();
-  return [
-    openTag,
-    `  <rect id="work-frame" width="${WORK_FRAME_CANVAS_SIZE}" height="${WORK_FRAME_CANVAS_SIZE}" fill="${WORK_FRAME_COLOR}"/>`,
-    `  <g id="work-canvas" transform="translate(${WORK_FRAME_SIZE} ${WORK_FRAME_SIZE}) scale(${WORK_FRAME_SCALE})">`,
-    indentSvg(body, "    "),
-    `  </g>`,
-    `</svg>`,
-  ].join("\n");
-};
 
 const shortHash = (hash: string | null) => (hash ? `${hash.slice(0, 10)}...${hash.slice(-8)}` : "");
 
@@ -183,7 +152,6 @@ const works = sampleIndex.samples.filter((sample) => sample.file.startsWith("sam
 const workViews: WorkView[] = works.map((sample, index) => {
   const svgPath = `${releaseBase}/${sample.file}`;
   const sourceSvg = sampleSvgModules[svgPath] ?? "";
-  const displaySvg = sourceSvg ? withWorkFrame(sourceSvg) : "";
   const file = fileByPath.get(sample.file);
   const provenance: Provenance = {
     artifactId: manifest.artifact_id ?? latest.artifact_id,
@@ -205,7 +173,6 @@ const workViews: WorkView[] = works.map((sample, index) => {
     index,
     sample,
     sourceSvg,
-    displaySvg,
     svgDownloadName: sample.file.split("/").pop() ?? `thought-v2-work-${index + 1}.svg`,
     svgSha256: file?.sha256 ?? null,
     provenanceJson,
@@ -265,7 +232,7 @@ const gridLinks: HTMLAnchorElement[] = [];
 
 const selectWork = (work: WorkView) => {
   detailImage.alt = `${workLabel(work)} ${work.sample.fixtureName}`;
-  detailImage.src = work.displaySvg ? dataUrl("image/svg+xml", work.displaySvg) : "";
+  detailImage.src = work.sourceSvg ? dataUrl("image/svg+xml", work.sourceSvg) : "";
   detailCaptionSlot.replaceChildren(renderCaption(work, "thought-detail-work__caption"));
   detail.setAttribute("data-selected-work", String(work.index + 1));
   gridLinks.forEach((link) => {
@@ -277,7 +244,7 @@ const selectWork = (work: WorkView) => {
 workViews.forEach((work) => {
   const figure = element("figure", "thought-work");
   const imageLink = element("a", "thought-work__link") as HTMLAnchorElement;
-  imageLink.href = work.displaySvg ? dataUrl("image/svg+xml", work.displaySvg) : "#";
+  imageLink.href = work.sourceSvg ? dataUrl("image/svg+xml", work.sourceSvg) : "#";
   imageLink.download = work.svgDownloadName;
   imageLink.dataset.workIndex = String(work.index);
   imageLink.title = work.sourceSvg
@@ -294,7 +261,7 @@ workViews.forEach((work) => {
   image.alt = work.sample.fixtureName;
   image.decoding = "async";
   image.loading = work.index < 6 ? "eager" : "lazy";
-  image.src = work.displaySvg ? dataUrl("image/svg+xml", work.displaySvg) : "";
+  image.src = work.sourceSvg ? dataUrl("image/svg+xml", work.sourceSvg) : "";
   imageLink.append(image);
 
   const caption = renderCaption(work, "thought-work__caption");

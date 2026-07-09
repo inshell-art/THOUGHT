@@ -130,6 +130,8 @@ contract ThoughtNFTV2 {
 
     uint256 private constant SVG_WIDTH = 960;
     uint256 private constant SVG_HEIGHT = 960;
+    string private constant WORK_FRAME_COLOR = "#202020";
+    string private constant WORK_FRAME_TRANSFORM = "translate(16 16) scale(0.9666666666666667)";
     uint256 private constant AGENT_X = 480;
     uint256 private constant AGENT_Y = 420;
     uint256 private constant AGENT_TARGET_WIDTH = 820;
@@ -475,7 +477,11 @@ contract ThoughtNFTV2 {
             _toString(SVG_WIDTH),
             '" height="',
             _toString(SVG_HEIGHT),
-            '" viewBox="0 0 960 960"><rect width="960" height="960" fill="#050505"/>',
+            '" viewBox="0 0 960 960"><rect id="work-frame" width="960" height="960" fill="',
+            WORK_FRAME_COLOR,
+            '"/><g id="work-canvas" transform="',
+            WORK_FRAME_TRANSFORM,
+            '"><rect id="canvas-bg" width="960" height="960" fill="#050505"/>',
             _svgTextLine(
                 AGENT_X,
                 AGENT_Y,
@@ -494,7 +500,7 @@ contract ThoughtNFTV2 {
                 record.promptLine,
                 promptSqueezed
             ),
-            "</svg>"
+            "</g></svg>"
         );
     }
 

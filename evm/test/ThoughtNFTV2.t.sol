@@ -724,7 +724,12 @@ contract ThoughtNFTV2Test {
         string memory svg = token.svgOf(tokenId);
         string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
 
-        require(_contains(svg, '<rect width="960" height="960" fill="#050505"/>'), "missing dark bg");
+        require(_contains(svg, '<rect id="work-frame" width="960" height="960" fill="#202020"/>'), "missing work frame");
+        require(
+            _contains(svg, '<g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">'),
+            "missing framed canvas group"
+        );
+        require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#050505"/>'), "missing dark bg");
         require(_count(svg, 'text-anchor="middle"') == 2, "both lines should be centered");
         require(!_contains(svg, "PROMPT:"), "svg should not label prompt");
         require(!_contains(svg, "AGENT:"), "svg should not label agent");
