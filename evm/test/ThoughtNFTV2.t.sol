@@ -730,6 +730,10 @@ contract ThoughtNFTV2Test {
             "missing framed canvas group"
         );
         require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#050505"/>'), "missing dark bg");
+        require(_contains(svg, 'id="binary-background"'), "missing binary background");
+        require(_contains(svg, 'data-zero="empty"'), "binary background should preserve zero cells");
+        require(_contains(svg, 'opacity="0.50"'), "binary background opacity mismatch");
+        require(_contains(svg, '<circle '), "binary background should render circles");
         require(_count(svg, 'text-anchor="middle"') == 2, "both lines should be centered");
         require(!_contains(svg, "PROMPT:"), "svg should not label prompt");
         require(!_contains(svg, "AGENT:"), "svg should not label agent");
@@ -751,6 +755,30 @@ contract ThoughtNFTV2Test {
         require(!_contains(metadata, "Color Font"), "metadata contains color font text");
         require(!_contains(metadata, "colorFont"), "metadata contains color font field");
         require(!_contains(metadata, DEFAULT_SPEC_TEXT), "metadata embeds full spec text");
+    }
+
+    function testSvgBinaryBackgroundUsesPromptBytesBeforeAgentBytes() public {
+        uint256 tokenId = _mintAsUser("ab", "C", 1);
+        string memory svg = token.svgOf(tokenId);
+
+        require(_contains(svg, 'id="binary-background"'), "missing binary background");
+        require(_contains(svg, 'fill="#006100"'), "binary background should use canonical green");
+        require(_contains(svg, 'data-grid-columns="5"'), "binary background should use square grid columns");
+        require(_contains(svg, 'data-grid-rows="5"'), "binary background should use square grid rows");
+        require(_contains(svg, 'data-cell-size="169"'), "binary background should use equal square cells");
+        require(_contains(svg, 'data-origin-x="57"'), "binary background should center grid horizontally");
+        require(_contains(svg, 'data-origin-y="64"'), "binary background should center grid vertically");
+        require(_contains(svg, 'data-dot-radius="18"'), "binary background should cap sparse dot radius");
+        require(_contains(svg, 'data-zero="empty"'), "binary background should preserve zero cells");
+        require(_count(svg, '<circle ') == 9, "binary background should render one circle per one bit");
+        require(!_contains(svg, "&#9679;"), "binary background should not use text glyph circles");
+        require(!_contains(svg, "textLength="), "binary background should not use text spacing");
+        require(!_contains(svg, "01100001"), "binary background should not render literal zeros and ones");
+        require(!_contains(svg, "01100001 01100010 01000011"), "binary background should not repeat byte tokens");
+
+        uint256 denseTokenId = _mintAsUser(_repeat("a", 72), _repeat("B", 27), 2);
+        string memory denseSvg = token.svgOf(denseTokenId);
+        require(_contains(denseSvg, 'data-cell-size="29"'), "dense binary background should shrink cells");
     }
 
     function testSqueezedSvgOnlyUsesTextLengthForLongLines() public {

@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits" data-grid-columns="18" data-grid-rows="18" data-cell-size="47" data-origin-x="57" data-origin-y="64" data-dot-radius="15" data-zero="empty">
+      <circle cx="127" cy="87" r="15"/>
+      <circle cx="174" cy="87" r="15"/>
+      <circle cx="221" cy="87" r="15"/>
+      <circle cx="315" cy="87" r="15"/>
+      <circle cx="456" cy="87" r="15"/>
+      <circle cx="503" cy="87" r="15"/>
+      <circle cx="738" cy="87" r="15"/>
+      <circle cx="785" cy="87" r="15"/>
+      <circle cx="832" cy="87" r="15"/>
+      <circle cx="80" cy="134" r="15"/>
+      <circle cx="174" cy="134" r="15"/>
+      <circle cx="221" cy="134" r="15"/>
+      <circle cx="315" cy="134" r="15"/>
+      <circle cx="409" cy="134" r="15"/>
+      <circle cx="456" cy="134" r="15"/>
+      <circle cx="550" cy="134" r="15"/>
+      <circle cx="597" cy="134" r="15"/>
+      <circle cx="644" cy="134" r="15"/>
+      <circle cx="832" cy="134" r="15"/>
+      <circle cx="315" cy="181" r="15"/>
+      <circle cx="362" cy="181" r="15"/>
+      <circle cx="456" cy="181" r="15"/>
+      <circle cx="691" cy="181" r="15"/>
+      <circle cx="738" cy="181" r="15"/>
+      <circle cx="832" cy="181" r="15"/>
+      <circle cx="127" cy="228" r="15"/>
+      <circle cx="174" cy="228" r="15"/>
+      <circle cx="221" cy="228" r="15"/>
+      <circle cx="268" cy="228" r="15"/>
+      <circle cx="503" cy="228" r="15"/>
+      <circle cx="550" cy="228" r="15"/>
+      <circle cx="644" cy="228" r="15"/>
+      <circle cx="691" cy="228" r="15"/>
+      <circle cx="738" cy="228" r="15"/>
+      <circle cx="832" cy="228" r="15"/>
+      <circle cx="879" cy="228" r="15"/>
+      <circle cx="80" cy="275" r="15"/>
+      <circle cx="315" cy="275" r="15"/>
+      <circle cx="362" cy="275" r="15"/>
+      <circle cx="409" cy="275" r="15"/>
+      <circle cx="503" cy="275" r="15"/>
+      <circle cx="550" cy="275" r="15"/>
+      <circle cx="597" cy="275" r="15"/>
+      <circle cx="691" cy="275" r="15"/>
+      <circle cx="785" cy="275" r="15"/>
+      <circle cx="80" cy="322" r="15"/>
+      <circle cx="409" cy="322" r="15"/>
+      <circle cx="456" cy="322" r="15"/>
+      <circle cx="503" cy="322" r="15"/>
+      <circle cx="550" cy="322" r="15"/>
+      <circle cx="691" cy="322" r="15"/>
+      <circle cx="738" cy="322" r="15"/>
+      <circle cx="785" cy="322" r="15"/>
+      <circle cx="174" cy="369" r="15"/>
+      <circle cx="221" cy="369" r="15"/>
+      <circle cx="268" cy="369" r="15"/>
+      <circle cx="362" cy="369" r="15"/>
+      <circle cx="456" cy="369" r="15"/>
+      <circle cx="550" cy="369" r="15"/>
+      <circle cx="691" cy="369" r="15"/>
+      <circle cx="738" cy="369" r="15"/>
+      <circle cx="832" cy="369" r="15"/>
+      <circle cx="879" cy="369" r="15"/>
+      <circle cx="80" cy="416" r="15"/>
+      <circle cx="268" cy="416" r="15"/>
+      <circle cx="597" cy="416" r="15"/>
+      <circle cx="644" cy="416" r="15"/>
+      <circle cx="738" cy="416" r="15"/>
+      <circle cx="785" cy="416" r="15"/>
+      <circle cx="80" cy="463" r="15"/>
+      <circle cx="127" cy="463" r="15"/>
+      <circle cx="174" cy="463" r="15"/>
+      <circle cx="409" cy="463" r="15"/>
+      <circle cx="456" cy="463" r="15"/>
+      <circle cx="550" cy="463" r="15"/>
+      <circle cx="597" cy="463" r="15"/>
+      <circle cx="644" cy="463" r="15"/>
+      <circle cx="738" cy="463" r="15"/>
+      <circle cx="832" cy="463" r="15"/>
+      <circle cx="80" cy="510" r="15"/>
+      <circle cx="127" cy="510" r="15"/>
+      <circle cx="221" cy="510" r="15"/>
+      <circle cx="268" cy="510" r="15"/>
+      <circle cx="315" cy="510" r="15"/>
+      <circle cx="409" cy="510" r="15"/>
+      <circle cx="456" cy="510" r="15"/>
+      <circle cx="550" cy="510" r="15"/>
+      <circle cx="597" cy="510" r="15"/>
+      <circle cx="644" cy="510" r="15"/>
+      <circle cx="785" cy="510" r="15"/>
+      <circle cx="832" cy="510" r="15"/>
+      <circle cx="127" cy="557" r="15"/>
+      <circle cx="174" cy="557" r="15"/>
+      <circle cx="221" cy="557" r="15"/>
+      <circle cx="315" cy="557" r="15"/>
+      <circle cx="362" cy="557" r="15"/>
+      <circle cx="409" cy="557" r="15"/>
+      <circle cx="691" cy="557" r="15"/>
+      <circle cx="738" cy="557" r="15"/>
+      <circle cx="832" cy="557" r="15"/>
+      <circle cx="174" cy="604" r="15"/>
+      <circle cx="221" cy="604" r="15"/>
+      <circle cx="268" cy="604" r="15"/>
+      <circle cx="503" cy="604" r="15"/>
+      <circle cx="550" cy="604" r="15"/>
+      <circle cx="644" cy="604" r="15"/>
+      <circle cx="691" cy="604" r="15"/>
+      <circle cx="738" cy="604" r="15"/>
+      <circle cx="832" cy="604" r="15"/>
+      <circle cx="80" cy="651" r="15"/>
+      <circle cx="174" cy="651" r="15"/>
+      <circle cx="362" cy="651" r="15"/>
+      <circle cx="409" cy="651" r="15"/>
+      <circle cx="503" cy="651" r="15"/>
+      <circle cx="550" cy="651" r="15"/>
+      <circle cx="644" cy="651" r="15"/>
+      <circle cx="691" cy="651" r="15"/>
+      <circle cx="738" cy="651" r="15"/>
+      <circle cx="80" cy="698" r="15"/>
+      <circle cx="409" cy="698" r="15"/>
+      <circle cx="456" cy="698" r="15"/>
+      <circle cx="550" cy="698" r="15"/>
+      <circle cx="738" cy="698" r="15"/>
+      <circle cx="785" cy="698" r="15"/>
+      <circle cx="832" cy="698" r="15"/>
+      <circle cx="221" cy="745" r="15"/>
+      <circle cx="268" cy="745" r="15"/>
+      <circle cx="362" cy="745" r="15"/>
+      <circle cx="409" cy="745" r="15"/>
+      <circle cx="456" cy="745" r="15"/>
+      <circle cx="550" cy="745" r="15"/>
+      <circle cx="597" cy="745" r="15"/>
+      <circle cx="644" cy="745" r="15"/>
+      <circle cx="785" cy="745" r="15"/>
+      <circle cx="80" cy="792" r="15"/>
+      <circle cx="127" cy="792" r="15"/>
+      <circle cx="221" cy="792" r="15"/>
+      <circle cx="268" cy="792" r="15"/>
+      <circle cx="362" cy="792" r="15"/>
+      <circle cx="503" cy="792" r="15"/>
+      <circle cx="644" cy="792" r="15"/>
+      <circle cx="80" cy="839" r="15"/>
+      <circle cx="127" cy="839" r="15"/>
+      <circle cx="362" cy="839" r="15"/>
+      <circle cx="409" cy="839" r="15"/>
+      <circle cx="456" cy="839" r="15"/>
+      <circle cx="550" cy="839" r="15"/>
+      <circle cx="644" cy="839" r="15"/>
+      <circle cx="738" cy="839" r="15"/>
+      <circle cx="879" cy="839" r="15"/>
+      <circle cx="80" cy="886" r="15"/>
+      <circle cx="174" cy="886" r="15"/>
+      <circle cx="221" cy="886" r="15"/>
+      <circle cx="315" cy="886" r="15"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">phản hồi êm</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">tín hiệu yên lặng</text>
+    </g>
+  </g>
+</svg>

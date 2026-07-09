@@ -142,6 +142,16 @@ contract ThoughtNFTV2 {
     uint256 private constant PROMPT_TARGET_WIDTH = 820;
     uint256 private constant PROMPT_BASE_FONT = 34;
     uint256 private constant PROMPT_MIN_FONT = 18;
+    uint256 private constant BINARY_BG_X = 48;
+    uint256 private constant BINARY_BG_Y = 64;
+    uint256 private constant BINARY_BG_ROWS = 48;
+    uint256 private constant BINARY_BG_ROW_GAP = 18;
+    uint256 private constant BINARY_BG_WIDTH = 864;
+    uint256 private constant BINARY_BG_HEIGHT = (BINARY_BG_ROWS - 1) * BINARY_BG_ROW_GAP;
+    uint256 private constant BINARY_BG_DOT_RADIUS_NUMERATOR = 32;
+    uint256 private constant BINARY_BG_DOT_RADIUS_DENOMINATOR = 100;
+    uint256 private constant BINARY_BG_MIN_DOT_RADIUS = 1;
+    uint256 private constant BINARY_BG_MAX_DOT_RADIUS = 18;
     string private constant FONT_STACK =
         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
@@ -482,6 +492,7 @@ contract ThoughtNFTV2 {
             '"/><g id="work-canvas" transform="',
             WORK_FRAME_TRANSFORM,
             '"><rect id="canvas-bg" width="960" height="960" fill="#050505"/>',
+            _svgBinaryBackground(record.promptLine, record.agentLine),
             _svgTextLine(
                 AGENT_X,
                 AGENT_Y,
@@ -502,6 +513,107 @@ contract ThoughtNFTV2 {
             ),
             "</g></svg>"
         );
+    }
+
+    function _svgBinaryBackground(string memory promptLine, string memory agentLine) private pure returns (string memory) {
+        bytes memory promptData = bytes(promptLine);
+        bytes memory agentData = bytes(agentLine);
+        if (promptData.length + agentData.length == 0) {
+            return "";
+        }
+
+        bytes memory output = abi.encodePacked(
+            '<g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits"'
+        );
+        uint256 totalBits = (promptData.length + agentData.length) * 8;
+        uint256 columns = _binaryGridColumns(totalBits);
+        uint256 rows = (totalBits + columns - 1) / columns;
+        uint256 cellSize = BINARY_BG_WIDTH / columns;
+        uint256 cellSizeY = BINARY_BG_HEIGHT / rows;
+        if (cellSizeY < cellSize) {
+            cellSize = cellSizeY;
+        }
+        if (cellSize < 1) {
+            cellSize = 1;
+        }
+        uint256 originX = BINARY_BG_X + (BINARY_BG_WIDTH - columns * cellSize) / 2;
+        uint256 originY = BINARY_BG_Y + (BINARY_BG_HEIGHT - rows * cellSize) / 2;
+        uint256 radius = (cellSize * BINARY_BG_DOT_RADIUS_NUMERATOR) / BINARY_BG_DOT_RADIUS_DENOMINATOR;
+        if (radius < BINARY_BG_MIN_DOT_RADIUS) {
+            radius = BINARY_BG_MIN_DOT_RADIUS;
+        }
+        if (radius > BINARY_BG_MAX_DOT_RADIUS) {
+            radius = BINARY_BG_MAX_DOT_RADIUS;
+        }
+        output = abi.encodePacked(
+            output,
+            ' data-grid-columns="',
+            _toString(columns),
+            '" data-grid-rows="',
+            _toString(rows),
+            '" data-cell-size="',
+            _toString(cellSize),
+            '" data-origin-x="',
+            _toString(originX),
+            '" data-origin-y="',
+            _toString(originY),
+            '" data-dot-radius="',
+            _toString(radius),
+            '" data-zero="empty">'
+        );
+
+        for (uint256 bitOffset = 0; bitOffset < totalBits; bitOffset++) {
+            if (!_binarySourceIsOne(promptData, agentData, bitOffset)) {
+                continue;
+            }
+            uint256 column = bitOffset % columns;
+            uint256 row = bitOffset / columns;
+            output = abi.encodePacked(
+                output,
+                '<circle cx="',
+                _toString(originX + column * cellSize + cellSize / 2),
+                '" cy="',
+                _toString(originY + row * cellSize + cellSize / 2),
+                '" r="',
+                _toString(radius),
+                '"/>'
+            );
+        }
+
+        return string(abi.encodePacked(output, "</g>"));
+    }
+
+    function _binaryGridColumns(uint256 totalBits) private pure returns (uint256) {
+        uint256 columns = _sqrtCeil((totalBits * BINARY_BG_WIDTH + BINARY_BG_HEIGHT - 1) / BINARY_BG_HEIGHT);
+        uint256 rows = (totalBits + columns - 1) / columns;
+        if (rows <= BINARY_BG_ROWS) {
+            return columns;
+        }
+        return (totalBits + BINARY_BG_ROWS - 1) / BINARY_BG_ROWS;
+    }
+
+    function _sqrtCeil(uint256 value) private pure returns (uint256) {
+        uint256 root = 1;
+        while (root * root < value) {
+            root++;
+        }
+        return root;
+    }
+
+    function _binarySourceIsOne(bytes memory promptData, bytes memory agentData, uint256 bitOffset)
+        private
+        pure
+        returns (bool)
+    {
+        uint256 byteOffset = bitOffset / 8;
+        uint256 bitIndex = bitOffset % 8;
+        uint8 value;
+        if (byteOffset < promptData.length) {
+            value = uint8(promptData[byteOffset]);
+        } else {
+            value = uint8(agentData[byteOffset - promptData.length]);
+        }
+        return ((uint256(value) >> (7 - bitIndex)) & 1) == 1;
     }
 
     function _svgTextLine(

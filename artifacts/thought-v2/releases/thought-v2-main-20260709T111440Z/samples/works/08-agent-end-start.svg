@@ -1,0 +1,249 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits" data-grid-columns="24" data-grid-rows="22" data-cell-size="36" data-origin-x="48" data-origin-y="91" data-dot-radius="11" data-zero="empty">
+      <circle cx="102" cy="109" r="11"/>
+      <circle cx="138" cy="109" r="11"/>
+      <circle cx="246" cy="109" r="11"/>
+      <circle cx="282" cy="109" r="11"/>
+      <circle cx="318" cy="109" r="11"/>
+      <circle cx="390" cy="109" r="11"/>
+      <circle cx="426" cy="109" r="11"/>
+      <circle cx="606" cy="109" r="11"/>
+      <circle cx="678" cy="109" r="11"/>
+      <circle cx="714" cy="109" r="11"/>
+      <circle cx="750" cy="109" r="11"/>
+      <circle cx="138" cy="145" r="11"/>
+      <circle cx="390" cy="145" r="11"/>
+      <circle cx="426" cy="145" r="11"/>
+      <circle cx="570" cy="145" r="11"/>
+      <circle cx="606" cy="145" r="11"/>
+      <circle cx="678" cy="145" r="11"/>
+      <circle cx="714" cy="145" r="11"/>
+      <circle cx="786" cy="145" r="11"/>
+      <circle cx="102" cy="181" r="11"/>
+      <circle cx="138" cy="181" r="11"/>
+      <circle cx="246" cy="181" r="11"/>
+      <circle cx="318" cy="181" r="11"/>
+      <circle cx="390" cy="181" r="11"/>
+      <circle cx="426" cy="181" r="11"/>
+      <circle cx="570" cy="181" r="11"/>
+      <circle cx="606" cy="181" r="11"/>
+      <circle cx="678" cy="181" r="11"/>
+      <circle cx="714" cy="181" r="11"/>
+      <circle cx="786" cy="181" r="11"/>
+      <circle cx="858" cy="181" r="11"/>
+      <circle cx="894" cy="181" r="11"/>
+      <circle cx="102" cy="217" r="11"/>
+      <circle cx="138" cy="217" r="11"/>
+      <circle cx="174" cy="217" r="11"/>
+      <circle cx="246" cy="217" r="11"/>
+      <circle cx="390" cy="217" r="11"/>
+      <circle cx="426" cy="217" r="11"/>
+      <circle cx="498" cy="217" r="11"/>
+      <circle cx="678" cy="217" r="11"/>
+      <circle cx="714" cy="217" r="11"/>
+      <circle cx="822" cy="217" r="11"/>
+      <circle cx="894" cy="217" r="11"/>
+      <circle cx="138" cy="253" r="11"/>
+      <circle cx="390" cy="253" r="11"/>
+      <circle cx="426" cy="253" r="11"/>
+      <circle cx="462" cy="253" r="11"/>
+      <circle cx="570" cy="253" r="11"/>
+      <circle cx="606" cy="253" r="11"/>
+      <circle cx="678" cy="253" r="11"/>
+      <circle cx="714" cy="253" r="11"/>
+      <circle cx="750" cy="253" r="11"/>
+      <circle cx="822" cy="253" r="11"/>
+      <circle cx="102" cy="289" r="11"/>
+      <circle cx="138" cy="289" r="11"/>
+      <circle cx="318" cy="289" r="11"/>
+      <circle cx="390" cy="289" r="11"/>
+      <circle cx="426" cy="289" r="11"/>
+      <circle cx="462" cy="289" r="11"/>
+      <circle cx="570" cy="289" r="11"/>
+      <circle cx="678" cy="289" r="11"/>
+      <circle cx="714" cy="289" r="11"/>
+      <circle cx="750" cy="289" r="11"/>
+      <circle cx="822" cy="289" r="11"/>
+      <circle cx="138" cy="325" r="11"/>
+      <circle cx="390" cy="325" r="11"/>
+      <circle cx="426" cy="325" r="11"/>
+      <circle cx="498" cy="325" r="11"/>
+      <circle cx="606" cy="325" r="11"/>
+      <circle cx="678" cy="325" r="11"/>
+      <circle cx="714" cy="325" r="11"/>
+      <circle cx="750" cy="325" r="11"/>
+      <circle cx="858" cy="325" r="11"/>
+      <circle cx="894" cy="325" r="11"/>
+      <circle cx="138" cy="361" r="11"/>
+      <circle cx="390" cy="361" r="11"/>
+      <circle cx="426" cy="361" r="11"/>
+      <circle cx="498" cy="361" r="11"/>
+      <circle cx="678" cy="361" r="11"/>
+      <circle cx="714" cy="361" r="11"/>
+      <circle cx="822" cy="361" r="11"/>
+      <circle cx="894" cy="361" r="11"/>
+      <circle cx="102" cy="397" r="11"/>
+      <circle cx="138" cy="397" r="11"/>
+      <circle cx="174" cy="397" r="11"/>
+      <circle cx="282" cy="397" r="11"/>
+      <circle cx="390" cy="397" r="11"/>
+      <circle cx="426" cy="397" r="11"/>
+      <circle cx="534" cy="397" r="11"/>
+      <circle cx="606" cy="397" r="11"/>
+      <circle cx="714" cy="397" r="11"/>
+      <circle cx="102" cy="433" r="11"/>
+      <circle cx="138" cy="433" r="11"/>
+      <circle cx="318" cy="433" r="11"/>
+      <circle cx="390" cy="433" r="11"/>
+      <circle cx="426" cy="433" r="11"/>
+      <circle cx="498" cy="433" r="11"/>
+      <circle cx="534" cy="433" r="11"/>
+      <circle cx="570" cy="433" r="11"/>
+      <circle cx="678" cy="433" r="11"/>
+      <circle cx="714" cy="433" r="11"/>
+      <circle cx="822" cy="433" r="11"/>
+      <circle cx="138" cy="469" r="11"/>
+      <circle cx="390" cy="469" r="11"/>
+      <circle cx="426" cy="469" r="11"/>
+      <circle cx="462" cy="469" r="11"/>
+      <circle cx="534" cy="469" r="11"/>
+      <circle cx="570" cy="469" r="11"/>
+      <circle cx="606" cy="469" r="11"/>
+      <circle cx="678" cy="469" r="11"/>
+      <circle cx="714" cy="469" r="11"/>
+      <circle cx="786" cy="469" r="11"/>
+      <circle cx="102" cy="505" r="11"/>
+      <circle cx="138" cy="505" r="11"/>
+      <circle cx="246" cy="505" r="11"/>
+      <circle cx="318" cy="505" r="11"/>
+      <circle cx="390" cy="505" r="11"/>
+      <circle cx="426" cy="505" r="11"/>
+      <circle cx="462" cy="505" r="11"/>
+      <circle cx="570" cy="505" r="11"/>
+      <circle cx="678" cy="505" r="11"/>
+      <circle cx="714" cy="505" r="11"/>
+      <circle cx="822" cy="505" r="11"/>
+      <circle cx="894" cy="505" r="11"/>
+      <circle cx="138" cy="541" r="11"/>
+      <circle cx="390" cy="541" r="11"/>
+      <circle cx="426" cy="541" r="11"/>
+      <circle cx="498" cy="541" r="11"/>
+      <circle cx="606" cy="541" r="11"/>
+      <circle cx="678" cy="541" r="11"/>
+      <circle cx="714" cy="541" r="11"/>
+      <circle cx="750" cy="541" r="11"/>
+      <circle cx="858" cy="541" r="11"/>
+      <circle cx="894" cy="541" r="11"/>
+      <circle cx="138" cy="577" r="11"/>
+      <circle cx="390" cy="577" r="11"/>
+      <circle cx="426" cy="577" r="11"/>
+      <circle cx="462" cy="577" r="11"/>
+      <circle cx="534" cy="577" r="11"/>
+      <circle cx="678" cy="577" r="11"/>
+      <circle cx="714" cy="577" r="11"/>
+      <circle cx="786" cy="577" r="11"/>
+      <circle cx="102" cy="613" r="11"/>
+      <circle cx="138" cy="613" r="11"/>
+      <circle cx="246" cy="613" r="11"/>
+      <circle cx="318" cy="613" r="11"/>
+      <circle cx="426" cy="613" r="11"/>
+      <circle cx="678" cy="613" r="11"/>
+      <circle cx="714" cy="613" r="11"/>
+      <circle cx="822" cy="613" r="11"/>
+      <circle cx="894" cy="613" r="11"/>
+      <circle cx="102" cy="649" r="11"/>
+      <circle cx="138" cy="649" r="11"/>
+      <circle cx="210" cy="649" r="11"/>
+      <circle cx="246" cy="649" r="11"/>
+      <circle cx="282" cy="649" r="11"/>
+      <circle cx="390" cy="649" r="11"/>
+      <circle cx="426" cy="649" r="11"/>
+      <circle cx="534" cy="649" r="11"/>
+      <circle cx="714" cy="649" r="11"/>
+      <circle cx="786" cy="649" r="11"/>
+      <circle cx="822" cy="649" r="11"/>
+      <circle cx="138" cy="685" r="11"/>
+      <circle cx="390" cy="685" r="11"/>
+      <circle cx="426" cy="685" r="11"/>
+      <circle cx="498" cy="685" r="11"/>
+      <circle cx="678" cy="685" r="11"/>
+      <circle cx="714" cy="685" r="11"/>
+      <circle cx="822" cy="685" r="11"/>
+      <circle cx="894" cy="685" r="11"/>
+      <circle cx="102" cy="721" r="11"/>
+      <circle cx="138" cy="721" r="11"/>
+      <circle cx="174" cy="721" r="11"/>
+      <circle cx="282" cy="721" r="11"/>
+      <circle cx="390" cy="721" r="11"/>
+      <circle cx="426" cy="721" r="11"/>
+      <circle cx="534" cy="721" r="11"/>
+      <circle cx="606" cy="721" r="11"/>
+      <circle cx="714" cy="721" r="11"/>
+      <circle cx="102" cy="757" r="11"/>
+      <circle cx="138" cy="757" r="11"/>
+      <circle cx="210" cy="757" r="11"/>
+      <circle cx="318" cy="757" r="11"/>
+      <circle cx="390" cy="757" r="11"/>
+      <circle cx="426" cy="757" r="11"/>
+      <circle cx="462" cy="757" r="11"/>
+      <circle cx="570" cy="757" r="11"/>
+      <circle cx="606" cy="757" r="11"/>
+      <circle cx="714" cy="757" r="11"/>
+      <circle cx="102" cy="793" r="11"/>
+      <circle cx="138" cy="793" r="11"/>
+      <circle cx="174" cy="793" r="11"/>
+      <circle cx="246" cy="793" r="11"/>
+      <circle cx="390" cy="793" r="11"/>
+      <circle cx="426" cy="793" r="11"/>
+      <circle cx="498" cy="793" r="11"/>
+      <circle cx="678" cy="793" r="11"/>
+      <circle cx="714" cy="793" r="11"/>
+      <circle cx="822" cy="793" r="11"/>
+      <circle cx="894" cy="793" r="11"/>
+      <circle cx="138" cy="829" r="11"/>
+      <circle cx="390" cy="829" r="11"/>
+      <circle cx="426" cy="829" r="11"/>
+      <circle cx="534" cy="829" r="11"/>
+      <circle cx="606" cy="829" r="11"/>
+      <circle cx="678" cy="829" r="11"/>
+      <circle cx="714" cy="829" r="11"/>
+      <circle cx="786" cy="829" r="11"/>
+      <circle cx="822" cy="829" r="11"/>
+      <circle cx="858" cy="829" r="11"/>
+      <circle cx="102" cy="865" r="11"/>
+      <circle cx="138" cy="865" r="11"/>
+      <circle cx="246" cy="865" r="11"/>
+      <circle cx="426" cy="865" r="11"/>
+      <circle cx="462" cy="865" r="11"/>
+      <circle cx="498" cy="865" r="11"/>
+      <circle cx="534" cy="865" r="11"/>
+      <circle cx="570" cy="865" r="11"/>
+      <circle cx="606" cy="865" r="11"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <g id="agent-line-carousel">
+        <text id="agent-line-text" x="88" y="413" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">the start is here and where is the end, here is the end?<animate attributeName="x" values="88;-1549" dur="21s" repeatCount="indefinite"/></text>
+        <text id="agent-line-text-copy" x="1725" y="413" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">the start is here and where is the end, here is the end?<animate attributeName="x" values="1725;88" dur="21s" repeatCount="indefinite"/></text>
+      </g>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">gap check</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits" data-grid-columns="22" data-grid-rows="22" data-cell-size="38" data-origin-x="62" data-origin-y="69" data-dot-radius="12" data-zero="empty">
+      <circle cx="81" cy="88" r="12"/>
+      <circle cx="119" cy="88" r="12"/>
+      <circle cx="157" cy="88" r="12"/>
+      <circle cx="385" cy="88" r="12"/>
+      <circle cx="461" cy="88" r="12"/>
+      <circle cx="575" cy="88" r="12"/>
+      <circle cx="613" cy="88" r="12"/>
+      <circle cx="689" cy="88" r="12"/>
+      <circle cx="765" cy="88" r="12"/>
+      <circle cx="841" cy="88" r="12"/>
+      <circle cx="157" cy="126" r="12"/>
+      <circle cx="195" cy="126" r="12"/>
+      <circle cx="233" cy="126" r="12"/>
+      <circle cx="461" cy="126" r="12"/>
+      <circle cx="537" cy="126" r="12"/>
+      <circle cx="651" cy="126" r="12"/>
+      <circle cx="689" cy="126" r="12"/>
+      <circle cx="727" cy="126" r="12"/>
+      <circle cx="765" cy="126" r="12"/>
+      <circle cx="233" cy="164" r="12"/>
+      <circle cx="271" cy="164" r="12"/>
+      <circle cx="309" cy="164" r="12"/>
+      <circle cx="537" cy="164" r="12"/>
+      <circle cx="613" cy="164" r="12"/>
+      <circle cx="727" cy="164" r="12"/>
+      <circle cx="765" cy="164" r="12"/>
+      <circle cx="841" cy="164" r="12"/>
+      <circle cx="81" cy="202" r="12"/>
+      <circle cx="119" cy="202" r="12"/>
+      <circle cx="309" cy="202" r="12"/>
+      <circle cx="347" cy="202" r="12"/>
+      <circle cx="385" cy="202" r="12"/>
+      <circle cx="613" cy="202" r="12"/>
+      <circle cx="689" cy="202" r="12"/>
+      <circle cx="803" cy="202" r="12"/>
+      <circle cx="841" cy="202" r="12"/>
+      <circle cx="81" cy="240" r="12"/>
+      <circle cx="157" cy="240" r="12"/>
+      <circle cx="233" cy="240" r="12"/>
+      <circle cx="271" cy="240" r="12"/>
+      <circle cx="461" cy="240" r="12"/>
+      <circle cx="689" cy="240" r="12"/>
+      <circle cx="727" cy="240" r="12"/>
+      <circle cx="765" cy="240" r="12"/>
+      <circle cx="157" cy="278" r="12"/>
+      <circle cx="233" cy="278" r="12"/>
+      <circle cx="347" cy="278" r="12"/>
+      <circle cx="385" cy="278" r="12"/>
+      <circle cx="461" cy="278" r="12"/>
+      <circle cx="537" cy="278" r="12"/>
+      <circle cx="575" cy="278" r="12"/>
+      <circle cx="613" cy="278" r="12"/>
+      <circle cx="765" cy="278" r="12"/>
+      <circle cx="803" cy="278" r="12"/>
+      <circle cx="841" cy="278" r="12"/>
+      <circle cx="233" cy="316" r="12"/>
+      <circle cx="309" cy="316" r="12"/>
+      <circle cx="423" cy="316" r="12"/>
+      <circle cx="461" cy="316" r="12"/>
+      <circle cx="537" cy="316" r="12"/>
+      <circle cx="765" cy="316" r="12"/>
+      <circle cx="841" cy="316" r="12"/>
+      <circle cx="879" cy="316" r="12"/>
+      <circle cx="81" cy="354" r="12"/>
+      <circle cx="309" cy="354" r="12"/>
+      <circle cx="385" cy="354" r="12"/>
+      <circle cx="499" cy="354" r="12"/>
+      <circle cx="537" cy="354" r="12"/>
+      <circle cx="613" cy="354" r="12"/>
+      <circle cx="727" cy="354" r="12"/>
+      <circle cx="803" cy="354" r="12"/>
+      <circle cx="879" cy="354" r="12"/>
+      <circle cx="81" cy="392" r="12"/>
+      <circle cx="119" cy="392" r="12"/>
+      <circle cx="157" cy="392" r="12"/>
+      <circle cx="385" cy="392" r="12"/>
+      <circle cx="461" cy="392" r="12"/>
+      <circle cx="575" cy="392" r="12"/>
+      <circle cx="613" cy="392" r="12"/>
+      <circle cx="651" cy="392" r="12"/>
+      <circle cx="689" cy="392" r="12"/>
+      <circle cx="879" cy="392" r="12"/>
+      <circle cx="81" cy="430" r="12"/>
+      <circle cx="119" cy="430" r="12"/>
+      <circle cx="157" cy="430" r="12"/>
+      <circle cx="195" cy="430" r="12"/>
+      <circle cx="233" cy="430" r="12"/>
+      <circle cx="461" cy="430" r="12"/>
+      <circle cx="537" cy="430" r="12"/>
+      <circle cx="651" cy="430" r="12"/>
+      <circle cx="689" cy="430" r="12"/>
+      <circle cx="765" cy="430" r="12"/>
+      <circle cx="841" cy="430" r="12"/>
+      <circle cx="119" cy="468" r="12"/>
+      <circle cx="233" cy="468" r="12"/>
+      <circle cx="271" cy="468" r="12"/>
+      <circle cx="309" cy="468" r="12"/>
+      <circle cx="537" cy="468" r="12"/>
+      <circle cx="613" cy="468" r="12"/>
+      <circle cx="727" cy="468" r="12"/>
+      <circle cx="765" cy="468" r="12"/>
+      <circle cx="841" cy="468" r="12"/>
+      <circle cx="81" cy="506" r="12"/>
+      <circle cx="119" cy="506" r="12"/>
+      <circle cx="195" cy="506" r="12"/>
+      <circle cx="233" cy="506" r="12"/>
+      <circle cx="309" cy="506" r="12"/>
+      <circle cx="347" cy="506" r="12"/>
+      <circle cx="385" cy="506" r="12"/>
+      <circle cx="613" cy="506" r="12"/>
+      <circle cx="689" cy="506" r="12"/>
+      <circle cx="803" cy="506" r="12"/>
+      <circle cx="841" cy="506" r="12"/>
+      <circle cx="81" cy="544" r="12"/>
+      <circle cx="157" cy="544" r="12"/>
+      <circle cx="195" cy="544" r="12"/>
+      <circle cx="233" cy="544" r="12"/>
+      <circle cx="271" cy="544" r="12"/>
+      <circle cx="309" cy="544" r="12"/>
+      <circle cx="385" cy="544" r="12"/>
+      <circle cx="423" cy="544" r="12"/>
+      <circle cx="461" cy="544" r="12"/>
+      <circle cx="689" cy="544" r="12"/>
+      <circle cx="765" cy="544" r="12"/>
+      <circle cx="879" cy="544" r="12"/>
+      <circle cx="81" cy="582" r="12"/>
+      <circle cx="157" cy="582" r="12"/>
+      <circle cx="233" cy="582" r="12"/>
+      <circle cx="309" cy="582" r="12"/>
+      <circle cx="461" cy="582" r="12"/>
+      <circle cx="499" cy="582" r="12"/>
+      <circle cx="537" cy="582" r="12"/>
+      <circle cx="765" cy="582" r="12"/>
+      <circle cx="841" cy="582" r="12"/>
+      <circle cx="119" cy="620" r="12"/>
+      <circle cx="157" cy="620" r="12"/>
+      <circle cx="195" cy="620" r="12"/>
+      <circle cx="233" cy="620" r="12"/>
+      <circle cx="385" cy="620" r="12"/>
+      <circle cx="423" cy="620" r="12"/>
+      <circle cx="499" cy="620" r="12"/>
+      <circle cx="537" cy="620" r="12"/>
+      <circle cx="575" cy="620" r="12"/>
+      <circle cx="613" cy="620" r="12"/>
+      <circle cx="841" cy="620" r="12"/>
+      <circle cx="81" cy="658" r="12"/>
+      <circle cx="195" cy="658" r="12"/>
+      <circle cx="233" cy="658" r="12"/>
+      <circle cx="309" cy="658" r="12"/>
+      <circle cx="385" cy="658" r="12"/>
+      <circle cx="499" cy="658" r="12"/>
+      <circle cx="689" cy="658" r="12"/>
+      <circle cx="81" cy="696" r="12"/>
+      <circle cx="119" cy="696" r="12"/>
+      <circle cx="157" cy="696" r="12"/>
+      <circle cx="385" cy="696" r="12"/>
+      <circle cx="461" cy="696" r="12"/>
+      <circle cx="575" cy="696" r="12"/>
+      <circle cx="613" cy="696" r="12"/>
+      <circle cx="689" cy="696" r="12"/>
+      <circle cx="841" cy="696" r="12"/>
+      <circle cx="119" cy="734" r="12"/>
+      <circle cx="157" cy="734" r="12"/>
+      <circle cx="195" cy="734" r="12"/>
+      <circle cx="233" cy="734" r="12"/>
+      <circle cx="461" cy="734" r="12"/>
+      <circle cx="537" cy="734" r="12"/>
+      <circle cx="651" cy="734" r="12"/>
+      <circle cx="689" cy="734" r="12"/>
+      <circle cx="765" cy="734" r="12"/>
+      <circle cx="841" cy="734" r="12"/>
+      <circle cx="119" cy="772" r="12"/>
+      <circle cx="233" cy="772" r="12"/>
+      <circle cx="271" cy="772" r="12"/>
+      <circle cx="309" cy="772" r="12"/>
+      <circle cx="537" cy="772" r="12"/>
+      <circle cx="613" cy="772" r="12"/>
+      <circle cx="727" cy="772" r="12"/>
+      <circle cx="765" cy="772" r="12"/>
+      <circle cx="803" cy="772" r="12"/>
+      <circle cx="841" cy="772" r="12"/>
+      <circle cx="157" cy="810" r="12"/>
+      <circle cx="195" cy="810" r="12"/>
+      <circle cx="271" cy="810" r="12"/>
+      <circle cx="309" cy="810" r="12"/>
+      <circle cx="347" cy="810" r="12"/>
+      <circle cx="385" cy="810" r="12"/>
+      <circle cx="613" cy="810" r="12"/>
+      <circle cx="689" cy="810" r="12"/>
+      <circle cx="803" cy="810" r="12"/>
+      <circle cx="841" cy="810" r="12"/>
+      <circle cx="81" cy="848" r="12"/>
+      <circle cx="157" cy="848" r="12"/>
+      <circle cx="271" cy="848" r="12"/>
+      <circle cx="385" cy="848" r="12"/>
+      <circle cx="423" cy="848" r="12"/>
+      <circle cx="461" cy="848" r="12"/>
+      <circle cx="689" cy="848" r="12"/>
+      <circle cx="765" cy="848" r="12"/>
+      <circle cx="879" cy="848" r="12"/>
+      <circle cx="81" cy="886" r="12"/>
+      <circle cx="157" cy="886" r="12"/>
+      <circle cx="233" cy="886" r="12"/>
+      <circle cx="271" cy="886" r="12"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">শান্ত উত্তর</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">নীরব সংকেত</text>
+    </g>
+  </g>
+</svg>

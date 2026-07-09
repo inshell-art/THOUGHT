@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits" data-grid-columns="15" data-grid-rows="14" data-cell-size="57" data-origin-x="52" data-origin-y="88" data-dot-radius="18" data-zero="empty">
+      <circle cx="137" cy="116" r="18"/>
+      <circle cx="194" cy="116" r="18"/>
+      <circle cx="251" cy="116" r="18"/>
+      <circle cx="422" cy="116" r="18"/>
+      <circle cx="479" cy="116" r="18"/>
+      <circle cx="593" cy="116" r="18"/>
+      <circle cx="650" cy="116" r="18"/>
+      <circle cx="821" cy="116" r="18"/>
+      <circle cx="80" cy="173" r="18"/>
+      <circle cx="194" cy="173" r="18"/>
+      <circle cx="251" cy="173" r="18"/>
+      <circle cx="308" cy="173" r="18"/>
+      <circle cx="479" cy="173" r="18"/>
+      <circle cx="536" cy="173" r="18"/>
+      <circle cx="650" cy="173" r="18"/>
+      <circle cx="707" cy="173" r="18"/>
+      <circle cx="764" cy="173" r="18"/>
+      <circle cx="80" cy="230" r="18"/>
+      <circle cx="137" cy="230" r="18"/>
+      <circle cx="251" cy="230" r="18"/>
+      <circle cx="308" cy="230" r="18"/>
+      <circle cx="422" cy="230" r="18"/>
+      <circle cx="593" cy="230" r="18"/>
+      <circle cx="707" cy="230" r="18"/>
+      <circle cx="764" cy="230" r="18"/>
+      <circle cx="821" cy="230" r="18"/>
+      <circle cx="878" cy="230" r="18"/>
+      <circle cx="137" cy="287" r="18"/>
+      <circle cx="365" cy="287" r="18"/>
+      <circle cx="764" cy="287" r="18"/>
+      <circle cx="821" cy="287" r="18"/>
+      <circle cx="80" cy="344" r="18"/>
+      <circle cx="251" cy="344" r="18"/>
+      <circle cx="308" cy="344" r="18"/>
+      <circle cx="365" cy="344" r="18"/>
+      <circle cx="593" cy="344" r="18"/>
+      <circle cx="707" cy="344" r="18"/>
+      <circle cx="764" cy="344" r="18"/>
+      <circle cx="80" cy="401" r="18"/>
+      <circle cx="137" cy="401" r="18"/>
+      <circle cx="194" cy="401" r="18"/>
+      <circle cx="251" cy="401" r="18"/>
+      <circle cx="308" cy="401" r="18"/>
+      <circle cx="422" cy="401" r="18"/>
+      <circle cx="479" cy="401" r="18"/>
+      <circle cx="764" cy="401" r="18"/>
+      <circle cx="878" cy="401" r="18"/>
+      <circle cx="80" cy="458" r="18"/>
+      <circle cx="137" cy="458" r="18"/>
+      <circle cx="308" cy="458" r="18"/>
+      <circle cx="479" cy="458" r="18"/>
+      <circle cx="536" cy="458" r="18"/>
+      <circle cx="707" cy="458" r="18"/>
+      <circle cx="821" cy="458" r="18"/>
+      <circle cx="80" cy="515" r="18"/>
+      <circle cx="137" cy="515" r="18"/>
+      <circle cx="194" cy="515" r="18"/>
+      <circle cx="308" cy="515" r="18"/>
+      <circle cx="536" cy="515" r="18"/>
+      <circle cx="593" cy="515" r="18"/>
+      <circle cx="650" cy="515" r="18"/>
+      <circle cx="821" cy="515" r="18"/>
+      <circle cx="878" cy="515" r="18"/>
+      <circle cx="137" cy="572" r="18"/>
+      <circle cx="194" cy="572" r="18"/>
+      <circle cx="479" cy="572" r="18"/>
+      <circle cx="593" cy="572" r="18"/>
+      <circle cx="650" cy="572" r="18"/>
+      <circle cx="764" cy="572" r="18"/>
+      <circle cx="878" cy="572" r="18"/>
+      <circle cx="80" cy="629" r="18"/>
+      <circle cx="194" cy="629" r="18"/>
+      <circle cx="251" cy="629" r="18"/>
+      <circle cx="365" cy="629" r="18"/>
+      <circle cx="536" cy="629" r="18"/>
+      <circle cx="650" cy="629" r="18"/>
+      <circle cx="707" cy="629" r="18"/>
+      <circle cx="821" cy="629" r="18"/>
+      <circle cx="878" cy="629" r="18"/>
+      <circle cx="80" cy="686" r="18"/>
+      <circle cx="308" cy="686" r="18"/>
+      <circle cx="707" cy="686" r="18"/>
+      <circle cx="764" cy="686" r="18"/>
+      <circle cx="821" cy="686" r="18"/>
+      <circle cx="878" cy="686" r="18"/>
+      <circle cx="194" cy="743" r="18"/>
+      <circle cx="308" cy="743" r="18"/>
+      <circle cx="365" cy="743" r="18"/>
+      <circle cx="650" cy="743" r="18"/>
+      <circle cx="764" cy="743" r="18"/>
+      <circle cx="821" cy="743" r="18"/>
+      <circle cx="80" cy="800" r="18"/>
+      <circle cx="137" cy="800" r="18"/>
+      <circle cx="194" cy="800" r="18"/>
+      <circle cx="308" cy="800" r="18"/>
+      <circle cx="365" cy="800" r="18"/>
+      <circle cx="593" cy="800" r="18"/>
+      <circle cx="764" cy="800" r="18"/>
+      <circle cx="878" cy="800" r="18"/>
+      <circle cx="80" cy="857" r="18"/>
+      <circle cx="308" cy="857" r="18"/>
+      <circle cx="422" cy="857" r="18"/>
+      <circle cx="479" cy="857" r="18"/>
+      <circle cx="536" cy="857" r="18"/>
+      <circle cx="650" cy="857" r="18"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">sakin yanıt</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">sessiz işaret</text>
+    </g>
+  </g>
+</svg>

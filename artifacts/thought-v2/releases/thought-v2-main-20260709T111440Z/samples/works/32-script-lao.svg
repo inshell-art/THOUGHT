@@ -1,0 +1,283 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits" data-grid-columns="23" data-grid-rows="22" data-cell-size="37" data-origin-x="54" data-origin-y="80" data-dot-radius="11" data-zero="empty">
+      <circle cx="72" cy="98" r="11"/>
+      <circle cx="109" cy="98" r="11"/>
+      <circle cx="146" cy="98" r="11"/>
+      <circle cx="368" cy="98" r="11"/>
+      <circle cx="442" cy="98" r="11"/>
+      <circle cx="479" cy="98" r="11"/>
+      <circle cx="516" cy="98" r="11"/>
+      <circle cx="590" cy="98" r="11"/>
+      <circle cx="664" cy="98" r="11"/>
+      <circle cx="738" cy="98" r="11"/>
+      <circle cx="812" cy="98" r="11"/>
+      <circle cx="886" cy="98" r="11"/>
+      <circle cx="109" cy="135" r="11"/>
+      <circle cx="146" cy="135" r="11"/>
+      <circle cx="183" cy="135" r="11"/>
+      <circle cx="405" cy="135" r="11"/>
+      <circle cx="479" cy="135" r="11"/>
+      <circle cx="516" cy="135" r="11"/>
+      <circle cx="553" cy="135" r="11"/>
+      <circle cx="627" cy="135" r="11"/>
+      <circle cx="701" cy="135" r="11"/>
+      <circle cx="775" cy="135" r="11"/>
+      <circle cx="812" cy="135" r="11"/>
+      <circle cx="109" cy="172" r="11"/>
+      <circle cx="146" cy="172" r="11"/>
+      <circle cx="183" cy="172" r="11"/>
+      <circle cx="220" cy="172" r="11"/>
+      <circle cx="442" cy="172" r="11"/>
+      <circle cx="516" cy="172" r="11"/>
+      <circle cx="553" cy="172" r="11"/>
+      <circle cx="590" cy="172" r="11"/>
+      <circle cx="664" cy="172" r="11"/>
+      <circle cx="738" cy="172" r="11"/>
+      <circle cx="849" cy="172" r="11"/>
+      <circle cx="886" cy="172" r="11"/>
+      <circle cx="146" cy="209" r="11"/>
+      <circle cx="183" cy="209" r="11"/>
+      <circle cx="220" cy="209" r="11"/>
+      <circle cx="257" cy="209" r="11"/>
+      <circle cx="479" cy="209" r="11"/>
+      <circle cx="553" cy="209" r="11"/>
+      <circle cx="590" cy="209" r="11"/>
+      <circle cx="627" cy="209" r="11"/>
+      <circle cx="701" cy="209" r="11"/>
+      <circle cx="775" cy="209" r="11"/>
+      <circle cx="72" cy="246" r="11"/>
+      <circle cx="109" cy="246" r="11"/>
+      <circle cx="183" cy="246" r="11"/>
+      <circle cx="220" cy="246" r="11"/>
+      <circle cx="257" cy="246" r="11"/>
+      <circle cx="294" cy="246" r="11"/>
+      <circle cx="516" cy="246" r="11"/>
+      <circle cx="590" cy="246" r="11"/>
+      <circle cx="627" cy="246" r="11"/>
+      <circle cx="664" cy="246" r="11"/>
+      <circle cx="738" cy="246" r="11"/>
+      <circle cx="812" cy="246" r="11"/>
+      <circle cx="886" cy="246" r="11"/>
+      <circle cx="72" cy="283" r="11"/>
+      <circle cx="183" cy="283" r="11"/>
+      <circle cx="257" cy="283" r="11"/>
+      <circle cx="294" cy="283" r="11"/>
+      <circle cx="331" cy="283" r="11"/>
+      <circle cx="553" cy="283" r="11"/>
+      <circle cx="627" cy="283" r="11"/>
+      <circle cx="664" cy="283" r="11"/>
+      <circle cx="701" cy="283" r="11"/>
+      <circle cx="775" cy="283" r="11"/>
+      <circle cx="849" cy="283" r="11"/>
+      <circle cx="109" cy="320" r="11"/>
+      <circle cx="146" cy="320" r="11"/>
+      <circle cx="257" cy="320" r="11"/>
+      <circle cx="294" cy="320" r="11"/>
+      <circle cx="331" cy="320" r="11"/>
+      <circle cx="368" cy="320" r="11"/>
+      <circle cx="590" cy="320" r="11"/>
+      <circle cx="664" cy="320" r="11"/>
+      <circle cx="701" cy="320" r="11"/>
+      <circle cx="738" cy="320" r="11"/>
+      <circle cx="812" cy="320" r="11"/>
+      <circle cx="886" cy="320" r="11"/>
+      <circle cx="220" cy="357" r="11"/>
+      <circle cx="257" cy="357" r="11"/>
+      <circle cx="294" cy="357" r="11"/>
+      <circle cx="331" cy="357" r="11"/>
+      <circle cx="368" cy="357" r="11"/>
+      <circle cx="405" cy="357" r="11"/>
+      <circle cx="627" cy="357" r="11"/>
+      <circle cx="701" cy="357" r="11"/>
+      <circle cx="738" cy="357" r="11"/>
+      <circle cx="775" cy="357" r="11"/>
+      <circle cx="849" cy="357" r="11"/>
+      <circle cx="72" cy="394" r="11"/>
+      <circle cx="146" cy="394" r="11"/>
+      <circle cx="183" cy="394" r="11"/>
+      <circle cx="220" cy="394" r="11"/>
+      <circle cx="257" cy="394" r="11"/>
+      <circle cx="331" cy="394" r="11"/>
+      <circle cx="368" cy="394" r="11"/>
+      <circle cx="405" cy="394" r="11"/>
+      <circle cx="442" cy="394" r="11"/>
+      <circle cx="664" cy="394" r="11"/>
+      <circle cx="738" cy="394" r="11"/>
+      <circle cx="775" cy="394" r="11"/>
+      <circle cx="812" cy="394" r="11"/>
+      <circle cx="886" cy="394" r="11"/>
+      <circle cx="109" cy="431" r="11"/>
+      <circle cx="220" cy="431" r="11"/>
+      <circle cx="257" cy="431" r="11"/>
+      <circle cx="331" cy="431" r="11"/>
+      <circle cx="405" cy="431" r="11"/>
+      <circle cx="442" cy="431" r="11"/>
+      <circle cx="479" cy="431" r="11"/>
+      <circle cx="701" cy="431" r="11"/>
+      <circle cx="775" cy="431" r="11"/>
+      <circle cx="812" cy="431" r="11"/>
+      <circle cx="849" cy="431" r="11"/>
+      <circle cx="72" cy="468" r="11"/>
+      <circle cx="146" cy="468" r="11"/>
+      <circle cx="331" cy="468" r="11"/>
+      <circle cx="442" cy="468" r="11"/>
+      <circle cx="479" cy="468" r="11"/>
+      <circle cx="516" cy="468" r="11"/>
+      <circle cx="738" cy="468" r="11"/>
+      <circle cx="812" cy="468" r="11"/>
+      <circle cx="849" cy="468" r="11"/>
+      <circle cx="886" cy="468" r="11"/>
+      <circle cx="109" cy="505" r="11"/>
+      <circle cx="146" cy="505" r="11"/>
+      <circle cx="183" cy="505" r="11"/>
+      <circle cx="331" cy="505" r="11"/>
+      <circle cx="368" cy="505" r="11"/>
+      <circle cx="442" cy="505" r="11"/>
+      <circle cx="479" cy="505" r="11"/>
+      <circle cx="516" cy="505" r="11"/>
+      <circle cx="553" cy="505" r="11"/>
+      <circle cx="775" cy="505" r="11"/>
+      <circle cx="849" cy="505" r="11"/>
+      <circle cx="886" cy="505" r="11"/>
+      <circle cx="72" cy="542" r="11"/>
+      <circle cx="146" cy="542" r="11"/>
+      <circle cx="220" cy="542" r="11"/>
+      <circle cx="294" cy="542" r="11"/>
+      <circle cx="331" cy="542" r="11"/>
+      <circle cx="442" cy="542" r="11"/>
+      <circle cx="516" cy="542" r="11"/>
+      <circle cx="553" cy="542" r="11"/>
+      <circle cx="590" cy="542" r="11"/>
+      <circle cx="812" cy="542" r="11"/>
+      <circle cx="886" cy="542" r="11"/>
+      <circle cx="72" cy="579" r="11"/>
+      <circle cx="109" cy="579" r="11"/>
+      <circle cx="183" cy="579" r="11"/>
+      <circle cx="257" cy="579" r="11"/>
+      <circle cx="368" cy="579" r="11"/>
+      <circle cx="442" cy="579" r="11"/>
+      <circle cx="516" cy="579" r="11"/>
+      <circle cx="553" cy="579" r="11"/>
+      <circle cx="590" cy="579" r="11"/>
+      <circle cx="627" cy="579" r="11"/>
+      <circle cx="849" cy="579" r="11"/>
+      <circle cx="72" cy="616" r="11"/>
+      <circle cx="109" cy="616" r="11"/>
+      <circle cx="146" cy="616" r="11"/>
+      <circle cx="220" cy="616" r="11"/>
+      <circle cx="294" cy="616" r="11"/>
+      <circle cx="368" cy="616" r="11"/>
+      <circle cx="442" cy="616" r="11"/>
+      <circle cx="479" cy="616" r="11"/>
+      <circle cx="553" cy="616" r="11"/>
+      <circle cx="590" cy="616" r="11"/>
+      <circle cx="627" cy="616" r="11"/>
+      <circle cx="664" cy="616" r="11"/>
+      <circle cx="886" cy="616" r="11"/>
+      <circle cx="109" cy="653" r="11"/>
+      <circle cx="146" cy="653" r="11"/>
+      <circle cx="183" cy="653" r="11"/>
+      <circle cx="257" cy="653" r="11"/>
+      <circle cx="331" cy="653" r="11"/>
+      <circle cx="442" cy="653" r="11"/>
+      <circle cx="479" cy="653" r="11"/>
+      <circle cx="553" cy="653" r="11"/>
+      <circle cx="627" cy="653" r="11"/>
+      <circle cx="664" cy="653" r="11"/>
+      <circle cx="701" cy="653" r="11"/>
+      <circle cx="72" cy="690" r="11"/>
+      <circle cx="146" cy="690" r="11"/>
+      <circle cx="183" cy="690" r="11"/>
+      <circle cx="220" cy="690" r="11"/>
+      <circle cx="294" cy="690" r="11"/>
+      <circle cx="368" cy="690" r="11"/>
+      <circle cx="442" cy="690" r="11"/>
+      <circle cx="516" cy="690" r="11"/>
+      <circle cx="590" cy="690" r="11"/>
+      <circle cx="664" cy="690" r="11"/>
+      <circle cx="701" cy="690" r="11"/>
+      <circle cx="738" cy="690" r="11"/>
+      <circle cx="109" cy="727" r="11"/>
+      <circle cx="183" cy="727" r="11"/>
+      <circle cx="220" cy="727" r="11"/>
+      <circle cx="257" cy="727" r="11"/>
+      <circle cx="331" cy="727" r="11"/>
+      <circle cx="405" cy="727" r="11"/>
+      <circle cx="479" cy="727" r="11"/>
+      <circle cx="516" cy="727" r="11"/>
+      <circle cx="701" cy="727" r="11"/>
+      <circle cx="738" cy="727" r="11"/>
+      <circle cx="775" cy="727" r="11"/>
+      <circle cx="146" cy="764" r="11"/>
+      <circle cx="220" cy="764" r="11"/>
+      <circle cx="257" cy="764" r="11"/>
+      <circle cx="294" cy="764" r="11"/>
+      <circle cx="368" cy="764" r="11"/>
+      <circle cx="442" cy="764" r="11"/>
+      <circle cx="516" cy="764" r="11"/>
+      <circle cx="590" cy="764" r="11"/>
+      <circle cx="664" cy="764" r="11"/>
+      <circle cx="701" cy="764" r="11"/>
+      <circle cx="738" cy="764" r="11"/>
+      <circle cx="775" cy="764" r="11"/>
+      <circle cx="812" cy="764" r="11"/>
+      <circle cx="183" cy="801" r="11"/>
+      <circle cx="257" cy="801" r="11"/>
+      <circle cx="294" cy="801" r="11"/>
+      <circle cx="331" cy="801" r="11"/>
+      <circle cx="405" cy="801" r="11"/>
+      <circle cx="479" cy="801" r="11"/>
+      <circle cx="664" cy="801" r="11"/>
+      <circle cx="701" cy="801" r="11"/>
+      <circle cx="738" cy="801" r="11"/>
+      <circle cx="775" cy="801" r="11"/>
+      <circle cx="812" cy="801" r="11"/>
+      <circle cx="849" cy="801" r="11"/>
+      <circle cx="220" cy="838" r="11"/>
+      <circle cx="294" cy="838" r="11"/>
+      <circle cx="331" cy="838" r="11"/>
+      <circle cx="368" cy="838" r="11"/>
+      <circle cx="442" cy="838" r="11"/>
+      <circle cx="516" cy="838" r="11"/>
+      <circle cx="590" cy="838" r="11"/>
+      <circle cx="627" cy="838" r="11"/>
+      <circle cx="664" cy="838" r="11"/>
+      <circle cx="738" cy="838" r="11"/>
+      <circle cx="775" cy="838" r="11"/>
+      <circle cx="812" cy="838" r="11"/>
+      <circle cx="849" cy="838" r="11"/>
+      <circle cx="886" cy="838" r="11"/>
+      <circle cx="257" cy="875" r="11"/>
+      <circle cx="331" cy="875" r="11"/>
+      <circle cx="368" cy="875" r="11"/>
+      <circle cx="405" cy="875" r="11"/>
+      <circle cx="479" cy="875" r="11"/>
+      <circle cx="553" cy="875" r="11"/>
+      <circle cx="664" cy="875" r="11"/>
+      <circle cx="701" cy="875" r="11"/>
+      <circle cx="775" cy="875" r="11"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">ຄໍາຕອບສະຫງົບ</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">ສັນຍານງຽບ</text>
+    </g>
+  </g>
+</svg>
