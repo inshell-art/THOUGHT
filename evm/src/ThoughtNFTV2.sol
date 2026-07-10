@@ -130,8 +130,6 @@ contract ThoughtNFTV2 {
 
     uint256 private constant SVG_WIDTH = 960;
     uint256 private constant SVG_HEIGHT = 960;
-    string private constant WORK_FRAME_COLOR = "#202020";
-    string private constant WORK_FRAME_TRANSFORM = "translate(16 16) scale(0.9666666666666667)";
     uint256 private constant AGENT_X = 480;
     uint256 private constant AGENT_Y = 420;
     uint256 private constant AGENT_TARGET_WIDTH = 820;
@@ -142,14 +140,22 @@ contract ThoughtNFTV2 {
     uint256 private constant PROMPT_TARGET_WIDTH = 820;
     uint256 private constant PROMPT_BASE_FONT = 34;
     uint256 private constant PROMPT_MIN_FONT = 18;
-    uint256 private constant BINARY_BG_X = 48;
-    uint256 private constant BINARY_BG_Y = 57;
-    uint256 private constant BINARY_BG_ROWS = 48;
-    uint256 private constant BINARY_BG_ROW_GAP = 18;
-    uint256 private constant BINARY_BG_WIDTH = 864;
-    uint256 private constant BINARY_BG_HEIGHT = (BINARY_BG_ROWS - 1) * BINARY_BG_ROW_GAP;
-    uint256 private constant BINARY_BG_DOT_RADIUS_NUMERATOR = 32;
-    uint256 private constant BINARY_BG_DOT_RADIUS_DENOMINATOR = 100;
+    uint256 private constant BINARY_BG_X = 32;
+    uint256 private constant BINARY_BG_Y = 32;
+    uint256 private constant BINARY_BG_WIDTH = 896;
+    uint256 private constant BINARY_BG_HEIGHT = 896;
+    uint256 private constant BINARY_BG_SIDE = 32;
+    uint256 private constant BINARY_BG_CAPACITY = BINARY_BG_SIDE * BINARY_BG_SIDE;
+    uint256 private constant BINARY_BG_DOT_RADIUS_NUMERATOR = 5;
+    uint256 private constant BINARY_BG_DOT_RADIUS_DENOMINATOR = 14;
+    uint256 private constant BINARY_AGENT_CLEAR_X = 93;
+    uint256 private constant BINARY_AGENT_CLEAR_Y = 373;
+    uint256 private constant BINARY_AGENT_CLEAR_WIDTH = 774;
+    uint256 private constant BINARY_AGENT_CLEAR_HEIGHT = 74;
+    uint256 private constant BINARY_PROMPT_CLEAR_X = 149;
+    uint256 private constant BINARY_PROMPT_CLEAR_Y = 821;
+    uint256 private constant BINARY_PROMPT_CLEAR_WIDTH = 662;
+    uint256 private constant BINARY_PROMPT_CLEAR_HEIGHT = 46;
     string private constant FONT_STACK =
         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
@@ -485,11 +491,7 @@ contract ThoughtNFTV2 {
             _toString(SVG_WIDTH),
             '" height="',
             _toString(SVG_HEIGHT),
-            '" viewBox="0 0 960 960"><rect id="work-frame" width="960" height="960" fill="',
-            WORK_FRAME_COLOR,
-            '"/><g id="work-canvas" transform="',
-            WORK_FRAME_TRANSFORM,
-            '"><rect id="canvas-bg" width="960" height="960" fill="#050505"/>',
+            '" viewBox="0 0 960 960"><rect id="canvas-bg" width="960" height="960" fill="#050505"/>',
             _svgBinaryBackground(record.promptLine, record.agentLine),
             _svgTextLine(
                 AGENT_X,
@@ -509,7 +511,7 @@ contract ThoughtNFTV2 {
                 record.promptLine,
                 promptSqueezed
             ),
-            "</g></svg>"
+            "</svg>"
         );
     }
 
@@ -520,12 +522,9 @@ contract ThoughtNFTV2 {
             return "";
         }
 
-        bytes memory output = abi.encodePacked(
-            '<g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits"'
-        );
         uint256 totalBits = (promptData.length + agentData.length) * 8;
-        uint256 columns = _binaryGridColumns(totalBits);
-        uint256 rows = (totalBits + columns - 1) / columns;
+        uint256 columns = BINARY_BG_SIDE;
+        uint256 rows = BINARY_BG_SIDE;
         uint256 cellSize = BINARY_BG_WIDTH / columns;
         uint256 cellSizeY = BINARY_BG_HEIGHT / rows;
         if (cellSizeY < cellSize) {
@@ -539,57 +538,86 @@ contract ThoughtNFTV2 {
         uint256 radius =
             (cellSize * BINARY_BG_DOT_RADIUS_NUMERATOR + BINARY_BG_DOT_RADIUS_DENOMINATOR - 1)
                 / BINARY_BG_DOT_RADIUS_DENOMINATOR;
-        output = abi.encodePacked(
-            output,
-            ' data-grid-columns="',
-            _toString(columns),
-            '" data-grid-rows="',
-            _toString(rows),
-            '" data-cell-size="',
-            _toString(cellSize),
-            '" data-origin-x="',
-            _toString(originX),
-            '" data-origin-y="',
-            _toString(originY),
-            '" data-dot-radius="',
-            _toString(radius),
-            '" data-zero="hollow-circle">'
-        );
 
-        for (uint256 bitOffset = 0; bitOffset < totalBits; bitOffset++) {
+        bytes memory output = new bytes(80_000);
+        uint256 cursor;
+        cursor = _writeSvgBytes(
+            output,
+            cursor,
+            '<g id="binary-background" opacity="1.00" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits"'
+        );
+        cursor = _writeSvgBytes(output, cursor, ' data-grid-columns="');
+        cursor = _writeSvgUint(output, cursor, columns);
+        cursor = _writeSvgBytes(output, cursor, '" data-grid-rows="');
+        cursor = _writeSvgUint(output, cursor, rows);
+        cursor = _writeSvgBytes(output, cursor, '" data-bit-capacity="');
+        cursor = _writeSvgUint(output, cursor, BINARY_BG_CAPACITY);
+        cursor = _writeSvgBytes(output, cursor, '" data-rendered-cells="892" data-cleared-cells="132" data-source-bit-count="');
+        cursor = _writeSvgUint(output, cursor, totalBits);
+        cursor = _writeSvgBytes(output, cursor, '" data-fill-rule="repeat-short-truncate-long" data-cell-size="');
+        cursor = _writeSvgUint(output, cursor, cellSize);
+        cursor = _writeSvgBytes(output, cursor, '" data-origin-x="');
+        cursor = _writeSvgUint(output, cursor, originX);
+        cursor = _writeSvgBytes(output, cursor, '" data-origin-y="');
+        cursor = _writeSvgUint(output, cursor, originY);
+        cursor = _writeSvgBytes(output, cursor, '" data-dot-radius="');
+        cursor = _writeSvgUint(output, cursor, radius);
+        cursor = _writeSvgBytes(output, cursor, '" data-zero="hollow-circle">');
+        cursor = _writeSvgBytes(output, cursor, '<defs><circle id="binary-one" r="');
+        cursor = _writeSvgUint(output, cursor, radius);
+        cursor = _writeSvgBytes(output, cursor, '" fill="#006100"/><circle id="binary-zero" r="');
+        cursor = _writeSvgUint(output, cursor, radius);
+        cursor = _writeSvgBytes(output, cursor, '" fill="none" stroke="#006100" stroke-width="1"/></defs>');
+
+        for (uint256 bitOffset = 0; bitOffset < BINARY_BG_CAPACITY; bitOffset++) {
             uint256 column = bitOffset % columns;
             uint256 row = bitOffset / columns;
-            bool isOne = _binarySourceIsOne(promptData, agentData, bitOffset);
-            output = abi.encodePacked(
-                output,
-                '<circle cx="',
-                _toString(originX + column * cellSize + cellSize / 2),
-                '" cy="',
-                _toString(originY + row * cellSize + cellSize / 2),
-                '" r="',
-                _toString(radius),
-                isOne ? '"/>' : '" fill="none" stroke="#006100" stroke-width="1"/>'
+            uint256 sourceBitOffset = totalBits > BINARY_BG_CAPACITY ? bitOffset : bitOffset % totalBits;
+            bool isOne = _binarySourceIsOne(promptData, agentData, sourceBitOffset);
+            uint256 cx = originX + column * cellSize + cellSize / 2;
+            uint256 cy = originY + row * cellSize + cellSize / 2;
+            if (_isBinaryTextBlockCell(cx, cy)) {
+                continue;
+            }
+            cursor = _writeSvgBytes(output, cursor, isOne ? '<use href="#binary-one" x="' : '<use href="#binary-zero" x="');
+            cursor = _writeSvgUint(output, cursor, cx);
+            cursor = _writeSvgBytes(output, cursor, '" y="');
+            cursor = _writeSvgUint(output, cursor, cy);
+            cursor = _writeSvgBytes(output, cursor, '"/>');
+        }
+
+        cursor = _writeSvgBytes(output, cursor, "</g>");
+        assembly {
+            mstore(output, cursor)
+        }
+        return string(output);
+    }
+
+    function _isBinaryTextBlockCell(uint256 x, uint256 y) private pure returns (bool) {
+        return _isInsideRect(x, y, BINARY_AGENT_CLEAR_X, BINARY_AGENT_CLEAR_Y, BINARY_AGENT_CLEAR_WIDTH, BINARY_AGENT_CLEAR_HEIGHT)
+            || _isInsideRect(
+                x, y, BINARY_PROMPT_CLEAR_X, BINARY_PROMPT_CLEAR_Y, BINARY_PROMPT_CLEAR_WIDTH, BINARY_PROMPT_CLEAR_HEIGHT
             );
-        }
-
-        return string(abi.encodePacked(output, "</g>"));
     }
 
-    function _binaryGridColumns(uint256 totalBits) private pure returns (uint256) {
-        uint256 columns = _sqrtCeil((totalBits * BINARY_BG_WIDTH + BINARY_BG_HEIGHT - 1) / BINARY_BG_HEIGHT);
-        uint256 rows = (totalBits + columns - 1) / columns;
-        if (rows <= BINARY_BG_ROWS) {
-            return columns;
-        }
-        return (totalBits + BINARY_BG_ROWS - 1) / BINARY_BG_ROWS;
+    function _isInsideRect(uint256 x, uint256 y, uint256 rectX, uint256 rectY, uint256 rectWidth, uint256 rectHeight)
+        private
+        pure
+        returns (bool)
+    {
+        return x >= rectX && x <= rectX + rectWidth && y >= rectY && y <= rectY + rectHeight;
     }
 
-    function _sqrtCeil(uint256 value) private pure returns (uint256) {
-        uint256 root = 1;
-        while (root * root < value) {
-            root++;
+    function _writeSvgBytes(bytes memory output, uint256 cursor, string memory value) private pure returns (uint256) {
+        bytes memory data = bytes(value);
+        for (uint256 i = 0; i < data.length; i++) {
+            output[cursor + i] = data[i];
         }
-        return root;
+        return cursor + data.length;
+    }
+
+    function _writeSvgUint(bytes memory output, uint256 cursor, uint256 value) private pure returns (uint256) {
+        return _writeSvgBytes(output, cursor, _toString(value));
     }
 
     function _binarySourceIsOne(bytes memory promptData, bytes memory agentData, uint256 bitOffset)

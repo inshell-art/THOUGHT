@@ -2,21 +2,19 @@
   "schema_version": 1,
   "artifact_kind": "thought-v2-render-artifact-channel",
   "channel": "experimental",
-  "artifact_id": "thought-v2-main-20260709T125029Z",
-  "generated_at": "2026-07-09T12:50:29.897Z",
-  "manifest_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T125029Z/manifest.json",
-  "manifest_sha256": "585ba5dfbd910a68622e4321686166314019b0e8fb7185bf4d6652ca4969250c",
-  "release_base_path": "artifacts/thought-v2/releases/thought-v2-main-20260709T125029Z",
+  "artifact_id": "thought-v2-clear-text-blocks-opacity-100-20260710T105511Z",
+  "generated_at": "2026-07-10T10:55:23.667Z",
+  "manifest_path": "artifacts/thought-v2/releases/thought-v2-clear-text-blocks-opacity-100-20260710T105511Z/manifest.json",
+  "manifest_sha256": "61d98a3fb939b1b8ebdafc858bd5288c86339b65e95e2bd99ef2f0a83cde491b",
+  "release_base_path": "artifacts/thought-v2/releases/thought-v2-clear-text-blocks-opacity-100-20260710T105511Z",
   "source": {
     "repo_remote": "https://github.com/inshell-art/THOUGHT.git",
-    "branch": "main",
-    "commit": "8a18a5f2561e122ff76cdac73bd904991b68fdbc",
+    "branch": "codex/thought-v2-clear-text-blocks",
+    "commit": "4dc93d50116a3fe93ea497eaa85b687ea3188f05",
     "dirty": true,
     "status": [
-      "M THOUGHT_V2_FE_TIGHTENING_ARTIFACT.md",
       " M evm/src/ThoughtNFTV2.sol",
       " M evm/test/ThoughtNFTV2.t.sol",
-      " M src/thought-v2-fixtures.ts",
       " M src/thought-v2-renderer.test.ts",
       " M src/thought-v2-renderer.ts"
     ]
