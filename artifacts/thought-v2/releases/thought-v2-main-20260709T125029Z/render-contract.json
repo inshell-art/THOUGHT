@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "renderContract": {
+    "schemaVersion": 1,
+    "canvas": {
+      "width": 960,
+      "height": 960,
+      "defaultBg": "#000000"
+    },
+    "workFrame": {
+      "size": 16,
+      "color": "#202020",
+      "transform": "translate(16 16) scale(0.9666666666666667)"
+    },
+    "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif",
+    "binaryBackground": {
+      "sourceOrder": [
+        "promptLine",
+        "agentLine"
+      ],
+      "encoding": "utf-8",
+      "layout": "one-pass-square-cell-grid",
+      "x": 48,
+      "y": 57,
+      "maxRows": 48,
+      "width": 864,
+      "height": 846,
+      "glyphs": {
+        "one": "circle",
+        "zero": "hollow circle"
+      },
+      "cell": {
+        "mode": "square-grid-fit",
+        "radiusMode": "percentage-of-square-cell",
+        "radiusFormula": "ceil(cellSize * dotRadiusRatio)",
+        "dotRadiusRatio": 0.32
+      },
+      "fill": "#006100",
+      "opacity": 0.5
+    },
+    "agentLine": {
+      "targetWidth": 784,
+      "defaultFontSize": 44,
+      "defaultTextColor": "#ffffff",
+      "defaultBgColor": "none",
+      "defaultFrameColor": "#ffffff",
+      "bg": {
+        "x": 87,
+        "y": 378,
+        "width": 786,
+        "height": 70,
+        "radius": 8
+      },
+      "clip": {
+        "x": 88,
+        "y": 378,
+        "width": 784,
+        "height": 70,
+        "radius": 8
+      },
+      "frameStrokeWidth": 1,
+      "text": {
+        "x": 480,
+        "y": 413,
+        "textAnchor": "middle",
+        "dominantBaseline": "middle"
+      }
+    },
+    "promptLine": {
+      "targetWidth": 628,
+      "defaultFontSize": 16,
+      "defaultTextColor": "#ffffff",
+      "bg": {
+        "x": 165,
+        "y": 868,
+        "width": 630,
+        "height": 44,
+        "radius": 8
+      },
+      "clip": {
+        "x": 166,
+        "y": 868,
+        "width": 628,
+        "height": 44,
+        "radius": 8
+      },
+      "text": {
+        "x": 480,
+        "y": 890,
+        "textAnchor": "middle",
+        "dominantBaseline": "middle"
+      }
+    },
+    "carousel": {
+      "minGap": 240,
+      "fontGapMultiplier": 6,
+      "minDurationSeconds": 14,
+      "pixelsPerSecond": 80
+    }
+  },
+  "limits": {
+    "promptMaxBytes": 1024,
+    "agentMaxBytes": 1024,
+    "promptMaxUnits": 960,
+    "agentMaxUnits": 960
+  },
+  "fixedRender": {
+    "agentFontSize": 44,
+    "promptFontSize": 16,
+    "agentTextColor": "#ffffff",
+    "promptTextColor": "#ffffff",
+    "agentBgColor": "none",
+    "agentFrameColor": "#ffffff",
+    "canvasBgColor": "#000000"
+  }
+}

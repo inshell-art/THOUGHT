@@ -1,0 +1,363 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits" data-grid-columns="19" data-grid-rows="18" data-cell-size="45" data-origin-x="52" data-origin-y="75" data-dot-radius="15" data-zero="hollow-circle">
+      <circle cx="74" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="97" r="15"/>
+      <circle cx="164" cy="97" r="15"/>
+      <circle cx="209" cy="97" r="15"/>
+      <circle cx="254" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="97" r="15"/>
+      <circle cx="389" cy="97" r="15"/>
+      <circle cx="434" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="97" r="15"/>
+      <circle cx="524" cy="97" r="15"/>
+      <circle cx="569" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="97" r="15"/>
+      <circle cx="659" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="97" r="15"/>
+      <circle cx="794" cy="97" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="97" r="15"/>
+      <circle cx="884" cy="97" r="15"/>
+      <circle cx="74" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="142" r="15"/>
+      <circle cx="209" cy="142" r="15"/>
+      <circle cx="254" cy="142" r="15"/>
+      <circle cx="299" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="142" r="15"/>
+      <circle cx="389" cy="142" r="15"/>
+      <circle cx="434" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="142" r="15"/>
+      <circle cx="524" cy="142" r="15"/>
+      <circle cx="569" cy="142" r="15"/>
+      <circle cx="614" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="142" r="15"/>
+      <circle cx="749" cy="142" r="15"/>
+      <circle cx="794" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="142" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="187" r="15"/>
+      <circle cx="164" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="187" r="15"/>
+      <circle cx="254" cy="187" r="15"/>
+      <circle cx="299" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="187" r="15"/>
+      <circle cx="389" cy="187" r="15"/>
+      <circle cx="434" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="187" r="15"/>
+      <circle cx="659" cy="187" r="15"/>
+      <circle cx="704" cy="187" r="15"/>
+      <circle cx="749" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="187" r="15"/>
+      <circle cx="839" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="187" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="232" r="15"/>
+      <circle cx="164" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="232" r="15"/>
+      <circle cx="479" cy="232" r="15"/>
+      <circle cx="524" cy="232" r="15"/>
+      <circle cx="569" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="232" r="15"/>
+      <circle cx="749" cy="232" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="232" r="15"/>
+      <circle cx="839" cy="232" r="15"/>
+      <circle cx="884" cy="232" r="15"/>
+      <circle cx="74" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="277" r="15"/>
+      <circle cx="164" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="277" r="15"/>
+      <circle cx="254" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="277" r="15"/>
+      <circle cx="344" cy="277" r="15"/>
+      <circle cx="389" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="277" r="15"/>
+      <circle cx="479" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="277" r="15"/>
+      <circle cx="614" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="277" r="15"/>
+      <circle cx="704" cy="277" r="15"/>
+      <circle cx="749" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="277" r="15"/>
+      <circle cx="884" cy="277" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="322" r="15"/>
+      <circle cx="119" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="322" r="15"/>
+      <circle cx="209" cy="322" r="15"/>
+      <circle cx="254" cy="322" r="15"/>
+      <circle cx="299" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="322" r="15"/>
+      <circle cx="389" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="322" r="15"/>
+      <circle cx="614" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="322" r="15"/>
+      <circle cx="704" cy="322" r="15"/>
+      <circle cx="749" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="322" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="367" r="15"/>
+      <circle cx="119" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="367" r="15"/>
+      <circle cx="434" cy="367" r="15"/>
+      <circle cx="479" cy="367" r="15"/>
+      <circle cx="524" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="367" r="15"/>
+      <circle cx="614" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="367" r="15"/>
+      <circle cx="794" cy="367" r="15"/>
+      <circle cx="839" cy="367" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="367" r="15"/>
+      <circle cx="74" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="412" r="15"/>
+      <circle cx="299" cy="412" r="15"/>
+      <circle cx="344" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="412" r="15"/>
+      <circle cx="479" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="412" r="15"/>
+      <circle cx="569" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="412" r="15"/>
+      <circle cx="659" cy="412" r="15"/>
+      <circle cx="704" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="412" r="15"/>
+      <circle cx="794" cy="412" r="15"/>
+      <circle cx="839" cy="412" r="15"/>
+      <circle cx="884" cy="412" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="457" r="15"/>
+      <circle cx="209" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="457" r="15"/>
+      <circle cx="524" cy="457" r="15"/>
+      <circle cx="569" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="457" r="15"/>
+      <circle cx="749" cy="457" r="15"/>
+      <circle cx="794" cy="457" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="457" r="15"/>
+      <circle cx="884" cy="457" r="15"/>
+      <circle cx="74" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="502" r="15"/>
+      <circle cx="164" cy="502" r="15"/>
+      <circle cx="209" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="502" r="15"/>
+      <circle cx="389" cy="502" r="15"/>
+      <circle cx="434" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="502" r="15"/>
+      <circle cx="569" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="502" r="15"/>
+      <circle cx="659" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="502" r="15"/>
+      <circle cx="749" cy="502" r="15"/>
+      <circle cx="794" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="502" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="547" r="15"/>
+      <circle cx="164" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="547" r="15"/>
+      <circle cx="254" cy="547" r="15"/>
+      <circle cx="299" cy="547" r="15"/>
+      <circle cx="344" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="547" r="15"/>
+      <circle cx="479" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="547" r="15"/>
+      <circle cx="614" cy="547" r="15"/>
+      <circle cx="659" cy="547" r="15"/>
+      <circle cx="704" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="547" r="15"/>
+      <circle cx="884" cy="547" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="592" r="15"/>
+      <circle cx="119" cy="592" r="15"/>
+      <circle cx="164" cy="592" r="15"/>
+      <circle cx="209" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="592" r="15"/>
+      <circle cx="299" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="592" r="15"/>
+      <circle cx="389" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="592" r="15"/>
+      <circle cx="479" cy="592" r="15"/>
+      <circle cx="524" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="592" r="15"/>
+      <circle cx="614" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="592" r="15"/>
+      <circle cx="749" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="592" r="15"/>
+      <circle cx="839" cy="592" r="15"/>
+      <circle cx="884" cy="592" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="637" r="15"/>
+      <circle cx="164" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="637" r="15"/>
+      <circle cx="254" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="637" r="15"/>
+      <circle cx="344" cy="637" r="15"/>
+      <circle cx="389" cy="637" r="15"/>
+      <circle cx="434" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="637" r="15"/>
+      <circle cx="524" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="637" r="15"/>
+      <circle cx="749" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="637" r="15"/>
+      <circle cx="839" cy="637" r="15"/>
+      <circle cx="884" cy="637" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="74" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="682" r="15"/>
+      <circle cx="254" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="682" r="15"/>
+      <circle cx="569" cy="682" r="15"/>
+      <circle cx="614" cy="682" r="15"/>
+      <circle cx="659" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="704" cy="682" r="15"/>
+      <circle cx="749" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="682" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="682" r="15"/>
+      <circle cx="74" cy="727" r="15"/>
+      <circle cx="119" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="727" r="15"/>
+      <circle cx="209" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="727" r="15"/>
+      <circle cx="434" cy="727" r="15"/>
+      <circle cx="479" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="727" r="15"/>
+      <circle cx="614" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="727" r="15"/>
+      <circle cx="704" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="727" r="15"/>
+      <circle cx="794" cy="727" r="15"/>
+      <circle cx="839" cy="727" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="884" cy="727" r="15"/>
+      <circle cx="74" cy="772" r="15"/>
+      <circle cx="119" cy="772" r="15"/>
+      <circle cx="164" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="299" cy="772" r="15"/>
+      <circle cx="344" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="772" r="15"/>
+      <circle cx="659" cy="772" r="15"/>
+      <circle cx="704" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="794" cy="772" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="772" r="15"/>
+      <circle cx="884" cy="772" r="15"/>
+      <circle cx="74" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="817" r="15"/>
+      <circle cx="164" cy="817" r="15"/>
+      <circle cx="209" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="817" r="15"/>
+      <circle cx="299" cy="817" r="15"/>
+      <circle cx="344" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="389" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="434" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="479" cy="817" r="15"/>
+      <circle cx="524" cy="817" r="15"/>
+      <circle cx="569" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="614" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="659" cy="817" r="15"/>
+      <circle cx="704" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="749" cy="817" r="15"/>
+      <circle cx="794" cy="817" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="839" cy="817" r="15"/>
+      <circle cx="884" cy="817" r="15"/>
+      <circle cx="74" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="119" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="164" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="209" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="254" cy="862" r="15"/>
+      <circle cx="299" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="344" cy="862" r="15"/>
+      <circle cx="389" cy="862" r="15"/>
+      <circle cx="434" cy="862" r="15"/>
+      <circle cx="479" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="524" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="569" cy="862" r="15"/>
+      <circle cx="614" cy="862" r="15" fill="none" stroke="#006100" stroke-width="1"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">quiet, then clear</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">signal: quiet, then clear</text>
+    </g>
+  </g>
+</svg>

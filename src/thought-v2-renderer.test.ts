@@ -26,8 +26,16 @@ describe("thought v2 renderer", () => {
       cy: Number(match[2]),
       r: Number(match[3]),
     }));
+    const rings = Array.from(
+      background.matchAll(/<circle cx="(\d+)" cy="(\d+)" r="(\d+)" fill="none" stroke="#006100" stroke-width="1"\/>/g),
+    ).map((match) => ({
+      cx: Number(match[1]),
+      cy: Number(match[2]),
+      r: Number(match[3]),
+    }));
     const expectedBinary = "011000010110001001000011";
     const expectedOneCount = expectedBinary.match(/1/g)?.length ?? 0;
+    const expectedZeroCount = expectedBinary.length - expectedOneCount;
     const expectedFirstOneIndex = expectedBinary.indexOf("1");
     const firstCircle = circles[0];
     const firstCircleIndex =
@@ -50,26 +58,28 @@ describe("thought v2 renderer", () => {
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.height).toBe(846);
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.glyphs).toMatchObject({
       one: "circle",
-      zero: "empty square cell",
+      zero: "hollow circle",
     });
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.cell).toMatchObject({
       mode: "square-grid-fit",
+      radiusMode: "percentage-of-square-cell",
+      radiusFormula: "ceil(cellSize * dotRadiusRatio)",
       dotRadiusRatio: 0.32,
-      minDotRadius: 1,
-      maxDotRadius: 18,
     });
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.fill).toBe("#006100");
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.opacity).toBe(0.5);
     expect(background).toContain('opacity="0.50"');
-    expect(background).toContain('data-zero="empty"');
+    expect(background).toContain('data-zero="hollow-circle"');
     expect(canvasIndex).toBeGreaterThan(-1);
     expect(backgroundIndex).toBeGreaterThan(canvasIndex);
     expect(agentIndex).toBeGreaterThan(backgroundIndex);
     expect(svg).toContain('id="agent-line-bg"');
     expect(svg).toContain('id="prompt-line-bg"');
     expect(svg).toContain('fill="none" stroke="#ffffff"');
-    expect(grid).toMatchObject({ columns: 5, rows: 5, cellSize: 169, originX: 57, originY: 64, dotRadius: 18 });
+    expect(grid).toMatchObject({ columns: 5, rows: 5, cellSize: 169, originX: 57, originY: 57, dotRadius: 55 });
     expect(circles).toHaveLength(expectedOneCount);
+    expect(rings).toHaveLength(expectedZeroCount);
+    expect(Array.from(background.matchAll(/<circle /g))).toHaveLength(expectedBinary.length);
     expect(firstCircleIndex).toBe(expectedFirstOneIndex);
     expect(denseCellSize).toBeLessThan(grid.cellSize);
     expect(background).toContain("<circle ");

@@ -143,15 +143,13 @@ contract ThoughtNFTV2 {
     uint256 private constant PROMPT_BASE_FONT = 34;
     uint256 private constant PROMPT_MIN_FONT = 18;
     uint256 private constant BINARY_BG_X = 48;
-    uint256 private constant BINARY_BG_Y = 64;
+    uint256 private constant BINARY_BG_Y = 57;
     uint256 private constant BINARY_BG_ROWS = 48;
     uint256 private constant BINARY_BG_ROW_GAP = 18;
     uint256 private constant BINARY_BG_WIDTH = 864;
     uint256 private constant BINARY_BG_HEIGHT = (BINARY_BG_ROWS - 1) * BINARY_BG_ROW_GAP;
     uint256 private constant BINARY_BG_DOT_RADIUS_NUMERATOR = 32;
     uint256 private constant BINARY_BG_DOT_RADIUS_DENOMINATOR = 100;
-    uint256 private constant BINARY_BG_MIN_DOT_RADIUS = 1;
-    uint256 private constant BINARY_BG_MAX_DOT_RADIUS = 18;
     string private constant FONT_STACK =
         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
@@ -523,7 +521,7 @@ contract ThoughtNFTV2 {
         }
 
         bytes memory output = abi.encodePacked(
-            '<g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; green circles are one bits and empty square cells are zero bits"'
+            '<g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits"'
         );
         uint256 totalBits = (promptData.length + agentData.length) * 8;
         uint256 columns = _binaryGridColumns(totalBits);
@@ -538,13 +536,9 @@ contract ThoughtNFTV2 {
         }
         uint256 originX = BINARY_BG_X + (BINARY_BG_WIDTH - columns * cellSize) / 2;
         uint256 originY = BINARY_BG_Y + (BINARY_BG_HEIGHT - rows * cellSize) / 2;
-        uint256 radius = (cellSize * BINARY_BG_DOT_RADIUS_NUMERATOR) / BINARY_BG_DOT_RADIUS_DENOMINATOR;
-        if (radius < BINARY_BG_MIN_DOT_RADIUS) {
-            radius = BINARY_BG_MIN_DOT_RADIUS;
-        }
-        if (radius > BINARY_BG_MAX_DOT_RADIUS) {
-            radius = BINARY_BG_MAX_DOT_RADIUS;
-        }
+        uint256 radius =
+            (cellSize * BINARY_BG_DOT_RADIUS_NUMERATOR + BINARY_BG_DOT_RADIUS_DENOMINATOR - 1)
+                / BINARY_BG_DOT_RADIUS_DENOMINATOR;
         output = abi.encodePacked(
             output,
             ' data-grid-columns="',
@@ -559,15 +553,13 @@ contract ThoughtNFTV2 {
             _toString(originY),
             '" data-dot-radius="',
             _toString(radius),
-            '" data-zero="empty">'
+            '" data-zero="hollow-circle">'
         );
 
         for (uint256 bitOffset = 0; bitOffset < totalBits; bitOffset++) {
-            if (!_binarySourceIsOne(promptData, agentData, bitOffset)) {
-                continue;
-            }
             uint256 column = bitOffset % columns;
             uint256 row = bitOffset / columns;
+            bool isOne = _binarySourceIsOne(promptData, agentData, bitOffset);
             output = abi.encodePacked(
                 output,
                 '<circle cx="',
@@ -576,7 +568,7 @@ contract ThoughtNFTV2 {
                 _toString(originY + row * cellSize + cellSize / 2),
                 '" r="',
                 _toString(radius),
-                '"/>'
+                isOne ? '"/>' : '" fill="none" stroke="#006100" stroke-width="1"/>'
             );
         }
 

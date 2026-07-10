@@ -731,7 +731,7 @@ contract ThoughtNFTV2Test {
         );
         require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#050505"/>'), "missing dark bg");
         require(_contains(svg, 'id="binary-background"'), "missing binary background");
-        require(_contains(svg, 'data-zero="empty"'), "binary background should preserve zero cells");
+        require(_contains(svg, 'data-zero="hollow-circle"'), "binary background should preserve zero cells");
         require(_contains(svg, 'opacity="0.50"'), "binary background opacity mismatch");
         require(_contains(svg, '<circle '), "binary background should render circles");
         require(_count(svg, 'text-anchor="middle"') == 2, "both lines should be centered");
@@ -767,10 +767,11 @@ contract ThoughtNFTV2Test {
         require(_contains(svg, 'data-grid-rows="5"'), "binary background should use square grid rows");
         require(_contains(svg, 'data-cell-size="169"'), "binary background should use equal square cells");
         require(_contains(svg, 'data-origin-x="57"'), "binary background should center grid horizontally");
-        require(_contains(svg, 'data-origin-y="64"'), "binary background should center grid vertically");
-        require(_contains(svg, 'data-dot-radius="18"'), "binary background should cap sparse dot radius");
-        require(_contains(svg, 'data-zero="empty"'), "binary background should preserve zero cells");
-        require(_count(svg, '<circle ') == 9, "binary background should render one circle per one bit");
+        require(_contains(svg, 'data-origin-y="57"'), "binary background should center grid vertically");
+        require(_contains(svg, 'data-dot-radius="55"'), "binary background should derive sparse dot radius");
+        require(_contains(svg, 'data-zero="hollow-circle"'), "binary background should preserve zero cells");
+        require(_count(svg, '<circle ') == 24, "binary background should render one circle per bit");
+        require(_count(svg, 'fill="none" stroke="#006100" stroke-width="1"') == 15, "zero bits should be rings");
         require(!_contains(svg, "&#9679;"), "binary background should not use text glyph circles");
         require(!_contains(svg, "textLength="), "binary background should not use text spacing");
         require(!_contains(svg, "01100001"), "binary background should not render literal zeros and ones");

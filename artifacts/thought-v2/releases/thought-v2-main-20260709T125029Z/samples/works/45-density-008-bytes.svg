@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960">
+  <rect id="work-frame" width="960" height="960" fill="#202020"/>
+  <g id="work-canvas" transform="translate(16 16) scale(0.9666666666666667)">
+    <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
+    <g id="binary-background" opacity="0.50" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits" data-grid-columns="9" data-grid-rows="8" data-cell-size="96" data-origin-x="48" data-origin-y="96" data-dot-radius="31" data-zero="hollow-circle">
+      <circle cx="96" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="192" cy="144" r="31"/>
+      <circle cx="288" cy="144" r="31"/>
+      <circle cx="384" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="576" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="672" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="768" cy="144" r="31"/>
+      <circle cx="864" cy="144" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="96" cy="240" r="31"/>
+      <circle cx="192" cy="240" r="31"/>
+      <circle cx="288" cy="240" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="384" cy="240" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="240" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="576" cy="240" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="672" cy="240" r="31"/>
+      <circle cx="768" cy="240" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="864" cy="240" r="31"/>
+      <circle cx="96" cy="336" r="31"/>
+      <circle cx="192" cy="336" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="288" cy="336" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="384" cy="336" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="336" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="576" cy="336" r="31"/>
+      <circle cx="672" cy="336" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="768" cy="336" r="31"/>
+      <circle cx="864" cy="336" r="31"/>
+      <circle cx="96" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="192" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="288" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="384" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="432" r="31"/>
+      <circle cx="576" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="672" cy="432" r="31"/>
+      <circle cx="768" cy="432" r="31"/>
+      <circle cx="864" cy="432" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="96" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="192" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="288" cy="528" r="31"/>
+      <circle cx="384" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="576" cy="528" r="31"/>
+      <circle cx="672" cy="528" r="31"/>
+      <circle cx="768" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="864" cy="528" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="96" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="192" cy="624" r="31"/>
+      <circle cx="288" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="384" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="480" cy="624" r="31"/>
+      <circle cx="576" cy="624" r="31"/>
+      <circle cx="672" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="768" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="864" cy="624" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="96" cy="720" r="31"/>
+      <circle cx="192" cy="720" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="288" cy="720" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="384" cy="720" r="31"/>
+      <circle cx="480" cy="720" r="31"/>
+      <circle cx="576" cy="720" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="672" cy="720" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="768" cy="720" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+      <circle cx="864" cy="720" r="31"/>
+      <circle cx="96" cy="816" r="31" fill="none" stroke="#006100" stroke-width="1"/>
+    </g>
+
+    <defs>
+      <clipPath id="agent-line-clip">
+        <rect x="88" y="378" width="784" height="70" rx="8"/>
+      </clipPath>
+      <clipPath id="prompt-line-clip">
+        <rect x="166" y="868" width="628" height="44" rx="8"/>
+      </clipPath>
+    </defs>
+
+    <g id="agent-line-area">
+      <rect id="agent-line-bg" x="87" y="378" width="786" height="70" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="agent-line-text" x="480" y="413" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)">bbbb</text>
+    </g>
+
+    <g id="prompt-line-area">
+      <rect id="prompt-line-bg" x="165" y="868" width="630" height="44" rx="8" fill="none" stroke="#ffffff" stroke-width="1"/>
+      <text id="prompt-line-text" x="480" y="890" text-anchor="middle" dominant-baseline="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif" font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)">aaaa</text>
+    </g>
+  </g>
+</svg>
