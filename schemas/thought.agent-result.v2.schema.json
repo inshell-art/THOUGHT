@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inshell.art/schemas/thought.agent-result.v2.schema.json",
+  "title": "THOUGHT Agent Result v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "agentLine", "provenanceFragment"],
+  "properties": {
+    "schema": { "const": "thought.agent-result.v2" },
+    "agentLine": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "provenanceFragment": {
+      "$ref": "thought.agent-fragment.v1.schema.json"
+    }
+  }
+}

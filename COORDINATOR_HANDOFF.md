@@ -1,5 +1,7 @@
 # THOUGHT / PATH / inshell.art Coordinator Handoff
 
+> Archive: this handoff captures the V1 local-stack state from 2026-05-08. Do not use its Color Font, preview-contract, or `THOUGHT.v1.md` directions for the active formal THOUGHT contract.
+
 Date: 2026-05-08
 
 ## Goal

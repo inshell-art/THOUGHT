@@ -57,7 +57,7 @@ npm run build:evm
 RPC_URL=http://192.168.0.104:8545 npm run devnode:deploy
 ```
 
-By default this deploys raw `THOUGHT.v1.md` bytes into `ThoughtSpecRegistry`, writes `recommendedThoughtSpec*` fields to `evm/addresses.anvil.json`, configures and freezes the PATH `THOUGHT` movement with quota `1`, and mints dev `$PATH #1` through `$PATH #10` to `0xf39f...2266`.
+By default this deploys raw `specs/THOUGHT.v2.md` bytes into `ThoughtSpecRegistry`, writes `recommendedThoughtSpec*` fields to `evm/addresses.anvil.json`, deploys the active unversioned `ThoughtNFT`, configures and freezes the PATH `THOUGHT` movement with quota `1`, and mints dev `$PATH #1` through `$PATH #10` to `0xf39f...2266`.
 
 To change the seeded PATH count:
 

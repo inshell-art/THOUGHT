@@ -16,7 +16,6 @@
     "build:evm": "cd evm && forge build",
     "test:evm": "cd evm && forge test --offline",
     "deploy:evm-local": "./scripts/deploy-evm-local.sh",
-    "deploy:evm-v2-local": "./scripts/deploy-evm-v2-local.sh",
     "ops:bundle:sepolia": "node scripts/write-sepolia-ops-bundle.mjs",
     "ops:pack:sepolia": "node scripts/write-thought-signing-os-pack.mjs",
     "devnode:start": "node scripts/start-devnode.mjs",

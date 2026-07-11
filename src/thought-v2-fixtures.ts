@@ -68,140 +68,140 @@ export const thoughtV2TextCorpuses: ThoughtV2TextCorpus[] = [
     ],
   },
   {
-    id: "long-agent",
-    name: "long agent lines",
+    id: "wide-agent-lines",
+    name: "wide agent lines",
     fixtures: [
       {
-        id: "agent-carousel-basic",
-        name: "work 07 long agent basic",
+        id: "agent-width-basic",
+        name: "work 07 wide agent basic",
         promptLine: "long agent check",
-        agentLine: "a long Agent line should carousel across the canvas without squeezing",
+        agentLine: "the clear answer travels",
       },
       {
         id: "agent-end-start",
         name: "work 08 end start gap",
         promptLine: "gap check",
-        agentLine: "the start is here and where is the end, here is the end?",
+        agentLine: "start and end stay apart",
       },
       {
         id: "agent-observation",
         name: "work 09 observation line",
         promptLine: "watch the answer",
-        agentLine: "observe the Agent response crossing the field without shrinking the type",
+        agentLine: "observe the field",
       },
       {
         id: "agent-memory-route",
         name: "work 10 memory route",
         promptLine: "memory route",
-        agentLine: "Agent memory passes through 北京 東京 서울 without losing rhythm",
+        agentLine: "memory crosses 北京",
       },
       {
         id: "agent-quiet-window",
         name: "work 11 quiet window",
         promptLine: "quiet window",
-        agentLine: "Agent channel carries مرحبا across a long quiet window",
+        agentLine: "quiet carries مرحبا",
       },
       {
         id: "agent-edge-repeat",
         name: "work 12 repeated edge",
         promptLine: "edge repeat",
-        agentLine: "edge spacing should keep the end away from the start on every loop",
+        agentLine: "edge keeps its distance",
       },
     ],
   },
   {
-    id: "long-prompt",
-    name: "long prompt lines",
+    id: "wide-prompt-lines",
+    name: "wide prompt lines",
     fixtures: [
       {
-        id: "prompt-carousel-basic",
-        name: "work 13 long prompt basic",
+        id: "prompt-width-basic",
+        name: "work 13 wide prompt basic",
         promptLine:
-          "trace the quiet signal across the archive before it becomes another visible proof of attention carried through the window and back",
+          "trace the signal across the archive before it becomes visible",
         agentLine: "quiet archive",
       },
       {
         id: "prompt-full-request",
         name: "work 14 full request",
         promptLine:
-          "when the prompt keeps moving the canvas should reveal the full sentence without squeezing the letters into a narrow static line",
+          "the prompt crosses the canvas without losing its written rhythm",
         agentLine: "full request",
       },
       {
         id: "prompt-first-last",
         name: "work 15 first last",
         promptLine:
-          "follow the small request from the first mark to the last answer and keep every word visible while the field stays still",
+          "follow the small request from first mark to final answer",
         agentLine: "first to last",
       },
       {
         id: "prompt-mixed-language",
         name: "work 16 mixed language prompt",
         promptLine:
-          "quiet prompt 你好 moves with مرحبا and keeps the same measured path across the lower edge",
+          "quiet prompt 你好 meets مرحبا across the field",
         agentLine: "mixed prompt",
       },
       {
         id: "prompt-proof-window",
         name: "work 17 proof window",
         promptLine:
-          "a proof window should carry the original request long enough for anyone to read the complete signal",
+          "a proof window carries the request long enough to read",
         agentLine: "proof window",
       },
       {
         id: "prompt-no-compression",
         name: "work 18 no compression",
         promptLine:
-          "do not compress this prompt into a tiny line because the animation should preserve the written rhythm",
+          "keep this prompt readable across the static field",
         agentLine: "no compression",
       },
     ],
   },
   {
-    id: "dual-carousel",
-    name: "dual carousel stress",
+    id: "dual-width-stress",
+    name: "dual width stress",
     fixtures: [
       {
         id: "dual-clean-spacing",
         name: "work 19 dual clean spacing",
         promptLine:
-          "the prompt also travels so both text fields need independent clean spacing between repeated copies",
-        agentLine: "the Agent answer is long and the prompt is also long so both lines should carousel cleanly",
+          "both lines keep their own measured space inside the field",
+        agentLine: "one Agent line remains",
       },
       {
         id: "dual-multilingual",
         name: "work 20 dual multilingual",
         promptLine:
-          "multilingual prompt 你好 مرحبا नमस्ते should stay readable while the agent answer moves above",
-        agentLine: "multilingual Agent line crosses العربية 中文 Hindi without a static fallback",
+          "multilingual prompt 你好 مرحبا stays readable",
+        agentLine: "the Agent returns 中文",
       },
       {
         id: "dual-marketplace",
         name: "work 21 marketplace preview",
         promptLine:
-          "marketplace previews should still expose the whole visible prompt when the text is longer than the canvas",
-        agentLine: "marketplace thumbnails need enough time and space to show a complete Agent line",
+          "marketplace previews expose the visible prompt clearly",
+        agentLine: "thumbnails show answer",
       },
       {
         id: "dual-saved-svg",
         name: "work 22 saved svg",
         promptLine:
-          "saving this work as svg should preserve the prompt animation and the exact injected text payload",
-        agentLine: "saved SVG artifact preserves the Agent line animation and text payload",
+          "saved SVG preserves the exact visible prompt",
+        agentLine: "saved SVG keeps response",
       },
       {
         id: "dual-bottom-top",
         name: "work 23 bottom top",
         promptLine:
-          "bottom prompt motion and central agent motion should remain visually separate throughout the loop",
-        agentLine: "center band motion should not collide with the lower prompt line during repeat",
+          "bottom prompt and central answer stay separate",
+        agentLine: "center stays separate",
       },
       {
         id: "dual-human-check",
         name: "work 24 human check",
         promptLine:
-          "a human should be able to watch the loop once and understand where each line begins and ends",
-        agentLine: "a human check should see the beginning and end of the Agent line without overlap",
+          "a human reads both lines from start to finish",
+        agentLine: "the answer remains clear",
       },
     ],
   },
@@ -362,22 +362,20 @@ export const thoughtV2TextCorpuses: ThoughtV2TextCorpus[] = [
       {
         id: "density-064-bytes",
         name: "work 48 density 064 bytes",
-        promptLine: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        agentLine: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        promptLine: "a".repeat(37),
+        agentLine: "b".repeat(27),
       },
       {
-        id: "density-128-bytes",
-        name: "work 49 density 128 bytes",
-        promptLine: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        agentLine: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        id: "density-096-bytes",
+        name: "work 49 density 096 bytes",
+        promptLine: "a".repeat(72),
+        agentLine: "b".repeat(24),
       },
       {
-        id: "density-256-bytes",
-        name: "work 50 density 256 bytes",
-        promptLine:
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        agentLine:
-          "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        id: "density-174-cjk-bytes",
+        name: "work 50 density 174 cjk bytes",
+        promptLine: "你".repeat(43),
+        agentLine: "好".repeat(15),
       },
     ],
   },

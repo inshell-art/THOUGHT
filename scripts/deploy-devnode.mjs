@@ -11,8 +11,8 @@ const privateKey =
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const pathEvmDir = process.env.PATH_EVM_DIR ?? "/Users/bigu/Projects/path/evm";
 const addressesFile = path.join(rootDir, "evm", "addresses.anvil.json");
-const thoughtSpecName = process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v1.md";
-const thoughtSpecFile = path.resolve(rootDir, process.env.THOUGHT_SPEC_FILE ?? thoughtSpecName);
+const thoughtSpecName = process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v2.md";
+const thoughtSpecFile = path.resolve(rootDir, process.env.THOUGHT_SPEC_FILE ?? path.join("specs", thoughtSpecName));
 const thoughtSpecRef = process.env.THOUGHT_SPEC_REF ?? thoughtSpecName;
 const maxThoughtSpecBytes = 20_000;
 const devPathCount = BigInt(process.env.DEV_PATH_COUNT ?? "10");
@@ -90,18 +90,6 @@ const main = async () => {
     await (await pathNft.safeMint(deployerAddress, tokenId, "0x")).wait();
   }
 
-  const seedGenerator = await deploy(
-    deployer,
-    path.join(rootDir, "evm", "out", "SeedGenerator.sol", "SeedGenerator.json"),
-  );
-  const colorFontV1 = await deploy(
-    deployer,
-    path.join(rootDir, "evm", "out", "ColorFontV1.sol", "ColorFontV1.json"),
-  );
-  const thoughtPreviewer = await deploy(
-    deployer,
-    path.join(rootDir, "evm", "out", "ThoughtPreviewer.sol", "ThoughtPreviewer.json"),
-  );
   const thoughtSpecRegistry = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtSpecRegistry.sol", "ThoughtSpecRegistry.json"),
@@ -139,7 +127,7 @@ const main = async () => {
   const thoughtNft = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtNFT.sol", "ThoughtNFT.json"),
-    [pathNftAddress, thoughtSpecRegistryAddress, await colorFontV1.getAddress()],
+    [pathNftAddress, thoughtSpecRegistryAddress],
   );
   const thoughtNftAddress = await thoughtNft.getAddress();
 
@@ -158,6 +146,7 @@ const main = async () => {
     rpcUrl,
     chainId: Number(network.chainId),
     ...(explorerUrl ? { explorerUrl } : {}),
+    path: { address: pathNftAddress },
     pathNft: { address: pathNftAddress },
     pathMovement: { name: "THOUGHT", quota: 1, frozen: true },
     devPathToken: { id: 1, owner: deployerAddress },
@@ -166,9 +155,6 @@ const main = async () => {
       lastId: Number(devPathCount),
       owner: deployerAddress,
     },
-    seedGenerator: { address: await seedGenerator.getAddress() },
-    colorFontV1: { address: await colorFontV1.getAddress() },
-    thoughtPreviewer: { address: await thoughtPreviewer.getAddress() },
     thoughtSpecRegistry: { address: thoughtSpecRegistryAddress, owner: deployerAddress },
     thoughtSpecs: [
       {
@@ -189,6 +175,7 @@ const main = async () => {
       hash: thoughtSpecHash,
       ref: thoughtSpecRef,
     },
+    thought: { address: thoughtNftAddress },
     thoughtNft: { address: thoughtNftAddress },
   };
 

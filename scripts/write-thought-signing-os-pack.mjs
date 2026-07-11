@@ -12,17 +12,14 @@ const defaultOutRoot = path.resolve(root, "artifacts/sepolia/current/signing-os-
 const curatedSourcePaths = [
   "AGENTS.md",
   "README.md",
-  "THOUGHT.v1.md",
-  "docs/ops/thought-signing-os-pack-book.md",
-  "docs/ops/thought-signing-os-pack-ops-review.md",
+  "specs/THOUGHT.v2.md",
+  "schemas",
+  "docs/agent",
   "evm/README.md",
   "evm/foundry.toml",
   "evm/src",
   "evm/test",
-  "scripts/write-thought-signing-os-pack.mjs",
-  "spec/COLOR_FONT.v1.json",
-  "spec/COLOR_FONT.v1.md",
-  "spec/COLOR_FONT.v1.txt"
+  "scripts/write-thought-signing-os-pack.mjs"
 ];
 
 function argValue(name) {
@@ -427,7 +424,7 @@ PATH NFT: $(jq -r '.path.pathNft' "$INPUTS_JSON")
 PATH admin: $(jq -r '.path.admin' "$INPUTS_JSON") ($(jq -r '.path.adminSignerRef' "$INPUTS_JSON"))
 deploy signer: $(jq -r '.thought.deploySignerRef' "$INPUTS_JSON") -> $DEPLOYER_EXPECTED
 registry owner: $(jq -r '.thought.registryOwner' "$INPUTS_JSON") ($(jq -r '.thought.registryOwnerSignerRef' "$INPUTS_JSON"))
-contracts: SeedGenerator, ColorFontV1, ThoughtPreviewer, ThoughtSpecRegistry, ThoughtNFT
+contracts: ThoughtSpecRegistry, ThoughtNFT
 spec: $(jq -r '.thought.spec.name' "$INPUTS_JSON")
 spec id: $(jq -r '.thought.spec.id' "$INPUTS_JSON")
 spec hash: $(jq -r '.thought.spec.hash' "$INPUTS_JSON")
@@ -483,19 +480,13 @@ deploy_contract() {
   forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_AUTH[@]}" --json "$target" "$@" | tee "$RESULT_DIR/\${name}.json"
 }
 
-deploy_contract seed-generator src/SeedGenerator.sol:SeedGenerator
-SEED_GENERATOR="$(jq -r '.deployedTo' "$RESULT_DIR/seed-generator.json")"
-deploy_contract color-font-v1 src/ColorFontV1.sol:ColorFontV1
-COLOR_FONT="$(jq -r '.deployedTo' "$RESULT_DIR/color-font-v1.json")"
-deploy_contract thought-previewer src/ThoughtPreviewer.sol:ThoughtPreviewer
-THOUGHT_PREVIEWER="$(jq -r '.deployedTo' "$RESULT_DIR/thought-previewer.json")"
 deploy_contract thought-spec-registry src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry --constructor-args "$ADMIN"
 REGISTRY="$(jq -r '.deployedTo' "$RESULT_DIR/thought-spec-registry.json")"
 SPEC_BYTES="$(hex_file "$SPEC_FILE")"
 echo "registering spec with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$REGISTRY" \
   'registerThoughtSpec(string,string,bytes)' "$SPEC_NAME" "$SPEC_REF" "$SPEC_BYTES" | tee "$RESULT_DIR/register-spec.json"
-deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY" "$COLOR_FONT"
+deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY"
 THOUGHT_NFT="$(jq -r '.deployedTo' "$RESULT_DIR/thought-nft.json")"
 echo "configuring PATH movement with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PATH_NFT" \
@@ -504,10 +495,10 @@ cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PATH_NFT" \
   'freezeMovementConfig(bytes32)' "$MOVEMENT" | tee "$RESULT_DIR/path-freeze-movement.json"
 cd "$PACK_ROOT"
 mkdir -p artifacts
-python3 - "$RESULT_DIR" "$PATH_NFT" "$ADMIN" "$SEED_GENERATOR" "$COLOR_FONT" "$THOUGHT_PREVIEWER" "$REGISTRY" "$THOUGHT_NFT" <<'PY'
+python3 - "$RESULT_DIR" "$PATH_NFT" "$ADMIN" "$REGISTRY" "$THOUGHT_NFT" <<'PY'
 import json, pathlib, sys
 result = pathlib.Path(sys.argv[1])
-path_nft, admin, seed, color, previewer, registry, thought = sys.argv[2:]
+path_nft, admin, registry, thought = sys.argv[2:]
 def load(name):
     return json.loads((result / name).read_text())
 def tx(name):
@@ -518,17 +509,11 @@ addresses = {
   'chain_id': 11155111,
   'path_nft': path_nft,
   'admin': admin,
-  'seed_generator': seed,
-  'color_font_v1': color,
-  'thought_previewer': previewer,
   'thought_spec_registry': registry,
   'thought_spec_registry_owner': admin,
   'thought_nft': thought,
 }
 txs = {
-  'seed_generator': tx('seed-generator.json'),
-  'color_font_v1': tx('color-font-v1.json'),
-  'thought_previewer': tx('thought-previewer.json'),
   'thought_spec_registry': tx('thought-spec-registry.json'),
   'register_spec': tx('register-spec.json'),
   'thought_nft': tx('thought-nft.json'),
@@ -563,9 +548,6 @@ TXS="$PACK_ROOT/artifacts/txs.json"
 [ -r "$ADDRESSES" ] || fail "missing deployment addresses: $ADDRESSES"
 THOUGHT_NFT="$(jq -r '.thought_nft' "$ADDRESSES")"
 REGISTRY="$(jq -r '.thought_spec_registry' "$ADDRESSES")"
-COLOR_FONT="$(jq -r '.color_font_v1' "$ADDRESSES")"
-PREVIEWER="$(jq -r '.thought_previewer' "$ADDRESSES")"
-SEED="$(jq -r '.seed_generator' "$ADDRESSES")"
 MINTER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getAuthorizedMinter(bytes32)(address)' "$MOVEMENT")"
 QUOTA="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getMovementQuota(bytes32)(uint32)' "$MOVEMENT")"
 FROZEN="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'isMovementFrozen(bytes32)(bool)' "$MOVEMENT")"
@@ -580,7 +562,7 @@ SPEC_REGISTERED="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$REGISTRY" 'isRegiste
 [ "$(lower "$NFT_REGISTRY")" = "$(lower "$REGISTRY")" ] || fail "ThoughtNFT registry mismatch"
 [ "$(lower "$REGISTRY_OWNER")" = "$(lower "$ADMIN_ADDRESS")" ] || fail "registry owner mismatch"
 [ "$SPEC_REGISTERED" = "true" ] || fail "expected THOUGHT spec is not registered"
-for addr in "$SEED" "$COLOR_FONT" "$PREVIEWER" "$REGISTRY" "$THOUGHT_NFT"; do
+for addr in "$REGISTRY" "$THOUGHT_NFT"; do
   code="$(cast code --rpc-url "$SEPOLIA_RPC_URL" "$addr")"
   [ "$code" != "0x" ] || fail "no code at deployed THOUGHT address $addr"
 done
@@ -618,9 +600,6 @@ fe_addresses = {
   'thought_nft': addresses['thought_nft'],
   'thought_spec_registry': addresses['thought_spec_registry'],
   'thought_spec_registry_owner': addresses['thought_spec_registry_owner'],
-  'color_font_v1': addresses['color_font_v1'],
-  'thought_previewer': addresses['thought_previewer'],
-  'seed_generator': addresses['seed_generator'],
 }
 (fe / 'addresses.sepolia.json').write_text(json.dumps(fe_addresses, indent=2) + '\\n')
 protocol = {
@@ -642,7 +621,7 @@ protocol = {
 }
 (fe / 'protocol-release.sepolia.json').write_text(json.dumps(protocol, indent=2) + '\\n')
 (fe / 'env.sepolia.example').write_text('VITE_NETWORK=sepolia\\nVITE_EXPECTED_CHAIN_ID=0xaa36a7\\n# Set VITE_ETH_RPC outside this public artifact.\\n')
-for contract in ['ThoughtNFT', 'ThoughtSpecRegistry', 'ThoughtPreviewer', 'ColorFontV1']:
+for contract in ['ThoughtNFT', 'ThoughtSpecRegistry']:
     artifact = json.loads((root / f'artifacts/contracts/{contract}.json').read_text())
     (fe / f'abi/{contract}.json').write_text(json.dumps({'abi': artifact['abi']}, indent=2) + '\\n')
 checksums = {}
@@ -728,19 +707,19 @@ echo "pushed deployment history to $DEST"
 }
 
 function renderReadme(runId) {
-  return `# THOUGHT Signing OS Pack\n\nRun ID: \`${runId}\`\n\nStandalone Sepolia deploy pack for THOUGHT. It deploys THOUGHT contracts, registers \`THOUGHT.v1.md\`, configures the existing PATH movement \`THOUGHT\` to the deployed \`ThoughtNFT\`, and freezes that PATH movement config.\n\nThis pack is designed for Signing OS. It does not require a git checkout or npm install on Signing OS.\n\nThe \`source/\` directory is a curated deploy source snapshot from the exact source commit, not a full repository archive. See \`PACK-MANIFEST.json.source_snapshot\` for the included paths.\n\nUse \`RUNBOOK.md\` for the operator sequence.\n`;
+  return `# THOUGHT Signing OS Pack\n\nRun ID: \`${runId}\`\n\nStandalone Sepolia deploy pack for the active formal THOUGHT contracts. It deploys \`ThoughtSpecRegistry\` and \`ThoughtNFT\`, registers \`THOUGHT.v2.md\`, configures the existing PATH movement \`THOUGHT\` to the deployed \`ThoughtNFT\`, and freezes that PATH movement config.\n\nThis pack is designed for Signing OS. It does not require a git checkout or npm install on Signing OS.\n\nThe \`source/\` directory is a curated deploy source snapshot from the exact source commit, not a full repository archive. See \`PACK-MANIFEST.json.source_snapshot\` for the included paths.\n\nUse \`RUNBOOK.md\` for the operator sequence.\n`;
 }
 
 function renderRunbook(runId) {
-  return `# THOUGHT Signing OS Runbook\n\nRun ID: \`${runId}\`\n\n## Sequence\n\n1. Put this whole pack directory on Signing OS.\n2. Ensure \`~/.opsec/path/env/sepolia.env\` exists and points to the Sepolia deploy keystore.\n3. Run \`bin/preflight\`.\n4. Run \`bin/verify\`.\n5. Connect ADMIN Ledger only for ADMIN actions.\n6. Open the Ethereum app on the ADMIN Ledger and enable blind signing before apply.\n7. Run \`bin/approve\` and type the exact approval phrase.\n8. Run \`bin/apply\`.\n9. Run \`bin/postconditions\`.\n10. Run \`tools/push-latest-result.sh\` or \`tools/push-deployment-history.sh\` as needed.\n\n## Signers\n\n- Deployer: \`SEPOLIA_DEPLOY_SW_A\` from canonical keystore env.\n- Registry owner/admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n- PATH movement admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n\nThe deployer does not become registry owner. \`ThoughtSpecRegistry\` is deployed with the ADMIN address as immutable owner.\n\n## Source Snapshot\n\n\`source/\` is a curated deploy source snapshot from the exact source commit. It intentionally excludes frontend/devnode/local deploy scripts. The included paths are recorded in \`PACK-MANIFEST.json.source_snapshot.paths\`.\n\n## Ledger Risk\n\n\`bin/apply\` asks the ADMIN Ledger to sign \`registerThoughtSpec(string,string,bytes)\`. The spec calldata is large because it embeds \`THOUGHT.v1.md\`. Blind signing must be enabled in the Ledger Ethereum app before \`bin/apply\`. If the Ledger refuses, stop, keep the failed result dir, write a recovery note from \`templates/recovery-note.md\`, push the latest result back with \`tools/push-latest-result.sh\`, and do not continue to PATH movement configuration.\n`;
+  return `# THOUGHT Signing OS Runbook\n\nRun ID: \`${runId}\`\n\n## Sequence\n\n1. Put this whole pack directory on Signing OS.\n2. Ensure \`~/.opsec/path/env/sepolia.env\` exists and points to the Sepolia deploy keystore.\n3. Run \`bin/preflight\`.\n4. Run \`bin/verify\`.\n5. Connect ADMIN Ledger only for ADMIN actions.\n6. Open the Ethereum app on the ADMIN Ledger and enable blind signing before apply.\n7. Run \`bin/approve\` and type the exact approval phrase.\n8. Run \`bin/apply\`.\n9. Run \`bin/postconditions\`.\n10. Run \`tools/push-latest-result.sh\` or \`tools/push-deployment-history.sh\` as needed.\n\n## Signers\n\n- Deployer: \`SEPOLIA_DEPLOY_SW_A\` from canonical keystore env.\n- Registry owner/admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n- PATH movement admin: \`SEPOLIA_ADMIN_HW_A\` Ledger.\n\nThe deployer does not become registry owner. \`ThoughtSpecRegistry\` is deployed with the ADMIN address as immutable owner.\n\n## Source Snapshot\n\n\`source/\` is a curated deploy source snapshot from the exact source commit. It intentionally excludes frontend/devnode/local deploy scripts. The included paths are recorded in \`PACK-MANIFEST.json.source_snapshot.paths\`.\n\n## Ledger Risk\n\n\`bin/apply\` asks the ADMIN Ledger to sign \`registerThoughtSpec(string,string,bytes)\`. The spec calldata is large because it embeds \`THOUGHT.v2.md\`. Blind signing must be enabled in the Ledger Ethereum app before \`bin/apply\`. If the Ledger refuses, stop, keep the failed result dir, write a recovery note from \`templates/recovery-note.md\`, push the latest result back with \`tools/push-latest-result.sh\`, and do not continue to PATH movement configuration.\n`;
 }
 
 function main() {
   const pathFeRelease = path.resolve(argValue("--path-fe-release") ?? process.env.PATH_FE_RELEASE_DIR ?? defaultPathFeRelease);
   const outRoot = path.resolve(argValue("--out-root") ?? process.env.OUT_ROOT ?? defaultOutRoot);
   const runId = argValue("--run-id") ?? process.env.RUN_ID ?? `sepolia-thought-signing-os-pack-${nowStamp()}`;
-  const specName = argValue("--spec-name") ?? process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v1.md";
-  const specFile = path.resolve(argValue("--spec-file") ?? process.env.THOUGHT_SPEC_FILE ?? path.join(root, specName));
+  const specName = argValue("--spec-name") ?? process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v2.md";
+  const specFile = path.resolve(argValue("--spec-file") ?? process.env.THOUGHT_SPEC_FILE ?? path.join(root, "specs", specName));
   const maxSpecBytes = Number(argValue("--max-spec-bytes") ?? process.env.MAX_THOUGHT_SPEC_BYTES ?? "20000");
   const movementQuota = Number(argValue("--movement-quota") ?? process.env.THOUGHT_MOVEMENT_QUOTA ?? "1");
   const deploySignerRef = argValue("--deploy-signer-ref") ?? process.env.THOUGHT_DEPLOY_SIGNER_REF ?? "SEPOLIA_DEPLOY_SW_A";
@@ -812,12 +791,12 @@ function main() {
 
   sourceSnapshot(path.join(packRoot, "source"));
   const contractArtifactDir = path.join(packRoot, "artifacts/contracts");
-  for (const contract of ["SeedGenerator", "ColorFontV1", "ThoughtPreviewer", "ThoughtSpecRegistry", "ThoughtNFT"]) copyContractArtifact(contract, contractArtifactDir);
+  for (const contract of ["ThoughtSpecRegistry", "ThoughtNFT"]) copyContractArtifact(contract, contractArtifactDir);
   writeJson(path.join(packRoot, "artifacts/build-evidence.json"), {
     schema_version: 1,
     source_commit: repoCommit,
     foundry_profile: "default",
-    contracts: ["SeedGenerator", "ColorFontV1", "ThoughtPreviewer", "ThoughtSpecRegistry", "ThoughtNFT"]
+    contracts: ["ThoughtSpecRegistry", "ThoughtNFT"]
   });
 
   write(path.join(packRoot, "lib/common.sh"), commonSh(), 0o755);

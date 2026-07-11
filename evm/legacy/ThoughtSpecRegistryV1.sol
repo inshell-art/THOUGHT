@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {ContractCodeStorage} from "./ContractCodeStorage.sol";
+import {ContractCodeStorage} from "../src/ContractCodeStorage.sol";
 
-contract ThoughtSpecRegistryV2 {
+contract ThoughtSpecRegistryV1 {
     error EmptyThoughtSpec();
     error InvalidThoughtSpecName(string specName);
     error InvalidThoughtSpecPair(bytes32 specId, bytes32 specHash);
@@ -15,7 +15,7 @@ contract ThoughtSpecRegistryV2 {
     error ThoughtSpecPointerInvalid(bytes32 specId);
     error ThoughtSpecTooLarge(uint256 length, uint256 maxLength);
 
-    event ThoughtSpecRegisteredV2(
+    event ThoughtSpecRegisteredV1(
         bytes32 indexed specId,
         bytes32 indexed specHash,
         string specName,
@@ -98,7 +98,7 @@ contract ThoughtSpecRegistryV2 {
         });
         _specIds.push(specId);
 
-        emit ThoughtSpecRegisteredV2(specId, specHash, specName, ref, pointer, byteLength);
+        emit ThoughtSpecRegisteredV1(specId, specHash, specName, ref, pointer, byteLength);
     }
 
     function thoughtSpecIdOfName(string calldata specName) external pure returns (bytes32) {
@@ -226,6 +226,7 @@ contract ThoughtSpecRegistryV2 {
         return _specIds[_specIds.length - 1];
     }
 
+    // Backward-compatible read wrappers. They expose archive data only; there is no active spec.
     function specMeta(bytes32 specId)
         external
         view
@@ -262,6 +263,9 @@ contract ThoughtSpecRegistryV2 {
         spec = _specs[specId];
         if (!spec.exists) {
             revert ThoughtSpecNotFound(specId);
+        }
+        if (spec.pointer == address(0) || spec.pointer.code.length <= 1) {
+            revert ThoughtSpecPointerInvalid(specId);
         }
     }
 }

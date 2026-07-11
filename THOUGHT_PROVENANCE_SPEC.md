@@ -1,5 +1,7 @@
 # THOUGHT Provenance Field Spec
 
+> Archive: this is the V1 provenance schema for historical Sepolia and local records. The active formal flow reserves `thought.provenance.v2`; see `specs/THOUGHT.v2.md` and `docs/agent/THOUGHT_AGENT_FLOW_V2.md`.
+
 Date: 2026-05-02
 
 This document explains the current `thought.provenance.v1` JSON record used by THOUGHT.

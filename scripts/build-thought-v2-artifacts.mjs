@@ -112,7 +112,7 @@ const copySourceFile = (fromRel, toRel, releaseDir) => {
   fs.copyFileSync(from, path.join(releaseDir, toRel));
 };
 
-const renderBundleReadme = ({ artifactId, channel, sourceBranch }) => `# THOUGHT V2 Artifact Bundle
+const renderBundleReadme = ({ artifactId, channel, sourceBranch }) => `# THOUGHT Artifact Bundle
 
 Artifact ID: \`${artifactId}\`
 Channel: \`${channel}\`
@@ -124,7 +124,7 @@ This bundle is a repo-published bridge artifact for FE and downstream agents.
 
 - \`manifest.json\`: authoritative machine-readable manifest.
 - \`handoff.md\`: human handoff for FE agents.
-- \`render-contract.json\`: machine-readable geometry, font, and carousel contract.
+- \`render-contract.json\`: machine-readable geometry, font, and overflow contract.
 - \`fixtures.json\`: default text and prepared prompt/agent corpuses.
 - \`reference/\`: exact TypeScript renderer and fixture source.
 - \`samples/default.svg\`: default generated artifact.
@@ -135,7 +135,7 @@ This bundle is a repo-published bridge artifact for FE and downstream agents.
 Consumers should resolve a channel file such as \`artifacts/thought-v2/latest.json\`, read \`manifest_path\`, fetch that manifest, and verify hashes before use.
 `;
 
-const renderBridgeReadme = () => `# THOUGHT V2 Artifact Bridge
+const renderBridgeReadme = () => `# THOUGHT Artifact Bridge
 
 This directory publishes render artifacts for downstream repos.
 
@@ -203,16 +203,6 @@ const buildArtifact = async () => {
   copySourceFile("src/thought-v2-renderer.ts", "reference/thought-v2-renderer.ts", releaseDir);
   copySourceFile("src/thought-v2-fixtures.ts", "reference/thought-v2-fixtures.ts", releaseDir);
 
-  const fixedRender = {
-    agentFontSize: THOUGHT_V2_RENDER_CONTRACT.agentLine.defaultFontSize,
-    promptFontSize: THOUGHT_V2_RENDER_CONTRACT.promptLine.defaultFontSize,
-    agentTextColor: THOUGHT_V2_RENDER_CONTRACT.agentLine.defaultTextColor,
-    promptTextColor: THOUGHT_V2_RENDER_CONTRACT.promptLine.defaultTextColor,
-    agentBgColor: THOUGHT_V2_RENDER_CONTRACT.agentLine.defaultBgColor,
-    agentFrameColor: THOUGHT_V2_RENDER_CONTRACT.agentLine.defaultFrameColor,
-    canvasBgColor: THOUGHT_V2_RENDER_CONTRACT.canvas.defaultBg,
-  };
-
   const fixturesPayload = {
     schema_version: 1,
     defaultText: thoughtV2DefaultText,
@@ -224,7 +214,6 @@ const buildArtifact = async () => {
     schema_version: 1,
     renderContract: THOUGHT_V2_RENDER_CONTRACT,
     limits: THOUGHT_V2_LIMITS,
-    fixedRender,
   });
   write(path.join(releaseDir, "README.md"), renderBundleReadme({ artifactId, channel, sourceBranch }));
 
@@ -232,7 +221,7 @@ const buildArtifact = async () => {
   const writeSample = (name, textPair, fixture = null) => {
     const promptMeasure = measureThoughtV2Line(textPair.promptLine, "prompt");
     const agentMeasure = measureThoughtV2Line(textPair.agentLine, "agent");
-    const svg = buildThoughtV2Svg({ ...textPair, ...fixedRender });
+    const svg = buildThoughtV2Svg(textPair);
     const rel = path.join("samples", fixture ? "works" : "", `${name}.svg`);
     write(path.join(releaseDir, rel), svg);
     samples.push({
@@ -251,8 +240,7 @@ const buildArtifact = async () => {
         byteLength: agentMeasure.byteLength,
         displayUnits: agentMeasure.displayUnits,
       },
-      animated:
-        svg.includes('id="agent-line-carousel"') || svg.includes('id="prompt-line-carousel"'),
+      animated: false,
     });
   };
 

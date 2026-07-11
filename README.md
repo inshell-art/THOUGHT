@@ -1,36 +1,52 @@
 # THOUGHT
 
-## Notice: SVG text uses system monospace
-- Title glyphs are emitted as `<text font-family="monospace">` in the SVG.
-- Rendering depends on the viewer environment (OS/browser fonts).
+THOUGHT is a human prompt transformed by an Agent into a fully onchain work. The active mint contract is public and unversioned: `ThoughtNFT`.
 
-## v0.0.2 release scope
-- This release is the run-only LAN testing build.
-- The front page has no mint path.
-- The page can override bundled `THOUGHT.md` with an uploaded local markdown file per browser session.
+## Product Contract
 
-## Local EVM flow
-- This path is intentionally transitional and should be treated as deprecated once the next renderer/contract refactor starts.
-- Solidity contracts live in `evm/`.
-- Start a local chain with `anvil`.
-- Deploy the contracts and write frontend addresses with `npm run deploy:evm-local`.
-- Run the browser app with `npm run dev -- --host 127.0.0.1 --port 5178`.
-- `contracts.html` now calls the EVM `ThoughtPreviewer.preview(uint256,uint64,string)` entrypoint over `eth_call`.
+Each work has two visible UTF-8 lines:
 
-## Local model flow
-- Install and run Ollama locally.
-- Pull a model, for example `ollama pull llama3.2:1b`.
-- Run the browser app with `npm run dev:lan`.
-- Open `http://<your-lan-ip>:5178` from another machine on the same LAN.
-- In the front page mode rail, choose `local`.
-- Use the `upload THOUGHT.md` button if you want to test a local instruction file without editing the bundled repo copy.
-- The uploaded markdown stays in that browser tab session only. `use bundled` reverts to the repo copy.
-- The page sends the current `THOUGHT.md` plus your prompt directly to `http://127.0.0.1:11434/api/generate`.
-- The model selector is provider-scoped. Ollama and OpenRouter try to load live model catalogs; OpenAI and Anthropic use curated browser-side fallback lists for now. The custom model option is only an escape hatch.
-- The frontend normalizes every provider response before rendering: uppercase A-Z, non-English/non-letter runs become one space, repeated spaces collapse, and output is clipped to 120 characters.
+```text
+promptLine = visible human material
+agentLine  = visible Agent return
+```
 
-## Modes
-- `connect`: browser-only OpenRouter OAuth PKCE flow. The page stores the returned OpenRouter credential in `sessionStorage` and uses it for OpenRouter model calls.
-- `direct`: advanced browser-side provider key path for OpenAI, OpenRouter, and Anthropic only.
-- `local`: Ollama on `localhost`, no cloud call and no key field.
-- No THOUGHT backend receives or stores provider keys in any mode.
+The human supplies the prompt, reviews the result, chooses a PATH, authorizes the wallet transaction, and decides whether to mint. The Agent receives one sealed task and returns one `agentLine`; it has no authority to select PATH, use a wallet, or mint.
+
+`ThoughtNFT.mint(MintThoughtInput)` remains permissionless. A direct caller can mint without an Agent run when PATH authorization, exact registered-spec validation, visible text validation, unique work validation, and non-empty provenance requirements pass.
+
+## Active Source
+
+- [evm/src/ThoughtNFT.sol](evm/src/ThoughtNFT.sol): unversioned ERC-721 mint contract.
+- [evm/src/ThoughtSpecRegistry.sol](evm/src/ThoughtSpecRegistry.sol): append-only exact-spec registry.
+- [specs/THOUGHT.v2.md](specs/THOUGHT.v2.md): formal human/Agent contract.
+- [docs/agent/THOUGHT_AGENT_FLOW_V2.md](docs/agent/THOUGHT_AGENT_FLOW_V2.md): sealed Agent and Plugin/MCP integration contract.
+- [artifacts/thought-v2/README.md](artifacts/thought-v2/README.md): artifact distribution contract for frontend consumers.
+
+V1 contracts live in `evm/legacy/`; historical V1 specs and coordinator material remain in the repository as archive evidence. New deployment and integration code must not use V1 Color Font or preview dependencies.
+
+## Renderer
+
+`tokenURI` produces metadata with an embedded 960x960 SVG. The renderer id is `thought.svg.v2.fixed-a-32`.
+
+The SVG uses a fixed 32x32 binary field. It derives 1024 bits from exact UTF-8 bytes of `promptLine` followed by `agentLine`; short payloads repeat and long payloads truncate. The exact field is independently available through `binaryField(...)` and `binaryFieldOf(tokenId)`.
+
+## Development
+
+```bash
+npm install
+npm run build:evm
+npm run test:evm
+npm test
+npm run build
+```
+
+For local EVM deployment, start Anvil and supply a local PATH address:
+
+```bash
+PATH_NFT_ADDRESS=<path-nft> PRIVATE_KEY=<local-key> npm run deploy:evm-local
+```
+
+The active deployment registers `specs/THOUGHT.v2.md`, deploys `ThoughtSpecRegistry` and `ThoughtNFT`, configures PATH `THOUGHT` movement with quota `1`, then freezes that PATH movement configuration by default.
+
+Sepolia uses `npm run ops:bundle:sepolia`. Mainnet requires the reviewed Ledger-admin procedure in [docs/ops/THOUGHT_MAINNET_DEPLOYMENT.md](docs/ops/THOUGHT_MAINNET_DEPLOYMENT.md).

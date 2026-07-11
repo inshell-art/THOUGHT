@@ -15,22 +15,22 @@
 - `ThoughtNFT.pathNft` and `ThoughtNFT.thoughtSpecRegistry` are immutable constructor dependencies.
 - `ThoughtNFT.mint` consumes exactly one PATH `THOUGHT` movement unit atomically before minting a THOUGHT.
 - Failed THOUGHT mints must not consume PATH, reserve text hashes, or increment supply.
-- Canonical text is uppercase A-Z plus single spaces. Non-canonical text must be rejected before PATH consumption.
-- Canonical text hashes are globally unique; the same canonical text cannot mint twice even with different provenance.
+- `promptLine` and `agentLine` are non-empty visible UTF-8 lines with ordinary single-space rules. Preserve case and visible Unicode exactly; reject controls, invisible characters, newlines, outer spaces, repeated spaces, byte-limit, and display-width violations before PATH consumption.
+- Ordered prompt/Agent work hashes are globally unique; the same `(promptLine, agentLine)` pair cannot mint twice even with different provenance.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
 - `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
 - There is no active/frozen/pinned THOUGHT spec at contract level. Do not reintroduce `activeSpecId`, `freezeActiveSpec`, `specAdmin`, or a required/latest spec gate in `ThoughtNFT`.
 - `ThoughtNFT.mint` must require and store both `thoughtSpecId` and `thoughtSpecHash`; mint validates the exact registered pair before PATH consumption.
 - Multiple registered THOUGHT spec versions may coexist and remain mintable in one collection.
 - Deploy scripts must read `THOUGHT.vN.md` as raw bytes, reject BOM/CRLF/name/header mismatches, hash the exact bytes, register with `registerThoughtSpec`, verify registry metadata/readback, and write `recommendedThoughtSpec*` release fields.
-- Color Font v1 is a standalone immutable contract dependency. ABI must remain stable: id, version, 26 glyphs, glyph lookup, data string, and hash.
-- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, path id, prompt hash, provenance hash, spec id, and provenance payload.
+- Color Font v1 is an archived V1 dependency only. Do not add it to the active `ThoughtNFT` constructor or mint flow.
+- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, PATH id/serial, visible line hashes, work hash, provenance hash/payload, exact spec pair, renderer id, and binary field.
 - `tokenURI` must not embed full spec text. Use compact spec ID/hash metadata and `thoughtSpecOf(tokenId)` / registry readback for name/ref/full bytes.
 - PATH movement setup must be frozen by deployment scripts after configuring `THOUGHT` movement quota.
 
 ## SVG text rendering
-- Title text is emitted as `<text font-family="monospace">` in the SVG.
-- Output rendering depends on the viewer environment fonts.
+- The formal renderer is `thought.svg.v2.fixed-a-32`: a 960x960 SVG with a deterministic 32x32 binary field derived from UTF-8 prompt bytes followed by Agent bytes.
+- Text is emitted as centered SVG `<text>` elements using the contract font stack. Output rendering depends on the viewer environment fonts.
 
 ## Security
 - Do not add secrets, live RPC keys, private keys, mnemonics, or real operator material.
