@@ -1,0 +1,19 @@
+{
+  "name": "thought",
+  "version": "0.2.0",
+  "description": "Run one sealed THOUGHT Agent task and submit exactly one result.",
+  "author": {
+    "name": "Inshell"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "THOUGHT",
+    "shortDescription": "Run one sealed THOUGHT Agent round.",
+    "longDescription": "Fetches a verified THOUGHT task and submits one bounded Agent result.",
+    "developerName": "Inshell",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use the THOUGHT MCP tools to fetch a sealed task, return one agentLine, and submit it."
+  },
+  "mcpServers": "./.mcp.json"
+}

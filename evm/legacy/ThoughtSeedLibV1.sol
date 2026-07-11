@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-library ThoughtSeedLib {
+library ThoughtSeedLibV1 {
     uint256 internal constant RNG_MOD = 1329227995784915872903807060280344576;
     uint256 internal constant U128_MASK = (uint256(1) << 128) - 1;
 
@@ -26,4 +26,3 @@ library ThoughtSeedLib {
         return value % RNG_MOD;
     }
 }
-

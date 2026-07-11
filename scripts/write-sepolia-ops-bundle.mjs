@@ -168,20 +168,16 @@ PATH_ADMIN_SIGNER_ARGS=(--account ${inputs.path.adminSignerRef})
 # PATH_ADMIN_SIGNER_ARGS=(--ledger --sender ${inputs.path.admin})
 \`\`\`
 
-Deploy the supporting contracts:
+Deploy the formal THOUGHT contracts:
 
 \`\`\`bash
 cd /path/to/THOUGHT/evm
 
-forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json src/SeedGenerator.sol:SeedGenerator | tee seed.json
-forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json src/ColorFontV1.sol:ColorFontV1 | tee color-font.json
-forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json src/ThoughtPreviewer.sol:ThoughtPreviewer | tee previewer.json
 forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json \\
   src/ThoughtSpecRegistry.sol:ThoughtSpecRegistry \\
   --constructor-args ${inputs.thought.registryOwner} | tee registry.json
 
 REGISTRY=$(jq -r .deployedTo registry.json)
-COLOR_FONT=$(jq -r .deployedTo color-font.json)
 \`\`\`
 
 Register the pinned THOUGHT spec bytes:
@@ -207,7 +203,7 @@ Deploy \`ThoughtNFT\` against PATH:
 \`\`\`bash
 forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json \\
   src/ThoughtNFT.sol:ThoughtNFT \\
-  --constructor-args ${inputs.path.pathNft} "$REGISTRY" "$COLOR_FONT" | tee thought-nft.json
+  --constructor-args ${inputs.path.pathNft} "$REGISTRY" | tee thought-nft.json
 
 THOUGHT_NFT=$(jq -r .deployedTo thought-nft.json)
 \`\`\`
@@ -261,8 +257,6 @@ After postconditions pass, export a THOUGHT FE release containing:
 - \`thought_nft\`: \`$THOUGHT_NFT\`
 - \`thought_spec_registry\`: \`$REGISTRY\`
 - \`thought_spec_registry_owner\`: \`${inputs.thought.registryOwner}\`
-- \`color_font_v1\`: \`$COLOR_FONT\`
-- \`thought_previewer\`: deployed previewer address
 - \`recommendedThoughtSpecName\`: \`${inputs.thought.spec.name}\`
 - \`recommendedThoughtSpecId\`: \`${inputs.thought.spec.id}\`
 - \`recommendedThoughtSpecHash\`: \`${inputs.thought.spec.hash}\`
@@ -273,8 +267,8 @@ function main() {
   const pathFeRelease = path.resolve(argValue("--path-fe-release") ?? process.env.PATH_FE_RELEASE_DIR ?? defaultPathFeRelease);
   const outRoot = path.resolve(argValue("--out-root") ?? process.env.OUT_ROOT ?? defaultOutRoot);
   const runId = argValue("--run-id") ?? process.env.RUN_ID ?? `sepolia-thought-deploy-${nowStamp()}`;
-  const specName = argValue("--spec-name") ?? process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v1.md";
-  const specFile = path.resolve(argValue("--spec-file") ?? process.env.THOUGHT_SPEC_FILE ?? path.join(root, specName));
+  const specName = argValue("--spec-name") ?? process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v2.md";
+  const specFile = path.resolve(argValue("--spec-file") ?? process.env.THOUGHT_SPEC_FILE ?? path.join(root, "specs", specName));
   const movementQuota = Number(argValue("--movement-quota") ?? process.env.THOUGHT_MOVEMENT_QUOTA ?? "1");
   const maxSpecBytes = Number(argValue("--max-spec-bytes") ?? process.env.MAX_THOUGHT_SPEC_BYTES ?? "20000");
   const deploySignerRef = argValue("--deploy-signer-ref") ?? process.env.THOUGHT_DEPLOY_SIGNER_REF ?? "SEPOLIA_DEPLOY_SW_A";

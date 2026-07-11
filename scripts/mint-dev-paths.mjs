@@ -33,9 +33,9 @@ const tokenExists = async (pathNft, tokenId) => {
 
 const main = async () => {
   const addresses = JSON.parse(await fs.readFile(addressesFile, "utf8"));
-  const pathNftAddress = addresses.pathNft?.address;
+  const pathNftAddress = addresses.path?.address ?? addresses.pathNft?.address;
   if (!pathNftAddress) {
-    throw new Error("evm/addresses.anvil.json has no pathNft.address");
+    throw new Error("evm/addresses.anvil.json has no path.address");
   }
 
   if (lastPathId < firstPathId) {

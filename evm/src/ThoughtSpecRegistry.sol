@@ -226,7 +226,6 @@ contract ThoughtSpecRegistry {
         return _specIds[_specIds.length - 1];
     }
 
-    // Backward-compatible read wrappers. They expose archive data only; there is no active spec.
     function specMeta(bytes32 specId)
         external
         view
@@ -263,9 +262,6 @@ contract ThoughtSpecRegistry {
         spec = _specs[specId];
         if (!spec.exists) {
             revert ThoughtSpecNotFound(specId);
-        }
-        if (spec.pointer == address(0) || spec.pointer.code.length <= 1) {
-            revert ThoughtSpecPointerInvalid(specId);
         }
     }
 }

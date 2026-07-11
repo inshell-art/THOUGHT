@@ -186,7 +186,7 @@ if (!app) {
 }
 
 const header = element("header", "thought-v2-lab__header");
-const title = element("h1", "thought-v2-lab__title", "THOUGHT V2");
+const title = element("h1", "thought-v2-lab__title", "THOUGHT");
 const subline = element("p", "thought-v2-lab__subline");
 subline.replaceChildren(
   element("span", undefined, `${works.length} works`),
@@ -215,7 +215,7 @@ const renderCaption = (work: WorkView, className: string) => {
 };
 
 const detail = element("section", "thought-v2-lab__detail");
-detail.setAttribute("aria-label", "THOUGHT V2 detail preview");
+detail.setAttribute("aria-label", "THOUGHT detail preview");
 
 const detailFigure = element("figure", "thought-detail-work");
 const detailImage = element("img", "thought-detail-work__image") as HTMLImageElement;
@@ -226,7 +226,7 @@ detailFigure.replaceChildren(detailImage, detailCaptionSlot);
 detail.append(detailFigure);
 
 const grid = element("section", "thought-v2-lab__grid");
-grid.setAttribute("aria-label", "THOUGHT V2 sample works");
+grid.setAttribute("aria-label", "THOUGHT sample works");
 
 const gridLinks: HTMLAnchorElement[] = [];
 
@@ -272,7 +272,7 @@ workViews.forEach((work) => {
 const empty = element(
   "p",
   "thought-v2-lab__empty",
-  "No THOUGHT V2 work samples were found in the current artifact release.",
+  "No THOUGHT work samples were found in the current artifact release.",
 );
 
 if (workViews.length > 0) {

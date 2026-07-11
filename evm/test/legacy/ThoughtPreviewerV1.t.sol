@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {SeedGenerator} from "../src/SeedGenerator.sol";
-import {ThoughtPreviewer} from "../src/ThoughtPreviewer.sol";
+import {SeedGeneratorV1} from "../../legacy/SeedGeneratorV1.sol";
+import {ThoughtPreviewerV1} from "../../legacy/ThoughtPreviewerV1.sol";
 
-contract ThoughtPreviewerTest {
-    SeedGenerator private immutable seedGenerator = new SeedGenerator();
-    ThoughtPreviewer private immutable previewer = new ThoughtPreviewer();
+contract ThoughtPreviewerV1Test {
+    SeedGeneratorV1 private immutable seedGenerator = new SeedGeneratorV1();
+    ThoughtPreviewerV1 private immutable previewer = new ThoughtPreviewerV1();
 
     function testSeedGeneratorMatchesKnownValue() public view {
         uint256 seed = seedGenerator.getSeed(0x1234, 7, "hi");

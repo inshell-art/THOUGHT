@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {ThoughtSeedLib} from "./ThoughtSeedLib.sol";
+import {ThoughtSeedLibV1} from "./ThoughtSeedLibV1.sol";
 
-contract ThoughtPreviewer {
+contract ThoughtPreviewerV1 {
     uint256 private constant MAX_TEXT_LEN = 23;
     uint256 private constant MAX_PALETTE = 64;
     uint256 private constant MAX_PATTERNS = 1024;
@@ -297,13 +297,13 @@ contract ThoughtPreviewer {
     ) private pure returns (uint32) {
         uint256 low = accountAddress & ((uint256(1) << 128) - 1);
         uint256 high = (accountAddress >> 128) & ((uint256(1) << 128) - 1);
-        uint256 seed = (low ^ high) % ThoughtSeedLib.RNG_MOD;
-        seed = (seed + index) % ThoughtSeedLib.RNG_MOD;
+        uint256 seed = (low ^ high) % ThoughtSeedLibV1.RNG_MOD;
+        seed = (seed + index) % ThoughtSeedLibV1.RNG_MOD;
         for (uint256 i = 0; i < text.length; i++) {
             if (!_tick(state, 2)) {
                 break;
             }
-            seed = (seed * 131 + uint8(text[i])) % ThoughtSeedLib.RNG_MOD;
+            seed = (seed * 131 + uint8(text[i])) % ThoughtSeedLibV1.RNG_MOD;
         }
         return uint32(seed);
     }

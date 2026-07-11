@@ -1,4 +1,4 @@
-# THOUGHT V2 Artifact Bridge
+# THOUGHT Artifact Bridge
 
 This directory publishes render artifacts for downstream repos.
 
