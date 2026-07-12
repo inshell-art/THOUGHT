@@ -439,7 +439,7 @@ contract ThoughtNFTTest {
         replay.agentLine = "REPLAY TARGET";
         _expectMintStringRevert(replay, "QUOTA_EXHAUSTED");
         require(token.totalSupply() == 1, "replay minted");
-        require(token.tokenOfWorkHash(token.workHash(keccak256(bytes(replay.promptLine)), keccak256(bytes(replay.agentLine)))) == 0, "replay reserved work");
+        require(token.tokenOfWorkHash(token.workHash(keccak256(bytes(replay.agentLine)))) == 0, "replay reserved work");
     }
 
     function testMintRejectsReentrantPathCallbackAndStillMintsOuterWork() public {
@@ -473,7 +473,7 @@ contract ThoughtNFTTest {
         ThoughtNFT.MintThoughtInput memory input = _input("quiet signal", "QUIET SIGNAL", 1, USER_KEY);
         bytes32 promptHash = keccak256(bytes(input.promptLine));
         bytes32 agentHash = keccak256(bytes(input.agentLine));
-        bytes32 mintedWorkHash = token.workHash(promptHash, agentHash);
+        bytes32 mintedWorkHash = token.workHash(agentHash);
         bytes32 provenanceHash = keccak256(bytes(input.provenanceJson));
 
         vm.expectEmit(true, true, true, true);
@@ -561,7 +561,7 @@ contract ThoughtNFTTest {
     function testPathConsumeFailureDoesNotMintReserveOrIncrementSupply() public {
         path.setAuthorizedMinter(address(0xCAFE));
         ThoughtNFT.MintThoughtInput memory input = _input("valid prompt", "VALID AGENT", 1, USER_KEY);
-        bytes32 mintedWorkHash = token.workHash(keccak256(bytes(input.promptLine)), keccak256(bytes(input.agentLine)));
+        bytes32 mintedWorkHash = token.workHash(keccak256(bytes(input.agentLine)));
 
         vm.prank(user);
         (bool ok,) = address(token).call(abi.encodeWithSelector(token.mint.selector, input));
@@ -575,11 +575,10 @@ contract ThoughtNFTTest {
         _mintAsUser("same prompt", "SAME AGENT", 1);
         uint256 beforeCalls = path.consumeCallCount();
         ThoughtNFT.MintThoughtInput memory duplicate = _input("same prompt", "SAME AGENT", 2, USER_KEY);
-        bytes32 mintedWorkHash =
-            token.workHash(keccak256(bytes(duplicate.promptLine)), keccak256(bytes(duplicate.agentLine)));
+        bytes32 mintedWorkHash = token.workHash(keccak256(bytes(duplicate.agentLine)));
 
         _expectMintRevert(
-            duplicate, abi.encodeWithSelector(ThoughtNFT.WorkAlreadyMinted.selector, mintedWorkHash, uint256(1))
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, mintedWorkHash, uint256(1))
         );
         require(path.consumeCallCount() == beforeCalls, "duplicate called path");
         require(!path.thoughtConsumed(2), "duplicate consumed path");
@@ -631,6 +630,10 @@ contract ThoughtNFTTest {
             _input("double  space", "VALID AGENT", 3, USER_KEY),
             abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.Prompt)
         );
+        _expectMintRevert(
+            _input("valid prompt", "DOUBLE  SPACE", 4, USER_KEY),
+            abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.Agent)
+        );
     }
 
     function testLetterCaseIsPreservedExactly() public {
@@ -644,6 +647,10 @@ contract ThoughtNFTTest {
     }
 
     function testDisplayLimitsAndByteLimits() public {
+        require(token.MAX_PROMPT_LINE_BYTES() == 320, "prompt byte limit changed");
+        require(token.MAX_AGENT_LINE_BYTES() == 180, "agent byte limit changed");
+        require(token.MAX_PROMPT_LINE_DISPLAY_UNITS() == 433, "prompt unit limit changed");
+        require(token.MAX_AGENT_LINE_DISPLAY_UNITS() == 162, "agent unit limit changed");
         _mintAsUser(_repeat("a", 72), _repeat("A", 27), 1);
 
         _expectMintRevert(
@@ -652,7 +659,7 @@ contract ThoughtNFTTest {
                 ThoughtNFT.DisplayLineTooWide.selector,
                 ThoughtNFT.DisplayKind.Prompt,
                 uint256(438),
-                token.PROMPT_MAX_UNITS()
+                token.MAX_PROMPT_LINE_DISPLAY_UNITS()
             )
         );
         _expectMintRevert(
@@ -661,42 +668,54 @@ contract ThoughtNFTTest {
                 ThoughtNFT.DisplayLineTooWide.selector,
                 ThoughtNFT.DisplayKind.Agent,
                 uint256(168),
-                token.AGENT_MAX_UNITS()
+                token.MAX_AGENT_LINE_DISPLAY_UNITS()
             )
         );
         _expectMintRevert(
-            _input(_repeat("a", token.PROMPT_MAX_BYTES() + 1), "VALID AGENT", 4, USER_KEY),
+            _input(_repeat("a", token.MAX_PROMPT_LINE_BYTES() + 1), "VALID AGENT", 4, USER_KEY),
             abi.encodeWithSelector(
                 ThoughtNFT.DisplayLineTooLarge.selector,
                 ThoughtNFT.DisplayKind.Prompt,
-                token.PROMPT_MAX_BYTES() + 1,
-                token.PROMPT_MAX_BYTES()
+                token.MAX_PROMPT_LINE_BYTES() + 1,
+                token.MAX_PROMPT_LINE_BYTES()
             )
         );
         _expectMintRevert(
-            _input("valid prompt", _repeat("A", token.AGENT_MAX_BYTES() + 1), 5, USER_KEY),
+            _input("valid prompt", _repeat("A", token.MAX_AGENT_LINE_BYTES() + 1), 5, USER_KEY),
             abi.encodeWithSelector(
                 ThoughtNFT.DisplayLineTooLarge.selector,
                 ThoughtNFT.DisplayKind.Agent,
-                token.AGENT_MAX_BYTES() + 1,
-                token.AGENT_MAX_BYTES()
+                token.MAX_AGENT_LINE_BYTES() + 1,
+                token.MAX_AGENT_LINE_BYTES()
             )
         );
     }
 
-    function testWorkUniquenessAllowsOneSideToDiffer() public {
+    function testAgentLineUniquenessRejectsChangedPromptBeforePathConsumption() public {
+        _mintAsUser("same prompt", "FIRST AGENT", 1);
+        uint256 beforeCalls = path.consumeCallCount();
+
+        ThoughtNFT.MintThoughtInput memory duplicate = _input("other prompt", "FIRST AGENT", 2, USER_KEY);
+        bytes32 agentLineHash = keccak256(bytes(duplicate.agentLine));
+        bytes32 mintedWorkHash = token.workHash(agentLineHash);
+        _expectMintRevert(
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, mintedWorkHash, uint256(1))
+        );
+        require(path.consumeCallCount() == beforeCalls, "duplicate called path");
+        require(!path.thoughtConsumed(2), "duplicate consumed path");
+        require(token.tokenOfAgentLineHash(agentLineHash) == 1, "agent hash lookup mismatch");
+    }
+
+    function testAgentLineUniquenessAllowsSharedPromptAndExactByteVariants() public {
         _mintAsUser("same prompt", "FIRST AGENT", 1);
         _mintAsUser("same prompt", "SECOND AGENT", 2);
-        _mintAsUser("other prompt", "FIRST AGENT", 3);
-        require(token.totalSupply() == 3, "one-sided differences should mint");
+        _mintAsUser("other prompt", "First Agent", 3);
+        _mintAsUser("unicode prompt", unicode"FIRST ÁGENT", 4);
+        require(token.totalSupply() == 4, "different agent lines should mint");
 
-        ThoughtNFT.MintThoughtInput memory duplicate = _input("same prompt", "FIRST AGENT", 4, USER_KEY);
-        bytes32 mintedWorkHash =
-            token.workHash(keccak256(bytes(duplicate.promptLine)), keccak256(bytes(duplicate.agentLine)));
-        _expectMintRevert(
-            duplicate, abi.encodeWithSelector(ThoughtNFT.WorkAlreadyMinted.selector, mintedWorkHash, uint256(1))
-        );
-        require(!path.thoughtConsumed(4), "duplicate consumed path");
+        string memory firstPromptField = token.binaryField("same prompt", "FIRST AGENT");
+        string memory changedPromptField = token.binaryField("other prompt", "FIRST AGENT");
+        require(!_equal(firstPromptField, changedPromptField), "prompt must affect binary field");
     }
 
     function testSvgAndMetadataUseFormalTwoLineRenderer() public {
@@ -706,12 +725,16 @@ contract ThoughtNFTTest {
 
         require(!_contains(svg, 'id="work-frame"'), "svg should not include an outer work frame");
         require(!_contains(svg, 'id="work-canvas"'), "svg should not scale the canvas through a wrapper");
-        require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#050505"/>'), "missing dark bg");
+        require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>'), "missing black bg");
         require(_contains(svg, 'id="binary-background"'), "missing binary background");
         require(_contains(svg, 'data-zero="hollow-circle"'), "binary background should preserve zero cells");
         require(_contains(svg, 'opacity="1.00"'), "binary background opacity mismatch");
         require(_contains(svg, '<circle '), "binary background should render circles");
         require(_count(svg, 'text-anchor="middle"') == 2, "both lines should be centered");
+        require(_contains(svg, '<clipPath id="agent-line-clip"><rect x="94" y="373" width="772" height="74" rx="9"/>'), "agent clip mismatch");
+        require(_contains(svg, '<clipPath id="prompt-line-clip"><rect x="150" y="821" width="660" height="46" rx="9"/>'), "prompt clip mismatch");
+        require(_contains(svg, 'font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)"'), "agent typography mismatch");
+        require(_contains(svg, 'font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)"'), "prompt typography mismatch");
         require(!_contains(svg, "PROMPT:"), "svg should not label prompt");
         require(!_contains(svg, "AGENT:"), "svg should not label agent");
         require(!_contains(svg, "Color Font"), "svg contains color font text");
@@ -784,8 +807,8 @@ contract ThoughtNFTTest {
             "zero bit pattern missing"
         );
         require(_contains(svg, '<rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/>'), "zero field missing");
-        require(_contains(svg, '<rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#050505"/>'), "agent clear missing");
-        require(_contains(svg, '<rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#050505"/>'), "prompt clear missing");
+        require(_contains(svg, '<rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#000000"/>'), "agent clear missing");
+        require(_contains(svg, '<rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#000000"/>'), "prompt clear missing");
         require(_count(svg, '<use href="#binary-one"') == 337, "one bits should be circles");
         require(!_contains(svg, "&#9679;"), "binary background should not use text glyph circles");
         require(!_contains(svg, "textLength="), "binary background should not use text spacing");
@@ -844,16 +867,17 @@ contract ThoughtNFTTest {
         require(path.thoughtConsumed(1), "manual mint did not consume path");
     }
 
-    function testSqueezedSvgOnlyUsesTextLengthForLongLines() public {
+    function testLongPromptUsesCanonicalCarouselWithoutTextSqueezing() public {
         uint256 shortTokenId = _mintAsUser("short", "SHORT", 1);
         string memory shortSvg = token.svgOf(shortTokenId);
-        require(!_contains(shortSvg, 'textLength="820"'), "short lines should not be squeezed");
-        require(!_contains(shortSvg, 'lengthAdjust="spacingAndGlyphs"'), "short lines should not length-adjust");
+        require(!_contains(shortSvg, "<animate"), "short lines should remain static");
 
         uint256 longTokenId = _mintAsUser(_repeat("a", 72), _repeat("A", 27), 2);
         string memory longSvg = token.svgOf(longTokenId);
-        require(_contains(longSvg, 'textLength="820"'), "long lines should be squeezed");
-        require(_contains(longSvg, 'lengthAdjust="spacingAndGlyphs"'), "long lines should length-adjust");
+        require(_contains(longSvg, '<g id="prompt-line-carousel">'), "long prompt should use carousel");
+        require(_contains(longSvg, '<animate attributeName="x"'), "carousel animation missing");
+        require(!_contains(longSvg, "textLength="), "canonical carousel must not squeeze glyphs");
+        require(!_contains(longSvg, 'lengthAdjust="spacingAndGlyphs"'), "canonical carousel must not length-adjust");
     }
 
     function testActiveApiSurfaceRemovesLegacyPreviewAndColorFontHelpers() public {

@@ -11,6 +11,7 @@ This repository now defines the active formal contract as unversioned `ThoughtNF
 5. Allow a direct/manual mint path without a run receipt. Agent participation is optional and must not become an onchain requirement.
 6. Derive `binaryField` using UTF-8 `promptLine` bytes followed by `agentLine` bytes, repeat short data or truncate long data to exactly 1024 bits. Include that result in `thought.provenance.v2`.
 7. Use `thought.svg.v2.fixed-a-32` to describe the render contract. Marketplace metadata public naming is `THOUGHT`, not `THOUGHT V2`.
+8. Validate visible lines with the shared deterministic rules before opening the wallet: prompt `320` UTF-8 bytes / `433` display units; Agent `180` UTF-8 bytes / `162` display units. Check Agent-line identity before wallet pressure when a read path is available; the contract remains authoritative.
 
 ## ABI Change
 
@@ -30,6 +31,10 @@ function mint(MintThoughtInput calldata input) external returns (uint256 tokenId
 ```
 
 The active constructor is `new ThoughtNFT(pathNft, thoughtSpecRegistry)`. New integration code must not pass a Color Font address.
+
+## Identity Rule
+
+`workHash` is a domain-separated hash of `agentLineHash` only. The same exact Agent line is already an existing THOUGHT even if the prompt or binary field differs. `promptLine` remains stored, rendered, hashed, and included in the binary-field source, but is not an edition key. Handle `AgentLineAlreadyMinted(workHash, tokenId)` as: `Agent line already exists as a THOUGHT.`
 
 ## Artifact Source
 

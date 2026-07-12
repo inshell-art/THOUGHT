@@ -15,6 +15,8 @@ The human supplies the prompt, reviews the result, chooses a PATH, authorizes th
 
 `ThoughtNFT.mint(MintThoughtInput)` remains permissionless. A direct caller can mint without an Agent run when PATH authorization, exact registered-spec validation, visible text validation, unique work validation, and non-empty provenance requirements pass.
 
+The Agent line is the identity-bearing face of a work. Exact UTF-8 Agent-line bytes are globally unique, so the same Agent line cannot mint twice even with a different prompt or provenance. The prompt remains fully stored, rendered, and included in the binary field. Visible-line limits are deterministic: prompt `320` UTF-8 bytes / `433` display units; Agent `180` UTF-8 bytes / `162` display units.
+
 ## Active Source
 
 - [evm/src/ThoughtNFT.sol](evm/src/ThoughtNFT.sol): unversioned ERC-721 mint contract.

@@ -23,7 +23,14 @@ Each successful mint:
 
 The contract does not require an Agent receipt, run id, Plugin, MCP server, or website. A user may call `mint(MintThoughtInput)` directly when the normal PATH authorization and contract validations pass. Agent execution is a provenance and convenience layer, not a mint authority.
 
-Canonical work identity is the hash of the ordered pair `(promptLineHash, agentLineHash)`. The same pair cannot mint twice, while a changed prompt or Agent line is a different work.
+Canonical work identity is a domain-separated hash of `agentLineHash` only. The same exact Agent-line UTF-8 bytes cannot mint twice, even with a changed prompt or provenance. A changed Agent line is a different work; the prompt remains stored, rendered, hashed, and included in the binary field.
+
+Visible-line limits are deterministic and enforced before PATH consumption:
+
+| Line | Maximum UTF-8 bytes | Maximum display units |
+| --- | ---: | ---: |
+| `promptLine` | 320 | 433 |
+| `agentLine` | 180 | 162 |
 
 ## Renderer and Metadata
 

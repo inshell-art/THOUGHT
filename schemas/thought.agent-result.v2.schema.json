@@ -7,7 +7,12 @@
   "required": ["schema", "agentLine", "provenanceFragment"],
   "properties": {
     "schema": { "const": "thought.agent-result.v2" },
-    "agentLine": { "type": "string", "minLength": 1, "maxLength": 1024 },
+    "agentLine": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "description": "One concise visible UTF-8 Agent line. The authoritative contract validator also enforces 180 UTF-8 bytes, 162 deterministic display units, and one-line/control/spacing rules."
+    },
     "provenanceFragment": {
       "$ref": "thought.agent-fragment.v1.schema.json"
     }

@@ -2,6 +2,8 @@
 
 This directory publishes render artifacts for downstream repos.
 
+`docs/agent/THOUGHT_ARTIFACT_CONSUMPTION_BOOK.md` is authoritative for channel policy, integrity verification, consumer pinning, umbrella releases, rollout, and rollback. This render bridge is one component of that larger artifact model.
+
 ## Channels
 
 - `latest.json`: most recently built artifact from this repo.

@@ -44,6 +44,8 @@ The Agent must return exactly one JSON object:
 
 No dialogue, repair loop, alternate candidate, PATH selection, wallet action, or mint action belongs in the Agent response.
 
+The Agent must return one concise, visible UTF-8 `agentLine`. The official validator enforces `180` UTF-8 bytes and `162` deterministic display units, plus one-line/control/spacing rules. It rejects an invalid result rather than repairing or truncating it. Exact Agent-line bytes are globally unique within THOUGHT, so the frontend should check the Agent-line identity before wallet pressure and the contract rechecks it authoritatively inside `mint(...)`.
+
 ## inshell.art Implementation Contract
 
 `inshell.art` owns the active integration. Its API and Plugin/MCP adapter must provide the following conceptual operations:

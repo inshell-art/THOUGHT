@@ -11,12 +11,16 @@
 - EVM tests: `npm run test:evm`.
 - Local EVM deploy: `npm run deploy:evm-local`.
 
+## Artifact Publication and Consumption
+- `docs/agent/THOUGHT_ARTIFACT_CONSUMPTION_BOOK.md` is authoritative for cross-repo artifact ownership, publication channels, integrity checks, consumer pinning, rollout, and rollback.
+- Do not publish or consume candidate/stable artifacts from a dirty worktree. `latest` is discovery-only; production consumers must pin an immutable artifact ID and manifest hash.
+
 ## Publish-Ready Contract Invariants
 - `ThoughtNFT.pathNft` and `ThoughtNFT.thoughtSpecRegistry` are immutable constructor dependencies.
 - `ThoughtNFT.mint` consumes exactly one PATH `THOUGHT` movement unit atomically before minting a THOUGHT.
 - Failed THOUGHT mints must not consume PATH, reserve text hashes, or increment supply.
-- `promptLine` and `agentLine` are non-empty visible UTF-8 lines with ordinary single-space rules. Preserve case and visible Unicode exactly; reject controls, invisible characters, newlines, outer spaces, repeated spaces, byte-limit, and display-width violations before PATH consumption.
-- Ordered prompt/Agent work hashes are globally unique; the same `(promptLine, agentLine)` pair cannot mint twice even with different provenance.
+- `promptLine` and `agentLine` are non-empty visible UTF-8 lines with ordinary single-space rules. Preserve case and visible Unicode exactly; reject controls, invisible characters, newlines, outer spaces, repeated spaces, byte-limit, and display-unit violations before PATH consumption. Limits are prompt: 320 UTF-8 bytes / 433 units; Agent: 180 UTF-8 bytes / 162 units.
+- Agent-line work hashes are globally unique. The same exact `agentLine` cannot mint twice even with a different prompt or provenance; a changed Agent line is a different work.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
 - `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
 - There is no active/frozen/pinned THOUGHT spec at contract level. Do not reintroduce `activeSpecId`, `freezeActiveSpec`, `specAdmin`, or a required/latest spec gate in `ThoughtNFT`.

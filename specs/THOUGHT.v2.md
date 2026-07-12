@@ -15,7 +15,7 @@ promptLine = visible human material
 agentLine = visible Agent return
 ```
 
-The contract derives the work hash and official SVG from those two lines. It does not prove that an Agent was used. A manual caller may mint directly when all contract invariants, PATH authorization, registered-spec validation, and provenance requirements pass.
+The contract derives the official SVG from both lines. It derives work identity from the exact Agent-line UTF-8 bytes only. It does not prove that an Agent was used. A manual caller may mint directly when all contract invariants, PATH authorization, registered-spec validation, and provenance requirements pass.
 
 ## One Creative Round
 
@@ -60,7 +60,7 @@ The Agent may use the sealed task's prompt, registered spec, and permitted publi
 
 ## Visible Text Rules
 
-`agentLine` must be one visible UTF-8 line.
+`promptLine` and `agentLine` must each be one visible UTF-8 line.
 
 Required:
 
@@ -73,10 +73,19 @@ no leading space
 no trailing space
 no repeated spaces
 case preserved exactly as returned
-fits the contract's byte and display-width limits
+fits the contract's byte and display-unit limits
 ```
 
 Case is not normalized. ASCII, non-Latin scripts, punctuation, and visible symbols are accepted or rejected only by the active contract's visible-text rules. Do not depend on the frontend to rewrite a result before mint.
+
+The limits are independent and deterministic:
+
+| Line | Maximum UTF-8 bytes | Maximum display units |
+| --- | ---: | ---: |
+| `promptLine` | 320 | 433 |
+| `agentLine` | 180 | 162 |
+
+The Agent line is the work identity. The contract derives a domain-separated work hash from `keccak256(utf8(agentLine))`; the same exact Agent line is rejected as a duplicate even if the prompt differs. The prompt remains visible, stored, hashed, and material to the binary field, but it is not an edition key. Exact UTF-8 bytes decide identity: visually similar strings with different accepted byte encodings can remain distinct.
 
 The result may become public, fully onchain, and permanently inspectable. Return only a line suitable for that outcome.
 

@@ -12,4 +12,4 @@ The task and result protocol is `thought-agent/2`. The only accepted Agent resul
 
 Fetch the sealed task before acting. Verify its registered `THOUGHT.v2.md` id, hash, ref, and exact text. Do not treat this plugin copy as a replacement for the verified onchain spec bytes.
 
-The Agent returns one `agentLine` and submits once. It does not change `promptLine`, select a PATH token, operate a wallet, authorize consumption, or mint. `ThoughtNFT.mint(MintThoughtInput)` remains a public direct-mint contract call.
+The Agent returns one concise visible UTF-8 `agentLine` and submits once. The official validator enforces `180` UTF-8 bytes, `162` deterministic display units, and one-line/control/spacing rules; it rejects invalid output rather than repairing it. Exact Agent-line bytes are globally unique within the collection. The Agent does not change `promptLine`, select a PATH token, operate a wallet, authorize consumption, or mint. `ThoughtNFT.mint(MintThoughtInput)` remains a public direct-mint contract call.

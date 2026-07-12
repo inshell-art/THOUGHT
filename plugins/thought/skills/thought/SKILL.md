@@ -19,6 +19,6 @@ Use this Skill only with a configured THOUGHT MCP server that exposes:
 4. Submit one result through `thought_submit_agent_result`.
 5. Read status only when needed to confirm submission.
 
-Return one visible `agentLine` plus an optional `thought.agent-fragment.v1` object. Preserve the human `promptLine` as supplied. Do not perform a dialogue, repair cycle, alternate response, wallet operation, PATH selection, or mint transaction.
+Return one concise visible UTF-8 `agentLine` plus an optional `thought.agent-fragment.v1` object. Preserve the human `promptLine` as supplied. The official validator enforces 180 UTF-8 bytes, 162 deterministic display units, and one-line/control/spacing rules. It rejects invalid output instead of repairing it; exact Agent-line bytes are globally unique. Do not perform a dialogue, repair cycle, alternate response, wallet operation, PATH selection, or mint transaction.
 
 If the MCP tools are unavailable or the spec anchor does not verify, stop and report the configuration/verification failure. Do not invent a task or submit an unverified result.

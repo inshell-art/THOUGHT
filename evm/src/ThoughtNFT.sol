@@ -91,7 +91,7 @@ contract ThoughtNFT {
     error ReentrantCall();
     error TransferToNonReceiverImplementer();
     error TransferToZeroAddress();
-    error WorkAlreadyMinted(bytes32 workHash, uint256 tokenId);
+    error AgentLineAlreadyMinted(bytes32 workHash, uint256 tokenId);
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
@@ -118,28 +118,35 @@ contract ThoughtNFT {
     string public constant symbol = "THOUGHT";
 
     bytes32 public constant THOUGHT_MOVEMENT = bytes32("THOUGHT");
-    bytes32 public constant WORK_DOMAIN = keccak256("INSHELL_THOUGHT_WORK");
-    bytes32 public constant RENDER_DOMAIN = keccak256("thought.svg.v2.fixed-a-32");
+    bytes32 public constant AGENT_LINE_WORK_DOMAIN = keccak256("INSHELL_THOUGHT_AGENT_LINE_WORK");
 
-    uint256 public constant PROMPT_MAX_BYTES = 320;
-    uint256 public constant AGENT_MAX_BYTES = 180;
-    uint256 public constant PROMPT_MAX_UNITS = 433;
-    uint256 public constant AGENT_MAX_UNITS = 162;
+    uint256 public constant MAX_PROMPT_LINE_BYTES = 320;
+    uint256 public constant MAX_AGENT_LINE_BYTES = 180;
+    uint256 public constant MAX_PROMPT_LINE_DISPLAY_UNITS = 433;
+    uint256 public constant MAX_AGENT_LINE_DISPLAY_UNITS = 162;
     uint256 public constant MAX_PROVENANCE_BYTES = 20_000;
     uint256 public constant BINARY_FIELD_BITS = 1024;
 
     uint256 private constant SVG_WIDTH = 960;
     uint256 private constant SVG_HEIGHT = 960;
     uint256 private constant AGENT_X = 480;
-    uint256 private constant AGENT_Y = 420;
-    uint256 private constant AGENT_TARGET_WIDTH = 820;
-    uint256 private constant AGENT_BASE_FONT = 118;
-    uint256 private constant AGENT_MIN_FONT = 48;
+    uint256 private constant AGENT_Y = 410;
+    uint256 private constant AGENT_TARGET_WIDTH = 772;
+    uint256 private constant AGENT_BASE_FONT = 44;
+    uint256 private constant AGENT_CLIP_X = 94;
+    uint256 private constant AGENT_CLIP_Y = 373;
+    uint256 private constant AGENT_CLIP_HEIGHT = 74;
+    uint256 private constant AGENT_CLIP_RADIUS = 9;
     uint256 private constant PROMPT_X = 480;
-    uint256 private constant PROMPT_Y = 830;
-    uint256 private constant PROMPT_TARGET_WIDTH = 820;
-    uint256 private constant PROMPT_BASE_FONT = 34;
-    uint256 private constant PROMPT_MIN_FONT = 18;
+    uint256 private constant PROMPT_Y = 844;
+    uint256 private constant PROMPT_TARGET_WIDTH = 660;
+    uint256 private constant PROMPT_BASE_FONT = 16;
+    uint256 private constant PROMPT_CLIP_X = 150;
+    uint256 private constant PROMPT_CLIP_Y = 821;
+    uint256 private constant PROMPT_CLIP_HEIGHT = 46;
+    uint256 private constant PROMPT_CLIP_RADIUS = 9;
+    uint256 private constant CAROUSEL_MIN_GAP = 240;
+    uint256 private constant CAROUSEL_FONT_GAP_MULTIPLIER = 6;
     uint256 private constant BINARY_BG_X = 32;
     uint256 private constant BINARY_BG_Y = 32;
     uint256 private constant BINARY_BG_WIDTH = 896;
@@ -264,10 +271,10 @@ contract ThoughtNFT {
 
         bytes32 promptLineHash = keccak256(bytes(input.promptLine));
         bytes32 agentLineHash = keccak256(bytes(input.agentLine));
-        bytes32 mintedWorkHash = _workHash(promptLineHash, agentLineHash);
+        bytes32 mintedWorkHash = _workHash(agentLineHash);
         uint256 existingTokenId = tokenOfWorkHash[mintedWorkHash];
         if (existingTokenId != 0) {
-            revert WorkAlreadyMinted(mintedWorkHash, existingTokenId);
+            revert AgentLineAlreadyMinted(mintedWorkHash, existingTokenId);
         }
 
         bytes32 provenanceHash = keccak256(provenanceBytes);
@@ -320,8 +327,12 @@ contract ThoughtNFT {
         );
     }
 
-    function workHash(bytes32 promptLineHash, bytes32 agentLineHash) external pure returns (bytes32) {
-        return _workHash(promptLineHash, agentLineHash);
+    function workHash(bytes32 agentLineHash) external pure returns (bytes32) {
+        return _workHash(agentLineHash);
+    }
+
+    function tokenOfAgentLineHash(bytes32 agentLineHash) external view returns (uint256 tokenId) {
+        return tokenOfWorkHash[_workHash(agentLineHash)];
     }
 
     function binaryField(string calldata promptLine, string calldata agentLine) external pure returns (string memory) {
@@ -496,40 +507,81 @@ contract ThoughtNFT {
         DisplayMeasure storage promptMeasure,
         DisplayMeasure storage agentMeasure
     ) private view returns (string memory) {
-        (uint256 agentFontSize, bool agentSqueezed) =
-            _fontSize(DisplayKind.Agent, agentMeasure.displayUnits, AGENT_TARGET_WIDTH, AGENT_BASE_FONT, AGENT_MIN_FONT);
-        (uint256 promptFontSize, bool promptSqueezed) =
-            _fontSize(
-                DisplayKind.Prompt, promptMeasure.displayUnits, PROMPT_TARGET_WIDTH, PROMPT_BASE_FONT, PROMPT_MIN_FONT
-            );
-
-        return string.concat(
+        string memory header = string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" width="',
             _toString(SVG_WIDTH),
             '" height="',
             _toString(SVG_HEIGHT),
-            '" viewBox="0 0 960 960"><rect id="canvas-bg" width="960" height="960" fill="#050505"/>',
-            _svgBinaryBackground(record.promptLine, record.agentLine),
+            '" viewBox="0 0 960 960"><rect id="canvas-bg" width="960" height="960" fill="#000000"/>'
+        );
+        string memory agentLineSvg = string.concat(
+            '<g id="agent-line-area">',
             _svgTextLine(
+                "agent-line-text",
+                agentMeasure.displayUnits,
                 AGENT_X,
                 AGENT_Y,
                 AGENT_TARGET_WIDTH,
-                agentFontSize,
-                "#f4f4f4",
-                record.agentLine,
-                agentSqueezed
+                "agent-line-clip",
+                AGENT_CLIP_X,
+                AGENT_BASE_FONT,
+                record.agentLine
             ),
+            "</g>"
+        );
+        string memory promptLineSvg = string.concat(
+            '<g id="prompt-line-area">',
             _svgTextLine(
+                "prompt-line-text",
+                promptMeasure.displayUnits,
                 PROMPT_X,
                 PROMPT_Y,
                 PROMPT_TARGET_WIDTH,
-                promptFontSize,
-                "#b8b8b8",
-                record.promptLine,
-                promptSqueezed
+                "prompt-line-clip",
+                PROMPT_CLIP_X,
+                PROMPT_BASE_FONT,
+                record.promptLine
             ),
+            "</g>"
+        );
+        return string.concat(
+            header,
+            _svgBinaryBackground(record.promptLine, record.agentLine),
+            _svgClipDefs(),
+            agentLineSvg,
+            promptLineSvg,
             "</svg>"
         );
+    }
+
+    function _svgClipDefs() private pure returns (string memory) {
+        string memory agentClip = string.concat(
+            '<clipPath id="agent-line-clip"><rect x="',
+            _toString(AGENT_CLIP_X),
+            '" y="',
+            _toString(AGENT_CLIP_Y),
+            '" width="',
+            _toString(AGENT_TARGET_WIDTH),
+            '" height="',
+            _toString(AGENT_CLIP_HEIGHT),
+            '" rx="',
+            _toString(AGENT_CLIP_RADIUS),
+            '"/></clipPath>'
+        );
+        string memory promptClip = string.concat(
+            '<clipPath id="prompt-line-clip"><rect x="',
+            _toString(PROMPT_CLIP_X),
+            '" y="',
+            _toString(PROMPT_CLIP_Y),
+            '" width="',
+            _toString(PROMPT_TARGET_WIDTH),
+            '" height="',
+            _toString(PROMPT_CLIP_HEIGHT),
+            '" rx="',
+            _toString(PROMPT_CLIP_RADIUS),
+            '"/></clipPath>'
+        );
+        return string.concat("<defs>", agentClip, promptClip, "</defs>");
     }
 
     function _svgBinaryBackground(string memory promptLine, string memory agentLine) private pure returns (string memory) {
@@ -542,21 +594,15 @@ contract ThoughtNFT {
 
         uint256 oneCount;
         for (uint256 bitOffset = 0; bitOffset < BINARY_BG_CAPACITY; bitOffset++) {
-            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) {
-                continue;
-            }
+            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) continue;
             (uint256 cx, uint256 cy) = _binaryCellCenter(bitOffset);
-            if (!_isBinaryTextBlockCell(cx, cy)) {
-                oneCount++;
-            }
+            if (!_isBinaryTextBlockCell(cx, cy)) oneCount++;
         }
 
         bytes memory output = new bytes(48_000);
         uint256 cursor = _writeBinaryScaffold(output, totalBits, oneCount);
         for (uint256 bitOffset = 0; bitOffset < BINARY_BG_CAPACITY; bitOffset++) {
-            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) {
-                continue;
-            }
+            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) continue;
             (uint256 cx, uint256 cy) = _binaryCellCenter(bitOffset);
             if (_isBinaryTextBlockCell(cx, cy)) {
                 continue;
@@ -568,6 +614,11 @@ contract ThoughtNFT {
             cursor = _writeSvgBytes(output, cursor, '"/>');
         }
 
+        cursor = _writeSvgBytes(
+            output,
+            cursor,
+            '<rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#000000"/><rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#000000"/>'
+        );
         cursor = _writeSvgBytes(output, cursor, "</g>");
         assembly {
             mstore(output, cursor)
@@ -594,7 +645,7 @@ contract ThoughtNFT {
         cursor = _writeSvgBytes(
             output,
             cursor,
-            '<g id="binary-background" opacity="1.00" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-rendered-cells="892" data-cleared-cells="132" data-one-cells="'
+            '<g id="binary-background" opacity="1.00" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits; text block cells are cleared" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-rendered-cells="892" data-cleared-cells="132" data-one-cells="'
         );
         cursor = _writeSvgUint(output, cursor, oneCount);
         cursor = _writeSvgBytes(output, cursor, '" data-zero-cells="');
@@ -604,7 +655,7 @@ contract ThoughtNFT {
         cursor = _writeSvgBytes(
             output,
             cursor,
-            '" data-fill-rule="repeat-short-truncate-long" data-cell-size="28" data-origin-x="32" data-origin-y="32" data-dot-radius="10" data-zero="hollow-circle"><defs><circle id="binary-one" r="10" fill="#006100"/><pattern id="binary-zero-pattern" x="32" y="32" width="28" height="28" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="14" cy="14" r="10" fill="none" stroke="#006100" stroke-width="1"/></pattern></defs><rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/><rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#050505"/><rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#050505"/>'
+            '" data-fill-rule="repeat-short-truncate-long" data-cell-size="28" data-origin-x="32" data-origin-y="32" data-dot-radius="10" data-zero="hollow-circle"><defs><circle id="binary-one" r="10" fill="#006100"/><pattern id="binary-zero-pattern" x="32" y="32" width="28" height="28" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="14" cy="14" r="10" fill="none" stroke="#006100" stroke-width="1"/></pattern></defs><rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/>'
         );
     }
 
@@ -666,58 +717,86 @@ contract ThoughtNFT {
     }
 
     function _svgTextLine(
+        string memory baseId,
+        uint256 displayUnits,
         uint256 x,
         uint256 y,
         uint256 targetWidth,
+        string memory clipId,
+        uint256 clipX,
         uint256 fontSize,
-        string memory fill,
-        string memory value,
-        bool squeezed
+        string memory value
     ) private pure returns (string memory) {
-        return string.concat(
-            '<text x="',
-            _toString(x),
+        uint256 textWidth = (displayUnits * fontSize + 9) / 10;
+        string memory escapedValue = _xmlEscape(value);
+        if (textWidth <= targetWidth) {
+            string memory identity = string.concat('<text id="', baseId, '" x="', _toString(x), '" y="', _toString(y));
+            string memory appearance = string.concat(
+                '" text-anchor="middle" dominant-baseline="middle" font-family="',
+                FONT_STACK,
+                '" font-size="',
+                _toString(fontSize),
+                '" fill="#ffffff" clip-path="url(#',
+                clipId,
+                ')">'
+            );
+            return string.concat(identity, appearance, escapedValue, "</text>");
+        }
+
+        uint256 gap = fontSize * CAROUSEL_FONT_GAP_MULTIPLIER;
+        if (gap < CAROUSEL_MIN_GAP) gap = CAROUSEL_MIN_GAP;
+        uint256 travel = textWidth + gap;
+        uint256 duration = (travel + 79) / 80;
+        if (duration < 14) duration = 14;
+        uint256 copyX = clipX + travel;
+        string memory textAttrs = string.concat(
             '" y="',
             _toString(y),
-            '" text-anchor="middle" dominant-baseline="middle" font-family="',
+            '" dominant-baseline="middle" font-family="',
             FONT_STACK,
             '" font-size="',
             _toString(fontSize),
-            '" fill="',
-            fill,
-            '"',
-            squeezed
-                ? string.concat(
-                    ' textLength="',
-                    _toString(targetWidth),
-                    '" lengthAdjust="spacingAndGlyphs"'
-                )
-                : "",
-            ">",
-            _xmlEscape(value),
+            '" fill="#ffffff" clip-path="url(#',
+            clipId,
+            ')">'
+        );
+        string memory firstAnimation = string.concat(
+            '<animate attributeName="x" values="',
+            _toString(clipX),
+            ";-",
+            _toString(travel - clipX),
+            '" dur="',
+            _toString(duration),
+            's" repeatCount="indefinite"/>'
+        );
+        string memory copyAnimation = string.concat(
+            '<animate attributeName="x" values="',
+            _toString(copyX),
+            ";",
+            _toString(clipX),
+            '" dur="',
+            _toString(duration),
+            's" repeatCount="indefinite"/>'
+        );
+        string memory firstText = string.concat(
+            '<text id="', baseId, '" x="', _toString(clipX), textAttrs, escapedValue, firstAnimation, "</text>"
+        );
+        string memory copyText = string.concat(
+            '<text id="',
+            baseId,
+            '-copy" x="',
+            _toString(copyX),
+            textAttrs,
+            escapedValue,
+            copyAnimation,
             "</text>"
         );
+        return string.concat('<g id="', _carouselId(baseId), '">', firstText, copyText, "</g>");
     }
 
-    function _fontSize(
-        DisplayKind kind,
-        uint256 displayUnits,
-        uint256 targetWidth,
-        uint256 baseFont,
-        uint256 minFont
-    )
-        private
-        pure
-        returns (uint256 size, bool squeezed)
-    {
-        uint256 fit = (targetWidth * 10) / displayUnits;
-        if (fit >= baseFont) {
-            return (baseFont, false);
-        }
-        if (fit < minFont) {
-            revert DisplayLineTooWide(kind, displayUnits, targetWidth);
-        }
-        return (fit, true);
+    function _carouselId(string memory baseId) private pure returns (string memory) {
+        if (keccak256(bytes(baseId)) == keccak256(bytes("agent-line-text"))) return "agent-line-carousel";
+        return "prompt-line-carousel";
     }
 
     function _validateDisplayLine(string memory value, DisplayKind kind)
@@ -726,8 +805,9 @@ contract ThoughtNFT {
         returns (DisplayMeasure memory measure)
     {
         bytes memory data = bytes(value);
-        uint256 maxBytes = kind == DisplayKind.Prompt ? PROMPT_MAX_BYTES : AGENT_MAX_BYTES;
-        uint256 maxUnits = kind == DisplayKind.Prompt ? PROMPT_MAX_UNITS : AGENT_MAX_UNITS;
+        uint256 maxBytes = kind == DisplayKind.Prompt ? MAX_PROMPT_LINE_BYTES : MAX_AGENT_LINE_BYTES;
+        uint256 maxUnits =
+            kind == DisplayKind.Prompt ? MAX_PROMPT_LINE_DISPLAY_UNITS : MAX_AGENT_LINE_DISPLAY_UNITS;
 
         if (data.length == 0) {
             revert DisplayLineEmpty(kind);
@@ -850,8 +930,8 @@ contract ThoughtNFT {
         return 8;
     }
 
-    function _workHash(bytes32 promptLineHash, bytes32 agentLineHash) internal pure returns (bytes32) {
-        return keccak256(abi.encode(WORK_DOMAIN, RENDER_DOMAIN, promptLineHash, agentLineHash));
+    function _workHash(bytes32 agentLineHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(AGENT_LINE_WORK_DOMAIN, agentLineHash));
     }
 
     function _mint(address to, uint256 tokenId) private {
