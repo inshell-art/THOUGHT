@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "artifact_kind": "thought-v2-render-artifact-channel",
-  "channel": "latest",
-  "source_channel": "stable",
+  "channel": "stable",
+  "source_channel": "candidate",
   "promotion": "same-bytes-pointer",
   "promoted_at": "2026-07-12T09:12:39Z",
   "release_tag": "thought-v2-line-limits-agent-identity-20260712",
