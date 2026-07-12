@@ -53,7 +53,7 @@ The authoritative procedure is `docs/agent/THOUGHT_ARTIFACT_CONSUMPTION_BOOK.md`
 - `npm run build`: passed
 - `npm run build:evm`: passed
 - `npm run test:evm`: passed, 84 tests
-- candidate `SHA256SUMS.txt`: all 63 files passed
+- candidate `SHA256SUMS.txt`: all 62 listed files passed; 63 total release files including the checksum list itself
 - source worktree at candidate build: clean
 - source tag resolves exactly to source commit
 - candidate and stable manifest identity: identical
