@@ -81,8 +81,15 @@ const transpileTsFile = (src, dst) => {
 const loadThoughtV2Modules = async () => {
   fs.rmSync(tempDir, { recursive: true, force: true });
   fs.mkdirSync(tempDir, { recursive: true });
+  transpileTsFile(path.join(root, "src", "thought-v2-protocol.ts"), path.join(tempDir, "thought-v2-protocol.mjs"));
   transpileTsFile(path.join(root, "src", "thought-v2-renderer.ts"), path.join(tempDir, "thought-v2-renderer.mjs"));
   transpileTsFile(path.join(root, "src", "thought-v2-fixtures.ts"), path.join(tempDir, "thought-v2-fixtures.mjs"));
+  const rendererFile = path.join(tempDir, "thought-v2-renderer.mjs");
+  fs.writeFileSync(
+    rendererFile,
+    fs.readFileSync(rendererFile, "utf8").replaceAll('"./thought-v2-protocol"', '"./thought-v2-protocol.mjs"'),
+    "utf8",
+  );
 
   const renderer = await import(pathToFileURL(path.join(tempDir, "thought-v2-renderer.mjs")).href);
   const fixtures = await import(pathToFileURL(path.join(tempDir, "thought-v2-fixtures.mjs")).href);

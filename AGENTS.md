@@ -33,7 +33,7 @@
 - PATH movement setup must be frozen by deployment scripts after configuring `THOUGHT` movement quota.
 
 ## SVG text rendering
-- The formal renderer is `thought.svg.v2.fixed-a-32`: a 960x960 SVG with a deterministic 32x32 binary field derived from UTF-8 prompt bytes followed by Agent bytes.
+- The formal renderer is `inshell.thought.svg.v2.binary-interleave-32`: a 960x960 SVG with independent 512-bit prompt and Agent streams interleaved into a deterministic packed 32x32 field.
 - Text is emitted as centered SVG `<text>` elements using the contract font stack. Output rendering depends on the viewer environment fonts.
 
 ## Security

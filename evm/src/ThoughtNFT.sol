@@ -60,6 +60,24 @@ contract ThoughtNFT {
         string provenanceJson;
         bytes32 promptLineHash;
         bytes32 agentLineHash;
+        bytes32 agentIdentityHash;
+        bytes32 binaryFieldHash;
+        bytes32 workHash;
+        bytes32 provenanceHash;
+        bytes32 thoughtSpecId;
+        bytes32 thoughtSpecHash;
+        uint256 pathId;
+        uint256 pathSerial;
+        address minter;
+        uint64 mintedAt;
+    }
+
+    struct ThoughtRecordView {
+        string promptLine;
+        string agentLine;
+        string provenanceJson;
+        bytes32 promptLineHash;
+        bytes32 agentLineHash;
         bytes32 workHash;
         bytes32 provenanceHash;
         bytes32 thoughtSpecId;
@@ -91,7 +109,8 @@ contract ThoughtNFT {
     error ReentrantCall();
     error TransferToNonReceiverImplementer();
     error TransferToZeroAddress();
-    error AgentLineAlreadyMinted(bytes32 workHash, uint256 tokenId);
+    error AgentLineAlreadyMinted(bytes32 agentIdentityHash, uint256 tokenId);
+    error InvalidProtocolReleaseHash();
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
@@ -107,6 +126,8 @@ contract ThoughtNFT {
         bytes32 indexed workHash,
         bytes32 promptLineHash,
         bytes32 agentLineHash,
+        bytes32 agentIdentityHash,
+        bytes32 binaryFieldKeccak256,
         uint256 pathId,
         uint256 pathSerial,
         bytes32 thoughtSpecId,
@@ -118,7 +139,10 @@ contract ThoughtNFT {
     string public constant symbol = "THOUGHT";
 
     bytes32 public constant THOUGHT_MOVEMENT = bytes32("THOUGHT");
-    bytes32 public constant AGENT_LINE_WORK_DOMAIN = keccak256("INSHELL_THOUGHT_AGENT_LINE_WORK");
+    string public constant RENDERER_ID = "inshell.thought.svg.v2.binary-interleave-32";
+    bytes32 public constant AGENT_IDENTITY_DOMAIN = keccak256("INSHELL_THOUGHT_V2_AGENT_IDENTITY");
+    bytes32 public constant WORK_DOMAIN = keccak256("INSHELL_THOUGHT_V2_WORK");
+    bytes32 public constant RENDERER_ID_HASH = keccak256(bytes(RENDERER_ID));
 
     uint256 public constant MAX_PROMPT_LINE_BYTES = 320;
     uint256 public constant MAX_AGENT_LINE_BYTES = 180;
@@ -126,56 +150,46 @@ contract ThoughtNFT {
     uint256 public constant MAX_AGENT_LINE_DISPLAY_UNITS = 162;
     uint256 public constant MAX_PROVENANCE_BYTES = 20_000;
     uint256 public constant BINARY_FIELD_BITS = 1024;
+    uint256 public constant BINARY_FIELD_BYTES = 128;
 
     uint256 private constant SVG_WIDTH = 960;
     uint256 private constant SVG_HEIGHT = 960;
     uint256 private constant AGENT_X = 480;
-    uint256 private constant AGENT_Y = 410;
-    uint256 private constant AGENT_TARGET_WIDTH = 772;
+    uint256 private constant AGENT_Y = 420;
+    uint256 private constant AGENT_TARGET_WIDTH = 768;
     uint256 private constant AGENT_BASE_FONT = 44;
-    uint256 private constant AGENT_CLIP_X = 94;
-    uint256 private constant AGENT_CLIP_Y = 373;
-    uint256 private constant AGENT_CLIP_HEIGHT = 74;
+    uint256 private constant AGENT_CLIP_X = 96;
+    uint256 private constant AGENT_CLIP_Y = 384;
+    uint256 private constant AGENT_CLIP_HEIGHT = 72;
     uint256 private constant AGENT_CLIP_RADIUS = 9;
     uint256 private constant PROMPT_X = 480;
-    uint256 private constant PROMPT_Y = 844;
-    uint256 private constant PROMPT_TARGET_WIDTH = 660;
+    uint256 private constant PROMPT_Y = 840;
+    uint256 private constant PROMPT_TARGET_WIDTH = 672;
     uint256 private constant PROMPT_BASE_FONT = 16;
-    uint256 private constant PROMPT_CLIP_X = 150;
-    uint256 private constant PROMPT_CLIP_Y = 821;
-    uint256 private constant PROMPT_CLIP_HEIGHT = 46;
+    uint256 private constant PROMPT_CLIP_X = 144;
+    uint256 private constant PROMPT_CLIP_Y = 816;
+    uint256 private constant PROMPT_CLIP_HEIGHT = 48;
     uint256 private constant PROMPT_CLIP_RADIUS = 9;
     uint256 private constant CAROUSEL_MIN_GAP = 240;
     uint256 private constant CAROUSEL_FONT_GAP_MULTIPLIER = 6;
-    uint256 private constant BINARY_BG_X = 32;
-    uint256 private constant BINARY_BG_Y = 32;
-    uint256 private constant BINARY_BG_WIDTH = 896;
-    uint256 private constant BINARY_BG_HEIGHT = 896;
+    uint256 private constant BINARY_BG_X = 96;
+    uint256 private constant BINARY_BG_Y = 96;
+    uint256 private constant BINARY_BG_WIDTH = 768;
+    uint256 private constant BINARY_BG_HEIGHT = 768;
     uint256 private constant BINARY_BG_SIDE = 32;
     uint256 private constant BINARY_BG_CAPACITY = BINARY_BG_SIDE * BINARY_BG_SIDE;
-    uint256 private constant BINARY_BG_DOT_RADIUS_NUMERATOR = 5;
-    uint256 private constant BINARY_BG_DOT_RADIUS_DENOMINATOR = 14;
     uint256 private constant BINARY_BG_CELL_SIZE = BINARY_BG_WIDTH / BINARY_BG_SIDE;
-    uint256 private constant BINARY_BG_DOT_RADIUS =
-        (BINARY_BG_CELL_SIZE * BINARY_BG_DOT_RADIUS_NUMERATOR + BINARY_BG_DOT_RADIUS_DENOMINATOR - 1)
-            / BINARY_BG_DOT_RADIUS_DENOMINATOR;
-    uint256 private constant BINARY_RENDERED_CELL_COUNT = 892;
-    uint256 private constant BINARY_AGENT_CLEAR_X = 93;
-    uint256 private constant BINARY_AGENT_CLEAR_Y = 373;
-    uint256 private constant BINARY_AGENT_CLEAR_WIDTH = 774;
-    uint256 private constant BINARY_AGENT_CLEAR_HEIGHT = 74;
-    uint256 private constant BINARY_PROMPT_CLEAR_X = 149;
-    uint256 private constant BINARY_PROMPT_CLEAR_Y = 821;
-    uint256 private constant BINARY_PROMPT_CLEAR_WIDTH = 662;
-    uint256 private constant BINARY_PROMPT_CLEAR_HEIGHT = 46;
+    uint256 private constant BINARY_ONE_RADIUS = 6;
     string private constant FONT_STACK =
         "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
     address public immutable pathNft;
     address public immutable thoughtSpecRegistry;
+    bytes32 public immutable protocolReleaseKeccak256;
     uint256 public totalSupply;
     mapping(bytes32 => uint256) public tokenOfWorkHash;
+    mapping(bytes32 => uint256) public tokenOfAgentIdentityHash;
 
     mapping(uint256 => address) private _ownerOf;
     mapping(address => uint256) private _balanceOf;
@@ -186,16 +200,22 @@ contract ThoughtNFT {
     mapping(uint256 => DisplayMeasure) private _agentMeasures;
     uint256 private _mintLocked;
 
-    constructor(address pathNft_, address thoughtSpecRegistry_) {
+    constructor(
+        address pathNft_,
+        address thoughtSpecRegistry_,
+        bytes32 protocolReleaseKeccak256_
+    ) {
         if (pathNft_ == address(0) || pathNft_.code.length == 0) {
             revert InvalidPathNft();
         }
         if (thoughtSpecRegistry_ == address(0) || thoughtSpecRegistry_.code.length == 0) {
             revert InvalidThoughtSpecRegistry();
         }
+        if (protocolReleaseKeccak256_ == bytes32(0)) revert InvalidProtocolReleaseHash();
 
         pathNft = pathNft_;
         thoughtSpecRegistry = thoughtSpecRegistry_;
+        protocolReleaseKeccak256 = protocolReleaseKeccak256_;
     }
 
     modifier nonReentrant() {
@@ -271,10 +291,13 @@ contract ThoughtNFT {
 
         bytes32 promptLineHash = keccak256(bytes(input.promptLine));
         bytes32 agentLineHash = keccak256(bytes(input.agentLine));
-        bytes32 mintedWorkHash = _workHash(agentLineHash);
-        uint256 existingTokenId = tokenOfWorkHash[mintedWorkHash];
+        bytes memory packedField = _packedBinaryField(bytes(input.promptLine), bytes(input.agentLine));
+        bytes32 binaryFieldHash = keccak256(packedField);
+        bytes32 derivedAgentIdentityHash = _agentIdentityHash(agentLineHash);
+        bytes32 mintedWorkHash = _workHash(promptLineHash, agentLineHash, binaryFieldHash);
+        uint256 existingTokenId = tokenOfAgentIdentityHash[derivedAgentIdentityHash];
         if (existingTokenId != 0) {
-            revert AgentLineAlreadyMinted(mintedWorkHash, existingTokenId);
+            revert AgentLineAlreadyMinted(derivedAgentIdentityHash, existingTokenId);
         }
 
         bytes32 provenanceHash = keccak256(provenanceBytes);
@@ -293,22 +316,24 @@ contract ThoughtNFT {
         uint64 mintedAt = uint64(block.timestamp);
         tokenId = totalSupply + 1;
         totalSupply = tokenId;
+        tokenOfAgentIdentityHash[derivedAgentIdentityHash] = tokenId;
         tokenOfWorkHash[mintedWorkHash] = tokenId;
-        _records[tokenId] = ThoughtRecord({
-            promptLine: input.promptLine,
-            agentLine: input.agentLine,
-            provenanceJson: input.provenanceJson,
-            promptLineHash: promptLineHash,
-            agentLineHash: agentLineHash,
-            workHash: mintedWorkHash,
-            provenanceHash: provenanceHash,
-            thoughtSpecId: input.thoughtSpecId,
-            thoughtSpecHash: input.thoughtSpecHash,
-            pathId: input.pathId,
-            pathSerial: pathSerial,
-            minter: msg.sender,
-            mintedAt: mintedAt
-        });
+        ThoughtRecord storage record = _records[tokenId];
+        record.promptLine = input.promptLine;
+        record.agentLine = input.agentLine;
+        record.provenanceJson = input.provenanceJson;
+        record.promptLineHash = promptLineHash;
+        record.agentLineHash = agentLineHash;
+        record.agentIdentityHash = derivedAgentIdentityHash;
+        record.binaryFieldHash = binaryFieldHash;
+        record.workHash = mintedWorkHash;
+        record.provenanceHash = provenanceHash;
+        record.thoughtSpecId = input.thoughtSpecId;
+        record.thoughtSpecHash = input.thoughtSpecHash;
+        record.pathId = input.pathId;
+        record.pathSerial = pathSerial;
+        record.minter = msg.sender;
+        record.mintedAt = mintedAt;
         _promptMeasures[tokenId] = promptMeasure;
         _agentMeasures[tokenId] = agentMeasure;
 
@@ -320,6 +345,8 @@ contract ThoughtNFT {
             mintedWorkHash,
             promptLineHash,
             agentLineHash,
+            derivedAgentIdentityHash,
+            binaryFieldHash,
             input.pathId,
             pathSerial,
             input.thoughtSpecId,
@@ -327,22 +354,32 @@ contract ThoughtNFT {
         );
     }
 
-    function workHash(bytes32 agentLineHash) external pure returns (bytes32) {
-        return _workHash(agentLineHash);
+    function agentIdentityHash(bytes32 agentLineHash) external pure returns (bytes32) {
+        return _agentIdentityHash(agentLineHash);
+    }
+
+    function workHash(bytes32 promptLineHash, bytes32 agentLineHash, bytes32 binaryFieldHash)
+        external
+        pure
+        returns (bytes32)
+    {
+        return _workHash(promptLineHash, agentLineHash, binaryFieldHash);
     }
 
     function tokenOfAgentLineHash(bytes32 agentLineHash) external view returns (uint256 tokenId) {
-        return tokenOfWorkHash[_workHash(agentLineHash)];
+        return tokenOfAgentIdentityHash[_agentIdentityHash(agentLineHash)];
     }
 
-    function binaryField(string calldata promptLine, string calldata agentLine) external pure returns (string memory) {
-        return _fixedBinaryField(bytes(promptLine), bytes(agentLine));
+    function binaryField(string calldata promptLine, string calldata agentLine) external pure returns (bytes memory) {
+        _validateDisplayLine(promptLine, DisplayKind.Prompt);
+        _validateDisplayLine(agentLine, DisplayKind.Agent);
+        return _packedBinaryField(bytes(promptLine), bytes(agentLine));
     }
 
-    function binaryFieldOf(uint256 tokenId) external view returns (string memory) {
+    function binaryFieldOf(uint256 tokenId) external view returns (bytes memory) {
         _requireMinted(tokenId);
         ThoughtRecord storage record = _records[tokenId];
-        return _fixedBinaryField(bytes(record.promptLine), bytes(record.agentLine));
+        return _packedBinaryField(bytes(record.promptLine), bytes(record.agentLine));
     }
 
     function promptLineOf(uint256 tokenId) external view returns (string memory) {
@@ -368,6 +405,16 @@ contract ThoughtNFT {
     function agentLineHashOf(uint256 tokenId) external view returns (bytes32) {
         _requireMinted(tokenId);
         return _records[tokenId].agentLineHash;
+    }
+
+    function agentIdentityHashOf(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _records[tokenId].agentIdentityHash;
+    }
+
+    function binaryFieldKeccak256Of(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _records[tokenId].binaryFieldHash;
     }
 
     function workHashOf(uint256 tokenId) external view returns (bytes32) {
@@ -400,9 +447,22 @@ contract ThoughtNFT {
         return _records[tokenId].mintedAt;
     }
 
-    function recordOf(uint256 tokenId) external view returns (ThoughtRecord memory) {
+    function recordOf(uint256 tokenId) external view returns (ThoughtRecordView memory view_) {
         _requireMinted(tokenId);
-        return _records[tokenId];
+        ThoughtRecord storage record = _records[tokenId];
+        view_.promptLine = record.promptLine;
+        view_.agentLine = record.agentLine;
+        view_.provenanceJson = record.provenanceJson;
+        view_.promptLineHash = record.promptLineHash;
+        view_.agentLineHash = record.agentLineHash;
+        view_.workHash = record.workHash;
+        view_.provenanceHash = record.provenanceHash;
+        view_.thoughtSpecId = record.thoughtSpecId;
+        view_.thoughtSpecHash = record.thoughtSpecHash;
+        view_.pathId = record.pathId;
+        view_.pathSerial = record.pathSerial;
+        view_.minter = record.minter;
+        view_.mintedAt = record.mintedAt;
     }
 
     function thoughtSpecOf(uint256 tokenId)
@@ -449,7 +509,9 @@ contract ThoughtNFT {
 
     function _tokenAttributes(ThoughtRecord storage record) private view returns (string memory) {
         return string.concat(
-            '[{"trait_type":"Render","value":"THOUGHT"},{"trait_type":"Renderer","value":"thought.svg.v2.fixed-a-32"},{"trait_type":"PATH","value":"',
+            '[{"trait_type":"Render","value":"THOUGHT"},{"trait_type":"Renderer","value":"',
+            RENDERER_ID,
+            '"},{"trait_type":"PATH","value":"',
             _toString(record.pathId),
             '"},{"trait_type":"PATH Serial","value":"',
             _toString(record.pathSerial),
@@ -460,17 +522,27 @@ contract ThoughtNFT {
     }
 
     function _tokenThought(ThoughtRecord storage record) private view returns (string memory) {
-        return string.concat(
-            '{"renderer":"thought.svg.v2.fixed-a-32","promptLine":',
+        string memory identity = string.concat(
+            '{"renderer":"',
+            RENDERER_ID,
+            '","protocolReleaseKeccak256":"',
+            _bytes32ToHex(protocolReleaseKeccak256),
+            '","promptLine":',
             _jsonString(record.promptLine),
             ',"agentLine":',
             _jsonString(record.agentLine),
-            ',"binaryField":',
-            _jsonString(_fixedBinaryField(bytes(record.promptLine), bytes(record.agentLine))),
-            ',"promptLineHash":"',
+            ',"binaryFieldPacked":"',
+            _bytesToHex(_packedBinaryField(bytes(record.promptLine), bytes(record.agentLine))),
+            '","binaryFieldKeccak256":"',
+            _bytes32ToHex(record.binaryFieldHash)
+        );
+        string memory hashes = string.concat(
+            '","promptLineKeccak256":"',
             _bytes32ToHex(record.promptLineHash),
-            '","agentLineHash":"',
+            '","agentLineKeccak256":"',
             _bytes32ToHex(record.agentLineHash),
+            '","agentIdentityHash":"',
+            _bytes32ToHex(record.agentIdentityHash),
             '","workHash":"',
             _bytes32ToHex(record.workHash),
             '","provenanceHash":"',
@@ -478,7 +550,9 @@ contract ThoughtNFT {
             '","thoughtSpecId":"',
             _bytes32ToHex(record.thoughtSpecId),
             '","thoughtSpecHash":"',
-            _bytes32ToHex(record.thoughtSpecHash),
+            _bytes32ToHex(record.thoughtSpecHash)
+        );
+        string memory context = string.concat(
             '","pathId":"',
             _toString(record.pathId),
             '","pathSerial":"',
@@ -491,6 +565,7 @@ contract ThoughtNFT {
             _jsonString(record.provenanceJson),
             "}"
         );
+        return string.concat(identity, hashes, context);
     }
 
     function _specNameOf(ThoughtRecord storage record) private view returns (string memory) {
@@ -585,28 +660,17 @@ contract ThoughtNFT {
     }
 
     function _svgBinaryBackground(string memory promptLine, string memory agentLine) private pure returns (string memory) {
-        bytes memory promptData = bytes(promptLine);
-        bytes memory agentData = bytes(agentLine);
-        uint256 totalBits = (promptData.length + agentData.length) * 8;
-        if (totalBits == 0) {
-            return "";
-        }
-
+        bytes memory packed = _packedBinaryField(bytes(promptLine), bytes(agentLine));
         uint256 oneCount;
         for (uint256 bitOffset = 0; bitOffset < BINARY_BG_CAPACITY; bitOffset++) {
-            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) continue;
-            (uint256 cx, uint256 cy) = _binaryCellCenter(bitOffset);
-            if (!_isBinaryTextBlockCell(cx, cy)) oneCount++;
+            if (_packedBitIsOne(packed, bitOffset)) oneCount++;
         }
 
         bytes memory output = new bytes(48_000);
-        uint256 cursor = _writeBinaryScaffold(output, totalBits, oneCount);
+        uint256 cursor = _writeBinaryScaffold(output, oneCount);
         for (uint256 bitOffset = 0; bitOffset < BINARY_BG_CAPACITY; bitOffset++) {
-            if (!_binarySourceIsOne(promptData, agentData, _binarySourceBitOffset(bitOffset, totalBits))) continue;
+            if (!_packedBitIsOne(packed, bitOffset)) continue;
             (uint256 cx, uint256 cy) = _binaryCellCenter(bitOffset);
-            if (_isBinaryTextBlockCell(cx, cy)) {
-                continue;
-            }
             cursor = _writeSvgBytes(output, cursor, '<use href="#binary-one" x="');
             cursor = _writeSvgUint(output, cursor, cx);
             cursor = _writeSvgBytes(output, cursor, '" y="');
@@ -617,17 +681,13 @@ contract ThoughtNFT {
         cursor = _writeSvgBytes(
             output,
             cursor,
-            '<rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#000000"/><rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#000000"/>'
+            '<rect id="agent-text-clear" x="96" y="384" width="768" height="72" fill="#000000"/><rect id="prompt-text-clear" x="144" y="816" width="672" height="48" fill="#000000"/>'
         );
         cursor = _writeSvgBytes(output, cursor, "</g>");
-        assembly {
+        assembly ("memory-safe") {
             mstore(output, cursor)
         }
         return string(output);
-    }
-
-    function _binarySourceBitOffset(uint256 bitOffset, uint256 totalBits) private pure returns (uint256) {
-        return totalBits > BINARY_BG_CAPACITY ? bitOffset : bitOffset % totalBits;
     }
 
     function _binaryCellCenter(uint256 bitOffset) private pure returns (uint256 cx, uint256 cy) {
@@ -637,55 +697,31 @@ contract ThoughtNFT {
         cy = BINARY_BG_Y + row * BINARY_BG_CELL_SIZE + BINARY_BG_CELL_SIZE / 2;
     }
 
-    function _writeBinaryScaffold(bytes memory output, uint256 totalBits, uint256 oneCount)
-        private
-        pure
-        returns (uint256 cursor)
-    {
+    function _writeBinaryScaffold(bytes memory output, uint256 oneCount) private pure returns (uint256 cursor) {
         cursor = _writeSvgBytes(
             output,
             cursor,
-            '<g id="binary-background" opacity="1.00" fill="#006100" aria-label="UTF-8 binary background: prompt line bytes then agent line bytes; filled green circles are one bits and hollow green circles are zero bits; text block cells are cleared" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-rendered-cells="892" data-cleared-cells="132" data-one-cells="'
+            '<g id="binary-background" opacity="1" fill="#006100" aria-label="Interleaved UTF-8 binary field: 512 prompt positions and 512 Agent positions; filled circles are one bits and hollow rings are zero bits" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-prompt-bit-positions="512" data-agent-bit-positions="512" data-one-cells="'
         );
         cursor = _writeSvgUint(output, cursor, oneCount);
         cursor = _writeSvgBytes(output, cursor, '" data-zero-cells="');
-        cursor = _writeSvgUint(output, cursor, BINARY_RENDERED_CELL_COUNT - oneCount);
-        cursor = _writeSvgBytes(output, cursor, '" data-source-bit-count="');
-        cursor = _writeSvgUint(output, cursor, totalBits);
+        cursor = _writeSvgUint(output, cursor, BINARY_FIELD_BITS - oneCount);
         cursor = _writeSvgBytes(
             output,
             cursor,
-            '" data-fill-rule="repeat-short-truncate-long" data-cell-size="28" data-origin-x="32" data-origin-y="32" data-dot-radius="10" data-zero="hollow-circle"><defs><circle id="binary-one" r="10" fill="#006100"/><pattern id="binary-zero-pattern" x="32" y="32" width="28" height="28" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="14" cy="14" r="10" fill="none" stroke="#006100" stroke-width="1"/></pattern></defs><rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/>'
+            '" data-pack="msb-first-128-bytes" data-cell-size="24" data-origin-x="96" data-origin-y="96"><defs><circle id="binary-one" r="6" fill="#006100"/><pattern id="binary-zero-pattern" x="96" y="96" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="12" cy="12" r="7" fill="none" stroke="#006100" stroke-width="2"/></pattern></defs><rect id="binary-zero-field" x="96" y="96" width="768" height="768" fill="url(#binary-zero-pattern)"/>'
         );
     }
 
-    function _fixedBinaryField(bytes memory promptData, bytes memory agentData) private pure returns (string memory) {
-        uint256 totalBits = (promptData.length + agentData.length) * 8;
-        if (totalBits == 0) {
-            return "";
+    function _packedBinaryField(bytes memory promptData, bytes memory agentData) private pure returns (bytes memory output) {
+        require(promptData.length > 0 && agentData.length > 0, "empty binary source");
+        output = new bytes(BINARY_FIELD_BYTES);
+        uint256 promptBits = promptData.length * 8;
+        uint256 agentBits = agentData.length * 8;
+        for (uint256 i = 0; i < 512; i++) {
+            if (_sourceBitIsOne(promptData, i % promptBits)) _setPackedBit(output, i * 2);
+            if (_sourceBitIsOne(agentData, i % agentBits)) _setPackedBit(output, i * 2 + 1);
         }
-
-        bytes memory output = new bytes(BINARY_FIELD_BITS);
-        for (uint256 bitOffset = 0; bitOffset < BINARY_FIELD_BITS; bitOffset++) {
-            uint256 sourceBitOffset = totalBits > BINARY_FIELD_BITS ? bitOffset : bitOffset % totalBits;
-            output[bitOffset] = _binarySourceIsOne(promptData, agentData, sourceBitOffset) ? bytes1("1") : bytes1("0");
-        }
-        return string(output);
-    }
-
-    function _isBinaryTextBlockCell(uint256 x, uint256 y) private pure returns (bool) {
-        return _isInsideRect(x, y, BINARY_AGENT_CLEAR_X, BINARY_AGENT_CLEAR_Y, BINARY_AGENT_CLEAR_WIDTH, BINARY_AGENT_CLEAR_HEIGHT)
-            || _isInsideRect(
-                x, y, BINARY_PROMPT_CLEAR_X, BINARY_PROMPT_CLEAR_Y, BINARY_PROMPT_CLEAR_WIDTH, BINARY_PROMPT_CLEAR_HEIGHT
-            );
-    }
-
-    function _isInsideRect(uint256 x, uint256 y, uint256 rectX, uint256 rectY, uint256 rectWidth, uint256 rectHeight)
-        private
-        pure
-        returns (bool)
-    {
-        return x >= rectX && x <= rectX + rectWidth && y >= rectY && y <= rectY + rectHeight;
     }
 
     function _writeSvgBytes(bytes memory output, uint256 cursor, string memory value) private pure returns (uint256) {
@@ -700,20 +736,20 @@ contract ThoughtNFT {
         return _writeSvgBytes(output, cursor, _toString(value));
     }
 
-    function _binarySourceIsOne(bytes memory promptData, bytes memory agentData, uint256 bitOffset)
-        private
-        pure
-        returns (bool)
-    {
+    function _sourceBitIsOne(bytes memory data, uint256 bitOffset) private pure returns (bool) {
         uint256 byteOffset = bitOffset / 8;
         uint256 bitIndex = bitOffset % 8;
-        uint8 value;
-        if (byteOffset < promptData.length) {
-            value = uint8(promptData[byteOffset]);
-        } else {
-            value = uint8(agentData[byteOffset - promptData.length]);
-        }
+        uint8 value = uint8(data[byteOffset]);
         return ((uint256(value) >> (7 - bitIndex)) & 1) == 1;
+    }
+
+    function _setPackedBit(bytes memory packed, uint256 bitOffset) private pure {
+        uint256 byteOffset = bitOffset / 8;
+        packed[byteOffset] = bytes1(uint8(packed[byteOffset]) | uint8(0x80 >> (bitOffset % 8)));
+    }
+
+    function _packedBitIsOne(bytes memory packed, uint256 bitOffset) private pure returns (bool) {
+        return ((uint8(packed[bitOffset / 8]) >> (7 - (bitOffset % 8))) & 1) == 1;
     }
 
     function _svgTextLine(
@@ -930,8 +966,16 @@ contract ThoughtNFT {
         return 8;
     }
 
-    function _workHash(bytes32 agentLineHash) internal pure returns (bytes32) {
-        return keccak256(abi.encode(AGENT_LINE_WORK_DOMAIN, agentLineHash));
+    function _agentIdentityHash(bytes32 agentLineHash) internal pure returns (bytes32) {
+        return keccak256(abi.encode(AGENT_IDENTITY_DOMAIN, agentLineHash));
+    }
+
+    function _workHash(bytes32 promptLineHash, bytes32 agentLineHash, bytes32 binaryFieldHash)
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode(WORK_DOMAIN, RENDERER_ID_HASH, promptLineHash, agentLineHash, binaryFieldHash));
     }
 
     function _mint(address to, uint256 tokenId) private {
@@ -1107,6 +1151,18 @@ contract ThoughtNFT {
             }
         }
 
+        return string(output);
+    }
+
+    function _bytesToHex(bytes memory value) private pure returns (string memory) {
+        bytes memory output = new bytes(2 + value.length * 2);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < value.length; i++) {
+            uint8 byteValue = uint8(value[i]);
+            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
+            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
+        }
         return string(output);
     }
 

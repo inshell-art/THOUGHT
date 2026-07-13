@@ -8,7 +8,7 @@ thought_submit_agent_result
 thought_get_run_status
 ```
 
-The task and result protocol is `thought-agent/2`. The only accepted Agent result schema is `thought.agent-result.v2`; its optional provenance fragment uses `thought.agent-fragment.v1`.
+The task protocol is `inshell.thought.agent-run.v2`. The accepted result schema is `inshell.thought.agent-result.v2`; its optional declaration uses `inshell.thought.agent-declaration.v1`.
 
 Fetch the sealed task before acting. Verify its registered `THOUGHT.v2.md` id, hash, ref, and exact text. Do not treat this plugin copy as a replacement for the verified onchain spec bytes.
 

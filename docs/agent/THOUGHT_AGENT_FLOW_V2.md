@@ -1,5 +1,7 @@
 # THOUGHT Agent Flow V2
 
+> Superseded design record. The active authority is [`protocol/CURRENT.json`](../../protocol/CURRENT.json) and `protocol/integrations/agent-run/v2/`.
+
 ## Authority
 
 The human owns the prompt, Agent choice, wallet, PATH authorization, and mint decision. The Agent is allowed one bounded creative round. It does not authorize a wallet, choose a PATH token, or mint a THOUGHT.

@@ -17,6 +17,10 @@ const thoughtSpecRef = process.env.THOUGHT_SPEC_REF ?? thoughtSpecName;
 const maxThoughtSpecBytes = 20_000;
 const devPathCount = BigInt(process.env.DEV_PATH_COUNT ?? "10");
 const explorerUrl = (process.env.THOUGHT_EXPLORER_URL ?? process.env.THOUGHT_INDEXER_URL ?? "").trim();
+const protocolCurrent = JSON.parse(
+  await fs.readFile(path.join(rootDir, "protocol", "CURRENT.json"), "utf8"),
+);
+const protocolReleaseKeccak256 = process.env.THOUGHT_PROTOCOL_RELEASE_HASH ?? protocolCurrent.keccak256;
 
 const readArtifact = async (artifactPath) => {
   const artifact = JSON.parse(await fs.readFile(artifactPath, "utf8"));
@@ -127,7 +131,7 @@ const main = async () => {
   const thoughtNft = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtNFT.sol", "ThoughtNFT.json"),
-    [pathNftAddress, thoughtSpecRegistryAddress],
+    [pathNftAddress, thoughtSpecRegistryAddress, protocolReleaseKeccak256],
   );
   const thoughtNftAddress = await thoughtNft.getAddress();
 
@@ -169,6 +173,7 @@ const main = async () => {
     recommendedThoughtSpecName: thoughtSpecName,
     recommendedThoughtSpecId: thoughtSpecId,
     recommendedThoughtSpecHash: thoughtSpecHash,
+    protocolReleaseKeccak256,
     thoughtSpec: {
       specName: thoughtSpecName,
       id: thoughtSpecId,

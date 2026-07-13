@@ -1,6 +1,10 @@
 # THOUGHT Artifact Handoff
 
-This is the current frontend artifact contract for public THOUGHT work. `thought-v2` remains only in technical file paths and renderer identifiers.
+> Historical design handoff. This document describes the superseded
+> `thought.svg.v2.fixed-a-32` renderer and is not an active protocol source.
+> Resolve the current release through [`protocol/CURRENT.json`](protocol/CURRENT.json).
+
+This was the frontend artifact contract for the referenced historical release. `thought-v2` remained only in technical file paths and renderer identifiers.
 
 ## Consumer Rule
 

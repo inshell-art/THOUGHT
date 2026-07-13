@@ -21,7 +21,7 @@ library ContractCodeStorage {
             runtimeCode
         );
 
-        assembly {
+        assembly ("memory-safe") {
             pointer := create(0, add(creationCode, 0x20), mload(creationCode))
         }
 
@@ -36,7 +36,7 @@ library ContractCodeStorage {
         }
 
         uint256 codeSize;
-        assembly {
+        assembly ("memory-safe") {
             codeSize := extcodesize(pointer)
         }
 
@@ -46,7 +46,7 @@ library ContractCodeStorage {
 
         uint256 dataSize = codeSize - 1;
         data = new bytes(dataSize);
-        assembly {
+        assembly ("memory-safe") {
             extcodecopy(pointer, add(data, 0x20), 1, dataSize)
         }
     }

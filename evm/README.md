@@ -8,11 +8,15 @@ This directory contains the active THOUGHT contract and the preserved V1 archive
 - `src/ThoughtSpecRegistry.sol`: the immutable-owner, append-only registry for exact `THOUGHT.vN.md` bytes.
 - `src/ContractCodeStorage.sol`: immutable code-pointer storage used by the registry.
 
-`ThoughtNFT` has exactly two immutable constructor dependencies:
+`ThoughtNFT` has three immutable constructor bindings:
 
 ```solidity
-new ThoughtNFT(pathNft, thoughtSpecRegistry)
+new ThoughtNFT(pathNft, thoughtSpecRegistry, protocolReleaseKeccak256)
 ```
+
+The constructor does not pin one spec version. Every mint supplies an exact registered
+`(thoughtSpecId, thoughtSpecHash)` pair, so multiple registered `THOUGHT.vN.md` versions
+can coexist and remain mintable in one collection.
 
 Each successful mint:
 
@@ -23,7 +27,7 @@ Each successful mint:
 
 The contract does not require an Agent receipt, run id, Plugin, MCP server, or website. A user may call `mint(MintThoughtInput)` directly when the normal PATH authorization and contract validations pass. Agent execution is a provenance and convenience layer, not a mint authority.
 
-Canonical work identity is a domain-separated hash of `agentLineHash` only. The same exact Agent-line UTF-8 bytes cannot mint twice, even with a changed prompt or provenance. A changed Agent line is a different work; the prompt remains stored, rendered, hashed, and included in the binary field.
+`agentIdentityHash` is the domain-separated uniqueness key derived from `agentLineHash`. `workHash` separately fingerprints the renderer, both line hashes, and packed-field hash. The same exact Agent-line UTF-8 bytes cannot mint twice, even with a changed prompt or provenance.
 
 Visible-line limits are deterministic and enforced before PATH consumption:
 
@@ -38,15 +42,18 @@ Visible-line limits are deterministic and enforced before PATH consumption:
 
 > A human prompt transformed by an Agent into a fully onchain work.
 
-Metadata uses public `THOUGHT` naming and technical renderer id `thought.svg.v2.fixed-a-32`. It includes the two visible lines, their hashes, work hash, provenance hash/payload, PATH id/serial, minter, minted timestamp, and exact spec id/hash. It never embeds full spec text.
+Metadata uses public `THOUGHT` naming and renderer id `inshell.thought.svg.v2.binary-interleave-32`. It includes the two visible lines, algorithm-labelled hashes, Agent identity, packed field/hash, work hash, provenance hash/payload, PATH id/serial, minter, minted timestamp, exact spec pair, and protocol release hash. It never embeds full spec text.
 
 The renderer derives a fixed 1024-bit field from UTF-8 bytes in this order:
 
 ```text
-promptLine bytes, then agentLine bytes
+P512[i] = prompt bits i mod prompt bit length
+A512[i] = Agent bits i mod Agent bit length
+F[2i] = P512[i]
+F[2i + 1] = A512[i]
 ```
 
-Short payloads repeat to 1024 bits; long payloads truncate to 1024 bits. The exact field is exposed through `binaryField(promptLine, agentLine)` and `binaryFieldOf(tokenId)` for provenance and independent verification.
+The 1024-bit field is packed MSB-first into exactly 128 bytes. The exact packed field is exposed through `binaryField(promptLine, agentLine)` and `binaryFieldOf(tokenId)` for provenance and independent verification.
 
 ## V1 Archive
 

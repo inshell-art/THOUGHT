@@ -203,7 +203,7 @@ Deploy \`ThoughtNFT\` against PATH:
 \`\`\`bash
 forge create --broadcast --rpc-url "$SEPOLIA_RPC_URL" "\${DEPLOY_SIGNER_ARGS[@]}" --json \\
   src/ThoughtNFT.sol:ThoughtNFT \\
-  --constructor-args ${inputs.path.pathNft} "$REGISTRY" | tee thought-nft.json
+  --constructor-args ${inputs.path.pathNft} "$REGISTRY" ${inputs.thought.protocolReleaseKeccak256} | tee thought-nft.json
 
 THOUGHT_NFT=$(jq -r .deployedTo thought-nft.json)
 \`\`\`
@@ -332,6 +332,7 @@ function main() {
       deploySignerRef,
       registryOwner,
       registryOwnerSignerRef,
+      protocolReleaseKeccak256: readJson(path.join(root, "protocol", "CURRENT.json")).keccak256,
       spec
     }
   };

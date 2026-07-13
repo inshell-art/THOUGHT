@@ -26,6 +26,9 @@ forge create --broadcast --rpc-url "$MAINNET_RPC_URL" "${DEPLOY_SIGNER_ARGS[@]}"
 
 REGISTRY=$(jq -r .deployedTo registry.json)
 SPEC_BYTES=0x$(xxd -p -c 256 ../specs/THOUGHT.v2.md | tr -d '\n')
+SPEC_ID=$(cast keccak 'THOUGHT.v2.md')
+SPEC_HASH=$(cast keccak "$SPEC_BYTES")
+PROTOCOL_RELEASE_HASH=$(jq -r .keccak256 ../protocol/CURRENT.json)
 
 cast send --rpc-url "$MAINNET_RPC_URL" "${REGISTRY_OWNER_SIGNER_ARGS[@]}" "$REGISTRY" \
   'registerThoughtSpec(string,string,bytes)' \
@@ -33,7 +36,7 @@ cast send --rpc-url "$MAINNET_RPC_URL" "${REGISTRY_OWNER_SIGNER_ARGS[@]}" "$REGI
 
 forge create --broadcast --rpc-url "$MAINNET_RPC_URL" "${DEPLOY_SIGNER_ARGS[@]}" --json \
   src/ThoughtNFT.sol:ThoughtNFT \
-  --constructor-args "$PATH_NFT" "$REGISTRY" | tee thought-nft.json
+  --constructor-args "$PATH_NFT" "$REGISTRY" "$PROTOCOL_RELEASE_HASH" | tee thought-nft.json
 
 THOUGHT_NFT=$(jq -r .deployedTo thought-nft.json)
 ```

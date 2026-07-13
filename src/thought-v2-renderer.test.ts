@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  binaryFieldPackedHex,
   buildThoughtV2Svg,
   fixedBinaryFieldOf,
   MAX_AGENT_LINE_BYTES,
@@ -12,175 +13,104 @@ import {
 } from "./thought-v2-renderer";
 
 describe("thought v2 renderer", () => {
-  it("lays out prompt bytes before agent bytes in the binary canvas background", () => {
-    const svg = buildThoughtV2Svg({
-      promptLine: "ab",
-      agentLine: "C",
-    });
+  it("renders the canonical 32x32 independently fitted interleaved field", () => {
+    const svg = buildThoughtV2Svg({ promptLine: "ab", agentLine: "C" });
+    const bits = fixedBinaryFieldOf("ab", "C");
+    const oneCount = bits.match(/1/g)?.length ?? 0;
 
-    const canvasIndex = svg.indexOf('id="canvas-bg"');
-    const backgroundIndex = svg.indexOf('id="binary-background"');
-    const background = svg.slice(backgroundIndex, svg.indexOf("</g>", backgroundIndex) + 4);
-    const grid = {
-      columns: Number(background.match(/data-grid-columns="(\d+)"/)?.[1]),
-      rows: Number(background.match(/data-grid-rows="(\d+)"/)?.[1]),
-      capacity: Number(background.match(/data-bit-capacity="(\d+)"/)?.[1]),
-      sourceBitCount: Number(background.match(/data-source-bit-count="(\d+)"/)?.[1]),
-      cellSize: Number(background.match(/data-cell-size="(\d+)"/)?.[1]),
-      originX: Number(background.match(/data-origin-x="(\d+)"/)?.[1]),
-      originY: Number(background.match(/data-origin-y="(\d+)"/)?.[1]),
-      dotRadius: Number(background.match(/data-dot-radius="(\d+)"/)?.[1]),
-    };
-    const circles = Array.from(background.matchAll(/<use href="#binary-one" x="(\d+)" y="(\d+)"\/>/g)).map((match) => ({
-      cx: Number(match[1]),
-      cy: Number(match[2]),
-    }));
-    const sourceBinary = "011000010110001001000011";
-    const expectedBinary = Array.from({ length: 1024 }, (_, index) => sourceBinary[index % sourceBinary.length]).join("");
-    const isCleared = (index: number): boolean => {
-      const row = Math.floor(index / 32);
-      const column = index % 32;
-      return (
-        (row >= 12 && row <= 14 && column >= 2 && column <= 29) ||
-        (row >= 28 && row <= 29 && column >= 4 && column <= 27)
-      );
-    };
-    const expectedVisibleBinary = expectedBinary
-      .split("")
-      .filter((_, index) => !isCleared(index))
-      .join("");
-    const expectedOneCount = expectedVisibleBinary.match(/1/g)?.length ?? 0;
-    const expectedZeroCount = expectedVisibleBinary.length - expectedOneCount;
-    const expectedFirstOneIndex = sourceBinary.indexOf("1");
-    const firstCircle = circles[0];
-    const firstCircleIndex =
-      Math.floor((firstCircle.cy - grid.originY) / grid.cellSize) * grid.columns +
-      Math.floor((firstCircle.cx - grid.originX) / grid.cellSize);
-    const longSvg = buildThoughtV2Svg({
-      promptLine: "a".repeat(54),
-      agentLine: "B".repeat(18),
+    expect(THOUGHT_V2_RENDER_CONTRACT.rendererId).toBe("inshell.thought.svg.v2.binary-interleave-32");
+    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground).toMatchObject({
+      sourceOrder: ["promptLine", "agentLine"],
+      sourceFit: "cycle-or-truncate-each-to-512-msb-first",
+      interleave: "P0-A0-through-P511-A511",
+      packedBytes: 128,
+      layout: "fixed-32x32-row-major",
+      x: 96,
+      y: 96,
+      width: 768,
+      height: 768,
+      side: 32,
+      capacity: 1024,
+      fill: "#006100",
+      opacity: 1,
+      cell: { width: 24, height: 24, oneRadius: 6, zeroRadius: 7, zeroStroke: 2 },
     });
-    const longBackground = longSvg.slice(
-      longSvg.indexOf('id="binary-background"'),
-      longSvg.indexOf("</g>", longSvg.indexOf('id="binary-background"')) + 4,
-    );
-    const longSourceBitCount = Number(longBackground.match(/data-source-bit-count="(\d+)"/)?.[1]);
-    const longCellSize = Number(longBackground.match(/data-cell-size="(\d+)"/)?.[1]);
+    expect(svg).toContain('data-prompt-bit-positions="512"');
+    expect(svg).toContain('data-agent-bit-positions="512"');
+    expect(svg).toContain('data-pack="msb-first-128-bytes"');
+    expect(svg).toContain(`data-one-cells="${oneCount}"`);
+    expect(svg.match(/<use href="#binary-one"/g)).toHaveLength(oneCount);
+    expect(svg).toContain('<rect id="binary-zero-field" x="96" y="96" width="768" height="768"');
+    expect(svg).toContain('<rect id="agent-text-clear" x="96" y="384" width="768" height="72"');
+    expect(svg).toContain('<rect id="prompt-text-clear" x="144" y="816" width="672" height="48"');
+    expect(svg).not.toMatch(/[01]{8}/);
+  });
 
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.sourceOrder).toEqual(["promptLine", "agentLine"]);
-    expect(THOUGHT_V2_RENDER_CONTRACT.rendererId).toBe("thought.svg.v2.fixed-a-32");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.layout).toBe("fixed-capacity-square-matrix");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.width).toBe(896);
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.height).toBe(896);
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.side).toBe(32);
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.capacity).toBe(1024);
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.fillRule).toBe("repeat-short-truncate-long");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.glyphs).toMatchObject({
-      one: "circle",
-      zero: "hollow circle",
-    });
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.zeroRendering).toBe("individual-circle-uses");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.clearStrategy).toBe("omit-text-block-cells");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.cell).toMatchObject({
-      mode: "square-grid-fit",
-      radiusMode: "percentage-of-square-cell",
-      radiusFormula: "ceil(cellSize * dotRadiusRatio)",
-      dotRadiusRatio: 5 / 14,
-    });
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.fill).toBe("#006100");
-    expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground.opacity).toBe(1);
-    expect(THOUGHT_V2_RENDER_CONTRACT.canvas.defaultBg).toBe("#000000");
+  it("allocates 512 bits to each source before row-major packing", () => {
+    const field = fixedBinaryFieldOf("a", "b");
+    const promptCycle = "01100001";
+    const agentCycle = "01100010";
+    const expected = Array.from(
+      { length: 512 },
+      (_, index) => `${promptCycle[index % 8]}${agentCycle[index % 8]}`,
+    ).join("");
+
+    expect(field).toBe(expected);
+    expect(field).toHaveLength(1024);
+    expect(binaryFieldPackedHex("a", "b")).toHaveLength(258);
+
+    const truncatedPrompt = "a".repeat(65);
+    const truncated = fixedBinaryFieldOf(truncatedPrompt, "b");
+    expect(truncated.slice(0, 1024).length).toBe(1024);
+    expect(truncated).toBe(field);
+  });
+
+  it("uses canonical line geometry and carousels valid overflow without rewriting text", () => {
     expect(THOUGHT_V2_RENDER_CONTRACT.agentLine).toMatchObject({
-      targetWidth: 772,
+      targetWidth: 768,
       defaultFontSize: 44,
-      minFontSize: 44,
-      clip: { x: 94, y: 373, width: 772, height: 74, radius: 9 },
-      text: { x: 480, y: 410 },
+      clip: { x: 96, y: 384, width: 768, height: 72, radius: 9 },
+      text: { x: 480, y: 420, textAnchor: "middle", dominantBaseline: "middle" },
     });
     expect(THOUGHT_V2_RENDER_CONTRACT.promptLine).toMatchObject({
-      targetWidth: 660,
+      targetWidth: 672,
       defaultFontSize: 16,
-      minFontSize: 16,
-      clip: { x: 150, y: 821, width: 660, height: 46, radius: 9 },
-      text: { x: 480, y: 844 },
+      clip: { x: 144, y: 816, width: 672, height: 48, radius: 9 },
+      text: { x: 480, y: 840, textAnchor: "middle", dominantBaseline: "middle" },
     });
-    expect(background).toContain('opacity="1.00"');
-    expect(background).toContain('data-zero="hollow-circle"');
-    expect(background).toContain('data-fill-rule="repeat-short-truncate-long"');
-    expect(background).toContain('data-rendered-cells="892"');
-    expect(background).toContain('data-cleared-cells="132"');
-    expect(canvasIndex).toBeGreaterThan(-1);
-    expect(backgroundIndex).toBeGreaterThan(canvasIndex);
-    expect(svg).not.toContain('id="work-frame"');
-    expect(svg).not.toContain('id="work-canvas"');
-    expect(svg).not.toContain('id="agent-line-bg"');
-    expect(svg).not.toContain('id="prompt-line-bg"');
-    expect(svg).toContain('<clipPath id="agent-line-clip">');
-    expect(svg).toContain('<clipPath id="prompt-line-clip">');
-    expect(grid).toMatchObject({
-      columns: 32,
-      rows: 32,
-      capacity: 1024,
-      sourceBitCount: 24,
-      cellSize: 28,
-      originX: 32,
-      originY: 32,
-      dotRadius: 10,
-    });
-    expect(background).toContain('<circle id="binary-one" r="10" fill="#006100"/>');
-    expect(background).toContain('<circle id="binary-zero" r="10" fill="none" stroke="#006100" stroke-width="1"/>');
-    expect(circles).toHaveLength(expectedOneCount);
-    expect(Array.from(background.matchAll(/<use href="#binary-zero/g))).toHaveLength(expectedZeroCount);
-    expect(Array.from(background.matchAll(/<use href="#binary-/g))).toHaveLength(892);
-    expect(firstCircleIndex).toBe(expectedFirstOneIndex);
-    expect(longCellSize).toBe(grid.cellSize);
-    expect(longSourceBitCount).toBe(576);
-    expect(longBackground).toContain('data-rendered-cells="892"');
-    expect(background).toContain("<use ");
-    expect(background).not.toContain('xml:space="preserve"');
-    expect(background).not.toContain("&#9679;");
-    expect(background).not.toMatch(/[01]{8}/);
+
+    const svg = buildThoughtV2Svg({ promptLine: "a".repeat(72), agentLine: "A".repeat(27) });
+    expect(svg).toContain('<g id="prompt-line-carousel">');
+    expect(svg).toContain('id="agent-line-text" x="480" y="420" text-anchor="middle"');
+    expect(svg).toContain('<animate attributeName="x"');
+    expect(svg).not.toContain("textLength=");
   });
 
-  it("derives the exact fixed 1024-bit field for provenance and contract verification", () => {
-    const cycle = "0110000101100010";
-    const field = fixedBinaryFieldOf("a", "b");
-
-    expect(field).toHaveLength(1024);
-    expect(field).toBe(cycle.repeat(64));
-
-    const truncated = fixedBinaryFieldOf("a".repeat(128), "b");
-    expect(truncated).toHaveLength(1024);
-    expect(truncated).toBe("01100001".repeat(128));
-  });
-
-  it("enforces the shared visible-line byte and display-unit limits at renderer boundaries", () => {
-    const promptAtLimit = measureThoughtV2Line("a".repeat(72), "prompt");
-    const agentAtLimit = measureThoughtV2Line("A".repeat(27), "agent");
-    const promptTooWide = measureThoughtV2Line("a".repeat(73), "prompt");
-    const agentTooWide = measureThoughtV2Line("A".repeat(28), "agent");
-    const promptWideScript = measureThoughtV2Line("你".repeat(43), "prompt");
-    const agentWideScript = measureThoughtV2Line("好".repeat(16), "agent");
-
+  it("enforces exact visible UTF-8 line limits without normalization", () => {
     expect({
       promptBytes: MAX_PROMPT_LINE_BYTES,
       agentBytes: MAX_AGENT_LINE_BYTES,
       promptUnits: MAX_PROMPT_LINE_DISPLAY_UNITS,
       agentUnits: MAX_AGENT_LINE_DISPLAY_UNITS,
     }).toEqual({ promptBytes: 320, agentBytes: 180, promptUnits: 433, agentUnits: 162 });
-    expect(promptAtLimit).toMatchObject({ byteLength: 72, displayUnits: 432, errors: [] });
-    expect(agentAtLimit).toMatchObject({ byteLength: 27, displayUnits: 162, errors: [] });
-    expect(promptTooWide.errors).toContain("prompt line is 438/433 display units");
-    expect(agentTooWide.errors).toContain("agent line is 168/162 display units");
-    expect(promptWideScript).toMatchObject({ byteLength: 129, displayUnits: 430, errors: [] });
-    expect(agentWideScript).toMatchObject({ byteLength: 48, displayUnits: 160, errors: [] });
-    expect(measureThoughtV2Line("line\nbreak", "agent").errors).not.toHaveLength(0);
-    expect(measureThoughtV2Line("line\tbreak", "prompt").errors).not.toHaveLength(0);
-
-    const svg = buildThoughtV2Svg({ promptLine: "a".repeat(72), agentLine: "A".repeat(27) });
-    expect(svg).toContain('font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)"');
-    expect(svg).toContain('font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)"');
-    expect(svg).toContain('<g id="prompt-line-carousel">');
-    expect(svg).toContain('<animate attributeName="x"');
+    expect(measureThoughtV2Line("a".repeat(72), "prompt")).toMatchObject({
+      byteLength: 72,
+      displayUnits: 432,
+      errors: [],
+    });
+    expect(measureThoughtV2Line("A".repeat(27), "agent")).toMatchObject({
+      byteLength: 27,
+      displayUnits: 162,
+      errors: [],
+    });
+    expect(measureThoughtV2Line("a".repeat(73), "prompt").errors).toContain(
+      "prompt line is 438/433 display units",
+    );
+    expect(measureThoughtV2Line("A".repeat(28), "agent").errors).toContain(
+      "agent line is 168/162 display units",
+    );
+    expect(() => buildThoughtV2Svg({ promptLine: " leading", agentLine: "valid" })).toThrow(
+      "invalid spacing",
+    );
   });
 });

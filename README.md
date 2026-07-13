@@ -21,17 +21,18 @@ The Agent line is the identity-bearing face of a work. Exact UTF-8 Agent-line by
 
 - [evm/src/ThoughtNFT.sol](evm/src/ThoughtNFT.sol): unversioned ERC-721 mint contract.
 - [evm/src/ThoughtSpecRegistry.sol](evm/src/ThoughtSpecRegistry.sol): append-only exact-spec registry.
-- [specs/THOUGHT.v2.md](specs/THOUGHT.v2.md): formal human/Agent contract.
-- [docs/agent/THOUGHT_AGENT_FLOW_V2.md](docs/agent/THOUGHT_AGENT_FLOW_V2.md): sealed Agent and Plugin/MCP integration contract.
+- [protocol/CURRENT.json](protocol/CURRENT.json): current protocol release pointer.
+- [protocol/releases/v2/art/THOUGHT.v2.md](protocol/releases/v2/art/THOUGHT.v2.md): Agent-facing artistic specification.
+- [protocol/integrations/agent-run/v2/thought-agent-run.v2.md](protocol/integrations/agent-run/v2/thought-agent-run.v2.md): sealed Agent transport integration.
 - [artifacts/thought-v2/README.md](artifacts/thought-v2/README.md): artifact distribution contract for frontend consumers.
 
 V1 contracts live in `evm/legacy/`; historical V1 specs and coordinator material remain in the repository as archive evidence. New deployment and integration code must not use V1 Color Font or preview dependencies.
 
 ## Renderer
 
-`tokenURI` produces metadata with an embedded 960x960 SVG. The renderer id is `thought.svg.v2.fixed-a-32`.
+`tokenURI` produces metadata with an embedded 960x960 SVG. The renderer id is `inshell.thought.svg.v2.binary-interleave-32`.
 
-The SVG uses a fixed 32x32 binary field. It derives 1024 bits from exact UTF-8 bytes of `promptLine` followed by `agentLine`; short payloads repeat and long payloads truncate. The exact field is independently available through `binaryField(...)` and `binaryFieldOf(tokenId)`.
+The SVG uses a fixed 32x32 binary field. Each exact UTF-8 line is independently cycled or truncated to 512 bits, then prompt and Agent bits are interleaved and packed MSB-first into 128 bytes. The exact packed field is available through `binaryField(...)` and `binaryFieldOf(tokenId)`.
 
 ## Development
 

@@ -461,6 +461,9 @@ PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
 MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
 SPEC_NAME="$(jq -r '.thought.spec.name' "$INPUTS_JSON")"
 SPEC_REF="$(jq -r '.thought.spec.ref' "$INPUTS_JSON")"
+SPEC_ID="$(jq -r '.thought.spec.id' "$INPUTS_JSON")"
+SPEC_HASH="$(jq -r '.thought.spec.hash' "$INPUTS_JSON")"
+PROTOCOL_RELEASE_HASH="$(jq -r '.thought.protocolReleaseKeccak256' "$INPUTS_JSON")"
 SPEC_FILE="$PACK_ROOT/source/$SPEC_NAME"
 ADMIN="$ADMIN_ADDRESS"
 DEPLOY_AUTH=(--keystore "$SEPOLIA_DEPLOY_KEYSTORE_JSON")
@@ -486,7 +489,7 @@ SPEC_BYTES="$(hex_file "$SPEC_FILE")"
 echo "registering spec with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$REGISTRY" \
   'registerThoughtSpec(string,string,bytes)' "$SPEC_NAME" "$SPEC_REF" "$SPEC_BYTES" | tee "$RESULT_DIR/register-spec.json"
-deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY"
+deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY" "$PROTOCOL_RELEASE_HASH"
 THOUGHT_NFT="$(jq -r '.deployedTo' "$RESULT_DIR/thought-nft.json")"
 echo "configuring PATH movement with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PATH_NFT" \
@@ -763,6 +766,7 @@ function main() {
       deploySignerExpectedAddress: "0x3e4fA9f09d8EDe66561145E1ef3bc127F80ED396",
       registryOwner,
       registryOwnerSignerRef,
+      protocolReleaseKeccak256: readJson(path.join(root, "protocol", "CURRENT.json")).keccak256,
       spec
     }
   };

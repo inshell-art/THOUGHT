@@ -14,7 +14,7 @@ library Base64 {
         uint256 encodedLen = 4 * ((data.length + 2) / 3);
         string memory result = new string(encodedLen + 32);
 
-        assembly {
+        assembly ("memory-safe") {
             mstore(result, encodedLen)
 
             let tablePtr := add(table, 1)

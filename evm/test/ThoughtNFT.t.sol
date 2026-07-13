@@ -181,6 +181,7 @@ contract ThoughtNFTTest {
     string private constant DEFAULT_SPEC_REF = "THOUGHT.v2.md";
     string private constant DEFAULT_SPEC_TEXT =
         "# THOUGHT.v2.md\n\nVersion: v2\n\nThe contract mints final visible V2 lines only.\n";
+    bytes32 private constant PROTOCOL_RELEASE_HASH = keccak256("inshell.thought.protocol.v2.test");
     bytes32 private constant CONSUME_AUTHORIZATION_TYPEHASH = keccak256(
         "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 nonce,uint256 deadline)"
     );
@@ -197,6 +198,8 @@ contract ThoughtNFTTest {
         bytes32 indexed workHash,
         bytes32 promptLineHash,
         bytes32 agentLineHash,
+        bytes32 agentIdentityHash,
+        bytes32 binaryFieldKeccak256,
         uint256 pathId,
         uint256 pathSerial,
         bytes32 thoughtSpecId,
@@ -216,7 +219,7 @@ contract ThoughtNFTTest {
         registry = new ThoughtSpecRegistry(address(this));
         (defaultSpecId, defaultSpecHash,) =
             registry.registerThoughtSpec(DEFAULT_SPEC_NAME, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT));
-        token = new ThoughtNFT(address(path), address(registry));
+        token = new ThoughtNFT(address(path), address(registry), PROTOCOL_RELEASE_HASH);
         path.setAuthorizedMinter(address(token));
         for (uint256 pathId = 1; pathId <= 96; pathId++) {
             path.mintPath(user, pathId);
@@ -262,21 +265,43 @@ contract ThoughtNFTTest {
         ownedRegistry.registerThoughtSpec("THOUGHT.v3.md", "THOUGHT.v3.md", bytes("Version: v3"));
     }
 
-    function testConstructorPinsDependenciesAndRejectsInvalidTargets() public {
+    function testConstructorPinsDependenciesAndProtocolReleaseAndRejectsInvalidTargets() public {
         require(token.pathNft() == address(path), "path dependency mismatch");
         require(token.thoughtSpecRegistry() == address(registry), "registry dependency mismatch");
+        require(token.protocolReleaseKeccak256() == PROTOCOL_RELEASE_HASH, "protocol release pin mismatch");
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
-        new ThoughtNFT(address(0), address(registry));
+        new ThoughtNFT(address(0), address(registry), PROTOCOL_RELEASE_HASH);
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
-        new ThoughtNFT(address(0x1234), address(registry));
+        new ThoughtNFT(address(0x1234), address(registry), PROTOCOL_RELEASE_HASH);
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0));
+        new ThoughtNFT(address(path), address(0), PROTOCOL_RELEASE_HASH);
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0x1234));
+        new ThoughtNFT(address(path), address(0x1234), PROTOCOL_RELEASE_HASH);
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidProtocolReleaseHash.selector));
+        new ThoughtNFT(address(path), address(registry), bytes32(0));
+    }
+
+    function testMultipleRegisteredSpecVersionsRemainMintable() public {
+        (bytes32 secondSpecId, bytes32 secondSpecHash,) =
+            registry.registerThoughtSpec("THOUGHT.v3.md", "THOUGHT.v3.md", bytes("# THOUGHT\nVersion: v3\n"));
+
+        ThoughtNFT.MintThoughtInput memory firstInput = _input("first spec", "FIRST SPEC", 1, USER_KEY);
+        vm.prank(user);
+        uint256 firstTokenId = token.mint(firstInput);
+        ThoughtNFT.MintThoughtInput memory secondInput =
+            _input("second spec", "SECOND SPEC", 2, USER_KEY, secondSpecId, secondSpecHash, DEFAULT_PROVENANCE);
+        vm.prank(user);
+        uint256 secondTokenId = token.mint(secondInput);
+
+        (bytes32 firstId, bytes32 firstHash,,) = token.thoughtSpecOf(firstTokenId);
+        (bytes32 secondId, bytes32 secondHash,,) = token.thoughtSpecOf(secondTokenId);
+        require(firstId == defaultSpecId && firstHash == defaultSpecHash, "first spec pair mismatch");
+        require(secondId == secondSpecId && secondHash == secondSpecHash, "second spec pair mismatch");
     }
 
     function testMarketplaceInterfacesAndNonexistentTokenReadsRevert() public {
@@ -439,12 +464,12 @@ contract ThoughtNFTTest {
         replay.agentLine = "REPLAY TARGET";
         _expectMintStringRevert(replay, "QUOTA_EXHAUSTED");
         require(token.totalSupply() == 1, "replay minted");
-        require(token.tokenOfWorkHash(token.workHash(keccak256(bytes(replay.agentLine)))) == 0, "replay reserved work");
+        require(token.tokenOfWorkHash(_workHashFor(replay.promptLine, replay.agentLine)) == 0, "replay reserved work");
     }
 
     function testMintRejectsReentrantPathCallbackAndStillMintsOuterWork() public {
         ReentrantPathNFTActive reentrantPath = new ReentrantPathNFTActive();
-        ThoughtNFT reentrantToken = new ThoughtNFT(address(reentrantPath), address(registry));
+        ThoughtNFT reentrantToken = new ThoughtNFT(address(reentrantPath), address(registry), PROTOCOL_RELEASE_HASH);
         reentrantPath.configure(reentrantToken, defaultSpecId, defaultSpecHash);
 
         ThoughtNFT.MintThoughtInput memory input = ThoughtNFT.MintThoughtInput({
@@ -473,14 +498,26 @@ contract ThoughtNFTTest {
         ThoughtNFT.MintThoughtInput memory input = _input("quiet signal", "QUIET SIGNAL", 1, USER_KEY);
         bytes32 promptHash = keccak256(bytes(input.promptLine));
         bytes32 agentHash = keccak256(bytes(input.agentLine));
-        bytes32 mintedWorkHash = token.workHash(agentHash);
+        bytes32 binaryHash = keccak256(token.binaryField(input.promptLine, input.agentLine));
+        bytes32 agentIdentity = token.agentIdentityHash(agentHash);
+        bytes32 mintedWorkHash = token.workHash(promptHash, agentHash, binaryHash);
         bytes32 provenanceHash = keccak256(bytes(input.provenanceJson));
 
         vm.expectEmit(true, true, true, true);
         emit PathThoughtConsumed(1, 1, 0, user);
         vm.expectEmit(true, true, true, true);
         emit ThoughtMinted(
-            1, user, mintedWorkHash, promptHash, agentHash, 1, 0, defaultSpecId, defaultSpecHash
+            1,
+            user,
+            mintedWorkHash,
+            promptHash,
+            agentHash,
+            agentIdentity,
+            binaryHash,
+            1,
+            0,
+            defaultSpecId,
+            defaultSpecHash
         );
 
         vm.prank(user);
@@ -497,6 +534,8 @@ contract ThoughtNFTTest {
         require(_equal(token.provenanceOf(tokenId), input.provenanceJson), "provenance mismatch");
         require(token.promptLineHashOf(tokenId) == promptHash, "prompt hash mismatch");
         require(token.agentLineHashOf(tokenId) == agentHash, "agent hash mismatch");
+        require(token.agentIdentityHashOf(tokenId) == agentIdentity, "agent identity mismatch");
+        require(token.binaryFieldKeccak256Of(tokenId) == binaryHash, "binary hash mismatch");
         require(token.workHashOf(tokenId) == mintedWorkHash, "work hash mismatch");
         require(token.provenanceHashOf(tokenId) == provenanceHash, "provenance hash mismatch");
         require(token.pathIdOf(tokenId) == 1, "path id mismatch");
@@ -504,7 +543,7 @@ contract ThoughtNFTTest {
         require(token.authorOf(tokenId) == user, "author mismatch");
         require(token.mintedAtOf(tokenId) == uint64(block.timestamp), "mint time mismatch");
 
-        ThoughtNFT.ThoughtRecord memory record = token.recordOf(tokenId);
+        ThoughtNFT.ThoughtRecordView memory record = token.recordOf(tokenId);
         require(_equal(record.promptLine, input.promptLine), "record prompt mismatch");
         require(_equal(record.agentLine, input.agentLine), "record agent mismatch");
         require(record.workHash == mintedWorkHash, "record work hash mismatch");
@@ -561,7 +600,7 @@ contract ThoughtNFTTest {
     function testPathConsumeFailureDoesNotMintReserveOrIncrementSupply() public {
         path.setAuthorizedMinter(address(0xCAFE));
         ThoughtNFT.MintThoughtInput memory input = _input("valid prompt", "VALID AGENT", 1, USER_KEY);
-        bytes32 mintedWorkHash = token.workHash(keccak256(bytes(input.agentLine)));
+        bytes32 mintedWorkHash = _workHashFor(input.promptLine, input.agentLine);
 
         vm.prank(user);
         (bool ok,) = address(token).call(abi.encodeWithSelector(token.mint.selector, input));
@@ -575,10 +614,10 @@ contract ThoughtNFTTest {
         _mintAsUser("same prompt", "SAME AGENT", 1);
         uint256 beforeCalls = path.consumeCallCount();
         ThoughtNFT.MintThoughtInput memory duplicate = _input("same prompt", "SAME AGENT", 2, USER_KEY);
-        bytes32 mintedWorkHash = token.workHash(keccak256(bytes(duplicate.agentLine)));
+        bytes32 agentIdentity = token.agentIdentityHash(keccak256(bytes(duplicate.agentLine)));
 
         _expectMintRevert(
-            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, mintedWorkHash, uint256(1))
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, agentIdentity, uint256(1))
         );
         require(path.consumeCallCount() == beforeCalls, "duplicate called path");
         require(!path.thoughtConsumed(2), "duplicate consumed path");
@@ -697,9 +736,9 @@ contract ThoughtNFTTest {
 
         ThoughtNFT.MintThoughtInput memory duplicate = _input("other prompt", "FIRST AGENT", 2, USER_KEY);
         bytes32 agentLineHash = keccak256(bytes(duplicate.agentLine));
-        bytes32 mintedWorkHash = token.workHash(agentLineHash);
+        bytes32 agentIdentity = token.agentIdentityHash(agentLineHash);
         _expectMintRevert(
-            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, mintedWorkHash, uint256(1))
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, agentIdentity, uint256(1))
         );
         require(path.consumeCallCount() == beforeCalls, "duplicate called path");
         require(!path.thoughtConsumed(2), "duplicate consumed path");
@@ -713,9 +752,9 @@ contract ThoughtNFTTest {
         _mintAsUser("unicode prompt", unicode"FIRST ÁGENT", 4);
         require(token.totalSupply() == 4, "different agent lines should mint");
 
-        string memory firstPromptField = token.binaryField("same prompt", "FIRST AGENT");
-        string memory changedPromptField = token.binaryField("other prompt", "FIRST AGENT");
-        require(!_equal(firstPromptField, changedPromptField), "prompt must affect binary field");
+        bytes memory firstPromptField = token.binaryField("same prompt", "FIRST AGENT");
+        bytes memory changedPromptField = token.binaryField("other prompt", "FIRST AGENT");
+        require(!_bytesEqual(firstPromptField, changedPromptField), "prompt must affect binary field");
     }
 
     function testSvgAndMetadataUseFormalTwoLineRenderer() public {
@@ -727,12 +766,12 @@ contract ThoughtNFTTest {
         require(!_contains(svg, 'id="work-canvas"'), "svg should not scale the canvas through a wrapper");
         require(_contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>'), "missing black bg");
         require(_contains(svg, 'id="binary-background"'), "missing binary background");
-        require(_contains(svg, 'data-zero="hollow-circle"'), "binary background should preserve zero cells");
-        require(_contains(svg, 'opacity="1.00"'), "binary background opacity mismatch");
-        require(_contains(svg, '<circle '), "binary background should render circles");
+        require(_contains(svg, 'data-pack="msb-first-128-bytes"'), "binary packing metadata missing");
+        require(_contains(svg, 'opacity="1"'), "binary background opacity mismatch");
+        require(_contains(svg, '<circle id="binary-one"'), "binary background should render circles");
         require(_count(svg, 'text-anchor="middle"') == 2, "both lines should be centered");
-        require(_contains(svg, '<clipPath id="agent-line-clip"><rect x="94" y="373" width="772" height="74" rx="9"/>'), "agent clip mismatch");
-        require(_contains(svg, '<clipPath id="prompt-line-clip"><rect x="150" y="821" width="660" height="46" rx="9"/>'), "prompt clip mismatch");
+        require(_contains(svg, '<clipPath id="agent-line-clip"><rect x="96" y="384" width="768" height="72" rx="9"/>'), "agent clip mismatch");
+        require(_contains(svg, '<clipPath id="prompt-line-clip"><rect x="144" y="816" width="672" height="48" rx="9"/>'), "prompt clip mismatch");
         require(_contains(svg, 'font-size="44" fill="#ffffff" clip-path="url(#agent-line-clip)"'), "agent typography mismatch");
         require(_contains(svg, 'font-size="16" fill="#ffffff" clip-path="url(#prompt-line-clip)"'), "prompt typography mismatch");
         require(!_contains(svg, "PROMPT:"), "svg should not label prompt");
@@ -746,12 +785,15 @@ contract ThoughtNFTTest {
         require(_contains(metadata, '"image":"data:image/svg+xml;base64,'), "metadata image missing");
         require(_contains(metadata, '"description":"A human prompt transformed by an Agent into a fully onchain work."'), "description missing");
         require(_contains(metadata, '"trait_type":"Render","value":"THOUGHT"'), "render trait missing");
-        require(_contains(metadata, '"trait_type":"Renderer","value":"thought.svg.v2.fixed-a-32"'), "renderer trait missing");
+        require(_contains(metadata, '"trait_type":"Renderer","value":"inshell.thought.svg.v2.binary-interleave-32"'), "renderer trait missing");
         require(_contains(metadata, '"trait_type":"PATH","value":"1"'), "path trait missing");
         require(_contains(metadata, '"trait_type":"PATH Serial","value":"0"'), "serial trait missing");
         require(_contains(metadata, '"trait_type":"Spec","value":"THOUGHT.v2.md"'), "spec trait missing");
-        require(_contains(metadata, '"renderer":"thought.svg.v2.fixed-a-32"'), "thought object missing renderer");
-        require(_contains(metadata, '"binaryField":"'), "thought object missing binary field");
+        require(_contains(metadata, '"renderer":"inshell.thought.svg.v2.binary-interleave-32"'), "thought object missing renderer");
+        require(_contains(metadata, '"binaryFieldPacked":"0x'), "thought object missing packed binary field");
+        require(_contains(metadata, '"binaryFieldKeccak256":"0x'), "binary field hash missing");
+        require(_contains(metadata, '"agentIdentityHash":"0x'), "agent identity hash missing");
+        require(_contains(metadata, '"protocolReleaseKeccak256":"0x'), "protocol release hash missing");
         require(_contains(metadata, "\"promptLine\":\"a&b<c>\\\"'\""), "prompt metadata escaping failed");
         require(_contains(metadata, "\"agentLine\":\"A&B<C>\\\"'\""), "agent metadata escaping failed");
         require(_contains(metadata, '"provenanceHash":"'), "provenance hash missing");
@@ -776,40 +818,35 @@ contract ThoughtNFTTest {
         require(tokenUriGas < 18_000_000, "token uri query exceeds renderer gas budget");
     }
 
-    function testSvgBinaryBackgroundUsesPromptBytesBeforeAgentBytes() public {
+    function testSvgBinaryBackgroundUsesIndependentInterleavedSources() public {
         uint256 tokenId = _mintAsUser("ab", "C", 1);
         string memory svg = token.svgOf(tokenId);
+        bytes memory field = token.binaryField("ab", "C");
+        uint256 expectedOnes = _packedOneCount(field);
 
         require(_contains(svg, 'id="binary-background"'), "missing binary background");
         require(_contains(svg, 'fill="#006100"'), "binary background should use canonical green");
         require(_contains(svg, 'data-grid-columns="32"'), "binary background should use fixed square grid columns");
         require(_contains(svg, 'data-grid-rows="32"'), "binary background should use fixed square grid rows");
         require(_contains(svg, 'data-bit-capacity="1024"'), "binary background should use fixed capacity");
-        require(_contains(svg, 'data-rendered-cells="892"'), "binary background should clear text block cells");
-        require(_contains(svg, 'data-cleared-cells="132"'), "binary background should expose cleared cells");
-        require(_contains(svg, 'data-one-cells="337"'), "one cell count mismatch");
-        require(_contains(svg, 'data-zero-cells="555"'), "zero cell count mismatch");
-        require(_contains(svg, 'data-source-bit-count="24"'), "binary background should expose source bit count");
-        require(
-            _contains(svg, 'data-fill-rule="repeat-short-truncate-long"'), "binary background should expose fill rule"
-        );
-        require(_contains(svg, 'data-cell-size="28"'), "binary background should use fixed equal square cells");
-        require(_contains(svg, 'data-origin-x="32"'), "binary background should center grid horizontally");
-        require(_contains(svg, 'data-origin-y="32"'), "binary background should center grid vertically");
-        require(_contains(svg, 'data-dot-radius="10"'), "binary background should derive fixed dot radius");
-        require(_contains(svg, 'data-zero="hollow-circle"'), "binary background should preserve zero cells");
-        require(_contains(svg, '<circle id="binary-one" r="10" fill="#006100"/>'), "one bit circle missing");
+        require(_contains(svg, 'data-prompt-bit-positions="512"'), "prompt allocation mismatch");
+        require(_contains(svg, 'data-agent-bit-positions="512"'), "agent allocation mismatch");
+        require(_contains(svg, 'data-pack="msb-first-128-bytes"'), "packing metadata mismatch");
+        require(_contains(svg, 'data-cell-size="24"'), "binary background should use fixed equal square cells");
+        require(_contains(svg, 'data-origin-x="96"'), "binary background should center grid horizontally");
+        require(_contains(svg, 'data-origin-y="96"'), "binary background should center grid vertically");
+        require(_contains(svg, '<circle id="binary-one" r="6" fill="#006100"/>'), "one bit circle missing");
         require(
             _contains(
                 svg,
-                '<pattern id="binary-zero-pattern" x="32" y="32" width="28" height="28" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="14" cy="14" r="10" fill="none" stroke="#006100" stroke-width="1"/></pattern>'
+                '<pattern id="binary-zero-pattern" x="96" y="96" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="12" cy="12" r="7" fill="none" stroke="#006100" stroke-width="2"/></pattern>'
             ),
             "zero bit pattern missing"
         );
-        require(_contains(svg, '<rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/>'), "zero field missing");
-        require(_contains(svg, '<rect id="agent-text-clear" x="93" y="373" width="774" height="74" fill="#000000"/>'), "agent clear missing");
-        require(_contains(svg, '<rect id="prompt-text-clear" x="149" y="821" width="662" height="46" fill="#000000"/>'), "prompt clear missing");
-        require(_count(svg, '<use href="#binary-one"') == 337, "one bits should be circles");
+        require(_contains(svg, '<rect id="binary-zero-field" x="96" y="96" width="768" height="768" fill="url(#binary-zero-pattern)"/>'), "zero field missing");
+        require(_contains(svg, '<rect id="agent-text-clear" x="96" y="384" width="768" height="72" fill="#000000"/>'), "agent clear missing");
+        require(_contains(svg, '<rect id="prompt-text-clear" x="144" y="816" width="672" height="48" fill="#000000"/>'), "prompt clear missing");
+        require(_count(svg, '<use href="#binary-one"') == expectedOnes, "one bits should match packed field");
         require(!_contains(svg, "&#9679;"), "binary background should not use text glyph circles");
         require(!_contains(svg, "textLength="), "binary background should not use text spacing");
         require(!_contains(svg, "01100001"), "binary background should not render literal zeros and ones");
@@ -817,36 +854,42 @@ contract ThoughtNFTTest {
 
         uint256 denseTokenId = _mintAsUser(_repeat("a", 72), _repeat("B", 27), 2);
         string memory denseSvg = token.svgOf(denseTokenId);
-        require(_contains(denseSvg, 'data-cell-size="28"'), "dense binary background should keep fixed cells");
-        require(_contains(denseSvg, 'data-rendered-cells="892"'), "dense binary background should clear text cells");
+        require(_contains(denseSvg, 'data-cell-size="24"'), "dense binary background should keep fixed cells");
 
         uint256 longTokenId = _mintAsUser(_repeat(unicode"你", 43), "B", 3);
         string memory longSvg = token.svgOf(longTokenId);
-        require(_contains(longSvg, 'data-source-bit-count="1040"'), "long binary background should expose source bits");
-        require(_contains(longSvg, 'data-cell-size="28"'), "long binary background should keep fixed cells");
-        require(_contains(longSvg, 'data-rendered-cells="892"'), "long binary background should clear text cells");
+        require(_contains(longSvg, 'data-cell-size="24"'), "long binary background should keep fixed cells");
     }
 
-    function testBinaryFieldIsExactly1024BitsAndMatchesStoredLines() public {
-        string memory field = token.binaryField("a", "b");
-        bytes memory bits = bytes(field);
-        bytes memory expectedCycle = bytes("0110000101100010");
+    function testBinaryFieldIsExactly128BytesAndInterleavesSources() public {
+        bytes memory field = token.binaryField("a", "b");
+        require(field.length == token.BINARY_FIELD_BYTES(), "packed binary field length mismatch");
 
-        require(bits.length == token.BINARY_FIELD_BITS(), "binary field capacity mismatch");
-        for (uint256 i = 0; i < bits.length; i++) {
-            require(bits[i] == expectedCycle[i % expectedCycle.length], "binary field source order mismatch");
+        bytes memory prompt = bytes("a");
+        bytes memory agent = bytes("b");
+        for (uint256 i = 0; i < 512; i++) {
+            require(_packedBit(field, i * 2) == _sourceBit(prompt, i % 8), "prompt interleave mismatch");
+            require(_packedBit(field, i * 2 + 1) == _sourceBit(agent, i % 8), "agent interleave mismatch");
         }
 
         uint256 tokenId = _mintAsUser("a", "b", 1);
-        require(_equal(token.binaryFieldOf(tokenId), field), "stored binary field mismatch");
+        require(_bytesEqual(token.binaryFieldOf(tokenId), field), "stored binary field mismatch");
+        require(token.binaryFieldKeccak256Of(tokenId) == keccak256(field), "stored field hash mismatch");
 
-        string memory truncated = token.binaryField(_repeat("a", 128), "b");
-        bytes memory truncatedBits = bytes(truncated);
-        bytes memory promptCycle = bytes("01100001");
-        require(truncatedBits.length == 1024, "long binary field capacity mismatch");
-        for (uint256 i = 0; i < truncatedBits.length; i++) {
-            require(truncatedBits[i] == promptCycle[i % promptCycle.length], "long binary field should truncate agent bits");
-        }
+        bytes memory boundary = token.binaryField(_repeat("a", 65), _repeat("b", 27));
+        require(boundary.length == 128, "boundary packed field length mismatch");
+    }
+
+    function testTypeScriptGoldenSvgAndTokenUriImageMatchExactly() public {
+        uint256 tokenId = _mintAsUser("a", "b", 1);
+        string memory svg = token.svgOf(tokenId);
+        require(
+            keccak256(bytes(svg)) == 0xcb4cd21cacb3f526aeb276e93076f35992dea36c11ae389d3d8a1aee5b786896,
+            "TypeScript/Solidity SVG mismatch"
+        );
+        string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
+        string memory embeddedSvg = _svgFromMetadata(metadata);
+        require(keccak256(bytes(embeddedSvg)) == keccak256(bytes(svg)), "tokenURI SVG mismatch");
     }
 
     function testManualDirectMintDoesNotRequireAgentReceipt() public {
@@ -1017,6 +1060,32 @@ contract ThoughtNFTTest {
         return string(_base64Decode(encoded));
     }
 
+    function _svgFromMetadata(string memory metadata) private pure returns (string memory) {
+        bytes memory source = bytes(metadata);
+        bytes memory marker = bytes('"image":"data:image/svg+xml;base64,');
+        uint256 start = type(uint256).max;
+        for (uint256 i = 0; i + marker.length <= source.length; i++) {
+            bool match_ = true;
+            for (uint256 j = 0; j < marker.length; j++) {
+                if (source[i + j] != marker[j]) {
+                    match_ = false;
+                    break;
+                }
+            }
+            if (match_) {
+                start = i + marker.length;
+                break;
+            }
+        }
+        require(start != type(uint256).max, "image marker missing");
+        uint256 end = start;
+        while (end < source.length && source[end] != bytes1('"')) end++;
+        require(end < source.length, "image terminator missing");
+        bytes memory encoded = new bytes(end - start);
+        for (uint256 i = 0; i < encoded.length; i++) encoded[i] = source[start + i];
+        return string(_base64Decode(encoded));
+    }
+
     function _base64Decode(bytes memory data) private pure returns (bytes memory) {
         require(data.length % 4 == 0, "bad base64 length");
         uint256 padding = 0;
@@ -1098,6 +1167,27 @@ contract ThoughtNFTTest {
 
     function _bytesEqual(bytes memory left, bytes memory right) private pure returns (bool) {
         return keccak256(left) == keccak256(right);
+    }
+
+    function _workHashFor(string memory promptLine, string memory agentLine) private view returns (bytes32) {
+        bytes32 promptHash = keccak256(bytes(promptLine));
+        bytes32 agentHash = keccak256(bytes(agentLine));
+        bytes32 binaryHash = keccak256(token.binaryField(promptLine, agentLine));
+        return token.workHash(promptHash, agentHash, binaryHash);
+    }
+
+    function _packedBit(bytes memory packed, uint256 bitOffset) private pure returns (uint8) {
+        return (uint8(packed[bitOffset / 8]) >> (7 - (bitOffset % 8))) & 1;
+    }
+
+    function _sourceBit(bytes memory source, uint256 bitOffset) private pure returns (uint8) {
+        return (uint8(source[bitOffset / 8]) >> (7 - (bitOffset % 8))) & 1;
+    }
+
+    function _packedOneCount(bytes memory packed) private pure returns (uint256 count) {
+        for (uint256 i = 0; i < packed.length * 8; i++) {
+            count += _packedBit(packed, i);
+        }
     }
 
     function _repeat(string memory char_, uint256 count) private pure returns (string memory) {
