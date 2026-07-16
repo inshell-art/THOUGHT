@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "canvas": {
+    "background": "#000000",
+    "height": 960,
+    "viewBox": "0 0 960 960",
+    "width": 960,
+    "xmlns": "http://www.w3.org/2000/svg"
+  },
+  "canonicality": {
+    "identity": "canonical-source-viewer-dependent-raster-v1",
+    "normativeStatement": "THOUGHT guarantees deterministic protocol data, loom geometry, SVG source, and tokenURI() bytes. It does not guarantee identical rasterized pixels across user agents. Text glyph appearance may vary according to available fonts, shaping engines, emoji support, and rasterizers. Such variation does not alter token identity, stored text, or the canonical loom field.",
+    "referenceRasters": "derived-reference-preview-non-canonical"
+  },
+  "encoding": {
+    "base64": "rfc4648-standard-with-padding",
+    "imageDataUriPrefix": "data:image/svg+xml;base64,",
+    "metadataDataUriPrefix": "data:application/json;base64,",
+    "svg": "utf-8-no-bom-no-final-newline",
+    "tokenMetadata": "utf-8-no-bom-no-final-newline"
+  },
+  "forbiddenCanonicalMethods": [
+    "browser-dom-serialization",
+    "XMLSerializer",
+    "canvas.measureText",
+    "getBBox",
+    "font-loading-measurement",
+    "runtime-locale-formatting",
+    "environment-dependent-json-serialization"
+  ],
+  "geometry": {
+    "agentClip": { "height": 74, "rx": 9, "width": 772, "x": 94, "y": 373 },
+    "agentClear": { "height": 76, "width": 776, "x": 92, "y": 372 },
+    "agentText": { "fontSize": 44, "textAnchor": "middle", "x": 480, "y": 410 },
+    "binaryField": {
+      "cellSize": 24,
+      "columns": 32,
+      "height": 768,
+      "oneRadius": 6,
+      "rows": 32,
+      "width": 768,
+      "x": 96,
+      "y": 96,
+      "zeroRadius": 7,
+      "zeroStrokeWidth": 2
+    },
+    "promptClip": { "height": 46, "rx": 9, "width": 660, "x": 150, "y": 821 },
+    "promptClear": { "height": 48, "width": 664, "x": 148, "y": 820 },
+    "promptText": { "fontSize": 16, "textAnchor": "middle", "x": 480, "y": 844 }
+  },
+  "id": "inshell.thought.svg.v2.binary-weave-32",
+  "metadata": {
+    "attributeOrder": [
+      "Prompt",
+      "Agent Response",
+      "Texture Density",
+      "Binary Contrast",
+      "Protocol"
+    ],
+    "keyOrder": ["name", "description", "image", "attributes", "properties", "thought"],
+    "propertiesKeyOrder": [
+      "promptBytes",
+      "agentBytes",
+      "promptWeight",
+      "agentWeight",
+      "loomWeight",
+      "bitDistance",
+      "protocolReleaseId",
+      "manifestKeccak256",
+      "rendererId",
+      "rendererProfileKeccak256",
+      "workProfileId",
+      "workProfileKeccak256",
+      "provenanceKeccak256"
+    ]
+  },
+  "serialization": {
+    "attributeOrder": "profile-order",
+    "colorCase": "lowercase-hex",
+    "elementOrder": ["canvas-bg", "binary-background", "clip-definitions", "agent-line-area", "prompt-line-area"],
+    "jsonEscaping": "contract-fixed-json-string-escaping",
+    "numberFormatting": "unsigned-base10-no-leading-zero",
+    "quoteStyle": "double",
+    "svgWhitespace": "none-outside-text-values",
+    "xmlEscapingOrder": ["&", "<", ">", "\"", "'"]
+  },
+  "text": {
+    "dominantBaseline": "middle",
+    "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif",
+    "geometryDependsOnFontMeasurement": false,
+    "overflow": "deterministic-svg-animate-carousel",
+    "xmlSpace": "preserve"
+  },
+  "version": 2
+}

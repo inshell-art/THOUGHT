@@ -1,28 +1,37 @@
 import { describe, expect, it } from "vitest";
 
+import { thoughtV2TextFixtures } from "./thought-v2-fixtures";
 import {
   binaryFieldPackedHex,
   buildThoughtV2Svg,
   fixedBinaryFieldOf,
   MAX_AGENT_LINE_BYTES,
-  MAX_AGENT_LINE_DISPLAY_UNITS,
   MAX_PROMPT_LINE_BYTES,
-  MAX_PROMPT_LINE_DISPLAY_UNITS,
   measureThoughtV2Line,
   THOUGHT_V2_RENDER_CONTRACT,
 } from "./thought-v2-renderer";
 
 describe("thought v2 renderer", () => {
-  it("renders the canonical 32x32 independently fitted interleaved field", () => {
+  it("renders the canonical 32x32 orthogonal binary weave", () => {
     const svg = buildThoughtV2Svg({ promptLine: "ab", agentLine: "C" });
     const bits = fixedBinaryFieldOf("ab", "C");
-    const oneCount = bits.match(/1/g)?.length ?? 0;
+    const isCleared = (index: number): boolean => {
+      const row = Math.floor(index / 32);
+      const column = index % 32;
+      return (
+        (row >= 11 && row <= 14) ||
+        (row >= 30 && column >= 2 && column <= 29)
+      );
+    };
+    const visibleBits = bits.split("").filter((_, index) => !isCleared(index));
+    const oneCount = visibleBits.filter((bit) => bit === "1").length;
+    const zeroCount = visibleBits.length - oneCount;
 
-    expect(THOUGHT_V2_RENDER_CONTRACT.rendererId).toBe("inshell.thought.svg.v2.binary-interleave-32");
+    expect(THOUGHT_V2_RENDER_CONTRACT.rendererId).toBe("inshell.thought.svg.v2.binary-weave-32");
     expect(THOUGHT_V2_RENDER_CONTRACT.binaryBackground).toMatchObject({
       sourceOrder: ["promptLine", "agentLine"],
-      sourceFit: "cycle-or-truncate-each-to-512-msb-first",
-      interleave: "P0-A0-through-P511-A511",
+      sourceFit: "cycle-exact-utf8-to-64-bytes-msb-first",
+      interleave: "checkerboard-prompt-horizontal-agent-vertical",
       packedBytes: 128,
       layout: "fixed-32x32-row-major",
       x: 96,
@@ -40,77 +49,109 @@ describe("thought v2 renderer", () => {
     expect(svg).toContain('data-pack="msb-first-128-bytes"');
     expect(svg).toContain(`data-one-cells="${oneCount}"`);
     expect(svg.match(/<use href="#binary-one"/g)).toHaveLength(oneCount);
+    expect(svg).toContain(`data-zero-cells="${zeroCount}"`);
+    expect(svg).toContain('data-rendered-cells="840"');
+    expect(svg).toContain('data-cleared-cells="184"');
     expect(svg).toContain('<rect id="binary-zero-field" x="96" y="96" width="768" height="768"');
-    expect(svg).toContain('<rect id="agent-text-clear" x="96" y="384" width="768" height="72"');
-    expect(svg).toContain('<rect id="prompt-text-clear" x="144" y="816" width="672" height="48"');
+    expect(svg).toContain('<rect id="agent-text-clear" x="92" y="372" width="776" height="76"');
+    expect(svg).toContain('<rect id="prompt-text-clear" x="148" y="820" width="664" height="48"');
     expect(svg).not.toMatch(/[01]{8}/);
   });
 
-  it("allocates 512 bits to each source before row-major packing", () => {
+  it("places prompt bits horizontally and Agent bits vertically", () => {
     const field = fixedBinaryFieldOf("a", "b");
     const promptCycle = "01100001";
     const agentCycle = "01100010";
-    const expected = Array.from(
-      { length: 512 },
-      (_, index) => `${promptCycle[index % 8]}${agentCycle[index % 8]}`,
-    ).join("");
+    let expected = "";
+    for (let row = 0; row < 32; row += 1) {
+      for (let column = 0; column < 32; column += 1) {
+        expected += (row + column) % 2 === 0
+          ? promptCycle[(row * 16 + Math.floor(column / 2)) % 8]
+          : agentCycle[(column * 16 + Math.floor(row / 2)) % 8];
+      }
+    }
 
     expect(field).toBe(expected);
     expect(field).toHaveLength(1024);
     expect(binaryFieldPackedHex("a", "b")).toHaveLength(258);
 
-    const truncatedPrompt = "a".repeat(65);
-    const truncated = fixedBinaryFieldOf(truncatedPrompt, "b");
-    expect(truncated.slice(0, 1024).length).toBe(1024);
-    expect(truncated).toBe(field);
+    expect(() => fixedBinaryFieldOf("a".repeat(65), "b")).toThrow("prompt line is 65/64 bytes");
   });
 
   it("uses canonical line geometry and carousels valid overflow without rewriting text", () => {
     expect(THOUGHT_V2_RENDER_CONTRACT.agentLine).toMatchObject({
-      targetWidth: 768,
+      targetWidth: 772,
+      carouselActivationWidth: 672,
       defaultFontSize: 44,
-      clip: { x: 96, y: 384, width: 768, height: 72, radius: 9 },
-      text: { x: 480, y: 420, textAnchor: "middle", dominantBaseline: "middle" },
+      clip: { x: 94, y: 373, width: 772, height: 74, radius: 9 },
+      text: { x: 480, y: 410, textAnchor: "middle", dominantBaseline: "middle" },
     });
     expect(THOUGHT_V2_RENDER_CONTRACT.promptLine).toMatchObject({
-      targetWidth: 672,
+      targetWidth: 660,
       defaultFontSize: 16,
-      clip: { x: 144, y: 816, width: 672, height: 48, radius: 9 },
-      text: { x: 480, y: 840, textAnchor: "middle", dominantBaseline: "middle" },
+      clip: { x: 150, y: 821, width: 660, height: 46, radius: 9 },
+      text: { x: 480, y: 844, textAnchor: "middle", dominantBaseline: "middle" },
     });
 
-    const svg = buildThoughtV2Svg({ promptLine: "a".repeat(72), agentLine: "A".repeat(27) });
-    expect(svg).toContain('<g id="prompt-line-carousel">');
-    expect(svg).toContain('id="agent-line-text" x="480" y="420" text-anchor="middle"');
+    const svg = buildThoughtV2Svg({ promptLine: "a".repeat(64), agentLine: "A".repeat(64) });
+    expect(svg).toContain('<g id="agent-line-carousel">');
+    expect(svg).not.toContain('<g id="prompt-line-carousel">');
     expect(svg).toContain('<animate attributeName="x"');
     expect(svg).not.toContain("textLength=");
+  });
+
+  it("keeps short Agent lines static while making legal long Agent lines move", () => {
+    const shortSvg = buildThoughtV2Svg({ promptLine: "short", agentLine: "A".repeat(25) });
+    const longSvg = buildThoughtV2Svg({ promptLine: "short", agentLine: "A".repeat(27) });
+
+    expect(shortSvg).not.toContain('<g id="agent-line-carousel">');
+    expect(longSvg).toContain('<g id="agent-line-carousel">');
+    expect(longSvg).not.toContain('<g id="prompt-line-carousel">');
   });
 
   it("enforces exact visible UTF-8 line limits without normalization", () => {
     expect({
       promptBytes: MAX_PROMPT_LINE_BYTES,
       agentBytes: MAX_AGENT_LINE_BYTES,
-      promptUnits: MAX_PROMPT_LINE_DISPLAY_UNITS,
-      agentUnits: MAX_AGENT_LINE_DISPLAY_UNITS,
-    }).toEqual({ promptBytes: 320, agentBytes: 180, promptUnits: 433, agentUnits: 162 });
-    expect(measureThoughtV2Line("a".repeat(72), "prompt")).toMatchObject({
-      byteLength: 72,
-      displayUnits: 432,
+    }).toEqual({ promptBytes: 64, agentBytes: 64 });
+    expect(measureThoughtV2Line("a".repeat(64), "prompt")).toMatchObject({
+      byteLength: 64,
+      displayUnits: 384,
       errors: [],
     });
-    expect(measureThoughtV2Line("A".repeat(27), "agent")).toMatchObject({
-      byteLength: 27,
-      displayUnits: 162,
+    expect(measureThoughtV2Line("A".repeat(64), "agent")).toMatchObject({
+      byteLength: 64,
+      displayUnits: 384,
       errors: [],
     });
-    expect(measureThoughtV2Line("a".repeat(73), "prompt").errors).toContain(
-      "prompt line is 438/433 display units",
+    expect(measureThoughtV2Line("a".repeat(65), "prompt").errors).toContain(
+      "prompt line is 65/64 bytes",
     );
-    expect(measureThoughtV2Line("A".repeat(28), "agent").errors).toContain(
-      "agent line is 168/162 display units",
+    expect(measureThoughtV2Line("A".repeat(65), "agent").errors).toContain(
+      "agent line is 65/64 bytes",
     );
+    expect(measureThoughtV2Line("A  B", "agent").errors).toEqual([]);
     expect(() => buildThoughtV2Svg({ promptLine: " leading", agentLine: "valid" })).toThrow(
       "invalid spacing",
     );
+  });
+
+  it("keeps the boundary fixture works exactly at the 64-byte limits", () => {
+    const boundaryFixtures = thoughtV2TextFixtures.filter(
+      (fixture) => fixture.corpusId === "exact-64-byte-limits",
+    );
+
+    expect(boundaryFixtures).toHaveLength(3);
+    boundaryFixtures.forEach((fixture) => {
+      expect(measureThoughtV2Line(fixture.promptLine, "prompt")).toMatchObject({
+        byteLength: MAX_PROMPT_LINE_BYTES,
+        errors: [],
+      });
+      expect(measureThoughtV2Line(fixture.agentLine, "agent")).toMatchObject({
+        byteLength: MAX_AGENT_LINE_BYTES,
+        errors: [],
+      });
+      expect(() => buildThoughtV2Svg(fixture)).not.toThrow();
+    });
   });
 });

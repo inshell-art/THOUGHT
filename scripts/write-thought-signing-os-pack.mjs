@@ -15,6 +15,7 @@ const curatedSourcePaths = [
   "specs/THOUGHT.v2.md",
   "schemas",
   "docs/agent",
+  "protocol/releases/v2",
   "evm/README.md",
   "evm/foundry.toml",
   "evm/src",
@@ -120,6 +121,53 @@ function validateSpec(specName, specFile, maxBytes) {
     byteLength: bytes.length,
     sha256: sha256HexBytes(bytes),
     file: specName
+  };
+}
+
+function validateProtocolManifest(manifestFile, manifestURI) {
+  if (path.basename(manifestFile) !== "release.manifest.json") {
+    throw new Error("Signing OS requires an approved release.manifest.json, not a draft manifest");
+  }
+  const bytes = fs.readFileSync(manifestFile);
+  if (bytes.length === 0) throw new Error("Protocol manifest is empty");
+  if (bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) {
+    throw new Error("Protocol manifest has UTF-8 BOM");
+  }
+  if (bytes.includes(0x0d)) throw new Error("Protocol manifest has CR/CRLF line endings");
+  if (bytes.at(-1) !== 0x0a || bytes.at(-2) === 0x0a) {
+    throw new Error("Protocol manifest must contain exactly one final LF");
+  }
+  const uriBytes = Buffer.byteLength(manifestURI, "utf8");
+  if (uriBytes < 1 || uriBytes > 200) throw new Error(`Protocol manifest URI is ${uriBytes} bytes; expected 1-200`);
+  const manifest = JSON.parse(bytes.toString("utf8"));
+  const artifactHash = (role) => {
+    const matches = (manifest.artifacts ?? []).filter((artifact) => artifact.role === role);
+    if (matches.length !== 1 || !ethers.isHexString(matches[0].keccak256, 32)) {
+      throw new Error(`Protocol manifest must contain exactly one valid ${role} hash`);
+    }
+    return matches[0].keccak256;
+  };
+  const manifestHash = ethers.keccak256(bytes);
+  const releaseId = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+    ["bytes32", "bytes32"],
+    [ethers.id("INSHELL_THOUGHT_PROTOCOL_RELEASE"), manifestHash],
+  ));
+  const rendererProfileHash = artifactHash("renderer-profile");
+  const workProfileHash = artifactHash("work-profile");
+  const constants = fs.readFileSync(path.join(root, "evm/src/ThoughtReleaseConstants.sol"), "utf8");
+  if (!constants.includes(`RENDERER_PROFILE_KECCAK256 = ${rendererProfileHash};`)) {
+    throw new Error("Renderer profile constant does not match approved manifest");
+  }
+  if (!constants.includes(`WORK_PROFILE_KECCAK256 = ${workProfileHash};`)) {
+    throw new Error("Work profile constant does not match approved manifest");
+  }
+  return {
+    file: path.basename(manifestFile),
+    manifestHash,
+    manifestURI,
+    releaseId,
+    rendererProfileHash,
+    workProfileHash,
   };
 }
 
@@ -344,6 +392,9 @@ sha256_check
 assert_path_dependency
 [ -d "$PACK_ROOT/source/evm/src" ] || fail "source snapshot missing"
 [ -r "$PACK_ROOT/artifacts/contracts/ThoughtNFT.json" ] || fail "compiled ThoughtNFT artifact missing"
+[ -r "$PACK_ROOT/artifacts/contracts/ThoughtRenderer.json" ] || fail "compiled ThoughtRenderer artifact missing"
+[ -r "$PACK_ROOT/artifacts/contracts/ThoughtSpecRegistryV2.json" ] || fail "compiled ThoughtSpecRegistryV2 artifact missing"
+[ -r "$PACK_ROOT/source/protocol/release.manifest.json" ] || fail "approved protocol manifest missing"
 echo "deploy signer: $(deploy_keystore_address)"
 echo "admin signer: $ADMIN_ADDRESS"
 finish PASS "run bin/verify"
@@ -363,7 +414,7 @@ assert_deployer_address
 assert_chain
 sha256_check
 assert_path_dependency
-jq -e '.network == "sepolia" and .chain_id == 11155111 and .path.movement == "THOUGHT" and .path.movementQuota == 1' "$INPUTS_JSON" >/dev/null || fail "inputs schema check failed"
+jq -e '.network == "sepolia" and .chain_id == 11155111 and .path.movement == "THOUGHT" and .path.movementQuota == 1 and (.thought.protocol.releaseId | test("^0x[0-9a-f]{64}$")) and (.thought.protocol.manifestHash | test("^0x[0-9a-f]{64}$")) and (.thought.protocol.manifestURI | length > 0)' "$INPUTS_JSON" >/dev/null || fail "inputs schema check failed"
 PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
 MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
 CODE="$(cast code --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT")"
@@ -424,11 +475,14 @@ PATH NFT: $(jq -r '.path.pathNft' "$INPUTS_JSON")
 PATH admin: $(jq -r '.path.admin' "$INPUTS_JSON") ($(jq -r '.path.adminSignerRef' "$INPUTS_JSON"))
 deploy signer: $(jq -r '.thought.deploySignerRef' "$INPUTS_JSON") -> $DEPLOYER_EXPECTED
 registry owner: $(jq -r '.thought.registryOwner' "$INPUTS_JSON") ($(jq -r '.thought.registryOwnerSignerRef' "$INPUTS_JSON"))
-contracts: ThoughtSpecRegistry, ThoughtNFT
+contracts: ThoughtSpecRegistry, ThoughtSpecRegistryV2, ThoughtRenderer, ThoughtNFT
 spec: $(jq -r '.thought.spec.name' "$INPUTS_JSON")
 spec id: $(jq -r '.thought.spec.id' "$INPUTS_JSON")
 spec hash: $(jq -r '.thought.spec.hash' "$INPUTS_JSON")
 spec sha256: $(jq -r '.thought.spec.sha256' "$INPUTS_JSON")
+protocol release: $(jq -r '.thought.protocol.releaseId' "$INPUTS_JSON")
+protocol manifest hash: $(jq -r '.thought.protocol.manifestHash' "$INPUTS_JSON")
+protocol manifest URI: $(jq -r '.thought.protocol.manifestURI' "$INPUTS_JSON")
 movement: THOUGHT -> ThoughtNFT, quota 1, freeze after config
 
 Type exactly:
@@ -463,7 +517,9 @@ SPEC_NAME="$(jq -r '.thought.spec.name' "$INPUTS_JSON")"
 SPEC_REF="$(jq -r '.thought.spec.ref' "$INPUTS_JSON")"
 SPEC_ID="$(jq -r '.thought.spec.id' "$INPUTS_JSON")"
 SPEC_HASH="$(jq -r '.thought.spec.hash' "$INPUTS_JSON")"
-PROTOCOL_RELEASE_HASH="$(jq -r '.thought.protocolReleaseKeccak256' "$INPUTS_JSON")"
+PROTOCOL_RELEASE_ID="$(jq -r '.thought.protocol.releaseId' "$INPUTS_JSON")"
+PROTOCOL_MANIFEST_HASH="$(jq -r '.thought.protocol.manifestHash' "$INPUTS_JSON")"
+PROTOCOL_MANIFEST_URI="$(jq -r '.thought.protocol.manifestURI' "$INPUTS_JSON")"
 SPEC_FILE="$PACK_ROOT/source/$SPEC_NAME"
 ADMIN="$ADMIN_ADDRESS"
 DEPLOY_AUTH=(--keystore "$SEPOLIA_DEPLOY_KEYSTORE_JSON")
@@ -489,7 +545,16 @@ SPEC_BYTES="$(hex_file "$SPEC_FILE")"
 echo "registering spec with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$REGISTRY" \
   'registerThoughtSpec(string,string,bytes)' "$SPEC_NAME" "$SPEC_REF" "$SPEC_BYTES" | tee "$RESULT_DIR/register-spec.json"
-deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY" "$PROTOCOL_RELEASE_HASH"
+deploy_contract thought-protocol-registry src/ThoughtSpecRegistryV2.sol:ThoughtSpecRegistryV2 --constructor-args "$ADMIN"
+PROTOCOL_REGISTRY="$(jq -r '.deployedTo' "$RESULT_DIR/thought-protocol-registry.json")"
+echo "registering protocol release with ADMIN Ledger"
+cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PROTOCOL_REGISTRY" \
+  'registerRelease(bytes32,string)' "$PROTOCOL_MANIFEST_HASH" "$PROTOCOL_MANIFEST_URI" | tee "$RESULT_DIR/register-protocol-release.json"
+REGISTERED_RELEASE="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PROTOCOL_REGISTRY" 'isRegistered(bytes32)(bool)' "$PROTOCOL_RELEASE_ID")"
+[ "$REGISTERED_RELEASE" = "true" ] || fail "protocol release registration readback failed"
+deploy_contract thought-renderer src/ThoughtRenderer.sol:ThoughtRenderer
+THOUGHT_RENDERER="$(jq -r '.deployedTo' "$RESULT_DIR/thought-renderer.json")"
+deploy_contract thought-nft src/ThoughtNFT.sol:ThoughtNFT --constructor-args "$PATH_NFT" "$REGISTRY" "$THOUGHT_RENDERER" "$PROTOCOL_REGISTRY" "$PROTOCOL_RELEASE_ID"
 THOUGHT_NFT="$(jq -r '.deployedTo' "$RESULT_DIR/thought-nft.json")"
 echo "configuring PATH movement with ADMIN Ledger"
 cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PATH_NFT" \
@@ -498,10 +563,10 @@ cast send --json --rpc-url "$SEPOLIA_RPC_URL" "\${ADMIN_AUTH[@]}" "$PATH_NFT" \
   'freezeMovementConfig(bytes32)' "$MOVEMENT" | tee "$RESULT_DIR/path-freeze-movement.json"
 cd "$PACK_ROOT"
 mkdir -p artifacts
-python3 - "$RESULT_DIR" "$PATH_NFT" "$ADMIN" "$REGISTRY" "$THOUGHT_NFT" <<'PY'
+python3 - "$RESULT_DIR" "$PATH_NFT" "$ADMIN" "$REGISTRY" "$PROTOCOL_REGISTRY" "$THOUGHT_RENDERER" "$THOUGHT_NFT" <<'PY'
 import json, pathlib, sys
 result = pathlib.Path(sys.argv[1])
-path_nft, admin, registry, thought = sys.argv[2:]
+path_nft, admin, registry, protocol_registry, renderer, thought = sys.argv[2:]
 def load(name):
     return json.loads((result / name).read_text())
 def tx(name):
@@ -514,11 +579,17 @@ addresses = {
   'admin': admin,
   'thought_spec_registry': registry,
   'thought_spec_registry_owner': admin,
+  'thought_protocol_registry': protocol_registry,
+  'thought_protocol_registry_owner': admin,
+  'thought_renderer': renderer,
   'thought_nft': thought,
 }
 txs = {
   'thought_spec_registry': tx('thought-spec-registry.json'),
   'register_spec': tx('register-spec.json'),
+  'thought_protocol_registry': tx('thought-protocol-registry.json'),
+  'register_protocol_release': tx('register-protocol-release.json'),
+  'thought_renderer': tx('thought-renderer.json'),
   'thought_nft': tx('thought-nft.json'),
   'path_set_movement': tx('path-set-movement.json'),
   'path_freeze_movement': tx('path-freeze-movement.json'),
@@ -546,34 +617,59 @@ PATH_NFT="$(jq -r '.path.pathNft' "$INPUTS_JSON")"
 MOVEMENT="$(jq -r '.path.movementBytes32' "$INPUTS_JSON")"
 EXPECTED_SPEC_ID="$(jq -r '.thought.spec.id' "$INPUTS_JSON")"
 EXPECTED_SPEC_HASH="$(jq -r '.thought.spec.hash' "$INPUTS_JSON")"
+EXPECTED_RELEASE_ID="$(jq -r '.thought.protocol.releaseId' "$INPUTS_JSON")"
+EXPECTED_MANIFEST_HASH="$(jq -r '.thought.protocol.manifestHash' "$INPUTS_JSON")"
+EXPECTED_RENDERER_PROFILE_HASH="$(jq -r '.thought.protocol.rendererProfileHash' "$INPUTS_JSON")"
+EXPECTED_WORK_PROFILE_HASH="$(jq -r '.thought.protocol.workProfileHash' "$INPUTS_JSON")"
 ADDRESSES="$PACK_ROOT/artifacts/addresses.sepolia.json"
 TXS="$PACK_ROOT/artifacts/txs.json"
 [ -r "$ADDRESSES" ] || fail "missing deployment addresses: $ADDRESSES"
 THOUGHT_NFT="$(jq -r '.thought_nft' "$ADDRESSES")"
+THOUGHT_RENDERER="$(jq -r '.thought_renderer' "$ADDRESSES")"
 REGISTRY="$(jq -r '.thought_spec_registry' "$ADDRESSES")"
+PROTOCOL_REGISTRY="$(jq -r '.thought_protocol_registry' "$ADDRESSES")"
 MINTER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getAuthorizedMinter(bytes32)(address)' "$MOVEMENT")"
 QUOTA="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'getMovementQuota(bytes32)(uint32)' "$MOVEMENT")"
 FROZEN="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PATH_NFT" 'isMovementFrozen(bytes32)(bool)' "$MOVEMENT")"
 NFT_PATH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'pathNft()(address)')"
 NFT_REGISTRY="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'thoughtSpecRegistry()(address)')"
+NFT_RENDERER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'thoughtRenderer()(address)')"
+NFT_PROTOCOL_REGISTRY="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'protocolRegistry()(address)')"
+NFT_RELEASE_ID="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'protocolReleaseId()(bytes32)')"
+NFT_MANIFEST_HASH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'protocolManifestHash()(bytes32)')"
+NFT_RENDERER_PROFILE_HASH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'RENDERER_PROFILE_KECCAK256()(bytes32)')"
+NFT_WORK_PROFILE_HASH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_NFT" 'WORK_PROFILE_KECCAK256()(bytes32)')"
+RENDERER_ID_HASH="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$THOUGHT_RENDERER" 'RENDERER_ID_HASH()(bytes32)')"
+EXPECTED_RENDERER_ID_HASH="$(jq -r '.thought.rendererIdHash' "$INPUTS_JSON")"
 REGISTRY_OWNER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$REGISTRY" 'owner()(address)')"
+PROTOCOL_REGISTRY_OWNER="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PROTOCOL_REGISTRY" 'owner()(address)')"
 SPEC_REGISTERED="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$REGISTRY" 'isRegisteredThoughtSpec(bytes32,bytes32)(bool)' "$EXPECTED_SPEC_ID" "$EXPECTED_SPEC_HASH")"
+RELEASE_REGISTERED="$(cast call --rpc-url "$SEPOLIA_RPC_URL" "$PROTOCOL_REGISTRY" 'isRegistered(bytes32)(bool)' "$EXPECTED_RELEASE_ID")"
 [ "$(lower "$MINTER")" = "$(lower "$THOUGHT_NFT")" ] || fail "PATH movement minter mismatch: $MINTER != $THOUGHT_NFT"
 [ "$QUOTA" = "1" ] || fail "PATH movement quota mismatch: $QUOTA"
 [ "$FROZEN" = "true" ] || fail "PATH movement not frozen"
 [ "$(lower "$NFT_PATH")" = "$(lower "$PATH_NFT")" ] || fail "ThoughtNFT.pathNft mismatch"
 [ "$(lower "$NFT_REGISTRY")" = "$(lower "$REGISTRY")" ] || fail "ThoughtNFT registry mismatch"
+[ "$(lower "$NFT_RENDERER")" = "$(lower "$THOUGHT_RENDERER")" ] || fail "ThoughtNFT renderer mismatch"
+[ "$(lower "$NFT_PROTOCOL_REGISTRY")" = "$(lower "$PROTOCOL_REGISTRY")" ] || fail "ThoughtNFT protocol registry mismatch"
+[ "$(lower "$NFT_RELEASE_ID")" = "$(lower "$EXPECTED_RELEASE_ID")" ] || fail "ThoughtNFT protocol release ID mismatch"
+[ "$(lower "$NFT_MANIFEST_HASH")" = "$(lower "$EXPECTED_MANIFEST_HASH")" ] || fail "ThoughtNFT protocol manifest hash mismatch"
+[ "$(lower "$NFT_RENDERER_PROFILE_HASH")" = "$(lower "$EXPECTED_RENDERER_PROFILE_HASH")" ] || fail "ThoughtNFT renderer profile hash mismatch"
+[ "$(lower "$NFT_WORK_PROFILE_HASH")" = "$(lower "$EXPECTED_WORK_PROFILE_HASH")" ] || fail "ThoughtNFT work profile hash mismatch"
+[ "$(lower "$RENDERER_ID_HASH")" = "$(lower "$EXPECTED_RENDERER_ID_HASH")" ] || fail "ThoughtRenderer ID hash mismatch"
 [ "$(lower "$REGISTRY_OWNER")" = "$(lower "$ADMIN_ADDRESS")" ] || fail "registry owner mismatch"
+[ "$(lower "$PROTOCOL_REGISTRY_OWNER")" = "$(lower "$ADMIN_ADDRESS")" ] || fail "protocol registry owner mismatch"
 [ "$SPEC_REGISTERED" = "true" ] || fail "expected THOUGHT spec is not registered"
-for addr in "$REGISTRY" "$THOUGHT_NFT"; do
+[ "$RELEASE_REGISTERED" = "true" ] || fail "expected protocol release is not registered"
+for addr in "$REGISTRY" "$PROTOCOL_REGISTRY" "$THOUGHT_RENDERER" "$THOUGHT_NFT"; do
   code="$(cast code --rpc-url "$SEPOLIA_RPC_URL" "$addr")"
   [ "$code" != "0x" ] || fail "no code at deployed THOUGHT address $addr"
 done
 mkdir -p "$PACK_ROOT/artifacts/fe-release/abi"
-python3 - "$PACK_ROOT" "$MINTER" "$QUOTA" "$FROZEN" "$NFT_PATH" "$NFT_REGISTRY" "$REGISTRY_OWNER" "$SPEC_REGISTERED" <<'PY'
+python3 - "$PACK_ROOT" "$MINTER" "$QUOTA" "$FROZEN" "$NFT_PATH" "$NFT_REGISTRY" "$NFT_RENDERER" "$NFT_PROTOCOL_REGISTRY" "$NFT_RELEASE_ID" "$NFT_MANIFEST_HASH" "$NFT_RENDERER_PROFILE_HASH" "$NFT_WORK_PROFILE_HASH" "$RENDERER_ID_HASH" "$REGISTRY_OWNER" "$PROTOCOL_REGISTRY_OWNER" "$SPEC_REGISTERED" "$RELEASE_REGISTERED" <<'PY'
 import hashlib, json, pathlib, shutil, sys
 root = pathlib.Path(sys.argv[1])
-minter, quota, frozen, nft_path, nft_registry, owner, spec_registered = sys.argv[2:]
+minter, quota, frozen, nft_path, nft_registry, nft_renderer, nft_protocol_registry, release_id, manifest_hash, renderer_profile_hash, work_profile_hash, renderer_id_hash, owner, protocol_owner, spec_registered, release_registered = sys.argv[2:]
 inputs = json.loads((root / 'inputs.json').read_text())
 addresses = json.loads((root / 'artifacts/addresses.sepolia.json').read_text())
 txs = json.loads((root / 'artifacts/txs.json').read_text())
@@ -585,8 +681,18 @@ post = {
   'path_movement_frozen': frozen == 'true',
   'thought_nft_path_nft': nft_path,
   'thought_nft_registry': nft_registry,
+  'thought_nft_renderer': nft_renderer,
+  'thought_nft_protocol_registry': nft_protocol_registry,
+  'protocol_release_id': release_id,
+  'protocol_manifest_hash': manifest_hash,
+  'renderer_profile_hash': renderer_profile_hash,
+  'work_profile_hash': work_profile_hash,
+  'thought_renderer_id': inputs['thought']['rendererId'],
+  'thought_renderer_id_hash': renderer_id_hash,
   'registry_owner': owner,
+  'protocol_registry_owner': protocol_owner,
   'spec_registered': spec_registered == 'true',
+  'release_registered': release_registered == 'true',
   'overall_status': 'PASS',
 }
 art = root / 'artifacts'
@@ -601,8 +707,11 @@ fe_addresses = {
   'chain_id': 11155111,
   'path_nft': addresses['path_nft'],
   'thought_nft': addresses['thought_nft'],
+  'thought_renderer': addresses['thought_renderer'],
   'thought_spec_registry': addresses['thought_spec_registry'],
   'thought_spec_registry_owner': addresses['thought_spec_registry_owner'],
+  'thought_protocol_registry': addresses['thought_protocol_registry'],
+  'thought_protocol_registry_owner': addresses['thought_protocol_registry_owner'],
 }
 (fe / 'addresses.sepolia.json').write_text(json.dumps(fe_addresses, indent=2) + '\\n')
 protocol = {
@@ -620,11 +729,12 @@ protocol = {
     'frozen': True,
   },
   'recommended_thought_spec': inputs['thought']['spec'],
+  'protocol_release': inputs['thought']['protocol'],
   'deploy_txs': txs,
 }
 (fe / 'protocol-release.sepolia.json').write_text(json.dumps(protocol, indent=2) + '\\n')
 (fe / 'env.sepolia.example').write_text('VITE_NETWORK=sepolia\\nVITE_EXPECTED_CHAIN_ID=0xaa36a7\\n# Set VITE_ETH_RPC outside this public artifact.\\n')
-for contract in ['ThoughtNFT', 'ThoughtSpecRegistry']:
+for contract in ['ThoughtNFT', 'ThoughtRenderer', 'ThoughtSpecRegistry', 'ThoughtSpecRegistryV2']:
     artifact = json.loads((root / f'artifacts/contracts/{contract}.json').read_text())
     (fe / f'abi/{contract}.json').write_text(json.dumps({'abi': artifact['abi']}, indent=2) + '\\n')
 checksums = {}
@@ -692,6 +802,7 @@ ADMIN signer: $(jq -r '.path.adminSignerRef' "$PACK_ROOT/inputs.json") / $(jq -r
 PATH dependency run id: $(jq -r '.path.runId' "$PACK_ROOT/inputs.json")
 PATH NFT: $(jq -r '.path.pathNft' "$PACK_ROOT/inputs.json")
 ThoughtNFT: $(jq -r '.thought_nft' "$PACK_ROOT/artifacts/addresses.sepolia.json")
+ThoughtRenderer: $(jq -r '.thought_renderer' "$PACK_ROOT/artifacts/addresses.sepolia.json")
 Registry: $(jq -r '.thought_spec_registry' "$PACK_ROOT/artifacts/addresses.sepolia.json")
 Final status: PASS
 Qualified for: FE Sepolia candidate handoff
@@ -710,7 +821,7 @@ echo "pushed deployment history to $DEST"
 }
 
 function renderReadme(runId) {
-  return `# THOUGHT Signing OS Pack\n\nRun ID: \`${runId}\`\n\nStandalone Sepolia deploy pack for the active formal THOUGHT contracts. It deploys \`ThoughtSpecRegistry\` and \`ThoughtNFT\`, registers \`THOUGHT.v2.md\`, configures the existing PATH movement \`THOUGHT\` to the deployed \`ThoughtNFT\`, and freezes that PATH movement config.\n\nThis pack is designed for Signing OS. It does not require a git checkout or npm install on Signing OS.\n\nThe \`source/\` directory is a curated deploy source snapshot from the exact source commit, not a full repository archive. See \`PACK-MANIFEST.json.source_snapshot\` for the included paths.\n\nUse \`RUNBOOK.md\` for the operator sequence.\n`;
+  return `# THOUGHT Signing OS Pack\n\nRun ID: \`${runId}\`\n\nStandalone Sepolia deploy pack for the active formal THOUGHT contracts. It deploys \`ThoughtSpecRegistry\`, immutable \`ThoughtRenderer\`, and \`ThoughtNFT\`; registers \`THOUGHT.v2.md\`; configures the existing PATH movement \`THOUGHT\` to the deployed \`ThoughtNFT\`; and freezes that PATH movement config.\n\nThis pack is designed for Signing OS. It does not require a git checkout or npm install on Signing OS.\n\nThe \`source/\` directory is a curated deploy source snapshot from the exact source commit, not a full repository archive. See \`PACK-MANIFEST.json.source_snapshot\` for the included paths.\n\nUse \`RUNBOOK.md\` for the operator sequence.\n`;
 }
 
 function renderRunbook(runId) {
@@ -723,6 +834,14 @@ function main() {
   const runId = argValue("--run-id") ?? process.env.RUN_ID ?? `sepolia-thought-signing-os-pack-${nowStamp()}`;
   const specName = argValue("--spec-name") ?? process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v2.md";
   const specFile = path.resolve(argValue("--spec-file") ?? process.env.THOUGHT_SPEC_FILE ?? path.join(root, "specs", specName));
+  const protocolManifestFile = path.resolve(
+    argValue("--protocol-manifest") ??
+      process.env.THOUGHT_PROTOCOL_MANIFEST_FILE ??
+      path.join(root, "protocol/releases/v2/release.manifest.json"),
+  );
+  const protocolManifestURI = (
+    argValue("--protocol-manifest-uri") ?? process.env.THOUGHT_PROTOCOL_MANIFEST_URI ?? ""
+  ).trim();
   const maxSpecBytes = Number(argValue("--max-spec-bytes") ?? process.env.MAX_THOUGHT_SPEC_BYTES ?? "20000");
   const movementQuota = Number(argValue("--movement-quota") ?? process.env.THOUGHT_MOVEMENT_QUOTA ?? "1");
   const deploySignerRef = argValue("--deploy-signer-ref") ?? process.env.THOUGHT_DEPLOY_SIGNER_REF ?? "SEPOLIA_DEPLOY_SW_A";
@@ -736,6 +855,7 @@ function main() {
   if (pathRelease.network !== "sepolia" || pathRelease.chainId !== 11155111) throw new Error(`PATH release is not Sepolia: ${pathRelease.network}/${pathRelease.chainId}`);
   const registryOwner = requireAddress(registryOwnerRaw ?? pathRelease.admin, "thought.registryOwner");
   const spec = validateSpec(specName, specFile, maxSpecBytes);
+  const protocol = validateProtocolManifest(protocolManifestFile, protocolManifestURI);
   const repoCommit = gitCommit(root);
   const packRoot = path.join(outRoot, runId);
   rmrf(packRoot);
@@ -766,7 +886,9 @@ function main() {
       deploySignerExpectedAddress: "0x3e4fA9f09d8EDe66561145E1ef3bc127F80ED396",
       registryOwner,
       registryOwnerSignerRef,
-      protocolReleaseKeccak256: readJson(path.join(root, "protocol", "CURRENT.json")).keccak256,
+      protocol,
+      rendererId: "inshell.thought.svg.v2.binary-weave-32",
+      rendererIdHash: ethers.id("inshell.thought.svg.v2.binary-weave-32"),
       spec
     }
   };
@@ -794,13 +916,14 @@ function main() {
   write(path.join(packRoot, "templates/recovery-note.md"), `# Recovery Note\n\nRun ID: ${runId}\n\nStep:\n\nFailure:\n\nDecision:\n\nRetry command:\n\nOperator:\n\nTimestamp UTC:\n`);
 
   sourceSnapshot(path.join(packRoot, "source"));
+  copyFile(protocolManifestFile, path.join(packRoot, "source", "protocol", "release.manifest.json"));
   const contractArtifactDir = path.join(packRoot, "artifacts/contracts");
-  for (const contract of ["ThoughtSpecRegistry", "ThoughtNFT"]) copyContractArtifact(contract, contractArtifactDir);
+  for (const contract of ["ThoughtSpecRegistry", "ThoughtSpecRegistryV2", "ThoughtRenderer", "ThoughtNFT"]) copyContractArtifact(contract, contractArtifactDir);
   writeJson(path.join(packRoot, "artifacts/build-evidence.json"), {
     schema_version: 1,
     source_commit: repoCommit,
     foundry_profile: "default",
-    contracts: ["ThoughtSpecRegistry", "ThoughtNFT"]
+    contracts: ["ThoughtSpecRegistry", "ThoughtSpecRegistryV2", "ThoughtRenderer", "ThoughtNFT"]
   });
 
   write(path.join(packRoot, "lib/common.sh"), commonSh(), 0o755);

@@ -13,8 +13,18 @@
           "type": "address"
         },
         {
+          "internalType": "address",
+          "name": "thoughtRenderer_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "protocolRegistry_",
+          "type": "address"
+        },
+        {
           "internalType": "bytes32",
-          "name": "protocolReleaseKeccak256_",
+          "name": "protocolReleaseId_",
           "type": "bytes32"
         }
       ],
@@ -75,33 +85,7 @@
     },
     {
       "inputs": [],
-      "name": "MAX_AGENT_LINE_DISPLAY_UNITS",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "MAX_PROMPT_LINE_BYTES",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "MAX_PROMPT_LINE_DISPLAY_UNITS",
       "outputs": [
         {
           "internalType": "uint256",
@@ -153,6 +137,19 @@
     },
     {
       "inputs": [],
+      "name": "RENDERER_PROFILE_KECCAK256",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "THOUGHT_MOVEMENT",
       "outputs": [
         {
@@ -167,6 +164,45 @@
     {
       "inputs": [],
       "name": "WORK_DOMAIN",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WORK_PROFILE_ID",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WORK_PROFILE_ID_HASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WORK_PROFILE_KECCAK256",
       "outputs": [
         {
           "internalType": "bytes32",
@@ -580,6 +616,30 @@
     {
       "inputs": [
         {
+          "internalType": "string",
+          "name": "promptLine",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "agentLine",
+          "type": "string"
+        }
+      ],
+      "name": "previewSvg",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
@@ -617,7 +677,46 @@
     },
     {
       "inputs": [],
-      "name": "protocolReleaseKeccak256",
+      "name": "protocolManifestHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolManifestURI",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolRegistry",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolReleaseId",
       "outputs": [
         {
           "internalType": "bytes32",
@@ -867,6 +966,19 @@
           "internalType": "string",
           "name": "",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "thoughtRenderer",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -1322,27 +1434,6 @@
       "type": "error"
     },
     {
-      "inputs": [
-        {
-          "internalType": "enum ThoughtNFT.DisplayKind",
-          "name": "kind",
-          "type": "uint8"
-        },
-        {
-          "internalType": "uint256",
-          "name": "actual",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "max",
-          "type": "uint256"
-        }
-      ],
-      "name": "DisplayLineTooWide",
-      "type": "error"
-    },
-    {
       "inputs": [],
       "name": "EmptyProvenance",
       "type": "error"
@@ -1381,7 +1472,18 @@
     },
     {
       "inputs": [],
-      "name": "InvalidProtocolReleaseHash",
+      "name": "InvalidProtocolRegistry",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "protocolReleaseId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "InvalidProtocolRelease",
       "type": "error"
     },
     {
@@ -1392,6 +1494,11 @@
     {
       "inputs": [],
       "name": "InvalidSender",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidThoughtRenderer",
       "type": "error"
     },
     {

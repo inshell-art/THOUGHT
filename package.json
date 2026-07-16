@@ -11,7 +11,7 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "artifact:build": "node scripts/build-thought-v2-artifacts.mjs",
-    "protocol:build": "npm run build:evm && node scripts/build-thought-v2-protocol.mjs",
+    "protocol:build": "node scripts/generate-thought-v2-release-constants.mjs && npm run build:evm && node scripts/build-thought-v2-protocol.mjs",
     "protocol:check": "node scripts/check-thought-v2-protocol.mjs",
     "preview": "vite preview",
     "preview:lan": "vite preview --host 0.0.0.0 --port 4173",

@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "renderContract": {
+    "schemaVersion": 2,
+    "rendererId": "inshell.thought.svg.v2.binary-weave-32",
+    "canvas": {
+      "width": 960,
+      "height": 960,
+      "defaultBg": "#000000"
+    },
+    "fontFamily": "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Noto Sans Mono', 'Noto Sans Mono CJK SC', 'Noto Sans Mono CJK JP', 'Noto Sans Mono CJK KR', 'Noto Sans', monospace, sans-serif",
+    "binaryBackground": {
+      "sourceOrder": [
+        "promptLine",
+        "agentLine"
+      ],
+      "sourceFit": "cycle-exact-utf8-to-64-bytes-msb-first",
+      "interleave": "checkerboard-prompt-horizontal-agent-vertical",
+      "packedBytes": 128,
+      "encoding": "utf-8",
+      "layout": "fixed-32x32-row-major",
+      "x": 96,
+      "y": 96,
+      "width": 768,
+      "height": 768,
+      "side": 32,
+      "capacity": 1024,
+      "fillRule": "orthogonal-binary-weave",
+      "glyphs": {
+        "one": "filled circle",
+        "zero": "hollow ring"
+      },
+      "cell": {
+        "width": 24,
+        "height": 24,
+        "oneRadius": 6,
+        "zeroRadius": 7,
+        "zeroStroke": 2
+      },
+      "fill": "#006100",
+      "opacity": 1
+    },
+    "agentLine": {
+      "targetWidth": 772,
+      "carouselActivationWidth": 672,
+      "defaultFontSize": 44,
+      "minFontSize": 44,
+      "defaultTextColor": "#ffffff",
+      "defaultBgColor": "none",
+      "bg": {
+        "x": 92,
+        "y": 372,
+        "width": 776,
+        "height": 76,
+        "radius": 9
+      },
+      "clip": {
+        "x": 94,
+        "y": 373,
+        "width": 772,
+        "height": 74,
+        "radius": 9
+      },
+      "text": {
+        "x": 480,
+        "y": 410,
+        "size": 44,
+        "textAnchor": "middle",
+        "dominantBaseline": "middle"
+      },
+      "overflow": "svg-animate-carousel"
+    },
+    "promptLine": {
+      "targetWidth": 660,
+      "defaultFontSize": 16,
+      "minFontSize": 16,
+      "defaultTextColor": "#ffffff",
+      "defaultBgColor": "none",
+      "bg": {
+        "x": 148,
+        "y": 820,
+        "width": 664,
+        "height": 48,
+        "radius": 9
+      },
+      "clip": {
+        "x": 150,
+        "y": 821,
+        "width": 660,
+        "height": 46,
+        "radius": 9
+      },
+      "text": {
+        "x": 480,
+        "y": 844,
+        "size": 16,
+        "textAnchor": "middle",
+        "dominantBaseline": "middle"
+      },
+      "overflow": "svg-animate-carousel"
+    },
+    "carousel": {
+      "minGap": 240,
+      "fontGapMultiplier": 6,
+      "minDurationSeconds": 14,
+      "pixelsPerSecond": 80
+    }
+  },
+  "limits": {
+    "promptMaxBytes": 64,
+    "agentMaxBytes": 64
+  }
+}

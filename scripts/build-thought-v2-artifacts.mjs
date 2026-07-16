@@ -249,7 +249,7 @@ const buildArtifact = async () => {
         byteLength: agentMeasure.byteLength,
         displayUnits: agentMeasure.displayUnits,
       },
-      animated: false,
+      animated: svg.includes("<animate "),
     });
   };
 

@@ -1,0 +1,107 @@
+{
+  "manifestFormat": "inshell.thought.release-manifest",
+  "manifestVersion": 1,
+  "protocol": "inshell.thought",
+  "release": "v2",
+  "createdAt": "2026-07-15T00:00:00Z",
+  "artifacts": [
+    {
+      "role": "creative-spec",
+      "path": "art/THOUGHT.v2.md",
+      "mediaType": "text/markdown; charset=utf-8",
+      "byteLength": 2811,
+      "keccak256": "0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a"
+    },
+    {
+      "role": "agent-result-schema",
+      "path": "agent/thought.agent-result.v2.schema.json",
+      "mediaType": "application/schema+json",
+      "byteLength": 1008,
+      "keccak256": "0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2"
+    },
+    {
+      "role": "agent-declaration-schema",
+      "path": "agent/thought.agent-declaration.v1.schema.json",
+      "mediaType": "application/schema+json",
+      "byteLength": 604,
+      "keccak256": "0x83ec43ed82c9cdeb153c34691c5882f0b09dd785bd0ccc9cfb858dc64a323ba3"
+    },
+    {
+      "role": "provenance-spec",
+      "path": "provenance/thought.provenance.v2.md",
+      "mediaType": "text/markdown; charset=utf-8",
+      "byteLength": 3235,
+      "keccak256": "0xa569e4256be9750e040a36ce478656d4f5182eb23450f7129614c52fbdcbdaa7"
+    },
+    {
+      "role": "provenance-schema",
+      "path": "provenance/thought.provenance.v2.schema.json",
+      "mediaType": "application/schema+json",
+      "byteLength": 4624,
+      "keccak256": "0xc789a9846ee3bedd79a57b42c365803fdedd7ef43a1c610029f8a5b7fb810b22"
+    },
+    {
+      "role": "work-profile",
+      "path": "work/thought.work.v2.profile.json",
+      "mediaType": "application/json",
+      "byteLength": 2944,
+      "keccak256": "0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb"
+    },
+    {
+      "role": "renderer-profile",
+      "path": "renderer/thought.renderer.v2.profile.json",
+      "mediaType": "application/json",
+      "byteLength": 3513,
+      "keccak256": "0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88"
+    },
+    {
+      "role": "fixture:text-validation",
+      "path": "conformance/text-validation.json",
+      "mediaType": "application/json",
+      "byteLength": 27562,
+      "keccak256": "0xe26d01097c6e6bb3347466076d85b184c175db249c605547a663757a57447105"
+    },
+    {
+      "role": "fixture:raw-utf8",
+      "path": "conformance/raw-utf8-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 2011,
+      "keccak256": "0x50f1501539e1f171c29f88cd94da984b0f82b733605081e8ec7b6dcaac131f27"
+    },
+    {
+      "role": "fixture:loom",
+      "path": "conformance/loom-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 54109,
+      "keccak256": "0x3cbd99e34b958aedf0b8e82fcac7f068f5e6f636ba68813cdb44c8a2b87a2e7e"
+    },
+    {
+      "role": "fixture:provenance",
+      "path": "conformance/provenance-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 11179,
+      "keccak256": "0x616c53daa8ad4ac4d6d3d5fa3fcf5ac0288fea3c80ba478d60e9bbeae4acc4a4"
+    },
+    {
+      "role": "fixture:traits",
+      "path": "conformance/trait-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 6556,
+      "keccak256": "0x679031db91c3ea622415af13333c44c8461257c82d295db630ca508ed44b95cd"
+    },
+    {
+      "role": "fixture:svg",
+      "path": "conformance/svg-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 462429,
+      "keccak256": "0xfe730510be2e009e8d27e22882598577ced979796699c695f53d5160d65e6e5f"
+    },
+    {
+      "role": "fixture:token-uri",
+      "path": "conformance/token-uri-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 261741,
+      "keccak256": "0x33f86f8e35f71498311126976dab3ee07b9b86ae181bccc8d39b9f78ebce1535"
+    }
+  ]
+}

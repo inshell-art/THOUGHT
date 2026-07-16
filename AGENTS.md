@@ -19,7 +19,7 @@
 - `ThoughtNFT.pathNft` and `ThoughtNFT.thoughtSpecRegistry` are immutable constructor dependencies.
 - `ThoughtNFT.mint` consumes exactly one PATH `THOUGHT` movement unit atomically before minting a THOUGHT.
 - Failed THOUGHT mints must not consume PATH, reserve text hashes, or increment supply.
-- `promptLine` and `agentLine` are non-empty visible UTF-8 lines with ordinary single-space rules. Preserve case and visible Unicode exactly; reject controls, invisible characters, newlines, outer spaces, repeated spaces, byte-limit, and display-unit violations before PATH consumption. Limits are prompt: 320 UTF-8 bytes / 433 units; Agent: 180 UTF-8 bytes / 162 units.
+- `promptLine` and `agentLine` are exact shortest-form UTF-8 lines, each 1 through 64 bytes. Preserve case, visible Unicode, and repeated internal U+0020 exactly; reject malformed UTF-8, controls, frozen disallowed scalars, non-ASCII whitespace, and outer spaces before PATH consumption. Display units are renderer measurements only and are not acceptance limits. The normative profile is `protocol/releases/v2/work/thought.work.v2.md`.
 - Agent-line work hashes are globally unique. The same exact `agentLine` cannot mint twice even with a different prompt or provenance; a changed Agent line is a different work.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
 - `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
@@ -33,7 +33,7 @@
 - PATH movement setup must be frozen by deployment scripts after configuring `THOUGHT` movement quota.
 
 ## SVG text rendering
-- The formal renderer is `inshell.thought.svg.v2.binary-interleave-32`: a 960x960 SVG with independent 512-bit prompt and Agent streams interleaved into a deterministic packed 32x32 field.
+- The formal renderer is `inshell.thought.svg.v2.binary-weave-32`: a 960x960 SVG with independent 512-bit prompt and Agent sources woven orthogonally into a deterministic packed 32x32 field.
 - Text is emitted as centered SVG `<text>` elements using the contract font stack. Output rendering depends on the viewer environment fonts.
 
 ## Security

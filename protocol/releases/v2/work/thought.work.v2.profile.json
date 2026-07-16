@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "agentIdentity": {
+    "domainEncoding": "keccak256-utf8",
+    "domainText": "INSHELL_THOUGHT_V2_AGENT_IDENTITY",
+    "encoding": "keccak256-abi-encode-bytes32-bytes32",
+    "input": "agentLineKeccak256"
+  },
+  "binaryField": {
+    "agentDirection": "vertical",
+    "agentSourceCells": 512,
+    "bitOrder": "msb-first",
+    "cellCount": 1024,
+    "columns": 32,
+    "cycleSourceBytes": 64,
+    "fieldOrder": "row-major",
+    "interleave": "checkerboard-even-prompt-odd-agent",
+    "packedBytes": 128,
+    "promptDirection": "horizontal",
+    "promptSourceCells": 512,
+    "rows": 32
+  },
+  "forbiddenCodePoints": {
+    "defaultIgnorableUnicodeVersion": "17.0.0",
+    "ranges": [
+      "U+0000-U+001F",
+      "U+007F-U+009F",
+      "U+00AD",
+      "U+034F",
+      "U+061C",
+      "U+115F-U+1160",
+      "U+17B4-U+17B5",
+      "U+180B-U+180F",
+      "U+200B-U+200F",
+      "U+202A-U+202E",
+      "U+2060-U+206F",
+      "U+3164",
+      "U+FE00-U+FE0F",
+      "U+FEFF",
+      "U+FFA0",
+      "U+FFF0-U+FFF8",
+      "U+1BCA0-U+1BCA3",
+      "U+1D173-U+1D17A",
+      "U+E0000-U+E0FFF",
+      "U+FDD0-U+FDEF",
+      "U+nFFFE-U+nFFFF"
+    ],
+    "whitespaceExceptU0020": [
+      "U+0009-U+000D",
+      "U+0085",
+      "U+00A0",
+      "U+1680",
+      "U+2000-U+200A",
+      "U+2028-U+2029",
+      "U+202F",
+      "U+205F",
+      "U+3000"
+    ]
+  },
+  "hashes": {
+    "agentLine": "keccak256-exact-utf8",
+    "binaryField": "keccak256-packed-128-bytes",
+    "promptLine": "keccak256-exact-utf8"
+  },
+  "id": "inshell.thought.work.v2",
+  "lineProfile": {
+    "agentMaxUtf8Bytes": 64,
+    "agentMinUtf8Bytes": 1,
+    "allowedWhitespace": "U+0020-internal-only",
+    "lineCount": 1,
+    "normalization": "none",
+    "promptMaxUtf8Bytes": 64,
+    "promptMinUtf8Bytes": 1,
+    "utf8": "rfc3629-shortest-form-unicode-scalars",
+    "xmlProfile": "xml-1.0-fifth-edition-characters-with-frozen-exclusions"
+  },
+  "structuralMetrics": {
+    "agentWeight": { "maximum": 512, "minimum": 0 },
+    "binaryContrast": [
+      { "label": "Low", "maximum": 170, "minimum": 0 },
+      { "label": "Medium", "maximum": 341, "minimum": 171 },
+      { "label": "High", "maximum": 512, "minimum": 342 }
+    ],
+    "bitDistance": { "maximum": 512, "minimum": 0 },
+    "loomWeight": { "maximum": 1024, "minimum": 0 },
+    "promptWeight": { "maximum": 512, "minimum": 0 },
+    "textureDensity": [
+      { "label": "Open", "maximum": 460, "minimum": 0 },
+      { "label": "Balanced", "maximum": 563, "minimum": 461 },
+      { "label": "Dense", "maximum": 1024, "minimum": 564 }
+    ]
+  },
+  "version": 2,
+  "workHash": {
+    "domainEncoding": "keccak256-utf8",
+    "domainText": "INSHELL_THOUGHT_V2_WORK",
+    "encoding": "keccak256-abi-encode-five-bytes32",
+    "inputs": [
+      "workDomain",
+      "rendererIdHash",
+      "promptLineKeccak256",
+      "agentLineKeccak256",
+      "binaryFieldKeccak256"
+    ]
+  }
+}

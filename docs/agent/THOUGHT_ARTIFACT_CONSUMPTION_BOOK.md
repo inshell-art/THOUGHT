@@ -94,11 +94,12 @@ Required files or immutable references:
 
 ```text
 contract/abi/ThoughtNFT.json
+contract/abi/ThoughtRenderer.json
 contract/abi/ThoughtSpecRegistry.json
 contract/release/<network>.json
 ```
 
-Each network release must identify chain ID, contract addresses, deployment blocks, source commit, deployment evidence, and recommended spec identity. Never include private RPC URLs, keys, mnemonics, or operator secrets.
+Each network release must identify chain ID, `ThoughtNFT`, `ThoughtRenderer`, and registry addresses, deployment blocks, source commit, deployment evidence, the renderer ID/hash pin, and recommended spec identity. Never include private RPC URLs, keys, mnemonics, or operator secrets.
 
 ### Umbrella frontend release
 

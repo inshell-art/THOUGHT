@@ -5,22 +5,24 @@ This directory contains the active THOUGHT contract and the preserved V1 archive
 ## Active Formal Contract
 
 - `src/ThoughtNFT.sol`: the public, unversioned ERC-721 contract. Its mint surface is `mint(MintThoughtInput)`.
+- `src/ThoughtRenderer.sol`: the immutable renderer dependency pinned by renderer-id hash at `ThoughtNFT` construction.
 - `src/ThoughtSpecRegistry.sol`: the immutable-owner, append-only registry for exact `THOUGHT.vN.md` bytes.
+- `src/ThoughtSpecRegistryV2.sol`: the immutable-owner, append-only registry for compact protocol-release commitments.
 - `src/ContractCodeStorage.sol`: immutable code-pointer storage used by the registry.
 
-`ThoughtNFT` has three immutable constructor bindings:
+`ThoughtNFT` has five immutable constructor bindings:
 
 ```solidity
-new ThoughtNFT(pathNft, thoughtSpecRegistry, protocolReleaseKeccak256)
+new ThoughtNFT(pathNft, thoughtSpecRegistry, thoughtRenderer, protocolRegistry, protocolReleaseId)
 ```
 
-The constructor does not pin one spec version. Every mint supplies an exact registered
+The constructor requires `protocolReleaseId` to exist in `protocolRegistry` and permanently binds the collection to that record. It also freezes exact renderer/work-profile hashes as generated constants. The constructor does not pin one creative-spec version. Every mint supplies an exact registered
 `(thoughtSpecId, thoughtSpecHash)` pair, so multiple registered `THOUGHT.vN.md` versions
 can coexist and remain mintable in one collection.
 
 Each successful mint:
 
-1. validates the human-owned `promptLine` and Agent-produced `agentLine` as visible UTF-8 text with ordinary single spaces;
+1. validates the human-owned `promptLine` and Agent-produced `agentLine` against the frozen strict UTF-8/XML/Unicode profile;
 2. validates the supplied exact registered `(thoughtSpecId, thoughtSpecHash)` pair and non-empty provenance bytes;
 3. consumes exactly one PATH `THOUGHT` movement unit atomically; and
 4. stores the two lines, provenance payload, PATH id/serial, hashes, minter, and timestamp before emitting `ThoughtMinted`.
@@ -31,10 +33,10 @@ The contract does not require an Agent receipt, run id, Plugin, MCP server, or w
 
 Visible-line limits are deterministic and enforced before PATH consumption:
 
-| Line | Maximum UTF-8 bytes | Maximum display units |
-| --- | ---: | ---: |
-| `promptLine` | 320 | 433 |
-| `agentLine` | 180 | 162 |
+| Line | UTF-8 byte length |
+| --- | ---: |
+| `promptLine` | 1 through 64 |
+| `agentLine` | 1 through 64 |
 
 ## Renderer and Metadata
 
@@ -42,15 +44,13 @@ Visible-line limits are deterministic and enforced before PATH consumption:
 
 > A human prompt transformed by an Agent into a fully onchain work.
 
-Metadata uses public `THOUGHT` naming and renderer id `inshell.thought.svg.v2.binary-interleave-32`. It includes the two visible lines, algorithm-labelled hashes, Agent identity, packed field/hash, work hash, provenance hash/payload, PATH id/serial, minter, minted timestamp, exact spec pair, and protocol release hash. It never embeds full spec text.
+Metadata uses public `THOUGHT` naming and renderer id `inshell.thought.svg.v2.binary-weave-32`. It includes exact line attributes, deterministic visual traits, structural properties, release/manifest/profile bindings, work/provenance facts, PATH facts, and the exact spec pair. It never embeds full spec text.
 
-The renderer derives a fixed 1024-bit field from UTF-8 bytes in this order:
+The renderer cycles each exact UTF-8 source to 64 bytes and derives a fixed 1024-bit checkerboard field:
 
 ```text
-P512[i] = prompt bits i mod prompt bit length
-A512[i] = Agent bits i mod Agent bit length
-F[2i] = P512[i]
-F[2i + 1] = A512[i]
+F[row][col] = P512[row*16 + floor(col/2)] when (row+col) is even
+F[row][col] = A512[col*16 + floor(row/2)] when (row+col) is odd
 ```
 
 The 1024-bit field is packed MSB-first into exactly 128 bytes. The exact packed field is exposed through `binaryField(promptLine, agentLine)` and `binaryFieldOf(tokenId)` for provenance and independent verification.
@@ -82,14 +82,15 @@ npm run deploy:evm-local
 npm run ops:bundle:sepolia
 ```
 
-`deploy-evm-local.sh` registers raw `specs/THOUGHT.v2.md` bytes, deploys the active unversioned contracts, configures PATH movement `THOUGHT` with quota `1`, and freezes that PATH movement by default.
+`deploy-evm-local.sh` registers raw `specs/THOUGHT.v2.md` bytes and a local protocol manifest, verifies profile hashes against generated contract constants, deploys the active unversioned contracts, configures PATH movement `THOUGHT` with quota `1`, and freezes that PATH movement by default.
 
 ## Sepolia and Mainnet Requirements
 
 - The `ThoughtSpecRegistry` owner is an explicit immutable constructor argument. On Sepolia and mainnet it must be the Ledger-backed long-term ADMIN address, not a software deployer.
 - Register the exact raw `THOUGHT.v2.md` bytes before public minting. The deployment scripts reject BOM, CRLF, filename, and version-header mismatches before deployment.
+- Register an approved exact-byte `release.manifest.json` in `ThoughtSpecRegistryV2` before deploying `ThoughtNFT`. Draft manifests are local-test-only. Verify the manifest's renderer/work-profile hashes against generated contract constants before broadcast and verify every immutable binding afterward.
 - Configure `PathNFT.setMovementConfig(bytes32("THOUGHT"), thoughtNft, 1)` and then freeze the movement config before public use.
-- Verify `pathNft`, `thoughtSpecRegistry`, registry ownership, spec registration, PATH minter, quota, and frozen state after deployment.
+- Verify `pathNft`, both registries and owners, release ID/hash/URI, renderer/work-profile hashes, spec registration, PATH minter, quota, and frozen state after deployment.
 - Mainnet execution uses the same formal signing workflow as Sepolia, but must be an explicitly reviewed release plan. Never substitute a software deployer for the Ledger ADMIN owner.
 
 ## Agent and Plugin Boundary

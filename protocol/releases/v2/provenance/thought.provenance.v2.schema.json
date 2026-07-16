@@ -1,44 +1,128 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://inshell.art/protocol/releases/v2/provenance/thought.provenance.v2.schema.json",
-  "title": "THOUGHT Provenance V2",
-  "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "protocol", "spec", "workProfile", "renderer", "promptLine", "agentLine", "promptLineKeccak256", "agentLineKeccak256", "agentIdentityHash", "workHash", "binaryFieldPacked", "binaryFieldKeccak256", "transport"],
   "properties": {
-    "schema": { "const": "inshell.thought.provenance.v2" },
-    "protocol": { "$ref": "#/$defs/anchor" },
-    "spec": { "$ref": "#/$defs/anchor" },
-    "workProfile": { "$ref": "#/$defs/anchor" },
-    "renderer": { "$ref": "#/$defs/anchor" },
-    "promptLine": { "type": "string", "minLength": 1 },
-    "agentLine": { "type": "string", "minLength": 1 },
-    "promptLineKeccak256": { "$ref": "#/$defs/bytes32" },
-    "agentLineKeccak256": { "$ref": "#/$defs/bytes32" },
-    "agentIdentityHash": { "$ref": "#/$defs/bytes32" },
-    "workHash": { "$ref": "#/$defs/bytes32" },
-    "binaryFieldPacked": { "type": "string", "pattern": "^0x[0-9a-f]{256}$" },
-    "binaryFieldKeccak256": { "$ref": "#/$defs/bytes32" },
-    "declaration": { "$ref": "../agent/thought.agent-declaration.v1.schema.json" },
-    "transport": {
+    "mintContext": { "$ref": "#/$defs/mintContext" },
+    "process": {
       "oneOf": [
-        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "manual" } } },
-        { "type": "object", "additionalProperties": false, "required": ["kind", "runId", "rawResponseSha256"], "properties": { "kind": { "const": "run" }, "runId": { "type": "string", "minLength": 1 }, "rawResponseSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" } } }
+        { "$ref": "#/$defs/manualProcess" },
+        { "$ref": "#/$defs/agentRunProcess" }
       ]
     },
-    "preMint": { "type": "object" }
+    "protocol": { "$ref": "#/$defs/protocol" },
+    "schema": { "const": "inshell.thought.provenance.v2" },
+    "work": { "$ref": "#/$defs/work" }
   },
+  "required": ["schema", "protocol", "work", "process", "mintContext"],
+  "title": "THOUGHT Provenance V2",
+  "type": "object",
   "$defs": {
-    "bytes32": { "type": "string", "pattern": "^0x[0-9a-f]{64}$" },
-    "anchor": {
-      "type": "object",
+    "address": { "pattern": "^0x[0-9a-f]{40}$", "type": "string" },
+    "agentDeclaration": {
       "additionalProperties": false,
-      "required": ["id", "keccak256", "ref"],
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
+        "agentLabel": { "maxLength": 100, "minLength": 1, "type": "string" },
+        "declaredOneCreativeResult": { "const": true },
+        "schema": { "const": "inshell.thought.agent-declaration.v1" },
+        "status": { "const": "declared-unverified" }
+      },
+      "required": ["schema", "status", "agentLabel", "declaredOneCreativeResult"],
+      "type": "object"
+    },
+    "agentRunProcess": {
+      "additionalProperties": false,
+      "properties": {
+        "agentDeclaration": { "$ref": "#/$defs/agentDeclaration" },
+        "kind": { "const": "agent-run" },
+        "transport": { "$ref": "#/$defs/transport" }
+      },
+      "required": ["kind", "agentDeclaration"],
+      "type": "object"
+    },
+    "artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": { "minLength": 1, "type": "string" },
         "keccak256": { "$ref": "#/$defs/bytes32" },
-        "ref": { "type": "string", "minLength": 1 }
-      }
+        "path": { "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\.\.?/).+$", "type": "string" }
+      },
+      "required": ["id", "path", "keccak256"],
+      "type": "object"
+    },
+    "bytes32": { "pattern": "^0x[0-9a-f]{64}$", "type": "string" },
+    "decimal": { "pattern": "^(0|[1-9][0-9]*)$", "type": "string" },
+    "manualProcess": {
+      "additionalProperties": false,
+      "properties": { "kind": { "const": "manual" } },
+      "required": ["kind"],
+      "type": "object"
+    },
+    "mintContext": {
+      "additionalProperties": false,
+      "properties": {
+        "chainId": { "$ref": "#/$defs/decimal" },
+        "minter": { "$ref": "#/$defs/address" },
+        "movement": { "const": "THOUGHT" },
+        "pathId": { "$ref": "#/$defs/decimal" },
+        "pathNft": { "$ref": "#/$defs/address" },
+        "thoughtNft": { "$ref": "#/$defs/address" }
+      },
+      "required": ["chainId", "thoughtNft", "pathNft", "minter", "movement", "pathId"],
+      "type": "object"
+    },
+    "protocol": {
+      "additionalProperties": false,
+      "properties": {
+        "agentResultSchema": { "$ref": "#/$defs/artifact" },
+        "creativeSpec": { "$ref": "#/$defs/artifact" },
+        "manifestKeccak256": { "$ref": "#/$defs/bytes32" },
+        "protocolReleaseId": { "$ref": "#/$defs/bytes32" },
+        "rendererProfile": { "$ref": "#/$defs/artifact" },
+        "workProfile": { "$ref": "#/$defs/artifact" }
+      },
+      "required": [
+        "protocolReleaseId",
+        "manifestKeccak256",
+        "creativeSpec",
+        "agentResultSchema",
+        "workProfile",
+        "rendererProfile"
+      ],
+      "type": "object"
+    },
+    "transport": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter": { "minLength": 1, "type": "string" },
+        "rawResponseSha256": { "pattern": "^[0-9a-f]{64}$", "type": "string" },
+        "runId": { "minLength": 1, "type": "string" }
+      },
+      "type": "object"
+    },
+    "work": {
+      "additionalProperties": false,
+      "properties": {
+        "agentIdentityHash": { "$ref": "#/$defs/bytes32" },
+        "agentLine": { "minLength": 1, "type": "string", "x-thought-utf8-max-bytes": 64 },
+        "agentLineKeccak256": { "$ref": "#/$defs/bytes32" },
+        "binaryFieldKeccak256": { "$ref": "#/$defs/bytes32" },
+        "binaryFieldPacked": { "pattern": "^0x[0-9a-f]{256}$", "type": "string" },
+        "promptLine": { "minLength": 1, "type": "string", "x-thought-utf8-max-bytes": 64 },
+        "promptLineKeccak256": { "$ref": "#/$defs/bytes32" },
+        "workHash": { "$ref": "#/$defs/bytes32" }
+      },
+      "required": [
+        "promptLine",
+        "agentLine",
+        "promptLineKeccak256",
+        "agentLineKeccak256",
+        "agentIdentityHash",
+        "workHash",
+        "binaryFieldPacked",
+        "binaryFieldKeccak256"
+      ],
+      "type": "object"
     }
   }
 }

@@ -1,0 +1,149 @@
+{
+  "invalid": [
+    {
+      "id": "wrong-release",
+      "mutate": {
+        "path": "protocol.protocolReleaseId",
+        "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    },
+    {
+      "id": "wrong-work-hash",
+      "mutate": {
+        "path": "work.workHash",
+        "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    },
+    {
+      "id": "noncanonical-leading-space",
+      "prefix": " "
+    },
+    {
+      "add": {
+        "path": "transactionHash",
+        "value": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      },
+      "id": "forbidden-post-mint-field"
+    }
+  ],
+  "schema": "inshell.thought.provenance-vectors.v1",
+  "valid": [
+    {
+      "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"minter\":\"0x3333333333333333333333333333333333333333\",\"movement\":\"THOUGHT\",\"pathId\":\"12\",\"pathNft\":\"0x2222222222222222222222222222222222222222\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"kind\":\"manual\"},\"protocol\":{\"agentResultSchema\":{\"id\":\"inshell.thought.agent-result.v2\",\"keccak256\":\"0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2\",\"path\":\"thought.agent-result.v2.schema.json\"},\"creativeSpec\":{\"id\":\"inshell.thought.v2\",\"keccak256\":\"0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a\",\"path\":\"THOUGHT.v2.md\"},\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"rendererProfile\":{\"id\":\"inshell.thought.svg.v2.binary-weave-32\",\"keccak256\":\"0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88\",\"path\":\"thought.renderer.v2.profile.json\"},\"workProfile\":{\"id\":\"inshell.thought.work.v2\",\"keccak256\":\"0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb\",\"path\":\"thought.work.v2.profile.json\"}},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0x83ce8f509901a42deac7d89e5cd9ee34bdd3d803721b8328add12afb93bc1bb2\",\"agentLine\":\"quiet return\",\"agentLineKeccak256\":\"0x3bd62ecd3709d1aba103bf23e7bb3887d093e136884fc6d2e0c1cba02a05a13b\",\"binaryFieldKeccak256\":\"0xfb9556fa589f490e95dd165a0625c4788713dbc792e51c5f37ce419d974354a0\",\"binaryFieldPacked\":\"0x2a022a22144114117f755d55bfafbeeb7d7f7dfdbeabbefa3e536f36beebbebb6b24184115051441282a28a83ca39e783e536f36144114116b241841970d34c3282a28a8140114507f577f779e69b69b7f755d55bfafbeeb282a28a89e29b6da2e126b26144114117f755d559f2db6cb2c3a69ac140114507b473e739e69b69b\",\"promptLine\":\"quiet signal\",\"promptLineKeccak256\":\"0x7217d54527306121b40b95c81b96dac2b6b1ecc6bac04a16e1d862ee87a0ffce\",\"workHash\":\"0x8ddbfe81712ba14e9755fa01d69c210ce6af77a8b8b70a4f4c9b63bb9ba75808\"}}",
+      "id": "manual",
+      "keccak256": "0x451832b24806f295b433afba2e64727820addaad7faebba422fb5fb6409ac09b",
+      "record": {
+        "mintContext": {
+          "chainId": "31337",
+          "minter": "0x3333333333333333333333333333333333333333",
+          "movement": "THOUGHT",
+          "pathId": "12",
+          "pathNft": "0x2222222222222222222222222222222222222222",
+          "thoughtNft": "0x1111111111111111111111111111111111111111"
+        },
+        "process": {
+          "kind": "manual"
+        },
+        "protocol": {
+          "agentResultSchema": {
+            "id": "inshell.thought.agent-result.v2",
+            "keccak256": "0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2",
+            "path": "thought.agent-result.v2.schema.json"
+          },
+          "creativeSpec": {
+            "id": "inshell.thought.v2",
+            "keccak256": "0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a",
+            "path": "THOUGHT.v2.md"
+          },
+          "manifestKeccak256": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+          "rendererProfile": {
+            "id": "inshell.thought.svg.v2.binary-weave-32",
+            "keccak256": "0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88",
+            "path": "thought.renderer.v2.profile.json"
+          },
+          "workProfile": {
+            "id": "inshell.thought.work.v2",
+            "keccak256": "0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb",
+            "path": "thought.work.v2.profile.json"
+          }
+        },
+        "schema": "inshell.thought.provenance.v2",
+        "work": {
+          "agentIdentityHash": "0x83ce8f509901a42deac7d89e5cd9ee34bdd3d803721b8328add12afb93bc1bb2",
+          "agentLine": "quiet return",
+          "agentLineKeccak256": "0x3bd62ecd3709d1aba103bf23e7bb3887d093e136884fc6d2e0c1cba02a05a13b",
+          "binaryFieldKeccak256": "0xfb9556fa589f490e95dd165a0625c4788713dbc792e51c5f37ce419d974354a0",
+          "binaryFieldPacked": "0x2a022a22144114117f755d55bfafbeeb7d7f7dfdbeabbefa3e536f36beebbebb6b24184115051441282a28a83ca39e783e536f36144114116b241841970d34c3282a28a8140114507f577f779e69b69b7f755d55bfafbeeb282a28a89e29b6da2e126b26144114117f755d559f2db6cb2c3a69ac140114507b473e739e69b69b",
+          "promptLine": "quiet signal",
+          "promptLineKeccak256": "0x7217d54527306121b40b95c81b96dac2b6b1ecc6bac04a16e1d862ee87a0ffce",
+          "workHash": "0x8ddbfe81712ba14e9755fa01d69c210ce6af77a8b8b70a4f4c9b63bb9ba75808"
+        }
+      }
+    },
+    {
+      "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"minter\":\"0x3333333333333333333333333333333333333333\",\"movement\":\"THOUGHT\",\"pathId\":\"12\",\"pathNft\":\"0x2222222222222222222222222222222222222222\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"agentLabel\":\"Codex\",\"declaredOneCreativeResult\":true,\"schema\":\"inshell.thought.agent-declaration.v1\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"transport\":{\"adapter\":\"codex\",\"rawResponseSha256\":\"4444444444444444444444444444444444444444444444444444444444444444\",\"runId\":\"run-fixture-1\"}},\"protocol\":{\"agentResultSchema\":{\"id\":\"inshell.thought.agent-result.v2\",\"keccak256\":\"0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2\",\"path\":\"thought.agent-result.v2.schema.json\"},\"creativeSpec\":{\"id\":\"inshell.thought.v2\",\"keccak256\":\"0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a\",\"path\":\"THOUGHT.v2.md\"},\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"rendererProfile\":{\"id\":\"inshell.thought.svg.v2.binary-weave-32\",\"keccak256\":\"0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88\",\"path\":\"thought.renderer.v2.profile.json\"},\"workProfile\":{\"id\":\"inshell.thought.work.v2\",\"keccak256\":\"0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb\",\"path\":\"thought.work.v2.profile.json\"}},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0x6ca3e938128e50d0f8032c3273ea1e7eb6c9905336099386f49e9078487d34cd\",\"agentLine\":\"the archive answers once\",\"agentLineKeccak256\":\"0xc0a010a03bea5d3f4dcd6900999f98851911d9abd4645c1a2f0f8416a6e4e87f\",\"binaryFieldKeccak256\":\"0x4ee478e1fc3d1971eaf75cefaa9d23c0bee588ee2303155f391c52d17b3f37e9\",\"binaryFieldPacked\":\"0x2a202a08140114057d775d55bfbabeea7d775d55beabbfae294a3c819449159428222a201d2496096c0e686684a81f9039d13d33042016017f5d7d5f3ee2be6b2a282822151015043913391bbebbaeaa7f757dd5bebbaeaa29023a093c879c6838832a38963937922b1839031e25b61b09003a213ee2be3b0910390315041405\",\"promptLine\":\"trace the archive\",\"promptLineKeccak256\":\"0xd6ca2521a7a1effb023ff45557dd17e90fe67ee489ca423199bdca8966e78280\",\"workHash\":\"0x7fab01b866a5f2ec5298e5a63a7d135efc2fc2e5c5646ccad9ef9ca2369ebf61\"}}",
+      "id": "agent-run",
+      "keccak256": "0x926baf7fdb5d6247880eb2b5e803c1e1be59ad1d2d3796931ac18e85fb6652af",
+      "record": {
+        "mintContext": {
+          "chainId": "31337",
+          "minter": "0x3333333333333333333333333333333333333333",
+          "movement": "THOUGHT",
+          "pathId": "12",
+          "pathNft": "0x2222222222222222222222222222222222222222",
+          "thoughtNft": "0x1111111111111111111111111111111111111111"
+        },
+        "process": {
+          "agentDeclaration": {
+            "agentLabel": "Codex",
+            "declaredOneCreativeResult": true,
+            "schema": "inshell.thought.agent-declaration.v1",
+            "status": "declared-unverified"
+          },
+          "kind": "agent-run",
+          "transport": {
+            "adapter": "codex",
+            "rawResponseSha256": "4444444444444444444444444444444444444444444444444444444444444444",
+            "runId": "run-fixture-1"
+          }
+        },
+        "protocol": {
+          "agentResultSchema": {
+            "id": "inshell.thought.agent-result.v2",
+            "keccak256": "0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2",
+            "path": "thought.agent-result.v2.schema.json"
+          },
+          "creativeSpec": {
+            "id": "inshell.thought.v2",
+            "keccak256": "0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a",
+            "path": "THOUGHT.v2.md"
+          },
+          "manifestKeccak256": "0x1111111111111111111111111111111111111111111111111111111111111111",
+          "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+          "rendererProfile": {
+            "id": "inshell.thought.svg.v2.binary-weave-32",
+            "keccak256": "0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88",
+            "path": "thought.renderer.v2.profile.json"
+          },
+          "workProfile": {
+            "id": "inshell.thought.work.v2",
+            "keccak256": "0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb",
+            "path": "thought.work.v2.profile.json"
+          }
+        },
+        "schema": "inshell.thought.provenance.v2",
+        "work": {
+          "agentIdentityHash": "0x6ca3e938128e50d0f8032c3273ea1e7eb6c9905336099386f49e9078487d34cd",
+          "agentLine": "the archive answers once",
+          "agentLineKeccak256": "0xc0a010a03bea5d3f4dcd6900999f98851911d9abd4645c1a2f0f8416a6e4e87f",
+          "binaryFieldKeccak256": "0x4ee478e1fc3d1971eaf75cefaa9d23c0bee588ee2303155f391c52d17b3f37e9",
+          "binaryFieldPacked": "0x2a202a08140114057d775d55bfbabeea7d775d55beabbfae294a3c819449159428222a201d2496096c0e686684a81f9039d13d33042016017f5d7d5f3ee2be6b2a282822151015043913391bbebbaeaa7f757dd5bebbaeaa29023a093c879c6838832a38963937922b1839031e25b61b09003a213ee2be3b0910390315041405",
+          "promptLine": "trace the archive",
+          "promptLineKeccak256": "0xd6ca2521a7a1effb023ff45557dd17e90fe67ee489ca423199bdca8966e78280",
+          "workHash": "0x7fab01b866a5f2ec5298e5a63a7d135efc2fc2e5c5646ccad9ef9ca2369ebf61"
+        }
+      }
+    }
+  ]
+}
