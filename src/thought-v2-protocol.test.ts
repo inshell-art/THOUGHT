@@ -87,6 +87,53 @@ describe("THOUGHT V2 protocol", () => {
     );
   });
 
+  it("replays every generated valid and invalid declaration vector", () => {
+    const validation = JSON.parse(
+      fs.readFileSync(
+        path.join(process.cwd(), "protocol/releases/v2/conformance/text-validation.json"),
+        "utf8",
+      ),
+    );
+    for (const fixture of validation.validModels) {
+      expect(measureThoughtLine(fixture.declaredModel, "model"), fixture.id).toEqual(fixture.model);
+    }
+    for (const fixture of validation.invalidModels) {
+      expect(measureThoughtLine(fixture.declaredModel, "model").errors, fixture.id).toEqual(
+        fixture.errors,
+      );
+      expect(fixture.errors.length, fixture.id).toBeGreaterThan(0);
+    }
+    for (const fixture of validation.validDeclaredAgents) {
+      expect(measureThoughtLine(fixture.declaredAgent, "declaredAgent"), fixture.id).toEqual(
+        fixture.measurement,
+      );
+    }
+    for (const fixture of validation.invalidDeclaredAgents) {
+      expect(
+        measureThoughtLine(fixture.declaredAgent, "declaredAgent").errors,
+        fixture.id,
+      ).toEqual(fixture.errors);
+      expect(fixture.errors.length, fixture.id).toBeGreaterThan(0);
+    }
+
+    const rawValidation = JSON.parse(
+      fs.readFileSync(
+        path.join(process.cwd(), "protocol/releases/v2/conformance/raw-utf8-vectors.json"),
+        "utf8",
+      ),
+    );
+    for (const fixture of rawValidation.invalid) {
+      expect(
+        measureThoughtLineBytes(getBytes(fixture.inputHex), "model").errors,
+        fixture.id,
+      ).toEqual(fixture.modelErrors);
+      expect(
+        measureThoughtLineBytes(getBytes(fixture.inputHex), "declaredAgent").errors,
+        fixture.id,
+      ).toEqual(fixture.declaredAgentErrors);
+    }
+  });
+
   it("rejects every frozen whitespace, default-ignorable, and noncharacter boundary", () => {
     for (const codepoint of frozenRejectedCodepoints) {
       expect(measureThoughtLine(String.fromCodePoint(codepoint), "prompt").errors.length).toBeGreaterThan(0);

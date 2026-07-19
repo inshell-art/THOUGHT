@@ -2,6 +2,19 @@
   "abi": [
     {
       "inputs": [],
+      "name": "CREATION_ATTESTATION_PROFILE_ID",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "RENDERER_ID",
       "outputs": [
         {
@@ -16,6 +29,45 @@
     {
       "inputs": [],
       "name": "RENDERER_ID_HASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "RENDERER_PROFILE_KECCAK256",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WORK_PROFILE_ID",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WORK_PROFILE_KECCAK256",
       "outputs": [
         {
           "internalType": "bytes32",
@@ -55,6 +107,122 @@
         }
       ],
       "name": "render",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "promptLine",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "agentLine",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "declaredAgent",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "declaredModel",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "provenanceJson",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "thoughtSpecId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "thoughtSpecHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pathId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "pathSerial",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "minter",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "mintedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "creationAttestationDigest",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "protocolReleaseId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "manifestKeccak256",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "creationAttestationVerifier",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct IThoughtRenderer.TokenData",
+          "name": "data",
+          "type": "tuple"
+        },
+        {
+          "internalType": "bytes",
+          "name": "packedField",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "promptDisplayUnits",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "agentDisplayUnits",
+          "type": "uint256"
+        }
+      ],
+      "name": "tokenURI",
       "outputs": [
         {
           "internalType": "string",

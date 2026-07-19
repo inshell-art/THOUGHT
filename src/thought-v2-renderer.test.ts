@@ -19,8 +19,8 @@ describe("thought v2 renderer", () => {
       const row = Math.floor(index / 32);
       const column = index % 32;
       return (
-        (row >= 11 && row <= 14) ||
-        (row >= 30 && column >= 2 && column <= 29)
+        (row >= 12 && row <= 14 && column >= 2 && column <= 29) ||
+        (row >= 28 && row <= 29 && column >= 4 && column <= 27)
       );
     };
     const visibleBits = bits.split("").filter((_, index) => !isCleared(index));
@@ -34,15 +34,15 @@ describe("thought v2 renderer", () => {
       interleave: "checkerboard-prompt-horizontal-agent-vertical",
       packedBytes: 128,
       layout: "fixed-32x32-row-major",
-      x: 96,
-      y: 96,
-      width: 768,
-      height: 768,
+      x: 32,
+      y: 32,
+      width: 896,
+      height: 896,
       side: 32,
       capacity: 1024,
       fill: "#006100",
       opacity: 1,
-      cell: { width: 24, height: 24, oneRadius: 6, zeroRadius: 7, zeroStroke: 2 },
+      cell: { width: 28, height: 28, oneRadius: 10, zeroRadius: 10, zeroStroke: 1 },
     });
     expect(svg).toContain('data-prompt-bit-positions="512"');
     expect(svg).toContain('data-agent-bit-positions="512"');
@@ -50,9 +50,9 @@ describe("thought v2 renderer", () => {
     expect(svg).toContain(`data-one-cells="${oneCount}"`);
     expect(svg.match(/<use href="#binary-one"/g)).toHaveLength(oneCount);
     expect(svg).toContain(`data-zero-cells="${zeroCount}"`);
-    expect(svg).toContain('data-rendered-cells="840"');
-    expect(svg).toContain('data-cleared-cells="184"');
-    expect(svg).toContain('<rect id="binary-zero-field" x="96" y="96" width="768" height="768"');
+    expect(svg).toContain('data-rendered-cells="892"');
+    expect(svg).toContain('data-cleared-cells="132"');
+    expect(svg).toContain('<rect id="binary-zero-field" x="32" y="32" width="896" height="896"');
     expect(svg).toContain('<rect id="agent-text-clear" x="92" y="372" width="776" height="76"');
     expect(svg).toContain('<rect id="prompt-text-clear" x="148" y="820" width="664" height="48"');
     expect(svg).not.toMatch(/[01]{8}/);

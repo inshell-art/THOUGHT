@@ -16,10 +16,12 @@ authorized for production registration. Its hash is technically registrable;
 the hashes are local build evidence, not an approved protocol release or a
 deployment instruction.
 
-No deployment, chain verification, release registration, signature, PATH
-consumption, mint, artifact pin, upload, candidate/stable promotion, or
-downstream rollout was performed. Source cleanup, commit, tag, and push were
-separately authorized by the operator on 2026-07-16.
+No public-network deployment, chain verification, release registration,
+signature, artifact pin, upload, candidate/stable promotion, or downstream
+rollout was performed. A disposable local Anvil deployment consumed fixture
+PATH units to mint 60 gallery tokens solely for browser verification. Source
+cleanup, commit, tag, and push were separately authorized by the operator on
+2026-07-16.
 
 ## Discovery and Ownership
 
@@ -81,8 +83,8 @@ source authority.
 status:                   draft
 registration authorized: false
 manifest byte length:   3,779
-manifest keccak256:     0x305f59465c93edf46e5ab0ca372b017f6cba5c98052e695ae6b9ca5778515d4b
-protocol release ID:    0xea4493c669fc366e224e66a43233e1e97efecd18568ef494dfc31b4a3c961b65
+manifest keccak256:     0xc46e1b3dbab5128bc4af98bc009dca3e45e6903c8263e0eb49cb5eb32fc16e0d
+protocol release ID:    0xcab9cb82294d90e90d60203b27195c4daa75ea365f3d9b249caf5cd4006d6673
 release-ID domain:      INSHELL_THOUGHT_PROTOCOL_RELEASE
 ```
 
@@ -166,6 +168,10 @@ placement, clipping, animation, identity, and hashes do not depend on font
 measurement or external assets. Viewer fonts may change glyph rasterization;
 that does not change the work.
 
+The current binary weave uses the approved full-canvas scale: x=32, y=32,
+width=896, height=896, 28 x 28 cells, and radius-10 marks. The orthogonal
+prompt/Agent weave semantics and renderer identifier remain unchanged.
+
 Metadata exposes exactly five ordered content attributes and ordered technical
 properties. Exact Prompt and Agent Response literals are preserved as content
 attributes. Structural metrics and deterministic observer traits supplement
@@ -182,10 +188,10 @@ Representative exact-byte gates:
 
 ```text
 one-byte SVG keccak256:
-0x0b9311310a8f9c5a615a766f384eec8bfb9b0a07f400416b34d771717c00f5ca
+0x9ecc3ca8c790cf007aa830ebfb23479f0b302f54b264d26fbcea6b0a1e199aa0
 
 deterministic full tokenURI keccak256:
-0x8565890ca125fd9feb741173fde3383dbced208c3d20b8002790ddee660a8522
+0x2ab866e95ae86c3462a7fd82c15bb33a33ed96aacffa6ed401fb819156d1f3a0
 ```
 
 The full tokenURI gate fixes timestamp, token facts, exact provenance, release
@@ -209,26 +215,25 @@ retroactively into the pre-mint provenance record.
 
 ## Browser Rendering Evidence
 
-The local lab at `http://127.0.0.1:5177/thought-v2-lab.html` was inspected in a
-real browser after the production and protocol builds:
+The local Anvil gallery at `http://127.0.0.1:5177/thought-v2-lab.html` was
+inspected in a real browser after a fresh deployment and 60 fixture mints:
 
 ```text
-SVG image works:                 61
-square rendered works:          61
-960x960 viewBox sources:         61
-binary-background sources:      61
-Agent-line sources:              61
-prompt-line sources:             61
-unique SVG sources:             60
-SVGs containing animation:       7
-external SVG href resources:     0
-external SVG CSS URL resources:  0
-horizontal viewport overflow:    0
+onchain tokenURI records:        60
+decoded SVG sources:             60
+unique SVG sources:              60
+960x960 viewBox sources:         60
+canonical geometry failures:     0
+card attributes rendered:        300
+selected-token attributes:       5
+failed loaded images:            0
+desktop horizontal overflow:     0
+mobile horizontal overflow:      0
 ```
 
 The fixtures include Latin, CJK, Arabic, Thai, combining sequences, and emoji.
-The visual check verifies invariant structure and containment, not
-cross-platform pixel identity.
+The desktop and 390 x 844 mobile screenshots verify the restored full-canvas
+look, invariant structure, and containment, not cross-platform pixel identity.
 
 ## Regression Evidence
 
@@ -296,14 +301,14 @@ come from exposing the exact release/profile metadata in canonical output.
 ```text
 npm run protocol:build   passed; 14 exact-byte artifacts generated
 npm run protocol:check   passed; embedded bundle verified offline
-npm test                 57 passed
+npm test                 60 passed
 npm run build            passed
 npm run build:evm        passed
 npm run test:evm         115 passed
   ThoughtSpecRegistryV2   5 passed
   active V2              54 passed
   archived V1            56 passed
-browser invariant check  passed; 61 self-contained works, no overflow
+browser invariant check  passed; 60 onchain works, no geometry failures or overflow
 forge fmt --check        passed for all changed Solidity files
 git diff --check         passed
 gitleaks source scan     passed; generated `dist/` excluded

@@ -22,15 +22,15 @@ const SVG_WIDTH = 960;
 const SVG_HEIGHT = 960;
 const CANVAS_BG = "#000000";
 const FIELD_COLOR = "#006100";
-const FIELD_X = 96;
-const FIELD_Y = 96;
-const FIELD_WIDTH = 768;
-const FIELD_HEIGHT = 768;
+const FIELD_X = 32;
+const FIELD_Y = 32;
+const FIELD_WIDTH = 896;
+const FIELD_HEIGHT = 896;
 const FIELD_SIDE = 32;
-const CELL_SIZE = 24;
-const ONE_RADIUS = 6;
-const ZERO_RADIUS = 7;
-const ZERO_STROKE = 2;
+const CELL_SIZE = 28;
+const ONE_RADIUS = 10;
+const ZERO_RADIUS = 10;
+const ZERO_STROKE = 1;
 const AGENT_BG = { x: 92, y: 372, width: 776, height: 76, radius: 9 };
 const AGENT_CLIP = { x: 94, y: 373, width: 772, height: 74, radius: 9 };
 const AGENT_TEXT = { x: 480, y: 410, size: 44 };
@@ -174,7 +174,7 @@ const binaryBackground = (promptLine: string, agentLine: string): string => {
       zeroCount += 1;
     }
   }
-  return `<g id="binary-background" opacity="1" fill="${FIELD_COLOR}" aria-label="Orthogonal UTF-8 binary weave: prompt bits travel horizontally and Agent bits travel vertically; filled circles are one bits and hollow rings are zero bits" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-prompt-bit-positions="512" data-agent-bit-positions="512" data-one-cells="${oneCount}" data-zero-cells="${zeroCount}" data-rendered-cells="${oneCount + zeroCount}" data-cleared-cells="${BINARY_FIELD_BITS - oneCount - zeroCount}" data-pack="msb-first-128-bytes" data-cell-size="24" data-origin-x="96" data-origin-y="96" data-dot-radius="6" data-zero="hollow-circle"><defs><circle id="binary-one" r="6" fill="${FIELD_COLOR}"/><pattern id="binary-zero-pattern" x="96" y="96" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="12" cy="12" r="7" fill="none" stroke="${FIELD_COLOR}" stroke-width="2"/></pattern></defs><rect id="binary-zero-field" x="96" y="96" width="768" height="768" fill="url(#binary-zero-pattern)"/>${uses.join("")}<rect id="agent-text-clear" x="92" y="372" width="776" height="76" fill="${CANVAS_BG}"/><rect id="prompt-text-clear" x="148" y="820" width="664" height="48" fill="${CANVAS_BG}"/></g>`;
+  return `<g id="binary-background" opacity="1" fill="${FIELD_COLOR}" aria-label="Orthogonal UTF-8 binary weave: prompt bits travel horizontally and Agent bits travel vertically; filled circles are one bits and hollow rings are zero bits" data-grid-columns="32" data-grid-rows="32" data-bit-capacity="1024" data-prompt-bit-positions="512" data-agent-bit-positions="512" data-one-cells="${oneCount}" data-zero-cells="${zeroCount}" data-rendered-cells="${oneCount + zeroCount}" data-cleared-cells="${BINARY_FIELD_BITS - oneCount - zeroCount}" data-pack="msb-first-128-bytes" data-cell-size="${CELL_SIZE}" data-origin-x="${FIELD_X}" data-origin-y="${FIELD_Y}" data-dot-radius="${ONE_RADIUS}" data-zero="hollow-circle"><defs><circle id="binary-one" r="${ONE_RADIUS}" fill="${FIELD_COLOR}"/><pattern id="binary-zero-pattern" x="${FIELD_X}" y="${FIELD_Y}" width="${CELL_SIZE}" height="${CELL_SIZE}" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="${CELL_SIZE / 2}" cy="${CELL_SIZE / 2}" r="${ZERO_RADIUS}" fill="none" stroke="${FIELD_COLOR}" stroke-width="${ZERO_STROKE}"/></pattern></defs><rect id="binary-zero-field" x="${FIELD_X}" y="${FIELD_Y}" width="${FIELD_WIDTH}" height="${FIELD_HEIGHT}" fill="url(#binary-zero-pattern)"/>${uses.join("")}<rect id="agent-text-clear" x="92" y="372" width="776" height="76" fill="${CANVAS_BG}"/><rect id="prompt-text-clear" x="148" y="820" width="664" height="48" fill="${CANVAS_BG}"/></g>`;
 };
 
 export const buildThoughtV2Svg = ({ promptLine, agentLine }: ThoughtV2SvgInput): string => {

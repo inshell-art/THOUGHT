@@ -16,6 +16,7 @@ evm/cache
 evm/out
 evm/broadcast
 evm/devnode-state
+/public/thought-v2-gallery.anvil.json
 
 # Editor directories and files
 .vscode/*

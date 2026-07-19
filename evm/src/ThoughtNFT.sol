@@ -1,20 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {Base64} from "./Base64.sol";
+import {ICreationAttestationVerifier} from "./ICreationAttestationVerifier.sol";
+import {IThoughtRenderer} from "./IThoughtRenderer.sol";
 import {ThoughtReleaseConstants} from "./ThoughtReleaseConstants.sol";
-
-interface IThoughtRenderer {
-    function RENDERER_ID_HASH() external view returns (bytes32);
-
-    function render(
-        string calldata promptLine,
-        string calldata agentLine,
-        bytes calldata packedField,
-        uint256 promptDisplayUnits,
-        uint256 agentDisplayUnits
-    ) external view returns (string memory);
-}
 
 interface IERC721Receiver {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
@@ -60,55 +49,45 @@ interface IThoughtProtocolRegistry {
 contract ThoughtNFT {
     enum DisplayKind {
         Prompt,
-        Agent
+        Agent,
+        DeclaredAgent,
+        Model
+    }
+
+    struct CreationAttestationProof {
+        bytes32 runIdHash;
+        uint64 deadline;
+        uint32 authorityEpoch;
+        bytes signature;
     }
 
     struct MintThoughtInput {
         string promptLine;
         string agentLine;
+        string declaredAgent;
+        string declaredModel;
         uint256 pathId;
         bytes32 thoughtSpecId;
         bytes32 thoughtSpecHash;
         string provenanceJson;
         uint256 deadline;
         bytes pathSignature;
+        CreationAttestationProof creationAttestation;
     }
 
     struct ThoughtRecord {
         string promptLine;
         string agentLine;
+        string declaredAgent;
+        string declaredModel;
         string provenanceJson;
+        bytes32 creationAttestationDigest;
         bytes32 thoughtSpecId;
         bytes32 thoughtSpecHash;
         uint256 pathId;
         uint256 pathSerial;
         address minter;
         uint64 mintedAt;
-    }
-
-    struct ThoughtRecordView {
-        string promptLine;
-        string agentLine;
-        string provenanceJson;
-        bytes32 promptLineHash;
-        bytes32 agentLineHash;
-        bytes32 workHash;
-        bytes32 provenanceHash;
-        bytes32 thoughtSpecId;
-        bytes32 thoughtSpecHash;
-        uint256 pathId;
-        uint256 pathSerial;
-        address minter;
-        uint64 mintedAt;
-    }
-
-    struct StructuralMetrics {
-        uint256 promptBytes;
-        uint256 agentBytes;
-        uint256 promptWeight;
-        uint256 agentWeight;
-        uint256 loomWeight;
-        uint256 bitDistance;
     }
 
     error ApprovalCallerNotOwnerNorApproved();
@@ -125,6 +104,9 @@ contract ThoughtNFT {
     error InvalidThoughtSpecPair(bytes32 thoughtSpecId, bytes32 thoughtSpecHash);
     error InvalidThoughtSpecRegistry();
     error InvalidThoughtRenderer();
+    error InvalidCreationAttestationProof();
+    error InvalidCreationAttestationResult();
+    error InvalidCreationAttestationVerifier();
     error InvalidProtocolRegistry();
     error InvalidProtocolRelease(bytes32 protocolReleaseId);
     error InvalidUtf8(DisplayKind kind);
@@ -135,6 +117,7 @@ contract ThoughtNFT {
     error TransferToNonReceiverImplementer();
     error TransferToZeroAddress();
     error AgentLineAlreadyMinted(bytes32 agentIdentityHash, uint256 tokenId);
+    error WorkAlreadyMinted(bytes32 workHash, uint256 tokenId);
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
@@ -154,6 +137,17 @@ contract ThoughtNFT {
         bytes32 thoughtSpecId,
         bytes32 thoughtSpecHash
     );
+    event CreationAttested(
+        uint256 indexed tokenId,
+        bytes32 indexed digest,
+        address indexed attestor,
+        bytes32 profileId,
+        bytes32 workHash,
+        bytes32 runIdHash,
+        address minter,
+        uint64 deadline,
+        uint32 authorityEpoch
+    );
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     string public constant name = "THOUGHT";
@@ -166,20 +160,21 @@ contract ThoughtNFT {
     bytes32 public constant WORK_DOMAIN = keccak256("INSHELL_THOUGHT_V2_WORK");
     bytes32 public constant RENDERER_ID_HASH = ThoughtReleaseConstants.RENDERER_ID_HASH;
     bytes32 public constant RENDERER_PROFILE_KECCAK256 = ThoughtReleaseConstants.RENDERER_PROFILE_KECCAK256;
-    bytes32 public constant WORK_PROFILE_ID_HASH = ThoughtReleaseConstants.WORK_PROFILE_ID_HASH;
     bytes32 public constant WORK_PROFILE_KECCAK256 = ThoughtReleaseConstants.WORK_PROFILE_KECCAK256;
+    bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtReleaseConstants.CREATION_ATTESTATION_PROFILE_ID;
 
     uint256 public constant MAX_PROMPT_LINE_BYTES = 64;
     uint256 public constant MAX_AGENT_LINE_BYTES = 64;
+    uint256 public constant MAX_DECLARED_AGENT_BYTES = 64;
+    uint256 public constant MAX_DECLARED_MODEL_BYTES = 64;
     uint256 public constant MAX_PROVENANCE_BYTES = 20_000;
     uint256 public constant BINARY_FIELD_BITS = 1024;
     uint256 public constant BINARY_FIELD_BYTES = 128;
 
-    bytes16 private constant HEX_DIGITS = "0123456789abcdef";
-
     address public immutable pathNft;
     address public immutable thoughtSpecRegistry;
     address public immutable thoughtRenderer;
+    address public immutable creationAttestationVerifier;
     address public immutable protocolRegistry;
     bytes32 public immutable protocolReleaseId;
     uint256 public totalSupply;
@@ -198,7 +193,8 @@ contract ThoughtNFT {
         address thoughtSpecRegistry_,
         address thoughtRenderer_,
         address protocolRegistry_,
-        bytes32 protocolReleaseId_
+        bytes32 protocolReleaseId_,
+        address creationAttestationVerifier_
     ) {
         if (pathNft_ == address(0) || pathNft_.code.length == 0) {
             revert InvalidPathNft();
@@ -212,10 +208,18 @@ contract ThoughtNFT {
         if (protocolRegistry_ == address(0) || protocolRegistry_.code.length == 0) {
             revert InvalidProtocolRegistry();
         }
+        if (creationAttestationVerifier_ == address(0) || creationAttestationVerifier_.code.length == 0) {
+            revert InvalidCreationAttestationVerifier();
+        }
         try IThoughtRenderer(thoughtRenderer_).RENDERER_ID_HASH() returns (bytes32 rendererIdHash) {
             if (rendererIdHash != RENDERER_ID_HASH) revert InvalidThoughtRenderer();
         } catch {
             revert InvalidThoughtRenderer();
+        }
+        try ICreationAttestationVerifier(creationAttestationVerifier_).profileId() returns (bytes32 profileId_) {
+            if (profileId_ != CREATION_ATTESTATION_PROFILE_ID) revert InvalidCreationAttestationVerifier();
+        } catch {
+            revert InvalidCreationAttestationVerifier();
         }
         if (
             protocolReleaseId_ == bytes32(0)
@@ -227,6 +231,7 @@ contract ThoughtNFT {
         pathNft = pathNft_;
         thoughtSpecRegistry = thoughtSpecRegistry_;
         thoughtRenderer = thoughtRenderer_;
+        creationAttestationVerifier = creationAttestationVerifier_;
         protocolRegistry = protocolRegistry_;
         protocolReleaseId = protocolReleaseId_;
     }
@@ -294,12 +299,21 @@ contract ThoughtNFT {
     function mint(MintThoughtInput calldata input) external nonReentrant returns (uint256 tokenId) {
         _validateDisplayLine(input.promptLine, DisplayKind.Prompt);
         _validateDisplayLine(input.agentLine, DisplayKind.Agent);
+        _validateDisplayLine(input.declaredAgent, DisplayKind.DeclaredAgent);
+        _validateDisplayLine(input.declaredModel, DisplayKind.Model);
         bytes memory provenanceBytes = bytes(input.provenanceJson);
         if (provenanceBytes.length == 0) {
             revert EmptyProvenance();
         }
         if (provenanceBytes.length > MAX_PROVENANCE_BYTES) {
             revert ProvenanceTooLarge(provenanceBytes.length, MAX_PROVENANCE_BYTES);
+        }
+        if (
+            input.thoughtSpecId == bytes32(0) || input.thoughtSpecHash == bytes32(0)
+                || !IThoughtSpecRegistry(thoughtSpecRegistry)
+                    .isRegisteredThoughtSpec(input.thoughtSpecId, input.thoughtSpecHash)
+        ) {
+            revert InvalidThoughtSpecPair(input.thoughtSpecId, input.thoughtSpecHash);
         }
 
         bytes32 promptLineHash = keccak256(bytes(input.promptLine));
@@ -308,18 +322,25 @@ contract ThoughtNFT {
         bytes32 binaryFieldHash = keccak256(packedField);
         bytes32 derivedAgentIdentityHash = _agentIdentityHash(agentLineHash);
         bytes32 mintedWorkHash = _workHash(promptLineHash, agentLineHash, binaryFieldHash);
+        bytes32 provenanceHash = keccak256(provenanceBytes);
         uint256 existingTokenId = tokenOfAgentIdentityHash[derivedAgentIdentityHash];
         if (existingTokenId != 0) {
             revert AgentLineAlreadyMinted(derivedAgentIdentityHash, existingTokenId);
         }
-
-        if (
-            input.thoughtSpecId == bytes32(0) || input.thoughtSpecHash == bytes32(0)
-                || !IThoughtSpecRegistry(thoughtSpecRegistry)
-                    .isRegisteredThoughtSpec(input.thoughtSpecId, input.thoughtSpecHash)
-        ) {
-            revert InvalidThoughtSpecPair(input.thoughtSpecId, input.thoughtSpecHash);
+        existingTokenId = tokenOfWorkHash[mintedWorkHash];
+        if (existingTokenId != 0) {
+            revert WorkAlreadyMinted(mintedWorkHash, existingTokenId);
         }
+
+        (bytes32 attestationDigest, address attestor) = _verifyCreationAttestation(
+            input.creationAttestation,
+            input.thoughtSpecId,
+            input.thoughtSpecHash,
+            mintedWorkHash,
+            provenanceHash,
+            keccak256(bytes(input.declaredAgent)),
+            keccak256(bytes(input.declaredModel))
+        );
 
         uint256 pathSerial = IPathNFT(pathNft)
             .consumeUnit(input.pathId, THOUGHT_MOVEMENT, msg.sender, input.deadline, input.pathSignature);
@@ -332,7 +353,10 @@ contract ThoughtNFT {
         ThoughtRecord storage record = _records[tokenId];
         record.promptLine = input.promptLine;
         record.agentLine = input.agentLine;
+        record.declaredAgent = input.declaredAgent;
+        record.declaredModel = input.declaredModel;
         record.provenanceJson = input.provenanceJson;
+        record.creationAttestationDigest = attestationDigest;
         record.thoughtSpecId = input.thoughtSpecId;
         record.thoughtSpecHash = input.thoughtSpecHash;
         record.pathId = input.pathId;
@@ -340,6 +364,9 @@ contract ThoughtNFT {
         record.minter = msg.sender;
         record.mintedAt = mintedAt;
         _mint(msg.sender, tokenId);
+        if (!_checkOnERC721Received(address(0), msg.sender, tokenId, "")) {
+            revert TransferToNonReceiverImplementer();
+        }
         emit PathThoughtConsumed(tokenId, input.pathId, pathSerial, msg.sender);
         emit ThoughtMinted(
             tokenId,
@@ -354,6 +381,60 @@ contract ThoughtNFT {
             input.thoughtSpecId,
             input.thoughtSpecHash
         );
+        if (attestationDigest != bytes32(0)) {
+            emit CreationAttested(
+                tokenId,
+                attestationDigest,
+                attestor,
+                CREATION_ATTESTATION_PROFILE_ID,
+                mintedWorkHash,
+                input.creationAttestation.runIdHash,
+                msg.sender,
+                input.creationAttestation.deadline,
+                input.creationAttestation.authorityEpoch
+            );
+        }
+    }
+
+    function _verifyCreationAttestation(
+        CreationAttestationProof calldata proof,
+        bytes32 thoughtSpecId,
+        bytes32 thoughtSpecHash,
+        bytes32 mintedWorkHash,
+        bytes32 provenanceHash,
+        bytes32 declaredAgentHash,
+        bytes32 declaredModelHash
+    ) private view returns (bytes32 digest, address attestor) {
+        if (
+            proof.runIdHash == bytes32(0) && proof.deadline == 0 && proof.authorityEpoch == 0
+                && proof.signature.length == 0
+        ) {
+            return (bytes32(0), address(0));
+        }
+        if (
+            proof.runIdHash == bytes32(0) || proof.deadline == 0 || proof.authorityEpoch == 0
+                || proof.signature.length != 65
+        ) {
+            revert InvalidCreationAttestationProof();
+        }
+
+        ICreationAttestationVerifier.Claim memory claim = ICreationAttestationVerifier.Claim({
+            profileId: CREATION_ATTESTATION_PROFILE_ID,
+            thoughtNft: address(this),
+            protocolReleaseId: protocolReleaseId,
+            thoughtSpecId: thoughtSpecId,
+            thoughtSpecHash: thoughtSpecHash,
+            workHash: mintedWorkHash,
+            provenanceHash: provenanceHash,
+            declaredAgentHash: declaredAgentHash,
+            declaredModelHash: declaredModelHash,
+            runIdHash: proof.runIdHash,
+            intendedMinter: msg.sender,
+            deadline: proof.deadline,
+            authorityEpoch: proof.authorityEpoch
+        });
+        (digest, attestor) = ICreationAttestationVerifier(creationAttestationVerifier).verify(claim, proof.signature);
+        if (digest == bytes32(0) || attestor == address(0)) revert InvalidCreationAttestationResult();
     }
 
     function agentIdentityHash(bytes32 agentLineHash) external pure returns (bytes32) {
@@ -392,6 +473,16 @@ contract ThoughtNFT {
     function agentLineOf(uint256 tokenId) external view returns (string memory) {
         _requireMinted(tokenId);
         return _records[tokenId].agentLine;
+    }
+
+    function declaredAgentOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+        return _records[tokenId].declaredAgent;
+    }
+
+    function declaredModelOf(uint256 tokenId) external view returns (string memory) {
+        _requireMinted(tokenId);
+        return _records[tokenId].declaredModel;
     }
 
     function provenanceOf(uint256 tokenId) external view returns (string memory) {
@@ -434,6 +525,11 @@ contract ThoughtNFT {
         return keccak256(bytes(_records[tokenId].provenanceJson));
     }
 
+    function creationAttestationDigestOf(uint256 tokenId) external view returns (bytes32) {
+        _requireMinted(tokenId);
+        return _records[tokenId].creationAttestationDigest;
+    }
+
     function pathIdOf(uint256 tokenId) external view returns (uint256) {
         _requireMinted(tokenId);
         return _records[tokenId].pathId;
@@ -452,28 +548,6 @@ contract ThoughtNFT {
     function mintedAtOf(uint256 tokenId) external view returns (uint64) {
         _requireMinted(tokenId);
         return _records[tokenId].mintedAt;
-    }
-
-    function recordOf(uint256 tokenId) external view returns (ThoughtRecordView memory view_) {
-        _requireMinted(tokenId);
-        ThoughtRecord storage record = _records[tokenId];
-        view_.promptLine = record.promptLine;
-        view_.agentLine = record.agentLine;
-        view_.provenanceJson = record.provenanceJson;
-        view_.promptLineHash = keccak256(bytes(record.promptLine));
-        view_.agentLineHash = keccak256(bytes(record.agentLine));
-        view_.workHash = _workHash(
-            view_.promptLineHash,
-            view_.agentLineHash,
-            keccak256(_packedBinaryField(bytes(record.promptLine), bytes(record.agentLine)))
-        );
-        view_.provenanceHash = keccak256(bytes(record.provenanceJson));
-        view_.thoughtSpecId = record.thoughtSpecId;
-        view_.thoughtSpecHash = record.thoughtSpecHash;
-        view_.pathId = record.pathId;
-        view_.pathSerial = record.pathSerial;
-        view_.minter = record.minter;
-        view_.mintedAt = record.mintedAt;
     }
 
     function thoughtSpecOf(uint256 tokenId)
@@ -501,14 +575,6 @@ contract ThoughtNFT {
         return IThoughtProtocolRegistry(protocolRegistry).getRelease(protocolReleaseId).manifestURI;
     }
 
-    function previewSvg(string calldata promptLine, string calldata agentLine) external view returns (string memory) {
-        uint256 promptDisplayUnits = _validateDisplayLine(promptLine, DisplayKind.Prompt);
-        uint256 agentDisplayUnits = _validateDisplayLine(agentLine, DisplayKind.Agent);
-        bytes memory packedField = _packedBinaryField(bytes(promptLine), bytes(agentLine));
-        return IThoughtRenderer(thoughtRenderer)
-            .render(promptLine, agentLine, packedField, promptDisplayUnits, agentDisplayUnits);
-    }
-
     function svgOf(uint256 tokenId) public view returns (string memory) {
         _requireMinted(tokenId);
         return _renderSvg(_records[tokenId]);
@@ -517,136 +583,28 @@ contract ThoughtNFT {
     function tokenURI(uint256 tokenId) public view returns (string memory) {
         _requireMinted(tokenId);
         ThoughtRecord storage record = _records[tokenId];
-        string memory svg = _renderSvg(record);
-        string memory metadata = string.concat(
-            '{"name":"THOUGHT #',
-            _toString(tokenId),
-            '","description":"A human prompt transformed by an Agent into a fully onchain work.',
-            '","image":"data:image/svg+xml;base64,',
-            Base64.encode(bytes(svg)),
-            '","attributes":',
-            _tokenAttributes(record),
-            ',"properties":',
-            _tokenProperties(record),
-            ',"thought":',
-            _tokenThought(record),
-            "}"
-        );
-
-        return string.concat("data:application/json;base64,", Base64.encode(bytes(metadata)));
-    }
-
-    function _tokenAttributes(ThoughtRecord storage record) private view returns (string memory) {
-        StructuralMetrics memory metrics = _structuralMetrics(record.promptLine, record.agentLine);
-        return string.concat(
-            '[{"trait_type":"Prompt","value":',
-            _jsonString(record.promptLine),
-            '},{"trait_type":"Agent Response","value":',
-            _jsonString(record.agentLine),
-            '},{"trait_type":"Texture Density","value":"',
-            _textureDensity(metrics.loomWeight),
-            '"},{"trait_type":"Binary Contrast","value":"',
-            _binaryContrast(metrics.bitDistance),
-            '"},{"trait_type":"Protocol","value":"V2"}]'
-        );
-    }
-
-    function _tokenProperties(ThoughtRecord storage record) private view returns (string memory) {
-        StructuralMetrics memory metrics = _structuralMetrics(record.promptLine, record.agentLine);
-        return string.concat(
-            '{"promptBytes":',
-            _toString(metrics.promptBytes),
-            ',"agentBytes":',
-            _toString(metrics.agentBytes),
-            ',"promptWeight":',
-            _toString(metrics.promptWeight),
-            ',"agentWeight":',
-            _toString(metrics.agentWeight),
-            ',"loomWeight":',
-            _toString(metrics.loomWeight),
-            ',"bitDistance":',
-            _toString(metrics.bitDistance),
-            ',"protocolReleaseId":"',
-            _bytes32ToHex(protocolReleaseId),
-            '","manifestKeccak256":"',
-            _bytes32ToHex(protocolManifestHash()),
-            '","rendererId":"',
-            RENDERER_ID,
-            '","rendererProfileKeccak256":"',
-            _bytes32ToHex(RENDERER_PROFILE_KECCAK256),
-            '","workProfileId":"',
-            WORK_PROFILE_ID,
-            '","workProfileKeccak256":"',
-            _bytes32ToHex(WORK_PROFILE_KECCAK256),
-            '","provenanceKeccak256":"',
-            _bytes32ToHex(keccak256(bytes(record.provenanceJson))),
-            '"}'
-        );
-    }
-
-    function _tokenThought(ThoughtRecord storage record) private view returns (string memory) {
         bytes memory packedField = _packedBinaryField(bytes(record.promptLine), bytes(record.agentLine));
-        bytes32 promptLineHash = keccak256(bytes(record.promptLine));
-        bytes32 agentLineHash = keccak256(bytes(record.agentLine));
-        bytes32 binaryFieldHash = keccak256(packedField);
-        bytes32 derivedAgentIdentityHash = _agentIdentityHash(agentLineHash);
-        bytes32 derivedWorkHash = _workHash(promptLineHash, agentLineHash, binaryFieldHash);
-        bytes32 provenanceHash = keccak256(bytes(record.provenanceJson));
-        string memory identity = string.concat(
-            '{"renderer":"',
-            RENDERER_ID,
-            '","protocolReleaseId":"',
-            _bytes32ToHex(protocolReleaseId),
-            '","manifestKeccak256":"',
-            _bytes32ToHex(protocolManifestHash()),
-            '","promptLine":',
-            _jsonString(record.promptLine),
-            ',"agentLine":',
-            _jsonString(record.agentLine),
-            ',"binaryFieldPacked":"',
-            _bytesToHex(packedField),
-            '","binaryFieldKeccak256":"',
-            _bytes32ToHex(binaryFieldHash)
-        );
-        string memory hashes = string.concat(
-            '","promptLineKeccak256":"',
-            _bytes32ToHex(promptLineHash),
-            '","agentLineKeccak256":"',
-            _bytes32ToHex(agentLineHash),
-            '","agentIdentityHash":"',
-            _bytes32ToHex(derivedAgentIdentityHash),
-            '","workHash":"',
-            _bytes32ToHex(derivedWorkHash),
-            '","provenanceHash":"',
-            _bytes32ToHex(provenanceHash),
-            '","thoughtSpecId":"',
-            _bytes32ToHex(record.thoughtSpecId),
-            '","thoughtSpecHash":"',
-            _bytes32ToHex(record.thoughtSpecHash)
-        );
-        string memory context = string.concat(
-            '","pathId":"',
-            _toString(record.pathId),
-            '","pathSerial":"',
-            _toString(record.pathSerial),
-            '","minter":"',
-            _addressToHex(record.minter),
-            '","mintedAt":"',
-            _toString(record.mintedAt),
-            '","provenance":',
-            _jsonString(record.provenanceJson),
-            "}"
-        );
-        return string.concat(identity, hashes, context);
-    }
-
-    function _specNameOf(ThoughtRecord storage record) private view returns (string memory) {
-        (bool exists, string memory specName, bytes32 registeredHash,,,,) =
-            IThoughtSpecRegistry(thoughtSpecRegistry).thoughtSpecMeta(record.thoughtSpecId);
-        if (exists && registeredHash == record.thoughtSpecHash) {
-            return specName;
-        }
-        return _bytes32ToHex(record.thoughtSpecId);
+        uint256 promptDisplayUnits = _validateDisplayLine(record.promptLine, DisplayKind.Prompt);
+        uint256 agentDisplayUnits = _validateDisplayLine(record.agentLine, DisplayKind.Agent);
+        IThoughtRenderer.TokenData memory data = IThoughtRenderer.TokenData({
+            tokenId: tokenId,
+            promptLine: record.promptLine,
+            agentLine: record.agentLine,
+            declaredAgent: record.declaredAgent,
+            declaredModel: record.declaredModel,
+            provenanceJson: record.provenanceJson,
+            thoughtSpecId: record.thoughtSpecId,
+            thoughtSpecHash: record.thoughtSpecHash,
+            pathId: record.pathId,
+            pathSerial: record.pathSerial,
+            minter: record.minter,
+            mintedAt: record.mintedAt,
+            creationAttestationDigest: record.creationAttestationDigest,
+            protocolReleaseId: protocolReleaseId,
+            manifestKeccak256: protocolManifestHash(),
+            creationAttestationVerifier: creationAttestationVerifier
+        });
+        return IThoughtRenderer(thoughtRenderer).tokenURI(data, packedField, promptDisplayUnits, agentDisplayUnits);
     }
 
     function _renderSvg(ThoughtRecord storage record) private view returns (string memory) {
@@ -722,45 +680,6 @@ contract ThoughtNFT {
                     mstore8(add(outputTarget, add(mul(row, 4), group)), packedByte)
                 }
             }
-        }
-    }
-
-    function _structuralMetrics(string memory promptLine, string memory agentLine)
-        private
-        pure
-        returns (StructuralMetrics memory metrics)
-    {
-        bytes memory promptData = bytes(promptLine);
-        bytes memory agentData = bytes(agentLine);
-        metrics.promptBytes = promptData.length;
-        metrics.agentBytes = agentData.length;
-
-        for (uint256 i = 0; i < 64; i++) {
-            uint8 promptByte = uint8(promptData[i % promptData.length]);
-            uint8 agentByte = uint8(agentData[i % agentData.length]);
-            metrics.promptWeight += _popcount8(promptByte);
-            metrics.agentWeight += _popcount8(agentByte);
-            metrics.bitDistance += _popcount8(promptByte ^ agentByte);
-        }
-        metrics.loomWeight = metrics.promptWeight + metrics.agentWeight;
-    }
-
-    function _textureDensity(uint256 loomWeight) private pure returns (string memory) {
-        if (loomWeight <= 460) return "Open";
-        if (loomWeight <= 563) return "Balanced";
-        return "Dense";
-    }
-
-    function _binaryContrast(uint256 bitDistance) private pure returns (string memory) {
-        if (bitDistance <= 170) return "Low";
-        if (bitDistance <= 341) return "Medium";
-        return "High";
-    }
-
-    function _popcount8(uint8 value) private pure returns (uint256 count) {
-        while (value != 0) {
-            value &= value - 1;
-            count++;
         }
     }
 
@@ -1023,120 +942,5 @@ contract ThoughtNFT {
         if (_ownerOf[tokenId] == address(0)) {
             revert NonexistentToken();
         }
-    }
-
-    function _jsonString(string memory value) private pure returns (string memory) {
-        return string.concat('"', _jsonEscape(value), '"');
-    }
-
-    function _jsonBare(string memory value) private pure returns (string memory) {
-        return _jsonEscape(value);
-    }
-
-    function _jsonEscape(string memory value) private pure returns (string memory) {
-        bytes memory input = bytes(value);
-        uint256 outputLen = 0;
-
-        for (uint256 i = 0; i < input.length; i++) {
-            uint8 charCode = uint8(input[i]);
-            if (input[i] == '"' || input[i] == "\\" || input[i] == "\n" || input[i] == "\r" || input[i] == "\t") {
-                outputLen += 2;
-            } else if (charCode < 0x20) {
-                outputLen += 6;
-            } else {
-                outputLen += 1;
-            }
-        }
-
-        bytes memory output = new bytes(outputLen);
-        uint256 cursor = 0;
-        for (uint256 i = 0; i < input.length; i++) {
-            uint8 charCode = uint8(input[i]);
-            if (input[i] == '"') {
-                output[cursor++] = "\\";
-                output[cursor++] = '"';
-            } else if (input[i] == "\\") {
-                output[cursor++] = "\\";
-                output[cursor++] = "\\";
-            } else if (input[i] == "\n") {
-                output[cursor++] = "\\";
-                output[cursor++] = "n";
-            } else if (input[i] == "\r") {
-                output[cursor++] = "\\";
-                output[cursor++] = "r";
-            } else if (input[i] == "\t") {
-                output[cursor++] = "\\";
-                output[cursor++] = "t";
-            } else if (charCode < 0x20) {
-                output[cursor++] = "\\";
-                output[cursor++] = "u";
-                output[cursor++] = "0";
-                output[cursor++] = "0";
-                output[cursor++] = HEX_DIGITS[charCode >> 4];
-                output[cursor++] = HEX_DIGITS[charCode & 0x0f];
-            } else {
-                output[cursor++] = input[i];
-            }
-        }
-
-        return string(output);
-    }
-
-    function _bytesToHex(bytes memory value) private pure returns (string memory) {
-        bytes memory output = new bytes(2 + value.length * 2);
-        output[0] = "0";
-        output[1] = "x";
-        for (uint256 i = 0; i < value.length; i++) {
-            uint8 byteValue = uint8(value[i]);
-            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
-            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
-        }
-        return string(output);
-    }
-
-    function _bytes32ToHex(bytes32 value) private pure returns (string memory) {
-        bytes memory output = new bytes(66);
-        output[0] = "0";
-        output[1] = "x";
-        for (uint256 i = 0; i < 32; i++) {
-            uint8 byteValue = uint8(value[i]);
-            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
-            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
-        }
-        return string(output);
-    }
-
-    function _addressToHex(address account) private pure returns (string memory) {
-        bytes20 value = bytes20(account);
-        bytes memory output = new bytes(42);
-        output[0] = "0";
-        output[1] = "x";
-        for (uint256 i = 0; i < 20; i++) {
-            uint8 byteValue = uint8(value[i]);
-            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
-            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
-        }
-        return string(output);
-    }
-
-    function _toString(uint256 value) private pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-
-        uint256 digits = 0;
-        uint256 temp = value;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + (value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
     }
 }

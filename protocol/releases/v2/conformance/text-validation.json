@@ -855,7 +855,1343 @@
       "promptLine": "􏿿"
     }
   ],
-  "schema": "inshell.thought.text-validation-vectors.v1",
+  "invalidDeclaredAgents": [
+    {
+      "declaredAgent": "",
+      "errors": [
+        "declaredAgent line is empty"
+      ],
+      "id": "empty"
+    },
+    {
+      "declaredAgent": "line\nbreak",
+      "errors": [
+        "declaredAgent line contains a control character U+A",
+        "declaredAgent line contains disallowed character U+A"
+      ],
+      "id": "newline"
+    },
+    {
+      "declaredAgent": "line\tbreak",
+      "errors": [
+        "declaredAgent line contains a control character U+9",
+        "declaredAgent line contains disallowed character U+9"
+      ],
+      "id": "tab"
+    },
+    {
+      "declaredAgent": "line\rbreak",
+      "errors": [
+        "declaredAgent line contains a control character U+D",
+        "declaredAgent line contains disallowed character U+D"
+      ],
+      "id": "carriage-return"
+    },
+    {
+      "declaredAgent": "line\u0001break",
+      "errors": [
+        "declaredAgent line contains a control character U+1",
+        "declaredAgent line contains disallowed character U+1"
+      ],
+      "id": "control"
+    },
+    {
+      "declaredAgent": " leading",
+      "errors": [
+        "declaredAgent line has invalid spacing"
+      ],
+      "id": "leading-space"
+    },
+    {
+      "declaredAgent": "trailing ",
+      "errors": [
+        "declaredAgent line has invalid spacing"
+      ],
+      "id": "trailing-space"
+    },
+    {
+      "declaredAgent": "   ",
+      "errors": [
+        "declaredAgent line has invalid spacing",
+        "declaredAgent line has invalid spacing"
+      ],
+      "id": "all-spaces"
+    },
+    {
+      "declaredAgent": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "errors": [
+        "declaredAgent line is 65/64 bytes"
+      ],
+      "id": "source-65-bytes"
+    },
+    {
+      "declaredAgent": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaé",
+      "errors": [
+        "declaredAgent line is 65/64 bytes"
+      ],
+      "id": "multibyte-over-64"
+    },
+    {
+      "declaredAgent": "a‍b",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200D"
+      ],
+      "id": "zero-width-joiner"
+    },
+    {
+      "declaredAgent": "a️",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FE0F"
+      ],
+      "id": "variation-selector"
+    },
+    {
+      "declaredAgent": "a﷐",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FDD0"
+      ],
+      "id": "noncharacter"
+    },
+    {
+      "declaredAgent": "\t",
+      "errors": [
+        "declaredAgent line contains a control character U+9",
+        "declaredAgent line contains disallowed character U+9"
+      ],
+      "id": "codepoint-u-0009"
+    },
+    {
+      "declaredAgent": "\r",
+      "errors": [
+        "declaredAgent line contains a control character U+D",
+        "declaredAgent line contains disallowed character U+D"
+      ],
+      "id": "codepoint-u-000d"
+    },
+    {
+      "declaredAgent": "",
+      "errors": [
+        "declaredAgent line contains a control character U+85",
+        "declaredAgent line contains disallowed character U+85"
+      ],
+      "id": "codepoint-u-0085"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+A0"
+      ],
+      "id": "codepoint-u-00a0"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1680"
+      ],
+      "id": "codepoint-u-1680"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2000"
+      ],
+      "id": "codepoint-u-2000"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200A"
+      ],
+      "id": "codepoint-u-200a"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2028"
+      ],
+      "id": "codepoint-u-2028"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2029"
+      ],
+      "id": "codepoint-u-2029"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+202F"
+      ],
+      "id": "codepoint-u-202f"
+    },
+    {
+      "declaredAgent": " ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+205F"
+      ],
+      "id": "codepoint-u-205f"
+    },
+    {
+      "declaredAgent": "　",
+      "errors": [
+        "declaredAgent line contains disallowed character U+3000"
+      ],
+      "id": "codepoint-u-3000"
+    },
+    {
+      "declaredAgent": "­",
+      "errors": [
+        "declaredAgent line contains disallowed character U+AD"
+      ],
+      "id": "codepoint-u-00ad"
+    },
+    {
+      "declaredAgent": "͏",
+      "errors": [
+        "declaredAgent line contains disallowed character U+34F"
+      ],
+      "id": "codepoint-u-034f"
+    },
+    {
+      "declaredAgent": "؜",
+      "errors": [
+        "declaredAgent line contains disallowed character U+61C"
+      ],
+      "id": "codepoint-u-061c"
+    },
+    {
+      "declaredAgent": "ᅟ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+115F"
+      ],
+      "id": "codepoint-u-115f"
+    },
+    {
+      "declaredAgent": "ᅠ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1160"
+      ],
+      "id": "codepoint-u-1160"
+    },
+    {
+      "declaredAgent": "឴",
+      "errors": [
+        "declaredAgent line contains disallowed character U+17B4"
+      ],
+      "id": "codepoint-u-17b4"
+    },
+    {
+      "declaredAgent": "឵",
+      "errors": [
+        "declaredAgent line contains disallowed character U+17B5"
+      ],
+      "id": "codepoint-u-17b5"
+    },
+    {
+      "declaredAgent": "᠋",
+      "errors": [
+        "declaredAgent line contains disallowed character U+180B"
+      ],
+      "id": "codepoint-u-180b"
+    },
+    {
+      "declaredAgent": "᠏",
+      "errors": [
+        "declaredAgent line contains disallowed character U+180F"
+      ],
+      "id": "codepoint-u-180f"
+    },
+    {
+      "declaredAgent": "​",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200B"
+      ],
+      "id": "codepoint-u-200b"
+    },
+    {
+      "declaredAgent": "‌",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200C"
+      ],
+      "id": "codepoint-u-200c"
+    },
+    {
+      "declaredAgent": "‍",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200D"
+      ],
+      "id": "codepoint-u-200d"
+    },
+    {
+      "declaredAgent": "‎",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200E"
+      ],
+      "id": "codepoint-u-200e"
+    },
+    {
+      "declaredAgent": "‏",
+      "errors": [
+        "declaredAgent line contains disallowed character U+200F"
+      ],
+      "id": "codepoint-u-200f"
+    },
+    {
+      "declaredAgent": "‪",
+      "errors": [
+        "declaredAgent line contains disallowed character U+202A"
+      ],
+      "id": "codepoint-u-202a"
+    },
+    {
+      "declaredAgent": "‮",
+      "errors": [
+        "declaredAgent line contains disallowed character U+202E"
+      ],
+      "id": "codepoint-u-202e"
+    },
+    {
+      "declaredAgent": "⁠",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2060"
+      ],
+      "id": "codepoint-u-2060"
+    },
+    {
+      "declaredAgent": "⁦",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2066"
+      ],
+      "id": "codepoint-u-2066"
+    },
+    {
+      "declaredAgent": "⁩",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2069"
+      ],
+      "id": "codepoint-u-2069"
+    },
+    {
+      "declaredAgent": "⁯",
+      "errors": [
+        "declaredAgent line contains disallowed character U+206F"
+      ],
+      "id": "codepoint-u-206f"
+    },
+    {
+      "declaredAgent": "ㅤ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+3164"
+      ],
+      "id": "codepoint-u-3164"
+    },
+    {
+      "declaredAgent": "︀",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FE00"
+      ],
+      "id": "codepoint-u-fe00"
+    },
+    {
+      "declaredAgent": "️",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FE0F"
+      ],
+      "id": "codepoint-u-fe0f"
+    },
+    {
+      "declaredAgent": "﻿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FEFF"
+      ],
+      "id": "codepoint-u-feff"
+    },
+    {
+      "declaredAgent": "ﾠ",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFA0"
+      ],
+      "id": "codepoint-u-ffa0"
+    },
+    {
+      "declaredAgent": "￰",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFF0"
+      ],
+      "id": "codepoint-u-fff0"
+    },
+    {
+      "declaredAgent": "￸",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFF8"
+      ],
+      "id": "codepoint-u-fff8"
+    },
+    {
+      "declaredAgent": "𛲠",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1BCA0"
+      ],
+      "id": "codepoint-u-1bca0"
+    },
+    {
+      "declaredAgent": "𛲣",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1BCA3"
+      ],
+      "id": "codepoint-u-1bca3"
+    },
+    {
+      "declaredAgent": "𝅳",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1D173"
+      ],
+      "id": "codepoint-u-1d173"
+    },
+    {
+      "declaredAgent": "𝅺",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1D17A"
+      ],
+      "id": "codepoint-u-1d17a"
+    },
+    {
+      "declaredAgent": "󠀀",
+      "errors": [
+        "declaredAgent line contains disallowed character U+E0000"
+      ],
+      "id": "codepoint-u-e0000"
+    },
+    {
+      "declaredAgent": "󠿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+E0FFF"
+      ],
+      "id": "codepoint-u-e0fff"
+    },
+    {
+      "declaredAgent": "﷐",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FDD0"
+      ],
+      "id": "codepoint-u-fdd0"
+    },
+    {
+      "declaredAgent": "﷯",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FDEF"
+      ],
+      "id": "codepoint-u-fdef"
+    },
+    {
+      "declaredAgent": "￾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFFE"
+      ],
+      "id": "codepoint-u-fffe"
+    },
+    {
+      "declaredAgent": "￿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFFF"
+      ],
+      "id": "codepoint-u-ffff"
+    },
+    {
+      "declaredAgent": "🿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1FFFE"
+      ],
+      "id": "codepoint-u-1fffe"
+    },
+    {
+      "declaredAgent": "🿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+1FFFF"
+      ],
+      "id": "codepoint-u-1ffff"
+    },
+    {
+      "declaredAgent": "𯿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2FFFE"
+      ],
+      "id": "codepoint-u-2fffe"
+    },
+    {
+      "declaredAgent": "𯿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+2FFFF"
+      ],
+      "id": "codepoint-u-2ffff"
+    },
+    {
+      "declaredAgent": "𿿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+3FFFE"
+      ],
+      "id": "codepoint-u-3fffe"
+    },
+    {
+      "declaredAgent": "𿿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+3FFFF"
+      ],
+      "id": "codepoint-u-3ffff"
+    },
+    {
+      "declaredAgent": "񏿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+4FFFE"
+      ],
+      "id": "codepoint-u-4fffe"
+    },
+    {
+      "declaredAgent": "񏿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+4FFFF"
+      ],
+      "id": "codepoint-u-4ffff"
+    },
+    {
+      "declaredAgent": "񟿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+5FFFE"
+      ],
+      "id": "codepoint-u-5fffe"
+    },
+    {
+      "declaredAgent": "񟿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+5FFFF"
+      ],
+      "id": "codepoint-u-5ffff"
+    },
+    {
+      "declaredAgent": "񯿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+6FFFE"
+      ],
+      "id": "codepoint-u-6fffe"
+    },
+    {
+      "declaredAgent": "񯿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+6FFFF"
+      ],
+      "id": "codepoint-u-6ffff"
+    },
+    {
+      "declaredAgent": "񿿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+7FFFE"
+      ],
+      "id": "codepoint-u-7fffe"
+    },
+    {
+      "declaredAgent": "񿿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+7FFFF"
+      ],
+      "id": "codepoint-u-7ffff"
+    },
+    {
+      "declaredAgent": "򏿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+8FFFE"
+      ],
+      "id": "codepoint-u-8fffe"
+    },
+    {
+      "declaredAgent": "򏿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+8FFFF"
+      ],
+      "id": "codepoint-u-8ffff"
+    },
+    {
+      "declaredAgent": "򟿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+9FFFE"
+      ],
+      "id": "codepoint-u-9fffe"
+    },
+    {
+      "declaredAgent": "򟿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+9FFFF"
+      ],
+      "id": "codepoint-u-9ffff"
+    },
+    {
+      "declaredAgent": "򯿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+AFFFE"
+      ],
+      "id": "codepoint-u-afffe"
+    },
+    {
+      "declaredAgent": "򯿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+AFFFF"
+      ],
+      "id": "codepoint-u-affff"
+    },
+    {
+      "declaredAgent": "򿿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+BFFFE"
+      ],
+      "id": "codepoint-u-bfffe"
+    },
+    {
+      "declaredAgent": "򿿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+BFFFF"
+      ],
+      "id": "codepoint-u-bffff"
+    },
+    {
+      "declaredAgent": "󏿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+CFFFE"
+      ],
+      "id": "codepoint-u-cfffe"
+    },
+    {
+      "declaredAgent": "󏿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+CFFFF"
+      ],
+      "id": "codepoint-u-cffff"
+    },
+    {
+      "declaredAgent": "󟿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+DFFFE"
+      ],
+      "id": "codepoint-u-dfffe"
+    },
+    {
+      "declaredAgent": "󟿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+DFFFF"
+      ],
+      "id": "codepoint-u-dffff"
+    },
+    {
+      "declaredAgent": "󯿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+EFFFE"
+      ],
+      "id": "codepoint-u-efffe"
+    },
+    {
+      "declaredAgent": "󯿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+EFFFF"
+      ],
+      "id": "codepoint-u-effff"
+    },
+    {
+      "declaredAgent": "󿿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFFFE"
+      ],
+      "id": "codepoint-u-ffffe"
+    },
+    {
+      "declaredAgent": "󿿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+FFFFF"
+      ],
+      "id": "codepoint-u-fffff"
+    },
+    {
+      "declaredAgent": "􏿾",
+      "errors": [
+        "declaredAgent line contains disallowed character U+10FFFE"
+      ],
+      "id": "codepoint-u-10fffe"
+    },
+    {
+      "declaredAgent": "􏿿",
+      "errors": [
+        "declaredAgent line contains disallowed character U+10FFFF"
+      ],
+      "id": "codepoint-u-10ffff"
+    }
+  ],
+  "invalidModels": [
+    {
+      "declaredModel": "",
+      "errors": [
+        "model line is empty"
+      ],
+      "id": "empty"
+    },
+    {
+      "declaredModel": "line\nbreak",
+      "errors": [
+        "model line contains a control character U+A",
+        "model line contains disallowed character U+A"
+      ],
+      "id": "newline"
+    },
+    {
+      "declaredModel": "line\tbreak",
+      "errors": [
+        "model line contains a control character U+9",
+        "model line contains disallowed character U+9"
+      ],
+      "id": "tab"
+    },
+    {
+      "declaredModel": "line\rbreak",
+      "errors": [
+        "model line contains a control character U+D",
+        "model line contains disallowed character U+D"
+      ],
+      "id": "carriage-return"
+    },
+    {
+      "declaredModel": "line\u0001break",
+      "errors": [
+        "model line contains a control character U+1",
+        "model line contains disallowed character U+1"
+      ],
+      "id": "control"
+    },
+    {
+      "declaredModel": " leading",
+      "errors": [
+        "model line has invalid spacing"
+      ],
+      "id": "leading-space"
+    },
+    {
+      "declaredModel": "trailing ",
+      "errors": [
+        "model line has invalid spacing"
+      ],
+      "id": "trailing-space"
+    },
+    {
+      "declaredModel": "   ",
+      "errors": [
+        "model line has invalid spacing",
+        "model line has invalid spacing"
+      ],
+      "id": "all-spaces"
+    },
+    {
+      "declaredModel": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab",
+      "errors": [
+        "model line is 65/64 bytes"
+      ],
+      "id": "source-65-bytes"
+    },
+    {
+      "declaredModel": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaé",
+      "errors": [
+        "model line is 65/64 bytes"
+      ],
+      "id": "multibyte-over-64"
+    },
+    {
+      "declaredModel": "a‍b",
+      "errors": [
+        "model line contains disallowed character U+200D"
+      ],
+      "id": "zero-width-joiner"
+    },
+    {
+      "declaredModel": "a️",
+      "errors": [
+        "model line contains disallowed character U+FE0F"
+      ],
+      "id": "variation-selector"
+    },
+    {
+      "declaredModel": "a﷐",
+      "errors": [
+        "model line contains disallowed character U+FDD0"
+      ],
+      "id": "noncharacter"
+    },
+    {
+      "declaredModel": "\t",
+      "errors": [
+        "model line contains a control character U+9",
+        "model line contains disallowed character U+9"
+      ],
+      "id": "codepoint-u-0009"
+    },
+    {
+      "declaredModel": "\r",
+      "errors": [
+        "model line contains a control character U+D",
+        "model line contains disallowed character U+D"
+      ],
+      "id": "codepoint-u-000d"
+    },
+    {
+      "declaredModel": "",
+      "errors": [
+        "model line contains a control character U+85",
+        "model line contains disallowed character U+85"
+      ],
+      "id": "codepoint-u-0085"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+A0"
+      ],
+      "id": "codepoint-u-00a0"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+1680"
+      ],
+      "id": "codepoint-u-1680"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+2000"
+      ],
+      "id": "codepoint-u-2000"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+200A"
+      ],
+      "id": "codepoint-u-200a"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+2028"
+      ],
+      "id": "codepoint-u-2028"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+2029"
+      ],
+      "id": "codepoint-u-2029"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+202F"
+      ],
+      "id": "codepoint-u-202f"
+    },
+    {
+      "declaredModel": " ",
+      "errors": [
+        "model line contains disallowed character U+205F"
+      ],
+      "id": "codepoint-u-205f"
+    },
+    {
+      "declaredModel": "　",
+      "errors": [
+        "model line contains disallowed character U+3000"
+      ],
+      "id": "codepoint-u-3000"
+    },
+    {
+      "declaredModel": "­",
+      "errors": [
+        "model line contains disallowed character U+AD"
+      ],
+      "id": "codepoint-u-00ad"
+    },
+    {
+      "declaredModel": "͏",
+      "errors": [
+        "model line contains disallowed character U+34F"
+      ],
+      "id": "codepoint-u-034f"
+    },
+    {
+      "declaredModel": "؜",
+      "errors": [
+        "model line contains disallowed character U+61C"
+      ],
+      "id": "codepoint-u-061c"
+    },
+    {
+      "declaredModel": "ᅟ",
+      "errors": [
+        "model line contains disallowed character U+115F"
+      ],
+      "id": "codepoint-u-115f"
+    },
+    {
+      "declaredModel": "ᅠ",
+      "errors": [
+        "model line contains disallowed character U+1160"
+      ],
+      "id": "codepoint-u-1160"
+    },
+    {
+      "declaredModel": "឴",
+      "errors": [
+        "model line contains disallowed character U+17B4"
+      ],
+      "id": "codepoint-u-17b4"
+    },
+    {
+      "declaredModel": "឵",
+      "errors": [
+        "model line contains disallowed character U+17B5"
+      ],
+      "id": "codepoint-u-17b5"
+    },
+    {
+      "declaredModel": "᠋",
+      "errors": [
+        "model line contains disallowed character U+180B"
+      ],
+      "id": "codepoint-u-180b"
+    },
+    {
+      "declaredModel": "᠏",
+      "errors": [
+        "model line contains disallowed character U+180F"
+      ],
+      "id": "codepoint-u-180f"
+    },
+    {
+      "declaredModel": "​",
+      "errors": [
+        "model line contains disallowed character U+200B"
+      ],
+      "id": "codepoint-u-200b"
+    },
+    {
+      "declaredModel": "‌",
+      "errors": [
+        "model line contains disallowed character U+200C"
+      ],
+      "id": "codepoint-u-200c"
+    },
+    {
+      "declaredModel": "‍",
+      "errors": [
+        "model line contains disallowed character U+200D"
+      ],
+      "id": "codepoint-u-200d"
+    },
+    {
+      "declaredModel": "‎",
+      "errors": [
+        "model line contains disallowed character U+200E"
+      ],
+      "id": "codepoint-u-200e"
+    },
+    {
+      "declaredModel": "‏",
+      "errors": [
+        "model line contains disallowed character U+200F"
+      ],
+      "id": "codepoint-u-200f"
+    },
+    {
+      "declaredModel": "‪",
+      "errors": [
+        "model line contains disallowed character U+202A"
+      ],
+      "id": "codepoint-u-202a"
+    },
+    {
+      "declaredModel": "‮",
+      "errors": [
+        "model line contains disallowed character U+202E"
+      ],
+      "id": "codepoint-u-202e"
+    },
+    {
+      "declaredModel": "⁠",
+      "errors": [
+        "model line contains disallowed character U+2060"
+      ],
+      "id": "codepoint-u-2060"
+    },
+    {
+      "declaredModel": "⁦",
+      "errors": [
+        "model line contains disallowed character U+2066"
+      ],
+      "id": "codepoint-u-2066"
+    },
+    {
+      "declaredModel": "⁩",
+      "errors": [
+        "model line contains disallowed character U+2069"
+      ],
+      "id": "codepoint-u-2069"
+    },
+    {
+      "declaredModel": "⁯",
+      "errors": [
+        "model line contains disallowed character U+206F"
+      ],
+      "id": "codepoint-u-206f"
+    },
+    {
+      "declaredModel": "ㅤ",
+      "errors": [
+        "model line contains disallowed character U+3164"
+      ],
+      "id": "codepoint-u-3164"
+    },
+    {
+      "declaredModel": "︀",
+      "errors": [
+        "model line contains disallowed character U+FE00"
+      ],
+      "id": "codepoint-u-fe00"
+    },
+    {
+      "declaredModel": "️",
+      "errors": [
+        "model line contains disallowed character U+FE0F"
+      ],
+      "id": "codepoint-u-fe0f"
+    },
+    {
+      "declaredModel": "﻿",
+      "errors": [
+        "model line contains disallowed character U+FEFF"
+      ],
+      "id": "codepoint-u-feff"
+    },
+    {
+      "declaredModel": "ﾠ",
+      "errors": [
+        "model line contains disallowed character U+FFA0"
+      ],
+      "id": "codepoint-u-ffa0"
+    },
+    {
+      "declaredModel": "￰",
+      "errors": [
+        "model line contains disallowed character U+FFF0"
+      ],
+      "id": "codepoint-u-fff0"
+    },
+    {
+      "declaredModel": "￸",
+      "errors": [
+        "model line contains disallowed character U+FFF8"
+      ],
+      "id": "codepoint-u-fff8"
+    },
+    {
+      "declaredModel": "𛲠",
+      "errors": [
+        "model line contains disallowed character U+1BCA0"
+      ],
+      "id": "codepoint-u-1bca0"
+    },
+    {
+      "declaredModel": "𛲣",
+      "errors": [
+        "model line contains disallowed character U+1BCA3"
+      ],
+      "id": "codepoint-u-1bca3"
+    },
+    {
+      "declaredModel": "𝅳",
+      "errors": [
+        "model line contains disallowed character U+1D173"
+      ],
+      "id": "codepoint-u-1d173"
+    },
+    {
+      "declaredModel": "𝅺",
+      "errors": [
+        "model line contains disallowed character U+1D17A"
+      ],
+      "id": "codepoint-u-1d17a"
+    },
+    {
+      "declaredModel": "󠀀",
+      "errors": [
+        "model line contains disallowed character U+E0000"
+      ],
+      "id": "codepoint-u-e0000"
+    },
+    {
+      "declaredModel": "󠿿",
+      "errors": [
+        "model line contains disallowed character U+E0FFF"
+      ],
+      "id": "codepoint-u-e0fff"
+    },
+    {
+      "declaredModel": "﷐",
+      "errors": [
+        "model line contains disallowed character U+FDD0"
+      ],
+      "id": "codepoint-u-fdd0"
+    },
+    {
+      "declaredModel": "﷯",
+      "errors": [
+        "model line contains disallowed character U+FDEF"
+      ],
+      "id": "codepoint-u-fdef"
+    },
+    {
+      "declaredModel": "￾",
+      "errors": [
+        "model line contains disallowed character U+FFFE"
+      ],
+      "id": "codepoint-u-fffe"
+    },
+    {
+      "declaredModel": "￿",
+      "errors": [
+        "model line contains disallowed character U+FFFF"
+      ],
+      "id": "codepoint-u-ffff"
+    },
+    {
+      "declaredModel": "🿾",
+      "errors": [
+        "model line contains disallowed character U+1FFFE"
+      ],
+      "id": "codepoint-u-1fffe"
+    },
+    {
+      "declaredModel": "🿿",
+      "errors": [
+        "model line contains disallowed character U+1FFFF"
+      ],
+      "id": "codepoint-u-1ffff"
+    },
+    {
+      "declaredModel": "𯿾",
+      "errors": [
+        "model line contains disallowed character U+2FFFE"
+      ],
+      "id": "codepoint-u-2fffe"
+    },
+    {
+      "declaredModel": "𯿿",
+      "errors": [
+        "model line contains disallowed character U+2FFFF"
+      ],
+      "id": "codepoint-u-2ffff"
+    },
+    {
+      "declaredModel": "𿿾",
+      "errors": [
+        "model line contains disallowed character U+3FFFE"
+      ],
+      "id": "codepoint-u-3fffe"
+    },
+    {
+      "declaredModel": "𿿿",
+      "errors": [
+        "model line contains disallowed character U+3FFFF"
+      ],
+      "id": "codepoint-u-3ffff"
+    },
+    {
+      "declaredModel": "񏿾",
+      "errors": [
+        "model line contains disallowed character U+4FFFE"
+      ],
+      "id": "codepoint-u-4fffe"
+    },
+    {
+      "declaredModel": "񏿿",
+      "errors": [
+        "model line contains disallowed character U+4FFFF"
+      ],
+      "id": "codepoint-u-4ffff"
+    },
+    {
+      "declaredModel": "񟿾",
+      "errors": [
+        "model line contains disallowed character U+5FFFE"
+      ],
+      "id": "codepoint-u-5fffe"
+    },
+    {
+      "declaredModel": "񟿿",
+      "errors": [
+        "model line contains disallowed character U+5FFFF"
+      ],
+      "id": "codepoint-u-5ffff"
+    },
+    {
+      "declaredModel": "񯿾",
+      "errors": [
+        "model line contains disallowed character U+6FFFE"
+      ],
+      "id": "codepoint-u-6fffe"
+    },
+    {
+      "declaredModel": "񯿿",
+      "errors": [
+        "model line contains disallowed character U+6FFFF"
+      ],
+      "id": "codepoint-u-6ffff"
+    },
+    {
+      "declaredModel": "񿿾",
+      "errors": [
+        "model line contains disallowed character U+7FFFE"
+      ],
+      "id": "codepoint-u-7fffe"
+    },
+    {
+      "declaredModel": "񿿿",
+      "errors": [
+        "model line contains disallowed character U+7FFFF"
+      ],
+      "id": "codepoint-u-7ffff"
+    },
+    {
+      "declaredModel": "򏿾",
+      "errors": [
+        "model line contains disallowed character U+8FFFE"
+      ],
+      "id": "codepoint-u-8fffe"
+    },
+    {
+      "declaredModel": "򏿿",
+      "errors": [
+        "model line contains disallowed character U+8FFFF"
+      ],
+      "id": "codepoint-u-8ffff"
+    },
+    {
+      "declaredModel": "򟿾",
+      "errors": [
+        "model line contains disallowed character U+9FFFE"
+      ],
+      "id": "codepoint-u-9fffe"
+    },
+    {
+      "declaredModel": "򟿿",
+      "errors": [
+        "model line contains disallowed character U+9FFFF"
+      ],
+      "id": "codepoint-u-9ffff"
+    },
+    {
+      "declaredModel": "򯿾",
+      "errors": [
+        "model line contains disallowed character U+AFFFE"
+      ],
+      "id": "codepoint-u-afffe"
+    },
+    {
+      "declaredModel": "򯿿",
+      "errors": [
+        "model line contains disallowed character U+AFFFF"
+      ],
+      "id": "codepoint-u-affff"
+    },
+    {
+      "declaredModel": "򿿾",
+      "errors": [
+        "model line contains disallowed character U+BFFFE"
+      ],
+      "id": "codepoint-u-bfffe"
+    },
+    {
+      "declaredModel": "򿿿",
+      "errors": [
+        "model line contains disallowed character U+BFFFF"
+      ],
+      "id": "codepoint-u-bffff"
+    },
+    {
+      "declaredModel": "󏿾",
+      "errors": [
+        "model line contains disallowed character U+CFFFE"
+      ],
+      "id": "codepoint-u-cfffe"
+    },
+    {
+      "declaredModel": "󏿿",
+      "errors": [
+        "model line contains disallowed character U+CFFFF"
+      ],
+      "id": "codepoint-u-cffff"
+    },
+    {
+      "declaredModel": "󟿾",
+      "errors": [
+        "model line contains disallowed character U+DFFFE"
+      ],
+      "id": "codepoint-u-dfffe"
+    },
+    {
+      "declaredModel": "󟿿",
+      "errors": [
+        "model line contains disallowed character U+DFFFF"
+      ],
+      "id": "codepoint-u-dffff"
+    },
+    {
+      "declaredModel": "󯿾",
+      "errors": [
+        "model line contains disallowed character U+EFFFE"
+      ],
+      "id": "codepoint-u-efffe"
+    },
+    {
+      "declaredModel": "󯿿",
+      "errors": [
+        "model line contains disallowed character U+EFFFF"
+      ],
+      "id": "codepoint-u-effff"
+    },
+    {
+      "declaredModel": "󿿾",
+      "errors": [
+        "model line contains disallowed character U+FFFFE"
+      ],
+      "id": "codepoint-u-ffffe"
+    },
+    {
+      "declaredModel": "󿿿",
+      "errors": [
+        "model line contains disallowed character U+FFFFF"
+      ],
+      "id": "codepoint-u-fffff"
+    },
+    {
+      "declaredModel": "􏿾",
+      "errors": [
+        "model line contains disallowed character U+10FFFE"
+      ],
+      "id": "codepoint-u-10fffe"
+    },
+    {
+      "declaredModel": "􏿿",
+      "errors": [
+        "model line contains disallowed character U+10FFFF"
+      ],
+      "id": "codepoint-u-10ffff"
+    }
+  ],
+  "schema": "inshell.thought.text-validation-vectors.v2",
   "valid": [
     {
       "agent": {
@@ -1186,6 +2522,82 @@
         "errors": []
       },
       "promptLine": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp"
+    }
+  ],
+  "validDeclaredAgents": [
+    {
+      "declaredAgent": "A",
+      "id": "one-byte",
+      "measurement": {
+        "byteLength": 1,
+        "displayUnits": 6,
+        "errors": []
+      }
+    },
+    {
+      "declaredAgent": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "id": "sixty-four-bytes",
+      "measurement": {
+        "byteLength": 64,
+        "displayUnits": 384,
+        "errors": []
+      }
+    },
+    {
+      "declaredAgent": "代理 Γ",
+      "id": "safe-non-ascii",
+      "measurement": {
+        "byteLength": 9,
+        "displayUnits": 32,
+        "errors": []
+      }
+    },
+    {
+      "declaredAgent": "Codex  Agent",
+      "id": "case-and-spacing",
+      "measurement": {
+        "byteLength": 12,
+        "displayUnits": 68,
+        "errors": []
+      }
+    }
+  ],
+  "validModels": [
+    {
+      "declaredModel": "M",
+      "id": "one-byte",
+      "model": {
+        "byteLength": 1,
+        "displayUnits": 6,
+        "errors": []
+      }
+    },
+    {
+      "declaredModel": "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+      "id": "sixty-four-bytes",
+      "model": {
+        "byteLength": 64,
+        "displayUnits": 384,
+        "errors": []
+      }
+    },
+    {
+      "declaredModel": "模型 Γ",
+      "id": "safe-non-ascii",
+      "model": {
+        "byteLength": 9,
+        "displayUnits": 32,
+        "errors": []
+      }
+    },
+    {
+      "declaredModel": "Model  Family X",
+      "id": "case-and-spacing",
+      "model": {
+        "byteLength": 15,
+        "displayUnits": 84,
+        "errors": []
+      }
     }
   ]
 }

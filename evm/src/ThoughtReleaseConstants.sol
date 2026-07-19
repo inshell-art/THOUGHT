@@ -5,10 +5,16 @@ pragma solidity ^0.8.28;
 library ThoughtReleaseConstants {
     string internal constant RELEASE_ID_DOMAIN_TEXT = "INSHELL_THOUGHT_PROTOCOL_RELEASE";
     bytes32 internal constant RELEASE_ID_DOMAIN = keccak256(bytes(RELEASE_ID_DOMAIN_TEXT));
+    string internal constant CREATION_ATTESTATION_PROFILE = "inshell.thought.creation-workflow-attestation.v1";
+    bytes32 internal constant CREATION_ATTESTATION_PROFILE_ID = keccak256(bytes(CREATION_ATTESTATION_PROFILE));
+    bytes32 internal constant CREATION_ATTESTATION_PROFILE_KECCAK256 =
+        0xa8b7ef8ccfcfe936afe42aa2efef61bd4ba91844a0b6d097a2dfeff5a2eb287c;
     string internal constant RENDERER_ID = "inshell.thought.svg.v2.binary-weave-32";
     bytes32 internal constant RENDERER_ID_HASH = keccak256(bytes(RENDERER_ID));
-    bytes32 internal constant RENDERER_PROFILE_KECCAK256 = 0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88;
+    bytes32 internal constant RENDERER_PROFILE_KECCAK256 =
+        0xc68ec09234f316cfdb19b96456e04f76f4f4674b3bb6596117cc39d124d1f6e1;
     string internal constant WORK_PROFILE_ID = "inshell.thought.work.v2";
     bytes32 internal constant WORK_PROFILE_ID_HASH = keccak256(bytes(WORK_PROFILE_ID));
-    bytes32 internal constant WORK_PROFILE_KECCAK256 = 0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb;
+    bytes32 internal constant WORK_PROFILE_KECCAK256 =
+        0xfaa37b147f7ea37a790f35b67707d895e1b4b11481434289d444faace3d72674;
 }

@@ -33,16 +33,16 @@
     "agentClear": { "height": 76, "width": 776, "x": 92, "y": 372 },
     "agentText": { "fontSize": 44, "textAnchor": "middle", "x": 480, "y": 410 },
     "binaryField": {
-      "cellSize": 24,
+      "cellSize": 28,
       "columns": 32,
-      "height": 768,
-      "oneRadius": 6,
+      "height": 896,
+      "oneRadius": 10,
       "rows": 32,
-      "width": 768,
-      "x": 96,
-      "y": 96,
-      "zeroRadius": 7,
-      "zeroStrokeWidth": 2
+      "width": 896,
+      "x": 32,
+      "y": 32,
+      "zeroRadius": 10,
+      "zeroStrokeWidth": 1
     },
     "promptClip": { "height": 46, "rx": 9, "width": 660, "x": 150, "y": 821 },
     "promptClear": { "height": 48, "width": 664, "x": 148, "y": 820 },
@@ -53,9 +53,10 @@
     "attributeOrder": [
       "Prompt",
       "Agent Response",
-      "Texture Density",
-      "Binary Contrast",
-      "Protocol"
+      "Declared Agent",
+      "Declared Model",
+      "Creation Attestation",
+      "Texture Density"
     ],
     "keyOrder": ["name", "description", "image", "attributes", "properties", "thought"],
     "propertiesKeyOrder": [
@@ -71,7 +72,34 @@
       "rendererProfileKeccak256",
       "workProfileId",
       "workProfileKeccak256",
+      "creationAttestationProfileId",
+      "creationAttestationVerifier",
+      "creationAttestationDigest",
       "provenanceKeccak256"
+    ],
+    "thoughtKeyOrder": [
+      "renderer",
+      "protocolReleaseId",
+      "manifestKeccak256",
+      "promptLine",
+      "agentLine",
+      "declaredAgent",
+      "declaredModel",
+      "creationAttestation",
+      "binaryFieldPacked",
+      "binaryFieldKeccak256",
+      "promptLineKeccak256",
+      "agentLineKeccak256",
+      "agentIdentityHash",
+      "workHash",
+      "provenanceHash",
+      "thoughtSpecId",
+      "thoughtSpecHash",
+      "pathId",
+      "pathSerial",
+      "minter",
+      "mintedAt",
+      "provenance"
     ]
   },
   "serialization": {

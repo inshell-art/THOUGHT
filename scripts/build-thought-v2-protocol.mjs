@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
-import { keccak256, toUtf8Bytes } from "ethers";
+import { TypedDataEncoder, Wallet, id, keccak256, toUtf8Bytes, verifyTypedData } from "ethers";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
@@ -11,6 +11,7 @@ const protocolRoot = path.join(root, "protocol");
 const releaseRoot = path.join(protocolRoot, "releases", "v2");
 const fixtureRoot = path.join(releaseRoot, "renderer", "fixtures");
 const conformanceRoot = path.join(releaseRoot, "conformance");
+const attestationFixtureRoot = path.join(releaseRoot, "attestation", "fixtures");
 const tempRoot = path.join(root, ".tmp", "thought-v2-protocol-build");
 const generatedRoot = path.join(root, "src", "generated");
 
@@ -71,9 +72,25 @@ transpile(
     ["./thought-v2-renderer", "./thought-v2-renderer.mjs"],
   ],
 );
+transpile(
+  path.join(root, "src", "thought-v2-creation-attestation.ts"),
+  path.join(tempRoot, "thought-v2-creation-attestation.mjs"),
+  [["./thought-v2-protocol", "./thought-v2-protocol.mjs"]],
+);
+transpile(
+  path.join(root, "src", "thought-v2-provenance.ts"),
+  path.join(tempRoot, "thought-v2-provenance.mjs"),
+  [["./thought-v2-protocol", "./thought-v2-protocol.mjs"]],
+);
 const protocol = await import(`${pathToFileURL(path.join(tempRoot, "thought-v2-protocol.mjs")).href}?v=1`);
 const renderer = await import(`${pathToFileURL(path.join(tempRoot, "thought-v2-renderer.mjs")).href}?v=1`);
 const tokenUri = await import(`${pathToFileURL(path.join(tempRoot, "thought-v2-token-uri.mjs")).href}?v=1`);
+const attestation = await import(
+  `${pathToFileURL(path.join(tempRoot, "thought-v2-creation-attestation.mjs")).href}?v=1`
+);
+const provenance = await import(
+  `${pathToFileURL(path.join(tempRoot, "thought-v2-provenance.mjs")).href}?v=1`
+);
 
 const validCases = [
   ["one-byte-cycle", "a", "b"],
@@ -153,6 +170,20 @@ const invalidRawUtf8Cases = [
   ["invalid-f5-leader", "f5908080"],
   ["invalid-ff-leader", "ff"],
 ];
+const validModelLabels = [
+  ["one-byte", "M"],
+  ["sixty-four-bytes", "M".repeat(64)],
+  ["safe-non-ascii", "模型 Γ"],
+  ["case-and-spacing", "Model  Family X"],
+];
+const validAgentLabels = [
+  ["one-byte", "A"],
+  ["sixty-four-bytes", "A".repeat(64)],
+  ["safe-non-ascii", "代理 Γ"],
+  ["case-and-spacing", "Codex  Agent"],
+];
+const declaredModelForVector = (index) => ["Model A", "Model A", "Model B", "模型 Γ"][index] ?? "Model A";
+const declaredAgentForVector = (index) => ["Codex", "A", "Fixture Agent", "代理 Γ"][index] ?? "Codex";
 
 const sampledGridPositions = (promptLine, agentLine) => {
   const promptBits = protocol.fitBinarySource512(promptLine);
@@ -246,10 +277,12 @@ const thoughtArtifact = JSON.parse(fs.readFileSync(path.join(root, "evm", "out",
 const rendererArtifact = JSON.parse(fs.readFileSync(path.join(root, "evm", "out", "ThoughtRenderer.sol", "ThoughtRenderer.json"), "utf8"));
 const registryArtifact = JSON.parse(fs.readFileSync(path.join(root, "evm", "out", "ThoughtSpecRegistry.sol", "ThoughtSpecRegistry.json"), "utf8"));
 const protocolRegistryArtifact = JSON.parse(fs.readFileSync(path.join(root, "evm", "out", "ThoughtSpecRegistryV2.sol", "ThoughtSpecRegistryV2.json"), "utf8"));
+const verifierArtifact = JSON.parse(fs.readFileSync(path.join(root, "evm", "out", "CreationAttestationVerifier.sol", "CreationAttestationVerifier.json"), "utf8"));
 writeJson(path.join(releaseRoot, "contract", "abi", "ThoughtNFT.json"), { abi: thoughtArtifact.abi });
 writeJson(path.join(releaseRoot, "contract", "abi", "ThoughtRenderer.json"), { abi: rendererArtifact.abi });
 writeJson(path.join(releaseRoot, "contract", "abi", "ThoughtSpecRegistry.json"), { abi: registryArtifact.abi });
 writeJson(path.join(releaseRoot, "contract", "abi", "ThoughtSpecRegistryV2.json"), { abi: protocolRegistryArtifact.abi });
+writeJson(path.join(releaseRoot, "contract", "abi", "CreationAttestationVerifier.json"), { abi: verifierArtifact.abi });
 
 const baseVector = JSON.parse(fs.readFileSync(path.join(fixtureRoot, "one-byte-cycle.json"), "utf8"));
 writeJson(path.join(releaseRoot, "contract", "vectors", "hash-vectors.json"), {
@@ -279,7 +312,17 @@ writeJson(path.join(conformanceRoot, "text-validation.json"), {
     ...item,
     errors: protocol.measureThoughtLine(item[`${item.kind}Line`], item.kind).errors,
   })),
-  schema: "inshell.thought.text-validation-vectors.v1",
+  invalidModels: invalidLineCases.map((item) => ({
+    declaredModel: item.promptLine,
+    errors: protocol.measureThoughtLine(item.promptLine, "model").errors,
+    id: item.id,
+  })),
+  invalidDeclaredAgents: invalidLineCases.map((item) => ({
+    declaredAgent: item.promptLine,
+    errors: protocol.measureThoughtLine(item.promptLine, "declaredAgent").errors,
+    id: item.id,
+  })),
+  schema: "inshell.thought.text-validation-vectors.v2",
   valid: validCases.map(([id, promptLine, agentLine]) => ({
     agent: protocol.measureThoughtLine(agentLine, "agent"),
     agentLine,
@@ -287,14 +330,29 @@ writeJson(path.join(conformanceRoot, "text-validation.json"), {
     prompt: protocol.measureThoughtLine(promptLine, "prompt"),
     promptLine,
   })),
+  validModels: validModelLabels.map(([id, declaredModel]) => ({
+    declaredModel,
+    id,
+    model: protocol.measureThoughtLine(declaredModel, "model"),
+  })),
+  validDeclaredAgents: validAgentLabels.map(([id, declaredAgent]) => ({
+    declaredAgent,
+    id,
+    measurement: protocol.measureThoughtLine(declaredAgent, "declaredAgent"),
+  })),
 });
 writeJson(path.join(conformanceRoot, "raw-utf8-vectors.json"), {
   invalid: invalidRawUtf8Cases.map(([id, inputHex]) => ({
     errors: protocol.measureThoughtLineBytes(Uint8Array.from(Buffer.from(inputHex, "hex")), "prompt").errors,
     id,
     inputHex: `0x${inputHex}`,
+    modelErrors: protocol.measureThoughtLineBytes(Uint8Array.from(Buffer.from(inputHex, "hex")), "model").errors,
+    declaredAgentErrors: protocol.measureThoughtLineBytes(
+      Uint8Array.from(Buffer.from(inputHex, "hex")),
+      "declaredAgent",
+    ).errors,
   })),
-  schema: "inshell.thought.raw-utf8-vectors.v1",
+  schema: "inshell.thought.raw-utf8-vectors.v2",
 });
 writeJson(path.join(conformanceRoot, "loom-vectors.json"), {
   collisions: JSON.parse(fs.readFileSync(path.join(fixtureRoot, "cycling-collisions.json"), "utf8")).collisions,
@@ -312,76 +370,451 @@ writeJson(path.join(conformanceRoot, "loom-vectors.json"), {
 
 const fixtureManifestHash = `0x${"11".repeat(32)}`;
 const fixtureReleaseId = protocol.deriveProtocolReleaseId(fixtureManifestHash);
-const artifactBinding = (id, relativePath) => ({
-  id,
-  keccak256: keccak256(bytes(path.join(releaseRoot, relativePath))),
-  path: relativePath.split("/").at(-1),
-});
-const fixtureProtocol = {
-  agentResultSchema: artifactBinding(protocol.THOUGHT_AGENT_RESULT_ID, "agent/thought.agent-result.v2.schema.json"),
-  creativeSpec: artifactBinding("inshell.thought.v2", "art/THOUGHT.v2.md"),
+const fixtureThoughtSpecName = "THOUGHT.v2.md";
+const fixtureThoughtSpecBytes = bytes(path.join(releaseRoot, "art", fixtureThoughtSpecName));
+const fixtureThoughtSpecPair = {
+  thoughtSpecId: keccak256(toUtf8Bytes(fixtureThoughtSpecName)),
+  thoughtSpecHash: keccak256(fixtureThoughtSpecBytes),
+};
+const fixtureSelectedSpec = {
+  specName: fixtureThoughtSpecName,
+  exactSpecBytes: fixtureThoughtSpecBytes,
+  pair: fixtureThoughtSpecPair,
+};
+const alternateThoughtSpecName = "THOUGHT.v3.md";
+const alternateThoughtSpecBytes = Buffer.from(
+  "# THOUGHT.v3.md\n\nVersion: v3\n\nConformance-only selected-spec fixture.\n",
+);
+const alternateThoughtSpecPair = {
+  thoughtSpecId: keccak256(toUtf8Bytes(alternateThoughtSpecName)),
+  thoughtSpecHash: keccak256(alternateThoughtSpecBytes),
+};
+const alternateSelectedSpec = {
+  specName: alternateThoughtSpecName,
+  exactSpecBytes: alternateThoughtSpecBytes,
+  pair: alternateThoughtSpecPair,
+};
+const fixtureProtocolFor = (selectedSpec) => ({
   manifestKeccak256: fixtureManifestHash,
   protocolReleaseId: fixtureReleaseId,
-  rendererProfile: artifactBinding(protocol.THOUGHT_RENDERER_ID, "renderer/thought.renderer.v2.profile.json"),
-  workProfile: artifactBinding(protocol.THOUGHT_WORK_PROFILE_ID, "work/thought.work.v2.profile.json"),
-};
+  thoughtSpecHash: selectedSpec.pair.thoughtSpecHash,
+  thoughtSpecId: selectedSpec.pair.thoughtSpecId,
+});
+const fixtureProtocol = fixtureProtocolFor(fixtureSelectedSpec);
+const fixtureSelectedSpecEvidence = ({ claim = false, tokenState = false, selectedSpec = fixtureSelectedSpec } = {}) => ({
+  specName: selectedSpec.specName,
+  exactSpecBytes: selectedSpec.exactSpecBytes,
+  registeredPair: selectedSpec.pair,
+  mintPair: selectedSpec.pair,
+  ...(claim ? { claimPair: selectedSpec.pair } : {}),
+  ...(tokenState ? { tokenStatePair: selectedSpec.pair } : {}),
+});
 const fixtureMintContext = {
   chainId: "31337",
-  minter: `0x${"33".repeat(20)}`,
-  movement: "THOUGHT",
-  pathId: "12",
-  pathNft: `0x${"22".repeat(20)}`,
+  intendedMinter: `0x${"33".repeat(20)}`,
   thoughtNft: `0x${"11".repeat(20)}`,
 };
-const provenanceRecord = (promptLine, agentLine, process) => ({
-  mintContext: fixtureMintContext,
-  process,
-  protocol: fixtureProtocol,
-  schema: protocol.THOUGHT_PROVENANCE_ID,
-  work: { promptLine, agentLine, ...protocol.thoughtWorkHashes(promptLine, agentLine) },
+const declarationFor = (label, source) => ({
+  label,
+  source,
+  status: "declared-unverified",
 });
-const provenanceVector = (id, record) => {
-  const canonical = protocol.canonicalJsonStringify(record);
-  return { canonicalJson: canonical, id, keccak256: keccak256(toUtf8Bytes(canonical)), record };
+const manualProcessFor = (declaredAgent, declaredModel, modelIdentifier) => ({
+  agentDeclaration: declarationFor(declaredAgent, "manual"),
+  kind: "manual",
+  modelDeclaration: {
+    ...declarationFor(declaredModel, "manual"),
+    ...(modelIdentifier ? { identifier: modelIdentifier } : {}),
+  },
+});
+const agentResultEnvelopeFor = ({
+  agentLine,
+  declaredAgent,
+  declaredModel,
+  manifestKeccak256,
+  modelIdentifier,
+  modelSource,
+  protocolReleaseId,
+}) => ({
+  agent: {
+    label: declaredAgent,
+    model: {
+      ...(modelIdentifier ? { identifier: modelIdentifier } : {}),
+      label: declaredModel,
+      source: modelSource,
+    },
+  },
+  agentLine,
+  release: { manifestKeccak256, protocolReleaseId },
+  schema: protocol.THOUGHT_AGENT_RESULT_ID,
+});
+const agentRunProcessFor = ({
+  adapter = "fixture",
+  agentLine,
+  declaredAgent,
+  declaredModel,
+  modelIdentifier,
+  modelSource = "runtime_configured",
+  protocolBinding,
+  provider,
+  route,
+  runReference,
+}) => ({
+  agentDeclaration: declarationFor(declaredAgent, modelSource),
+  kind: "agent-run",
+  modelDeclaration: {
+    ...declarationFor(declaredModel, modelSource),
+    ...(modelIdentifier ? { identifier: modelIdentifier } : {}),
+  },
+  transport: {
+    adapter,
+    ...(provider ? { provider } : {}),
+    resultEnvelope: agentResultEnvelopeFor({
+      agentLine,
+      declaredAgent,
+      declaredModel,
+      manifestKeccak256: protocolBinding.manifestKeccak256,
+      modelIdentifier,
+      modelSource,
+      protocolReleaseId: protocolBinding.protocolReleaseId,
+    }),
+    ...(route ? { route } : {}),
+    runReference,
+  },
+});
+const provenanceVector = (id, input, typedFacts = {}, selectedSpec = fixtureSelectedSpecEvidence()) => {
+  const built = provenance.buildVerifiedCanonicalProvenance({ ...input, selectedSpec }, typedFacts);
+  const independentlyHashed = keccak256(built.exactBytes);
+  if (built.provenanceHash !== independentlyHashed) {
+    throw new Error(`shared provenance hash mismatch for ${id}`);
+  }
+  return {
+    canonicalJson: built.canonicalJson,
+    id,
+    keccak256: built.provenanceHash,
+    record: built.provenance,
+  };
 };
 const manualProvenance = provenanceVector(
   "manual",
-  provenanceRecord("quiet signal", "quiet return", { kind: "manual" }),
+  {
+    mintContext: fixtureMintContext,
+    process: manualProcessFor("Codex", "Model A"),
+    protocol: fixtureProtocol,
+    promptLine: "quiet signal",
+    agentLine: "quiet return",
+  },
 );
 const agentRunProvenance = provenanceVector(
   "agent-run",
-  provenanceRecord("trace the archive", "the archive answers once", {
+  {
+    mintContext: fixtureMintContext,
+    process: agentRunProcessFor({
+      adapter: "codex",
+      agentLine: "the archive answers once",
+      declaredAgent: "Codex",
+      declaredModel: "GPT-5.6",
+      modelIdentifier: "gpt-5.6-2026-07-15",
+      protocolBinding: fixtureProtocol,
+      provider: "openai-fixture",
+      route: "fixture/agent-run",
+      runReference: "run-1",
+    }),
+    protocol: fixtureProtocol,
+    promptLine: "trace the archive",
+    agentLine: "the archive answers once",
+  },
+);
+const observedLegacyHybrid = {
+  mintContext: {
+    chainId: "31337",
+    minter: fixtureMintContext.intendedMinter,
+    movement: "THOUGHT",
+    pathId: "12",
+    pathNft: `0x${"22".repeat(20)}`,
+    thoughtNft: fixtureMintContext.thoughtNft,
+  },
+  process: {
     agentDeclaration: {
-      agentLabel: "Codex",
       declaredOneCreativeResult: true,
+      label: "Codex",
       schema: protocol.THOUGHT_AGENT_DECLARATION_ID,
       status: "declared-unverified",
     },
     kind: "agent-run",
-    transport: { adapter: "codex", rawResponseSha256: "44".repeat(32), runId: "run-fixture-1" },
-  }),
+    modelDeclaration: { label: "Model A", source: "runtime_configured" },
+  },
+  protocol: {
+    agentResultSchema: { keccak256: `0x${"55".repeat(32)}`, path: "agent/result.schema.json" },
+    creativeSpec: { id: "inshell.thought.v2", keccak256: fixtureThoughtSpecPair.thoughtSpecHash },
+    manifestKeccak256: fixtureManifestHash,
+    protocolReleaseId: fixtureReleaseId,
+    rendererProfile: { keccak256: `0x${"66".repeat(32)}`, path: "renderer/profile.json" },
+    workProfile: { keccak256: `0x${"77".repeat(32)}`, path: "work/profile.json" },
+  },
+  schema: protocol.THOUGHT_PROVENANCE_ID,
+  work: manualProvenance.record.work,
+};
+const observedLegacyHybridCanonicalJson = protocol.canonicalJsonStringify(observedLegacyHybrid);
+const observedLegacyHybridVerification = provenance.verifyProvenance(
+  Uint8Array.from(Buffer.from(observedLegacyHybridCanonicalJson, "utf8")),
 );
+if (observedLegacyHybridVerification.conforming) {
+  throw new Error("observed legacy-hybrid provenance unexpectedly conforms");
+}
 writeJson(path.join(conformanceRoot, "provenance-vectors.json"), {
   invalid: [
+    {
+      canonicalJson: observedLegacyHybridCanonicalJson,
+      id: "observed-legacy-hybrid",
+      issues: observedLegacyHybridVerification.issues,
+    },
     { id: "wrong-release", mutate: { path: "protocol.protocolReleaseId", value: `0x${"ff".repeat(32)}` } },
+    { id: "wrong-spec-id", mutate: { path: "protocol.thoughtSpecId", value: `0x${"ff".repeat(32)}` } },
+    { id: "wrong-spec-hash", mutate: { path: "protocol.thoughtSpecHash", value: `0x${"ff".repeat(32)}` } },
     { id: "wrong-work-hash", mutate: { path: "work.workHash", value: `0x${"ff".repeat(32)}` } },
     { id: "noncanonical-leading-space", prefix: " " },
     { add: { path: "transactionHash", value: `0x${"ff".repeat(32)}` }, id: "forbidden-post-mint-field" },
   ],
-  schema: "inshell.thought.provenance-vectors.v1",
+  schema: "inshell.thought.provenance-vectors.v2",
   valid: [manualProvenance, agentRunProvenance],
 });
-write(path.join(releaseRoot, "provenance", "examples", "manual.json"), `${manualProvenance.canonicalJson}\n`);
+write(path.join(releaseRoot, "provenance", "examples", "manual.json"), manualProvenance.canonicalJson);
+
+fs.rmSync(attestationFixtureRoot, { recursive: true, force: true });
+fs.mkdirSync(attestationFixtureRoot, { recursive: true });
+const fixtureVerifier = `0x${"44".repeat(20)}`;
+const fixtureChainId = 31_337n;
+const fixtureAuthority = new Wallet(id("THOUGHT V2 CREATION ATTESTATION NON-PRODUCTION FIXTURE KEY"));
+const attestationCases = [
+  { id: "ascii", promptLine: "a", agentLine: "b", declaredAgent: "Codex", declaredModel: "Model A", deadline: 1_900_000_000n, authorityEpoch: 1n },
+  { id: "safe-non-ascii", promptLine: "你好", agentLine: "مرحبا", declaredAgent: "代理 Γ", declaredModel: "模型 Γ", deadline: 1_900_000_001n, authorityEpoch: 2n },
+  { id: "one-byte-declarations", promptLine: "p", agentLine: "r", declaredAgent: "A", declaredModel: "M", deadline: 1n, authorityEpoch: 1n },
+  { id: "sixty-four-byte-boundaries", promptLine: "p".repeat(64), agentLine: "r".repeat(64), declaredAgent: "A".repeat(64), declaredModel: "M".repeat(64), deadline: (1n << 64n) - 1n, authorityEpoch: (1n << 32n) - 1n },
+  { id: "safe-non-ascii-alternate-spec", promptLine: "你好", agentLine: "مرحبا", declaredAgent: "代理 Γ", declaredModel: "模型 Γ", deadline: 1_900_000_005n, authorityEpoch: 2n, selectedSpec: alternateSelectedSpec },
+];
+const attestationVectors = [];
+for (const [index, item] of attestationCases.entries()) {
+  const mintContext = fixtureMintContext;
+  const selectedSpec = item.selectedSpec ?? fixtureSelectedSpec;
+  const selectedProtocol = fixtureProtocolFor(selectedSpec);
+  const runReference = `public-safe-run-${String(index + 1).padStart(4, "0")}`;
+  const attestedProvenance = provenanceVector(`attestation-${index + 1}`, {
+    protocol: selectedProtocol,
+    promptLine: item.promptLine,
+    agentLine: item.agentLine,
+    process: agentRunProcessFor({
+      agentLine: item.agentLine,
+      declaredAgent: item.declaredAgent,
+      declaredModel: item.declaredModel,
+      protocolBinding: selectedProtocol,
+      runReference,
+    }),
+    mintContext,
+  }, {
+    declaredAgent: item.declaredAgent,
+    declaredModel: item.declaredModel,
+  }, fixtureSelectedSpecEvidence({ claim: true, selectedSpec }));
+  const claim = {
+    profileId: protocol.THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
+    thoughtNft: mintContext.thoughtNft,
+    protocolReleaseId: fixtureReleaseId,
+    thoughtSpecId: selectedSpec.pair.thoughtSpecId,
+    thoughtSpecHash: selectedSpec.pair.thoughtSpecHash,
+    workHash: protocol.thoughtWorkHashes(item.promptLine, item.agentLine).workHash,
+    provenanceHash: attestedProvenance.keccak256,
+    declaredAgentHash: keccak256(toUtf8Bytes(item.declaredAgent)),
+    declaredModelHash: keccak256(toUtf8Bytes(item.declaredModel)),
+    runIdHash: attestedProvenance.record.process.transport.runIdHash,
+    intendedMinter: mintContext.intendedMinter,
+    deadline: item.deadline,
+    authorityEpoch: item.authorityEpoch,
+  };
+  const preSignVerification = provenance.verifyProvenance(
+    Uint8Array.from(Buffer.from(attestedProvenance.canonicalJson, "utf8")),
+    selectedProtocol,
+    {
+      declaredAgent: item.declaredAgent,
+      declaredModel: item.declaredModel,
+      attestationClaim: {
+        chainId: fixtureChainId.toString(),
+        declaredAgentHash: claim.declaredAgentHash,
+        declaredModelHash: claim.declaredModelHash,
+        intendedMinter: claim.intendedMinter,
+        protocolReleaseId: claim.protocolReleaseId,
+        provenanceHash: claim.provenanceHash,
+        runIdHash: claim.runIdHash,
+        thoughtNft: claim.thoughtNft,
+        thoughtSpecHash: claim.thoughtSpecHash,
+        thoughtSpecId: claim.thoughtSpecId,
+        workHash: claim.workHash,
+      },
+    },
+    fixtureSelectedSpecEvidence({ claim: true, selectedSpec }),
+  );
+  if (!preSignVerification.conforming) {
+    throw new Error(`mock signer rejected ${item.id}: ${preSignVerification.errors.join("; ")}`);
+  }
+  const domain = attestation.creationAttestationDomain(fixtureChainId, fixtureVerifier);
+  const signature = await fixtureAuthority.signTypedData(
+    domain,
+    attestation.CREATION_ATTESTATION_TYPES,
+    claim,
+  );
+  attestationVectors.push({
+    authority: fixtureAuthority.address.toLowerCase(),
+    claim: {
+      ...claim,
+      deadline: claim.deadline.toString(),
+      authorityEpoch: Number(claim.authorityEpoch),
+    },
+    agentLine: item.agentLine,
+    declaredAgent: item.declaredAgent,
+    declaredModel: item.declaredModel,
+    digest: attestation.hashCreationAttestationClaim(fixtureChainId, fixtureVerifier, claim),
+    domain: { ...domain, chainId: domain.chainId.toString() },
+    domainSeparator: TypedDataEncoder.hashDomain(domain),
+    id: item.id,
+    promptLine: item.promptLine,
+    provenance: {
+      canonicalJson: attestedProvenance.canonicalJson,
+      keccak256: attestedProvenance.keccak256,
+      processKind: "agent-run",
+    },
+    signature,
+    structHash: attestation.hashCreationAttestationStruct(claim),
+  });
+}
+const previousDraftTypes = {
+  CreationAttestation: attestation.CREATION_ATTESTATION_TYPES.CreationAttestation
+    .filter(({ name }) => name !== "thoughtSpecId" && name !== "thoughtSpecHash"),
+};
+const firstVector = attestationVectors[0];
+const firstClaim = {
+  ...firstVector.claim,
+  deadline: BigInt(firstVector.claim.deadline),
+  authorityEpoch: BigInt(firstVector.claim.authorityEpoch),
+};
+const {
+  thoughtSpecId: omittedPreviousThoughtSpecId,
+  thoughtSpecHash: omittedPreviousThoughtSpecHash,
+  ...previousDraftClaim
+} = firstClaim;
+void omittedPreviousThoughtSpecId;
+void omittedPreviousThoughtSpecHash;
+const fixtureDomain = attestation.creationAttestationDomain(fixtureChainId, fixtureVerifier);
+const previousDraftSignature = await fixtureAuthority.signTypedData(
+  fixtureDomain,
+  previousDraftTypes,
+  previousDraftClaim,
+);
+const substitutedPairClaim = {
+  ...firstClaim,
+  thoughtSpecId: alternateThoughtSpecPair.thoughtSpecId,
+  thoughtSpecHash: alternateThoughtSpecPair.thoughtSpecHash,
+};
+const substitutedPairDigest = attestation.hashCreationAttestationClaim(
+  fixtureChainId,
+  fixtureVerifier,
+  substitutedPairClaim,
+);
+const mutatedProvenanceBytes = Uint8Array.from(toUtf8Bytes(firstVector.provenance.canonicalJson));
+mutatedProvenanceBytes[0] ^= 1;
+const mutatedProvenanceHash = keccak256(mutatedProvenanceBytes);
+const mutatedProvenanceClaim = { ...firstClaim, provenanceHash: mutatedProvenanceHash };
+writeJson(path.join(attestationFixtureRoot, "creation-attestation-vectors.json"), {
+  canonicalEmptyProof: {
+    authorityEpoch: 0,
+    deadline: "0",
+    runIdHash: `0x${"00".repeat(32)}`,
+    signature: "0x",
+  },
+  domainName: attestation.CREATION_ATTESTATION_DOMAIN_NAME,
+  domainVersion: attestation.CREATION_ATTESTATION_DOMAIN_VERSION,
+  previousDraftProof: {
+    claim: {
+      ...previousDraftClaim,
+      deadline: previousDraftClaim.deadline.toString(),
+      authorityEpoch: Number(previousDraftClaim.authorityEpoch),
+    },
+    digest: TypedDataEncoder.hash(fixtureDomain, previousDraftTypes, previousDraftClaim),
+    recoveredAuthority: verifyTypedData(fixtureDomain, previousDraftTypes, previousDraftClaim, previousDraftSignature)
+      .toLowerCase(),
+    signature: previousDraftSignature,
+    typeHash: id("CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)"),
+    typeString: "CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)",
+  },
+  selectedPairSubstitution: {
+    originalDigest: firstVector.digest,
+    originalSignature: firstVector.signature,
+    substitutedClaim: {
+      ...substitutedPairClaim,
+      deadline: substitutedPairClaim.deadline.toString(),
+      authorityEpoch: Number(substitutedPairClaim.authorityEpoch),
+    },
+    substitutedDigest: substitutedPairDigest,
+    recoveredFromReusedSignature: verifyTypedData(
+      fixtureDomain,
+      attestation.CREATION_ATTESTATION_TYPES,
+      substitutedPairClaim,
+      firstVector.signature,
+    ).toLowerCase(),
+  },
+  oneByteProvenanceMutation: {
+    originalDigest: firstVector.digest,
+    originalProvenanceHash: firstClaim.provenanceHash,
+    mutatedDigest: attestation.hashCreationAttestationClaim(
+      fixtureChainId,
+      fixtureVerifier,
+      mutatedProvenanceClaim,
+    ),
+    mutatedProvenanceHash,
+  },
+  invalid: [
+    { id: "partial-empty-run", mutate: { path: "proof.runIdHash", value: id("partial") } },
+    { id: "partial-empty-deadline", mutate: { path: "proof.deadline", value: "1" } },
+    { id: "partial-empty-epoch", mutate: { path: "proof.authorityEpoch", value: 1 } },
+    { id: "wrong-profile", mutate: { path: "claim.profileId", value: id("wrong-profile") } },
+    { id: "wrong-chain", mutate: { path: "domain.chainId", value: "31338" } },
+    { id: "wrong-verifier", mutate: { path: "domain.verifyingContract", value: `0x${"55".repeat(20)}` } },
+    { id: "wrong-thought-nft", mutate: { path: "claim.thoughtNft", value: `0x${"66".repeat(20)}` } },
+    { id: "wrong-release", mutate: { path: "claim.protocolReleaseId", value: id("wrong-release") } },
+    { id: "wrong-spec-id", mutate: { path: "claim.thoughtSpecId", value: id("wrong-spec-id") } },
+    { id: "wrong-spec-hash", mutate: { path: "claim.thoughtSpecHash", value: id("wrong-spec-hash") } },
+    { id: "wrong-spec-pair", mutate: { path: "claim.thoughtSpecId+thoughtSpecHash", value: `${alternateThoughtSpecPair.thoughtSpecId}+${alternateThoughtSpecPair.thoughtSpecHash}` } },
+    { id: "wrong-work", mutate: { path: "claim.workHash", value: id("wrong-work") } },
+    { id: "wrong-provenance", mutate: { path: "claim.provenanceHash", value: id("wrong-provenance") } },
+    { id: "wrong-declared-agent", mutate: { path: "claim.declaredAgentHash", value: id("wrong-agent") } },
+    { id: "wrong-declared-model", mutate: { path: "claim.declaredModelHash", value: id("wrong-model") } },
+    { id: "zero-run", mutate: { path: "claim.runIdHash", value: `0x${"00".repeat(32)}` } },
+    { id: "wrong-run", mutate: { path: "claim.runIdHash", value: id("wrong-run") } },
+    { id: "wrong-minter", mutate: { path: "claim.intendedMinter", value: `0x${"77".repeat(20)}` } },
+    { id: "wrong-deadline", mutate: { path: "claim.deadline", value: "1900000002" } },
+    { id: "wrong-epoch", mutate: { path: "claim.authorityEpoch", value: 3 } },
+    { id: "malformed-signature", mutate: { path: "proof.signature", value: "0x01" } },
+    {
+      id: "previous-draft-type",
+      typeString: "CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)",
+      typeHash: id("CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)"),
+    },
+  ],
+  primaryType: attestation.CREATION_ATTESTATION_PRIMARY_TYPE,
+  profileId: protocol.THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
+  profileName: protocol.THOUGHT_CREATION_ATTESTATION_PROFILE,
+  schema: "inshell.thought.creation-attestation-vectors.v1",
+  typeHash: attestation.CREATION_ATTESTATION_TYPEHASH,
+  typeString: attestation.CREATION_ATTESTATION_TYPE_STRING,
+  types: attestation.CREATION_ATTESTATION_TYPES,
+  vectors: attestationVectors,
+});
 
 const classifyDensity = (value) => value <= 460 ? "Open" : value <= 563 ? "Balanced" : "Dense";
-const classifyContrast = (value) => value <= 170 ? "Low" : value <= 341 ? "Medium" : "High";
 writeJson(path.join(conformanceRoot, "trait-vectors.json"), {
-  binaryContrastBoundaries: [0, 170, 171, 341, 342, 512].map((value) => ({ label: classifyContrast(value), value })),
   representatives: validCases.map(([id, promptLine, agentLine]) => ({
     id,
     ...protocol.deriveThoughtTraits(promptLine, agentLine),
   })),
-  schema: "inshell.thought.trait-vectors.v1",
+  schema: "inshell.thought.trait-vectors.v2",
   textureDensityBoundaries: [0, 460, 461, 563, 564, 1024].map((value) => ({ label: classifyDensity(value), value })),
 });
 writeJson(path.join(conformanceRoot, "svg-vectors.json"), {
@@ -395,39 +828,136 @@ writeJson(path.join(conformanceRoot, "svg-vectors.json"), {
 
 const rendererProfileHash = keccak256(bytes(path.join(releaseRoot, "renderer", "thought.renderer.v2.profile.json")));
 const workProfileHash = keccak256(bytes(path.join(releaseRoot, "work", "thought.work.v2.profile.json")));
+const tokenUriVectors = [];
+for (const [[vectorId, promptLine, agentLine], index] of validCases.slice(0, 4).map((item, index) => [item, index])) {
+  const declaredAgent = declaredAgentForVector(index);
+  const declaredModel = declaredModelForVector(index);
+  const processKind = index === 0 || index === 2 ? "manual" : "agent-run";
+  const mintContext = fixtureMintContext;
+  const shouldAttest = index === 3;
+  const runReference = `public-safe-run-${String(index + 101).padStart(4, "0")}`;
+  const tokenProvenance = provenanceVector(`token-uri-${index + 1}`, {
+    protocol: fixtureProtocol,
+    promptLine,
+    agentLine,
+    process: processKind === "manual"
+      ? manualProcessFor(declaredAgent, declaredModel)
+      : agentRunProcessFor({
+        agentLine,
+        declaredAgent,
+        declaredModel,
+        protocolBinding: fixtureProtocol,
+        runReference,
+      }),
+    mintContext,
+  }, { declaredAgent, declaredModel }, fixtureSelectedSpecEvidence({ claim: shouldAttest, tokenState: true }));
+  let creationAttestationDigest = `0x${"00".repeat(32)}`;
+  let mockAttestation;
+  if (shouldAttest) {
+    const claim = {
+      profileId: protocol.THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
+      thoughtNft: mintContext.thoughtNft,
+      protocolReleaseId: fixtureReleaseId,
+      thoughtSpecId: fixtureThoughtSpecPair.thoughtSpecId,
+      thoughtSpecHash: fixtureThoughtSpecPair.thoughtSpecHash,
+      workHash: protocol.thoughtWorkHashes(promptLine, agentLine).workHash,
+      provenanceHash: tokenProvenance.keccak256,
+      declaredAgentHash: keccak256(toUtf8Bytes(declaredAgent)),
+      declaredModelHash: keccak256(toUtf8Bytes(declaredModel)),
+      runIdHash: tokenProvenance.record.process.transport.runIdHash,
+      intendedMinter: mintContext.intendedMinter,
+      deadline: 1_900_100_000n + BigInt(index),
+      authorityEpoch: 1n,
+    };
+    const preSignVerification = provenance.verifyProvenance(
+      Uint8Array.from(Buffer.from(tokenProvenance.canonicalJson, "utf8")),
+      fixtureProtocol,
+      {
+        declaredAgent,
+        declaredModel,
+        attestationClaim: {
+          chainId: fixtureChainId.toString(),
+          declaredAgentHash: claim.declaredAgentHash,
+          declaredModelHash: claim.declaredModelHash,
+          intendedMinter: claim.intendedMinter,
+          protocolReleaseId: claim.protocolReleaseId,
+          provenanceHash: claim.provenanceHash,
+          runIdHash: claim.runIdHash,
+          thoughtNft: claim.thoughtNft,
+          thoughtSpecHash: claim.thoughtSpecHash,
+          thoughtSpecId: claim.thoughtSpecId,
+          workHash: claim.workHash,
+        },
+      },
+      fixtureSelectedSpecEvidence({ claim: true, tokenState: true }),
+    );
+    if (!preSignVerification.conforming) {
+      throw new Error(`mock signer rejected tokenURI vector ${vectorId}: ${preSignVerification.errors.join("; ")}`);
+    }
+    const domain = attestation.creationAttestationDomain(fixtureChainId, fixtureVerifier);
+    const signature = await fixtureAuthority.signTypedData(
+      domain,
+      attestation.CREATION_ATTESTATION_TYPES,
+      claim,
+    );
+    creationAttestationDigest = attestation.hashCreationAttestationClaim(
+      fixtureChainId,
+      fixtureVerifier,
+      claim,
+    );
+    mockAttestation = {
+      claim: {
+        ...claim,
+        deadline: claim.deadline.toString(),
+        authorityEpoch: Number(claim.authorityEpoch),
+      },
+      digest: creationAttestationDigest,
+      signature,
+    };
+  }
+  const input = {
+    agentLine,
+    declaredAgent,
+    declaredModel,
+    creationAttestationDigest,
+    creationAttestationVerifier: fixtureVerifier,
+    manifestKeccak256: fixtureManifestHash,
+    minter: mintContext.intendedMinter,
+    mintedAt: BigInt(1_700_000_000 + index),
+    pathId: BigInt(index + 1),
+    pathSerial: BigInt(index),
+    promptLine,
+    protocolReleaseId: fixtureReleaseId,
+    provenanceJson: tokenProvenance.canonicalJson,
+    rendererProfileKeccak256: rendererProfileHash,
+    thoughtSpecHash: fixtureThoughtSpecPair.thoughtSpecHash,
+    thoughtSpecId: fixtureThoughtSpecPair.thoughtSpecId,
+    tokenId: BigInt(index + 1),
+    workProfileKeccak256: workProfileHash,
+  };
+  const metadata = tokenUri.buildThoughtV2Metadata(input);
+  const uri = tokenUri.buildThoughtV2TokenUri(input);
+  tokenUriVectors.push({
+    id: vectorId,
+    metadata,
+    metadataKeccak256: keccak256(toUtf8Bytes(metadata)),
+    ...(mockAttestation ? { mockAttestation } : {}),
+    provenance: {
+      canonicalJson: tokenProvenance.canonicalJson,
+      keccak256: tokenProvenance.keccak256,
+      processKind,
+    },
+    tokenURI: uri,
+    tokenURIKeccak256: keccak256(toUtf8Bytes(uri)),
+  });
+}
 writeJson(path.join(conformanceRoot, "token-uri-vectors.json"), {
-  schema: "inshell.thought.token-uri-vectors.v1",
+  schema: "inshell.thought.token-uri-vectors.v2",
   v1Regression: {
     sourceKeccak256: keccak256(bytes(path.join(root, "evm", "legacy", "ThoughtNFTV1.sol"))),
     sourcePath: "evm/legacy/ThoughtNFTV1.sol",
   },
-  vectors: validCases.slice(0, 4).map(([id, promptLine, agentLine], index) => {
-    const input = {
-      agentLine,
-      manifestKeccak256: fixtureManifestHash,
-      minter: `0x${"33".repeat(20)}`,
-      mintedAt: BigInt(1_700_000_000 + index),
-      pathId: BigInt(index + 1),
-      pathSerial: BigInt(index),
-      promptLine,
-      protocolReleaseId: fixtureReleaseId,
-      provenanceJson: manualProvenance.canonicalJson,
-      rendererProfileKeccak256: rendererProfileHash,
-      thoughtSpecHash: keccak256(toUtf8Bytes("fixture thought spec")),
-      thoughtSpecId: keccak256(toUtf8Bytes("THOUGHT.v2.md")),
-      tokenId: BigInt(index + 1),
-      workProfileKeccak256: workProfileHash,
-    };
-    const metadata = tokenUri.buildThoughtV2Metadata(input);
-    const uri = tokenUri.buildThoughtV2TokenUri(input);
-    return {
-      id,
-      metadata,
-      metadataKeccak256: keccak256(toUtf8Bytes(metadata)),
-      tokenURI: uri,
-      tokenURIKeccak256: keccak256(toUtf8Bytes(uri)),
-    };
-  }),
+  vectors: tokenUriVectors,
 });
 
 const conformanceNames = [
@@ -447,6 +977,15 @@ const artifactDescriptors = [
   ["creative-spec", "art/THOUGHT.v2.md", "text/markdown; charset=utf-8"],
   ["agent-result-schema", "agent/thought.agent-result.v2.schema.json", "application/schema+json"],
   ["agent-declaration-schema", "agent/thought.agent-declaration.v1.schema.json", "application/schema+json"],
+  ["creation-attestation-profile", "attestation/thought.creation-workflow-attestation.v1.md", "text/markdown; charset=utf-8"],
+  ["contract-interface", "contract/thought-nft.v2.interface.md", "text/markdown; charset=utf-8"],
+  ["contract-abi:ThoughtNFT", "contract/abi/ThoughtNFT.json", "application/json"],
+  ["contract-abi:ThoughtRenderer", "contract/abi/ThoughtRenderer.json", "application/json"],
+  ["contract-abi:ThoughtSpecRegistry", "contract/abi/ThoughtSpecRegistry.json", "application/json"],
+  ["contract-abi:ThoughtProtocolRegistry", "contract/abi/ThoughtSpecRegistryV2.json", "application/json"],
+  ["contract-abi:CreationAttestationVerifier", "contract/abi/CreationAttestationVerifier.json", "application/json"],
+  ["contract-hash-vectors", "contract/vectors/hash-vectors.json", "application/json"],
+  ["mint-input-schema", "contract/thought.mint-input.v2.schema.json", "application/schema+json"],
   ["provenance-spec", "provenance/thought.provenance.v2.md", "text/markdown; charset=utf-8"],
   ["provenance-schema", "provenance/thought.provenance.v2.schema.json", "application/schema+json"],
   ["work-profile", "work/thought.work.v2.profile.json", "application/json"],
@@ -458,6 +997,7 @@ const artifactDescriptors = [
   ["fixture:traits", "conformance/trait-vectors.json", "application/json"],
   ["fixture:svg", "conformance/svg-vectors.json", "application/json"],
   ["fixture:token-uri", "conformance/token-uri-vectors.json", "application/json"],
+  ["fixture:creation-attestation", "attestation/fixtures/creation-attestation-vectors.json", "application/json"],
 ];
 const safeRelativePath = (relativePath) => {
   if (
@@ -479,6 +1019,13 @@ const artifacts = artifactDescriptors.map(([role, relativePath, mediaType]) => {
   if (data.includes(0x0d)) throw new Error(`CR/CRLF: ${relativePath}`);
   if (data[data.length - 1] !== 0x0a || data[data.length - 2] === 0x0a) {
     throw new Error(`artifact must have exactly one final LF: ${relativePath}`);
+  }
+  if (mediaType.includes("json")) {
+    try {
+      JSON.parse(data.toString("utf8"));
+    } catch (error) {
+      throw new Error(`invalid JSON artifact ${relativePath}: ${error.message}`);
+    }
   }
   return { role, path: relativePath, mediaType, byteLength: data.length, keccak256: keccak256(data) };
 });

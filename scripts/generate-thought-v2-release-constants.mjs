@@ -9,6 +9,10 @@ const releaseRoot = path.join(root, "protocol", "releases", "v2");
 const output = path.join(root, "evm", "src", "ThoughtReleaseConstants.sol");
 
 const sources = {
+  attestation: {
+    id: "inshell.thought.creation-workflow-attestation.v1",
+    path: "attestation/thought.creation-workflow-attestation.v1.md",
+  },
   renderer: {
     id: "inshell.thought.svg.v2.binary-weave-32",
     path: "renderer/thought.renderer.v2.profile.json",
@@ -31,6 +35,7 @@ const readExactText = (relativePath) => {
   return data;
 };
 
+const attestationBytes = readExactText(sources.attestation.path);
 const rendererBytes = readExactText(sources.renderer.path);
 const workBytes = readExactText(sources.work.path);
 const generated = `// SPDX-License-Identifier: MIT
@@ -40,17 +45,25 @@ pragma solidity ^0.8.28;
 library ThoughtReleaseConstants {
     string internal constant RELEASE_ID_DOMAIN_TEXT = "INSHELL_THOUGHT_PROTOCOL_RELEASE";
     bytes32 internal constant RELEASE_ID_DOMAIN = keccak256(bytes(RELEASE_ID_DOMAIN_TEXT));
+    string internal constant CREATION_ATTESTATION_PROFILE = "${sources.attestation.id}";
+    bytes32 internal constant CREATION_ATTESTATION_PROFILE_ID = keccak256(bytes(CREATION_ATTESTATION_PROFILE));
+    bytes32 internal constant CREATION_ATTESTATION_PROFILE_KECCAK256 =
+        ${keccak256(attestationBytes)};
     string internal constant RENDERER_ID = "${sources.renderer.id}";
     bytes32 internal constant RENDERER_ID_HASH = keccak256(bytes(RENDERER_ID));
-    bytes32 internal constant RENDERER_PROFILE_KECCAK256 = ${keccak256(rendererBytes)};
+    bytes32 internal constant RENDERER_PROFILE_KECCAK256 =
+        ${keccak256(rendererBytes)};
     string internal constant WORK_PROFILE_ID = "${sources.work.id}";
     bytes32 internal constant WORK_PROFILE_ID_HASH = keccak256(bytes(WORK_PROFILE_ID));
-    bytes32 internal constant WORK_PROFILE_KECCAK256 = ${keccak256(workBytes)};
+    bytes32 internal constant WORK_PROFILE_KECCAK256 =
+        ${keccak256(workBytes)};
 }
 `;
 
 fs.writeFileSync(output, generated);
 console.log(JSON.stringify({
+  creationAttestationProfileId: keccak256(Buffer.from(sources.attestation.id, "utf8")),
+  creationAttestationProfileKeccak256: keccak256(attestationBytes),
   output: path.relative(root, output),
   rendererProfileKeccak256: keccak256(rendererBytes),
   workProfileKeccak256: keccak256(workBytes),

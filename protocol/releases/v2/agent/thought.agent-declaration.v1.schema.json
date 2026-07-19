@@ -4,11 +4,16 @@
   "title": "THOUGHT Agent Declaration V1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "status", "agentLabel", "declaredOneCreativeResult"],
+  "required": ["schema", "status", "label", "declaredOneCreativeResult"],
   "properties": {
     "schema": { "const": "inshell.thought.agent-declaration.v1" },
     "status": { "const": "declared-unverified" },
-    "agentLabel": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "x-thought-line-profile": "inshell.thought.work.v2",
+      "x-thought-utf8-max-bytes": 64
+    },
     "declaredOneCreativeResult": { "const": true }
   }
 }

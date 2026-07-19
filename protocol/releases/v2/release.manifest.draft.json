@@ -3,70 +3,133 @@
   "manifestVersion": 1,
   "protocol": "inshell.thought",
   "release": "v2",
-  "createdAt": "2026-07-15T00:00:00Z",
+  "createdAt": "2026-07-19T00:00:00Z",
   "artifacts": [
     {
       "role": "creative-spec",
       "path": "art/THOUGHT.v2.md",
       "mediaType": "text/markdown; charset=utf-8",
-      "byteLength": 2811,
-      "keccak256": "0xe56691af2ea250f66a09c6766ea90f5180af45f56d129b5cdce1ca42204d7f0a"
+      "byteLength": 4150,
+      "keccak256": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76"
     },
     {
       "role": "agent-result-schema",
       "path": "agent/thought.agent-result.v2.schema.json",
       "mediaType": "application/schema+json",
-      "byteLength": 1008,
-      "keccak256": "0x6091b7df2f41de70336f64b4520dacb98a8b7015267e2a51faac1876f36a01b2"
+      "byteLength": 2047,
+      "keccak256": "0x5be0c63ed232eeeeaa2e20b8194370384f466d0d542fa61f2c16bca94671a465"
     },
     {
       "role": "agent-declaration-schema",
       "path": "agent/thought.agent-declaration.v1.schema.json",
       "mediaType": "application/schema+json",
-      "byteLength": 604,
-      "keccak256": "0x83ec43ed82c9cdeb153c34691c5882f0b09dd785bd0ccc9cfb858dc64a323ba3"
+      "byteLength": 689,
+      "keccak256": "0xc457d91f8aef93c4b1820025753769e8a63a564ed76dc21a5ffb51771d1117b9"
+    },
+    {
+      "role": "creation-attestation-profile",
+      "path": "attestation/thought.creation-workflow-attestation.v1.md",
+      "mediaType": "text/markdown; charset=utf-8",
+      "byteLength": 4147,
+      "keccak256": "0xa8b7ef8ccfcfe936afe42aa2efef61bd4ba91844a0b6d097a2dfeff5a2eb287c"
+    },
+    {
+      "role": "contract-interface",
+      "path": "contract/thought-nft.v2.interface.md",
+      "mediaType": "text/markdown; charset=utf-8",
+      "byteLength": 3655,
+      "keccak256": "0x07f5c0f525b5bbc6ace69b5679de58e5e658e6406aa79cf35bf49771c7eaf047"
+    },
+    {
+      "role": "contract-abi:ThoughtNFT",
+      "path": "contract/abi/ThoughtNFT.json",
+      "mediaType": "application/json",
+      "byteLength": 35679,
+      "keccak256": "0x4e283a3638a3c2532f00f617de95a3e47b5c85690394d28769b36ef0de28b424"
+    },
+    {
+      "role": "contract-abi:ThoughtRenderer",
+      "path": "contract/abi/ThoughtRenderer.json",
+      "mediaType": "application/json",
+      "byteLength": 5825,
+      "keccak256": "0xf0c805f40e3eca9312ec69b6a4347ecfea234216fd0e2fdfa3f875843491f648"
+    },
+    {
+      "role": "contract-abi:ThoughtSpecRegistry",
+      "path": "contract/abi/ThoughtSpecRegistry.json",
+      "mediaType": "application/json",
+      "byteLength": 12376,
+      "keccak256": "0x945be230d334f9a8c50a7b7744fa9c4d1e3b9afc3445a1f36c4fd094989d499c"
+    },
+    {
+      "role": "contract-abi:ThoughtProtocolRegistry",
+      "path": "contract/abi/ThoughtSpecRegistryV2.json",
+      "mediaType": "application/json",
+      "byteLength": 5443,
+      "keccak256": "0x1053fefa85b2518e5f8d4df92d7ae6b5674ff6eeaf72fb644a7014139934db33"
+    },
+    {
+      "role": "contract-abi:CreationAttestationVerifier",
+      "path": "contract/abi/CreationAttestationVerifier.json",
+      "mediaType": "application/json",
+      "byteLength": 16636,
+      "keccak256": "0x3cfe0aad3a78d931bfa9c13e5840876762a02749631feb2612009d14f5033a2b"
+    },
+    {
+      "role": "contract-hash-vectors",
+      "path": "contract/vectors/hash-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 1296,
+      "keccak256": "0x31422bb1795d00bec3b363c1fe00afa4c169a3013876eba54be4b598069eb7eb"
+    },
+    {
+      "role": "mint-input-schema",
+      "path": "contract/thought.mint-input.v2.schema.json",
+      "mediaType": "application/schema+json",
+      "byteLength": 2056,
+      "keccak256": "0xb5eb1dd5eca2005375fdcbf25e77a6950a7f565b0676a277856ff15ec9e02f82"
     },
     {
       "role": "provenance-spec",
       "path": "provenance/thought.provenance.v2.md",
       "mediaType": "text/markdown; charset=utf-8",
-      "byteLength": 3235,
-      "keccak256": "0xa569e4256be9750e040a36ce478656d4f5182eb23450f7129614c52fbdcbdaa7"
+      "byteLength": 6105,
+      "keccak256": "0x0d520bc4e6146001051e8e5572b28607dff72e13146b0eb681a91ccc8c5835ef"
     },
     {
       "role": "provenance-schema",
       "path": "provenance/thought.provenance.v2.schema.json",
       "mediaType": "application/schema+json",
-      "byteLength": 4624,
-      "keccak256": "0xc789a9846ee3bedd79a57b42c365803fdedd7ef43a1c610029f8a5b7fb810b22"
+      "byteLength": 6560,
+      "keccak256": "0xda3ef8295c48503d178bc3befdf7dfe72a9f366c268a9a5273a8d420668bd646"
     },
     {
       "role": "work-profile",
       "path": "work/thought.work.v2.profile.json",
       "mediaType": "application/json",
-      "byteLength": 2944,
-      "keccak256": "0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb"
+      "byteLength": 3242,
+      "keccak256": "0xfaa37b147f7ea37a790f35b67707d895e1b4b11481434289d444faace3d72674"
     },
     {
       "role": "renderer-profile",
       "path": "renderer/thought.renderer.v2.profile.json",
       "mediaType": "application/json",
-      "byteLength": 3513,
-      "keccak256": "0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88"
+      "byteLength": 4198,
+      "keccak256": "0xc68ec09234f316cfdb19b96456e04f76f4f4674b3bb6596117cc39d124d1f6e1"
     },
     {
       "role": "fixture:text-validation",
       "path": "conformance/text-validation.json",
       "mediaType": "application/json",
-      "byteLength": 27562,
-      "keccak256": "0xe26d01097c6e6bb3347466076d85b184c175db249c605547a663757a57447105"
+      "byteLength": 60947,
+      "keccak256": "0xe4d313b723a06637965ddcd78efc9c11e71542edbc2e169ecea74e3f758a7940"
     },
     {
       "role": "fixture:raw-utf8",
       "path": "conformance/raw-utf8-vectors.json",
       "mediaType": "application/json",
-      "byteLength": 2011,
-      "keccak256": "0x50f1501539e1f171c29f88cd94da984b0f82b733605081e8ec7b6dcaac131f27"
+      "byteLength": 4315,
+      "keccak256": "0x0f060ce749772b3710f7431e146af7b5a1af9b541a0aac5856c717631bec4c28"
     },
     {
       "role": "fixture:loom",
@@ -79,29 +142,36 @@
       "role": "fixture:provenance",
       "path": "conformance/provenance-vectors.json",
       "mediaType": "application/json",
-      "byteLength": 11179,
-      "keccak256": "0x616c53daa8ad4ac4d6d3d5fa3fcf5ac0288fea3c80ba478d60e9bbeae4acc4a4"
+      "byteLength": 15811,
+      "keccak256": "0xbecd349e780b2f024883f456d3fa50c869ea5bc6329553cbdb173c83bf501d9a"
     },
     {
       "role": "fixture:traits",
       "path": "conformance/trait-vectors.json",
       "mediaType": "application/json",
-      "byteLength": 6556,
-      "keccak256": "0x679031db91c3ea622415af13333c44c8461257c82d295db630ca508ed44b95cd"
+      "byteLength": 5487,
+      "keccak256": "0xbe6e35c729ffe84fb4a58a61e2080d17fe9eb369bea8e3a4142795712b5ad987"
     },
     {
       "role": "fixture:svg",
       "path": "conformance/svg-vectors.json",
       "mediaType": "application/json",
-      "byteLength": 462429,
-      "keccak256": "0xfe730510be2e009e8d27e22882598577ced979796699c695f53d5160d65e6e5f"
+      "byteLength": 488325,
+      "keccak256": "0x4f7409db4be499d38e78cab4442dc765cfd7ea528cb30ce76713556fa8e67cd8"
     },
     {
       "role": "fixture:token-uri",
       "path": "conformance/token-uri-vectors.json",
       "mediaType": "application/json",
-      "byteLength": 261741,
-      "keccak256": "0x33f86f8e35f71498311126976dab3ee07b9b86ae181bccc8d39b9f78ebce1535"
+      "byteLength": 282314,
+      "keccak256": "0x8bce9a418b48dcd296e1f5a4d065c15bdbe7741fa9c109efd63bb5e5a0494a4b"
+    },
+    {
+      "role": "fixture:creation-attestation",
+      "path": "attestation/fixtures/creation-attestation-vectors.json",
+      "mediaType": "application/json",
+      "byteLength": 30260,
+      "keccak256": "0xd7ba86d0cdd94efeb899e75e9cf2fc7406a7cf888fb5049a920dcd5b87a10576"
     }
   ]
 }

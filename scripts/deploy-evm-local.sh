@@ -17,6 +17,8 @@ THOUGHT_PROTOCOL_MANIFEST_URI="${THOUGHT_PROTOCOL_MANIFEST_URI:-}"
 MAX_THOUGHT_SPEC_BYTES="${MAX_THOUGHT_SPEC_BYTES:-20000}"
 THOUGHT_REGISTRY_OWNER="${THOUGHT_REGISTRY_OWNER:-}"
 THOUGHT_REGISTRY_OWNER_PRIVATE_KEY="${THOUGHT_REGISTRY_OWNER_PRIVATE_KEY:-$PRIVATE_KEY}"
+THOUGHT_ATTESTATION_OWNER="${THOUGHT_ATTESTATION_OWNER:-}"
+THOUGHT_ATTESTATION_AUTHORITY="${THOUGHT_ATTESTATION_AUTHORITY:-}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -52,6 +54,16 @@ DEPLOYER_ADDRESS="$(cast wallet address --private-key "$PRIVATE_KEY")"
 if [[ -z "$THOUGHT_REGISTRY_OWNER" ]]; then
   THOUGHT_REGISTRY_OWNER="$DEPLOYER_ADDRESS"
 fi
+if [[ -z "$THOUGHT_ATTESTATION_OWNER" ]]; then
+  THOUGHT_ATTESTATION_OWNER="$THOUGHT_REGISTRY_OWNER"
+fi
+if [[ -z "$THOUGHT_ATTESTATION_AUTHORITY" ]]; then
+  THOUGHT_ATTESTATION_AUTHORITY="$DEPLOYER_ADDRESS"
+fi
+if [[ ! "$THOUGHT_ATTESTATION_OWNER" =~ ^0x[0-9a-fA-F]{40}$ || ! "$THOUGHT_ATTESTATION_AUTHORITY" =~ ^0x[0-9a-fA-F]{40}$ ]]; then
+  echo "THOUGHT_ATTESTATION_OWNER and THOUGHT_ATTESTATION_AUTHORITY must be addresses." >&2
+  exit 1
+fi
 THOUGHT_REGISTRY_OWNER_ADDRESS="$(cast wallet address --private-key "$THOUGHT_REGISTRY_OWNER_PRIVATE_KEY")"
 if [[ "${THOUGHT_REGISTRY_OWNER_ADDRESS,,}" != "${THOUGHT_REGISTRY_OWNER,,}" ]]; then
   echo "THOUGHT_REGISTRY_OWNER_PRIVATE_KEY does not match THOUGHT_REGISTRY_OWNER." >&2
@@ -63,8 +75,9 @@ tmp_registry="$(mktemp)"
 tmp_protocol="$(mktemp)"
 tmp_protocol_registry="$(mktemp)"
 tmp_renderer="$(mktemp)"
+tmp_attestation_verifier="$(mktemp)"
 tmp_token="$(mktemp)"
-trap 'rm -f "$tmp_spec" "$tmp_registry" "$tmp_protocol" "$tmp_protocol_registry" "$tmp_renderer" "$tmp_token"' EXIT
+trap 'rm -f "$tmp_spec" "$tmp_registry" "$tmp_protocol" "$tmp_protocol_registry" "$tmp_renderer" "$tmp_attestation_verifier" "$tmp_token"' EXIT
 
 node --input-type=module - "$THOUGHT_SPEC_NAME" "$THOUGHT_SPEC_FILE" "$THOUGHT_SPEC_REF" "$MAX_THOUGHT_SPEC_BYTES" >"$tmp_spec" <<'NODE'
 import fs from "node:fs";
@@ -145,6 +158,7 @@ const uriLength = Buffer.byteLength(manifestURI, "utf8");
 if (uriLength < 1 || uriLength > 200) throw new Error(`invalid manifest URI length: ${uriLength}`);
 const rendererProfileHash = artifactHash("renderer-profile");
 const workProfileHash = artifactHash("work-profile");
+const creationAttestationProfileHash = artifactHash("creation-attestation-profile");
 const constants = fs.readFileSync(constantsFile, "utf8");
 if (!constants.includes(`RENDERER_PROFILE_KECCAK256 = ${rendererProfileHash};`)) {
   throw new Error("compiled renderer profile constant does not match protocol manifest");
@@ -152,12 +166,16 @@ if (!constants.includes(`RENDERER_PROFILE_KECCAK256 = ${rendererProfileHash};`))
 if (!constants.includes(`WORK_PROFILE_KECCAK256 = ${workProfileHash};`)) {
   throw new Error("compiled work profile constant does not match protocol manifest");
 }
+if (!constants.includes(`CREATION_ATTESTATION_PROFILE_KECCAK256 = ${creationAttestationProfileHash};`)) {
+  throw new Error("compiled creation-attestation profile constant does not match protocol manifest");
+}
 process.stdout.write(`${JSON.stringify({
   manifestHash,
   manifestURI,
   releaseId,
   rendererProfileHash,
   workProfileHash,
+  creationAttestationProfileHash,
 })}\n`);
 NODE
 
@@ -190,6 +208,7 @@ PROTOCOL_MANIFEST_URI="$(jq -r '.manifestURI' "$tmp_protocol")"
 PROTOCOL_RELEASE_ID="$(jq -r '.releaseId' "$tmp_protocol")"
 RENDERER_PROFILE_HASH="$(jq -r '.rendererProfileHash' "$tmp_protocol")"
 WORK_PROFILE_HASH="$(jq -r '.workProfileHash' "$tmp_protocol")"
+CREATION_ATTESTATION_PROFILE_HASH="$(jq -r '.creationAttestationProfileHash' "$tmp_protocol")"
 
 (
   cd "$EVM_DIR"
@@ -282,8 +301,20 @@ RENDERER_ADDRESS="$(jq -r '.deployedTo' "$tmp_renderer")"
     --rpc-url "$RPC_URL" \
     --private-key "$PRIVATE_KEY" \
     --json \
+    src/CreationAttestationVerifier.sol:CreationAttestationVerifier \
+    --constructor-args "$THOUGHT_ATTESTATION_OWNER" "$THOUGHT_ATTESTATION_AUTHORITY" >"$tmp_attestation_verifier"
+)
+ATTESTATION_VERIFIER_ADDRESS="$(jq -r '.deployedTo' "$tmp_attestation_verifier")"
+
+(
+  cd "$EVM_DIR"
+  forge create \
+    --broadcast \
+    --rpc-url "$RPC_URL" \
+    --private-key "$PRIVATE_KEY" \
+    --json \
     src/ThoughtNFT.sol:ThoughtNFT \
-    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" "$RENDERER_ADDRESS" "$PROTOCOL_REGISTRY_ADDRESS" "$PROTOCOL_RELEASE_ID" >"$tmp_token"
+    --constructor-args "$PATH_NFT_ADDRESS" "$REGISTRY_ADDRESS" "$RENDERER_ADDRESS" "$PROTOCOL_REGISTRY_ADDRESS" "$PROTOCOL_RELEASE_ID" "$ATTESTATION_VERIFIER_ADDRESS" >"$tmp_token"
 )
 
 TOKEN_ADDRESS="$(python3 - "$tmp_token" <<'PY'
@@ -296,6 +327,9 @@ PY
 NFT_MANIFEST_HASH="$(cast call "$TOKEN_ADDRESS" 'protocolManifestHash()(bytes32)' --rpc-url "$RPC_URL")"
 NFT_RENDERER_PROFILE_HASH="$(cast call "$TOKEN_ADDRESS" 'RENDERER_PROFILE_KECCAK256()(bytes32)' --rpc-url "$RPC_URL")"
 NFT_WORK_PROFILE_HASH="$(cast call "$TOKEN_ADDRESS" 'WORK_PROFILE_KECCAK256()(bytes32)' --rpc-url "$RPC_URL")"
+NFT_ATTESTATION_VERIFIER="$(cast call "$TOKEN_ADDRESS" 'creationAttestationVerifier()(address)' --rpc-url "$RPC_URL")"
+NFT_ATTESTATION_PROFILE_ID="$(cast call "$TOKEN_ADDRESS" 'CREATION_ATTESTATION_PROFILE_ID()(bytes32)' --rpc-url "$RPC_URL")"
+VERIFIER_ATTESTATION_PROFILE_ID="$(cast call "$ATTESTATION_VERIFIER_ADDRESS" 'profileId()(bytes32)' --rpc-url "$RPC_URL")"
 if [[ "${NFT_MANIFEST_HASH,,}" != "${PROTOCOL_MANIFEST_HASH,,}" ]]; then
   echo "ThoughtNFT protocol manifest hash mismatch." >&2
   exit 1
@@ -306,6 +340,14 @@ if [[ "${NFT_RENDERER_PROFILE_HASH,,}" != "${RENDERER_PROFILE_HASH,,}" ]]; then
 fi
 if [[ "${NFT_WORK_PROFILE_HASH,,}" != "${WORK_PROFILE_HASH,,}" ]]; then
   echo "ThoughtNFT work profile hash mismatch." >&2
+  exit 1
+fi
+if [[ "${NFT_ATTESTATION_VERIFIER,,}" != "${ATTESTATION_VERIFIER_ADDRESS,,}" ]]; then
+  echo "ThoughtNFT creation-attestation verifier mismatch." >&2
+  exit 1
+fi
+if [[ "${NFT_ATTESTATION_PROFILE_ID,,}" != "${VERIFIER_ATTESTATION_PROFILE_ID,,}" ]]; then
+  echo "Creation-attestation profile ID mismatch." >&2
   exit 1
 fi
 
@@ -327,10 +369,10 @@ if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
     --private-key "$PRIVATE_KEY" >/dev/null
 fi
 
-python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$REGISTRY_ADDRESS" "$PROTOCOL_REGISTRY_ADDRESS" "$THOUGHT_REGISTRY_OWNER" "$RENDERER_ADDRESS" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_NAME" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" "$THOUGHT_SPEC_BYTE_LENGTH" "$PROTOCOL_RELEASE_ID" "$PROTOCOL_MANIFEST_HASH" "$PROTOCOL_MANIFEST_URI" "$RENDERER_PROFILE_HASH" "$WORK_PROFILE_HASH" <<'PY'
+python3 - "$ADDRESSES_FILE" "$RPC_URL" "$CHAIN_ID" "$REGISTRY_ADDRESS" "$PROTOCOL_REGISTRY_ADDRESS" "$THOUGHT_REGISTRY_OWNER" "$RENDERER_ADDRESS" "$ATTESTATION_VERIFIER_ADDRESS" "$THOUGHT_ATTESTATION_OWNER" "$THOUGHT_ATTESTATION_AUTHORITY" "$VERIFIER_ATTESTATION_PROFILE_ID" "$TOKEN_ADDRESS" "$PATH_NFT_ADDRESS" "$THOUGHT_MOVEMENT_QUOTA" "$THOUGHT_SPEC_NAME" "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH" "$THOUGHT_SPEC_REF" "$THOUGHT_SPEC_BYTE_LENGTH" "$PROTOCOL_RELEASE_ID" "$PROTOCOL_MANIFEST_HASH" "$PROTOCOL_MANIFEST_URI" "$RENDERER_PROFILE_HASH" "$WORK_PROFILE_HASH" "$CREATION_ATTESTATION_PROFILE_HASH" <<'PY'
 import json, sys
 
-out_path, rpc_url, chain_id, registry_address, protocol_registry_address, registry_owner, renderer_address, token_address, path_nft_address, thought_movement_quota, thought_spec_name, thought_spec_id, thought_spec_hash, thought_spec_ref, thought_spec_byte_length, protocol_release_id, protocol_manifest_hash, protocol_manifest_uri, renderer_profile_hash, work_profile_hash = sys.argv[1:]
+out_path, rpc_url, chain_id, registry_address, protocol_registry_address, registry_owner, renderer_address, attestation_verifier_address, attestation_owner, attestation_authority, attestation_profile_id, token_address, path_nft_address, thought_movement_quota, thought_spec_name, thought_spec_id, thought_spec_hash, thought_spec_ref, thought_spec_byte_length, protocol_release_id, protocol_manifest_hash, protocol_manifest_uri, renderer_profile_hash, work_profile_hash, creation_attestation_profile_hash = sys.argv[1:]
 payload = {
     "schema": "thought.evm.v2.addresses",
     "network": "anvil",
@@ -340,6 +382,13 @@ payload = {
     "thoughtSpecRegistry": {"address": registry_address, "owner": registry_owner},
     "protocolRegistry": {"address": protocol_registry_address, "owner": registry_owner},
     "thoughtRenderer": {"address": renderer_address},
+    "creationAttestationVerifier": {
+        "address": attestation_verifier_address,
+        "owner": attestation_owner,
+        "authority": attestation_authority,
+        "authorityEpoch": 1,
+        "profileId": attestation_profile_id,
+    },
     "thought": {"address": token_address},
     "movement": "THOUGHT",
     "movementQuota": int(thought_movement_quota),
@@ -354,6 +403,7 @@ payload = {
         "manifestURI": protocol_manifest_uri,
         "rendererProfileHash": renderer_profile_hash,
         "workProfileHash": work_profile_hash,
+        "creationAttestationProfileHash": creation_attestation_profile_hash,
     },
 }
 with open(out_path, "w", encoding="utf-8") as f:
@@ -365,6 +415,7 @@ PY
 echo "ThoughtSpecRegistry: $REGISTRY_ADDRESS"
 echo "ThoughtSpecRegistry owner: $THOUGHT_REGISTRY_OWNER"
 echo "ThoughtNFT:          $TOKEN_ADDRESS"
+echo "Attestation verifier: $ATTESTATION_VERIFIER_ADDRESS"
 echo "PathNFT:             $PATH_NFT_ADDRESS"
 if [[ "$CONFIGURE_PATH_MOVEMENT" == "1" ]]; then
   echo "Configured and froze PATH THOUGHT movement to $TOKEN_ADDRESS with quota $THOUGHT_MOVEMENT_QUOTA"

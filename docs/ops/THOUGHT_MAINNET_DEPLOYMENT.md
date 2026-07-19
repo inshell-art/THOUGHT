@@ -6,6 +6,8 @@ This is the mainnet path for the active formal contracts. It intentionally requi
 
 - A reviewed PATH mainnet release provides the `PathNFT` address and the long-term PATH ADMIN address.
 - The registry owner is that Ledger-backed ADMIN address.
+- The `CreationAttestationVerifier` owner is that Ledger-backed ADMIN address.
+- The initial creation-attestation authority is a separately reviewed production service-key address. Only its public address enters this repository or deployment input; the signing private key does not.
 - The exact raw `specs/THOUGHT.v2.md` bytes have passed BOM, CRLF, name, and `Version: v2` checks.
 - An approved exact-byte `protocol/releases/v2/release.manifest.json` and 1-200 byte retrieval URI have passed the complete release gate. Draft manifests are forbidden.
 - The build and both active and legacy regression suites pass from the reviewed commit.
@@ -54,8 +56,14 @@ forge create --broadcast --rpc-url "$MAINNET_RPC_URL" "${DEPLOY_SIGNER_ARGS[@]}"
 THOUGHT_RENDERER=$(jq -r .deployedTo thought-renderer.json)
 
 forge create --broadcast --rpc-url "$MAINNET_RPC_URL" "${DEPLOY_SIGNER_ARGS[@]}" --json \
+  src/CreationAttestationVerifier.sol:CreationAttestationVerifier \
+  --constructor-args "$THOUGHT_REGISTRY_OWNER" "$THOUGHT_ATTESTATION_AUTHORITY" | tee creation-attestation-verifier.json
+
+CREATION_ATTESTATION_VERIFIER=$(jq -r .deployedTo creation-attestation-verifier.json)
+
+forge create --broadcast --rpc-url "$MAINNET_RPC_URL" "${DEPLOY_SIGNER_ARGS[@]}" --json \
   src/ThoughtNFT.sol:ThoughtNFT \
-  --constructor-args "$PATH_NFT" "$REGISTRY" "$THOUGHT_RENDERER" "$PROTOCOL_REGISTRY" "$PROTOCOL_RELEASE_ID" | tee thought-nft.json
+  --constructor-args "$PATH_NFT" "$REGISTRY" "$THOUGHT_RENDERER" "$PROTOCOL_REGISTRY" "$PROTOCOL_RELEASE_ID" "$CREATION_ATTESTATION_VERIFIER" | tee thought-nft.json
 
 THOUGHT_NFT=$(jq -r .deployedTo thought-nft.json)
 ```
@@ -81,6 +89,7 @@ cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'pathNft()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'thoughtSpecRegistry()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'thoughtRenderer()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'protocolRegistry()(address)'
+cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'creationAttestationVerifier()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'protocolReleaseId()(bytes32)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'protocolManifestHash()(bytes32)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$THOUGHT_NFT" 'protocolManifestURI()(string)'
@@ -90,8 +99,13 @@ cast call --rpc-url "$MAINNET_RPC_URL" "$REGISTRY" 'owner()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$PROTOCOL_REGISTRY" 'owner()(address)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$PROTOCOL_REGISTRY" \
   'isRegistered(bytes32)(bool)' "$PROTOCOL_RELEASE_ID"
+cast call --rpc-url "$MAINNET_RPC_URL" "$CREATION_ATTESTATION_VERIFIER" 'profileId()(bytes32)'
+cast call --rpc-url "$MAINNET_RPC_URL" "$CREATION_ATTESTATION_VERIFIER" 'owner()(address)'
+cast call --rpc-url "$MAINNET_RPC_URL" "$CREATION_ATTESTATION_VERIFIER" 'authority()(address)'
+cast call --rpc-url "$MAINNET_RPC_URL" "$CREATION_ATTESTATION_VERIFIER" 'authorityEpoch()(uint32)'
+cast call --rpc-url "$MAINNET_RPC_URL" "$CREATION_ATTESTATION_VERIFIER" 'paused()(bool)'
 cast call --rpc-url "$MAINNET_RPC_URL" "$REGISTRY" \
-  'isRegisteredThoughtSpec(bytes32,bytes32)(bool)' "$THOUGHT_SPEC_ID" "$THOUGHT_SPEC_HASH"
+  'isRegisteredThoughtSpec(bytes32,bytes32)(bool)' "$SPEC_ID" "$SPEC_HASH"
 cast call --rpc-url "$MAINNET_RPC_URL" "$PATH_NFT" \
   'getAuthorizedMinter(bytes32)(address)' $(cast format-bytes32-string THOUGHT)
 cast call --rpc-url "$MAINNET_RPC_URL" "$PATH_NFT" \
@@ -100,4 +114,4 @@ cast call --rpc-url "$MAINNET_RPC_URL" "$PATH_NFT" \
   'isMovementFrozen(bytes32)(bool)' $(cast format-bytes32-string THOUGHT)
 ```
 
-The expected final state is: the active `ThoughtNFT` is the PATH movement minter, quota is `1`, movement is frozen, the exact-spec registry contains the exact `THOUGHT.v2.md` id/hash pair, and the collection's immutable release/manifest/profile getters match the approved registered manifest.
+The expected final state is: the active `ThoughtNFT` is the PATH movement minter, quota is `1`, movement is frozen, the exact-spec registry contains the exact `THOUGHT.v2.md` id/hash pair, and the collection's immutable release/manifest/profile/verifier getters match the approved deployment. The verifier must report the reviewed profile ID, Ledger-backed owner, reviewed service-key authority at epoch `1`, and `paused == false`.

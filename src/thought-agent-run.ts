@@ -7,9 +7,11 @@ import {
 } from "./thought-v2-release";
 import {
   assertThoughtLine,
+  isThoughtModelSource,
   THOUGHT_AGENT_DECLARATION_ID,
   THOUGHT_AGENT_RESULT_ID,
   THOUGHT_AGENT_RUN_ID,
+  type ThoughtDeclaredModel,
 } from "./thought-v2-protocol";
 
 export type ThoughtAgentRunState =
@@ -36,10 +38,14 @@ export type ThoughtAgentResult = {
     manifestKeccak256: `0x${string}`;
   };
   agentLine: string;
+  agent: {
+    label: string;
+    model: ThoughtDeclaredModel;
+  };
   declaration?: {
     schema: typeof THOUGHT_AGENT_DECLARATION_ID;
     status: "declared-unverified";
-    agentLabel: string;
+    label: string;
     declaredOneCreativeResult: true;
   };
 };
@@ -113,6 +119,19 @@ const assertActive = (run: ThoughtAgentRun, now: number): void => {
   }
 };
 
+const assertDeclaredModel: (value: unknown) => asserts value is ThoughtDeclaredModel = (value) => {
+  if (!exactKeys(value, ["label", "source"], ["identifier"])) {
+    throw new Error("Agent model shape mismatch");
+  }
+  const model = value as Record<string, unknown>;
+  if (typeof model.label !== "string") throw new Error("Agent model label mismatch");
+  assertThoughtLine(model.label, "model");
+  if (!isThoughtModelSource(model.source)) throw new Error("Agent model source mismatch");
+  if (model.identifier !== undefined && (typeof model.identifier !== "string" || model.identifier.length < 1)) {
+    throw new Error("Agent model identifier mismatch");
+  }
+};
+
 export const claimThoughtAgentRun = (run: ThoughtAgentRun, now: number): ThoughtAgentRun => {
   assertActive(run, now);
   if (run.state !== "created") throw new Error(`cannot claim from ${run.state}`);
@@ -132,7 +151,7 @@ const parseThoughtAgentResult = (exactResultBytes: string, run: ThoughtAgentRun)
   } catch {
     throw new Error("Agent result is not valid JSON");
   }
-  if (!exactKeys(value, ["schema", "release", "agentLine"], ["declaration"])) {
+  if (!exactKeys(value, ["schema", "release", "agentLine", "agent"], ["declaration"])) {
     throw new Error("Agent result shape mismatch");
   }
   const result = value as ThoughtAgentResult;
@@ -147,16 +166,21 @@ const parseThoughtAgentResult = (exactResultBytes: string, run: ThoughtAgentRun)
     throw new Error("Agent result manifest hash mismatch");
   }
   assertThoughtLine(result.agentLine, "agent");
+  if (!exactKeys(result.agent, ["label", "model"])) {
+    throw new Error("Agent identity shape mismatch");
+  }
+  if (typeof result.agent.label !== "string") throw new Error("Agent identity label mismatch");
+  assertThoughtLine(result.agent.label, "declaredAgent");
+  assertDeclaredModel(result.agent.model);
   if (result.declaration !== undefined) {
-    if (!exactKeys(result.declaration, ["schema", "status", "agentLabel", "declaredOneCreativeResult"])) {
+    if (!exactKeys(result.declaration, ["schema", "status", "label", "declaredOneCreativeResult"])) {
       throw new Error("Agent declaration shape mismatch");
     }
     if (
       result.declaration.schema !== THOUGHT_AGENT_DECLARATION_ID ||
       result.declaration.status !== "declared-unverified" ||
-      typeof result.declaration.agentLabel !== "string" ||
-      result.declaration.agentLabel.length < 1 ||
-      result.declaration.agentLabel.length > 100 ||
+      typeof result.declaration.label !== "string" ||
+      result.declaration.label !== result.agent.label ||
       result.declaration.declaredOneCreativeResult !== true
     ) throw new Error("Agent declaration mismatch");
   }

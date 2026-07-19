@@ -1,35 +1,8 @@
 {
-  "binaryContrastBoundaries": [
-    {
-      "label": "Low",
-      "value": 0
-    },
-    {
-      "label": "Low",
-      "value": 170
-    },
-    {
-      "label": "Medium",
-      "value": 171
-    },
-    {
-      "label": "Medium",
-      "value": 341
-    },
-    {
-      "label": "High",
-      "value": 342
-    },
-    {
-      "label": "High",
-      "value": 512
-    }
-  ],
   "representatives": [
     {
       "agentBytes": 1,
       "agentWeight": 192,
-      "binaryContrast": "Low",
       "bitDistance": 128,
       "id": "one-byte-cycle",
       "loomWeight": 384,
@@ -40,7 +13,6 @@
     {
       "agentBytes": 63,
       "agentWeight": 192,
-      "binaryContrast": "Low",
       "bitDistance": 128,
       "id": "source-63-bytes",
       "loomWeight": 384,
@@ -51,7 +23,6 @@
     {
       "agentBytes": 64,
       "agentWeight": 241,
-      "binaryContrast": "Medium",
       "bitDistance": 196,
       "id": "source-64-bytes",
       "loomWeight": 482,
@@ -62,7 +33,6 @@
     {
       "agentBytes": 64,
       "agentWeight": 242,
-      "binaryContrast": "Medium",
       "bitDistance": 260,
       "id": "direction-diagnostic-64-bytes",
       "loomWeight": 484,
@@ -73,7 +43,6 @@
     {
       "agentBytes": 12,
       "agentWeight": 257,
-      "binaryContrast": "Low",
       "bitDistance": 70,
       "id": "ascii",
       "loomWeight": 514,
@@ -84,7 +53,6 @@
     {
       "agentBytes": 25,
       "agentWeight": 271,
-      "binaryContrast": "Medium",
       "bitDistance": 237,
       "id": "ascii-punctuation",
       "loomWeight": 519,
@@ -95,7 +63,6 @@
     {
       "agentBytes": 13,
       "agentWeight": 158,
-      "binaryContrast": "Medium",
       "bitDistance": 187,
       "id": "internal-repeated-spaces",
       "loomWeight": 343,
@@ -106,7 +73,6 @@
     {
       "agentBytes": 13,
       "agentWeight": 272,
-      "binaryContrast": "Low",
       "bitDistance": 136,
       "id": "cjk",
       "loomWeight": 534,
@@ -117,7 +83,6 @@
     {
       "agentBytes": 27,
       "agentWeight": 232,
-      "binaryContrast": "Low",
       "bitDistance": 63,
       "id": "thai-combining",
       "loomWeight": 457,
@@ -128,7 +93,6 @@
     {
       "agentBytes": 15,
       "agentWeight": 232,
-      "binaryContrast": "Low",
       "bitDistance": 70,
       "id": "arabic",
       "loomWeight": 492,
@@ -139,7 +103,6 @@
     {
       "agentBytes": 29,
       "agentWeight": 255,
-      "binaryContrast": "Medium",
       "bitDistance": 175,
       "id": "arabic-vowel-marks",
       "loomWeight": 525,
@@ -150,7 +113,6 @@
     {
       "agentBytes": 18,
       "agentWeight": 241,
-      "binaryContrast": "Medium",
       "bitDistance": 222,
       "id": "mixed-scripts",
       "loomWeight": 486,
@@ -161,7 +123,6 @@
     {
       "agentBytes": 2,
       "agentWeight": 256,
-      "binaryContrast": "Low",
       "bitDistance": 64,
       "id": "utf8-two-byte",
       "loomWeight": 512,
@@ -172,7 +133,6 @@
     {
       "agentBytes": 3,
       "agentWeight": 279,
-      "binaryContrast": "Low",
       "bitDistance": 149,
       "id": "utf8-three-byte",
       "loomWeight": 535,
@@ -183,7 +143,6 @@
     {
       "agentBytes": 4,
       "agentWeight": 240,
-      "binaryContrast": "Low",
       "bitDistance": 16,
       "id": "utf8-four-byte",
       "loomWeight": 464,
@@ -194,7 +153,6 @@
     {
       "agentBytes": 8,
       "agentWeight": 304,
-      "binaryContrast": "Low",
       "bitDistance": 32,
       "id": "emoji-skin-tone",
       "loomWeight": 608,
@@ -205,7 +163,6 @@
     {
       "agentBytes": 8,
       "agentWeight": 312,
-      "binaryContrast": "Low",
       "bitDistance": 56,
       "id": "regional-indicator-flag",
       "loomWeight": 600,
@@ -216,7 +173,6 @@
     {
       "agentBytes": 3,
       "agentWeight": 192,
-      "binaryContrast": "Low",
       "bitDistance": 64,
       "id": "combining-sequence",
       "loomWeight": 406,
@@ -227,7 +183,6 @@
     {
       "agentBytes": 2,
       "agentWeight": 224,
-      "binaryContrast": "Low",
       "bitDistance": 32,
       "id": "unicode-precomposed",
       "loomWeight": 480,
@@ -238,7 +193,6 @@
     {
       "agentBytes": 8,
       "agentWeight": 200,
-      "binaryContrast": "Low",
       "bitDistance": 24,
       "id": "xml-escaping",
       "loomWeight": 424,
@@ -249,7 +203,6 @@
     {
       "agentBytes": 1,
       "agentWeight": 256,
-      "binaryContrast": "Low",
       "bitDistance": 64,
       "id": "shortest",
       "loomWeight": 448,
@@ -260,7 +213,6 @@
     {
       "agentBytes": 64,
       "agentWeight": 128,
-      "binaryContrast": "Medium",
       "bitDistance": 192,
       "id": "maximum-valid-ascii",
       "loomWeight": 320,
@@ -269,7 +221,7 @@
       "textureDensity": "Open"
     }
   ],
-  "schema": "inshell.thought.trait-vectors.v1",
+  "schema": "inshell.thought.trait-vectors.v2",
   "textureDensityBoundaries": [
     {
       "label": "Open",

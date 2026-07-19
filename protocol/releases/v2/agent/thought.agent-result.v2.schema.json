@@ -3,6 +3,7 @@
   "$id": "https://inshell.art/protocol/releases/v2/agent/thought.agent-result.v2.schema.json",
   "additionalProperties": false,
   "properties": {
+    "agent": { "$ref": "#/$defs/agent" },
     "agentLine": {
       "minLength": 1,
       "type": "string",
@@ -21,10 +22,47 @@
     },
     "schema": { "const": "inshell.thought.agent-result.v2" }
   },
-  "required": ["schema", "release", "agentLine"],
+  "required": ["schema", "release", "agentLine", "agent"],
   "title": "THOUGHT Agent Result V2",
   "type": "object",
   "$defs": {
+    "agent": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "minLength": 1,
+          "type": "string",
+          "x-thought-line-profile": "inshell.thought.work.v2",
+          "x-thought-utf8-max-bytes": 64
+        },
+        "model": { "$ref": "#/$defs/model" }
+      },
+      "required": ["label", "model"],
+      "type": "object"
+    },
+    "model": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier": { "minLength": 1, "type": "string" },
+        "label": {
+          "minLength": 1,
+          "type": "string",
+          "x-thought-line-profile": "inshell.thought.work.v2",
+          "x-thought-utf8-max-bytes": 64
+        },
+        "source": {
+          "enum": [
+            "connector_observed",
+            "runtime_configured",
+            "agent_declared",
+            "manual",
+            "unknown"
+          ]
+        }
+      },
+      "required": ["label", "source"],
+      "type": "object"
+    },
     "bytes32": { "pattern": "^0x[0-9a-f]{64}$", "type": "string" }
   }
 }

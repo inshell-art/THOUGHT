@@ -24,6 +24,9 @@ export const thoughtV2DefaultText: ThoughtV2TextPair = {
   agentLine: "quiet Agent مرحبا",
 };
 
+export const thoughtV2FixtureDeclaredModel = "Fixture Model";
+export const thoughtV2FixtureDeclaredAgent = "Fixture Agent";
+
 export const thoughtV2TextCorpuses: ThoughtV2TextCorpus[] = [
   {
     id: "mixed-baseline",

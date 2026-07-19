@@ -1,7 +1,7 @@
 {
-  "manifestByteLength": 3779,
-  "manifestHash": "0x305f59465c93edf46e5ab0ca372b017f6cba5c98052e695ae6b9ca5778515d4b",
-  "protocolReleaseId": "0xea4493c669fc366e224e66a43233e1e97efecd18568ef494dfc31b4a3c961b65",
+  "manifestByteLength": 6508,
+  "manifestHash": "0x88816286211e657f07e94a4728543c92c6463fece9701fb0cee0b1ae29ef0ef2",
+  "protocolReleaseId": "0x6950429fdb8c369226b47f5308590de7cc601c037cdbf816dead7eb3e6aa7bd5",
   "registrationAuthorized": false,
   "status": "draft"
 }

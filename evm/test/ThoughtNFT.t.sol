@@ -2,6 +2,8 @@
 pragma solidity ^0.8.28;
 
 import {ThoughtNFT} from "../src/ThoughtNFT.sol";
+import {CreationAttestationVerifier} from "../src/CreationAttestationVerifier.sol";
+import {ICreationAttestationVerifier} from "../src/ICreationAttestationVerifier.sol";
 import {ThoughtRenderer} from "../src/ThoughtRenderer.sol";
 import {ThoughtSpecRegistry} from "../src/ThoughtSpecRegistry.sol";
 import {ThoughtSpecRegistryV2} from "../src/ThoughtSpecRegistryV2.sol";
@@ -91,6 +93,15 @@ contract MockPathNFTActive {
     }
 }
 
+contract PermissivePathNFTActive {
+    uint256 public consumeCallCount;
+
+    function consumeUnit(uint256, bytes32, address, uint256, bytes calldata) external returns (uint256 serial) {
+        consumeCallCount += 1;
+        return 0;
+    }
+}
+
 contract RecordingERC721ReceiverActive {
     bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
@@ -125,6 +136,24 @@ contract RevertingERC721ReceiverActive {
     }
 }
 
+contract MintingERC721ReceiverActive {
+    bool public accept;
+    uint256 public callbackCount;
+
+    function setAccept(bool value) external {
+        accept = value;
+    }
+
+    function mint(ThoughtNFT token, ThoughtNFT.MintThoughtInput calldata input) external returns (uint256) {
+        return token.mint(input);
+    }
+
+    function onERC721Received(address, address, uint256, bytes calldata) external returns (bytes4) {
+        callbackCount += 1;
+        return accept ? bytes4(0x150b7a02) : bytes4(0xffffffff);
+    }
+}
+
 contract WrongThoughtRendererActive {
     function RENDERER_ID_HASH() external pure returns (bytes32) {
         return keccak256("wrong.renderer");
@@ -135,14 +164,18 @@ contract ReentrantPathNFTActive {
     ThoughtNFT public token;
     bytes32 public specId;
     bytes32 public specHash;
+    string public nestedProvenance;
     bool public reentrantBlocked;
     uint256 public consumeCallCount;
     bool private _entered;
 
-    function configure(ThoughtNFT token_, bytes32 specId_, bytes32 specHash_) external {
+    function configure(ThoughtNFT token_, bytes32 specId_, bytes32 specHash_, string calldata nestedProvenance_)
+        external
+    {
         token = token_;
         specId = specId_;
         specHash = specHash_;
+        nestedProvenance = nestedProvenance_;
     }
 
     function consumeUnit(uint256, bytes32, address, uint256, bytes calldata) external returns (uint256 serial) {
@@ -153,12 +186,17 @@ contract ReentrantPathNFTActive {
             ThoughtNFT.MintThoughtInput memory input = ThoughtNFT.MintThoughtInput({
                 promptLine: "nested prompt",
                 agentLine: "NESTED AGENT",
+                declaredAgent: "Fixture Agent",
+                declaredModel: "Fixture Model",
                 pathId: 77,
                 thoughtSpecId: specId,
                 thoughtSpecHash: specHash,
-                provenanceJson: '{"app":"THOUGHT","test":"reentrant"}',
+                provenanceJson: nestedProvenance,
                 deadline: block.timestamp + 1 hours,
-                pathSignature: ""
+                pathSignature: "",
+                creationAttestation: ThoughtNFT.CreationAttestationProof({
+                    runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+                })
             });
 
             try token.mint(input) returns (uint256) {
@@ -210,15 +248,18 @@ contract ThoughtNFTTest {
     VmActive private constant vm = VmActive(address(uint160(uint256(keccak256("hevm cheat code")))));
     uint256 private constant USER_KEY = 0xA11CE;
     uint256 private constant OTHER_KEY = 0xB0B;
-    string private constant DEFAULT_PROVENANCE =
-        '{"app":"THOUGHT","version":"v2","route":"codex","agentVerified":false}';
+    uint256 private constant ATTESTOR_KEY = 0xA7735702;
+    bytes16 private constant HEX_DIGITS = "0123456789abcdef";
+    string private constant DEFAULT_DECLARED_MODEL = "Fixture Model";
+    string private constant DEFAULT_DECLARED_AGENT = "Fixture Agent";
     string private constant DEFAULT_SPEC_NAME = "THOUGHT.v2.md";
     string private constant DEFAULT_SPEC_REF = "THOUGHT.v2.md";
     string private constant DEFAULT_SPEC_TEXT =
         "# THOUGHT.v2.md\n\nVersion: v2\n\nThe contract mints final visible V2 lines only.\n";
     bytes32 private constant PROTOCOL_RELEASE_HASH = keccak256("inshell.thought.protocol.v2.test");
-    uint256 private constant APPROVED_MAX_COMPLETE_MINT_GAS = 825_000;
+    uint256 private constant APPROVED_MAX_COMPLETE_MINT_GAS = 5_000_000;
     uint256 private constant APPROVED_MAX_COMBINED_DEPLOYMENT_GAS = 8_000_000;
+    uint256 private constant APPROVED_MAX_VERIFIER_DEPLOYMENT_GAS = 1_100_000;
     bytes32 private constant CONSUME_AUTHORIZATION_TYPEHASH = keccak256(
         "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 nonce,uint256 deadline)"
     );
@@ -239,12 +280,24 @@ contract ThoughtNFTTest {
         bytes32 thoughtSpecId,
         bytes32 thoughtSpecHash
     );
+    event CreationAttested(
+        uint256 indexed tokenId,
+        bytes32 indexed digest,
+        address indexed attestor,
+        bytes32 profileId,
+        bytes32 workHash,
+        bytes32 runIdHash,
+        address minter,
+        uint64 deadline,
+        uint32 authorityEpoch
+    );
     event GasProfile(string metric, uint256 gasUsed, uint256 responseBytes);
 
     MockPathNFTActive private path;
     ThoughtSpecRegistry private registry;
     ThoughtSpecRegistryV2 private protocolRegistry;
     ThoughtRenderer private renderer;
+    CreationAttestationVerifier private attestationVerifier;
     ThoughtNFT private token;
     address private user;
     bytes32 private defaultSpecId;
@@ -257,11 +310,17 @@ contract ThoughtNFTTest {
         registry = new ThoughtSpecRegistry(address(this));
         protocolRegistry = new ThoughtSpecRegistryV2(address(this));
         renderer = new ThoughtRenderer();
+        attestationVerifier = new CreationAttestationVerifier(address(this), vm.addr(ATTESTOR_KEY));
         (defaultSpecId, defaultSpecHash,) =
             registry.registerThoughtSpec(DEFAULT_SPEC_NAME, DEFAULT_SPEC_REF, bytes(DEFAULT_SPEC_TEXT));
         protocolReleaseId = protocolRegistry.registerRelease(PROTOCOL_RELEASE_HASH, "ipfs://thought-v2-test-manifest");
         token = new ThoughtNFT(
-            address(path), address(registry), address(renderer), address(protocolRegistry), protocolReleaseId
+            address(path),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
         );
         path.setAuthorizedMinter(address(token));
         for (uint256 pathId = 1; pathId <= 96; pathId++) {
@@ -312,49 +371,146 @@ contract ThoughtNFTTest {
         require(token.pathNft() == address(path), "path dependency mismatch");
         require(token.thoughtSpecRegistry() == address(registry), "registry dependency mismatch");
         require(token.thoughtRenderer() == address(renderer), "renderer dependency mismatch");
+        require(
+            token.creationAttestationVerifier() == address(attestationVerifier),
+            "attestation verifier dependency mismatch"
+        );
         require(token.protocolRegistry() == address(protocolRegistry), "protocol registry mismatch");
         require(token.protocolReleaseId() == protocolReleaseId, "protocol release id mismatch");
         require(token.protocolManifestHash() == PROTOCOL_RELEASE_HASH, "manifest hash mismatch");
         require(_equal(token.protocolManifestURI(), "ipfs://thought-v2-test-manifest"), "manifest URI mismatch");
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
-        new ThoughtNFT(address(0), address(registry), address(renderer), address(protocolRegistry), protocolReleaseId);
+        new ThoughtNFT(
+            address(0),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidPathNft.selector));
         new ThoughtNFT(
-            address(0x1234), address(registry), address(renderer), address(protocolRegistry), protocolReleaseId
+            address(0x1234),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
         );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0), address(renderer), address(protocolRegistry), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(0),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecRegistry.selector));
-        new ThoughtNFT(address(path), address(0x1234), address(renderer), address(protocolRegistry), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(0x1234),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtRenderer.selector));
-        new ThoughtNFT(address(path), address(registry), address(0), address(protocolRegistry), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(0),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtRenderer.selector));
-        new ThoughtNFT(address(path), address(registry), address(0x1234), address(protocolRegistry), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(0x1234),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         WrongThoughtRendererActive wrongRenderer = new WrongThoughtRendererActive();
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidThoughtRenderer.selector));
         new ThoughtNFT(
-            address(path), address(registry), address(wrongRenderer), address(protocolRegistry), protocolReleaseId
+            address(path),
+            address(registry),
+            address(wrongRenderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
         );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidProtocolRegistry.selector));
-        new ThoughtNFT(address(path), address(registry), address(renderer), address(0), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(0),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidProtocolRegistry.selector));
-        new ThoughtNFT(address(path), address(registry), address(renderer), address(0x1234), protocolReleaseId);
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(0x1234),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
 
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidProtocolRelease.selector, bytes32(0)));
-        new ThoughtNFT(address(path), address(registry), address(renderer), address(protocolRegistry), bytes32(0));
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            bytes32(0),
+            address(attestationVerifier)
+        );
 
         bytes32 missingRelease = keccak256("missing release");
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidProtocolRelease.selector, missingRelease));
-        new ThoughtNFT(address(path), address(registry), address(renderer), address(protocolRegistry), missingRelease);
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            missingRelease,
+            address(attestationVerifier)
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationVerifier.selector));
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(0)
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationVerifier.selector));
+        new ThoughtNFT(
+            address(path),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(0x1234)
+        );
     }
 
     function testMultipleRegisteredSpecVersionsRemainMintable() public {
@@ -364,8 +520,10 @@ contract ThoughtNFTTest {
         ThoughtNFT.MintThoughtInput memory firstInput = _input("first spec", "FIRST SPEC", 1, USER_KEY);
         vm.prank(user);
         uint256 firstTokenId = token.mint(firstInput);
-        ThoughtNFT.MintThoughtInput memory secondInput =
-            _input("second spec", "SECOND SPEC", 2, USER_KEY, secondSpecId, secondSpecHash, DEFAULT_PROVENANCE);
+        ThoughtNFT.MintThoughtInput memory secondInput = _input("second spec", "SECOND SPEC", 2, USER_KEY);
+        secondInput.thoughtSpecId = secondSpecId;
+        secondInput.thoughtSpecHash = secondSpecHash;
+        secondInput = _withCanonicalProvenance(token, secondInput, user);
         vm.prank(user);
         uint256 secondTokenId = token.mint(secondInput);
 
@@ -394,11 +552,15 @@ contract ThoughtNFTTest {
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
         token.agentLineOf(missingTokenId);
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
+        token.declaredAgentOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
+        token.declaredModelOf(missingTokenId);
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
         token.provenanceOf(missingTokenId);
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
         token.workHashOf(missingTokenId);
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
-        token.recordOf(missingTokenId);
+        token.creationAttestationDigestOf(missingTokenId);
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
         token.thoughtSpecOf(missingTokenId);
         vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.NonexistentToken.selector));
@@ -535,6 +697,7 @@ contract ThoughtNFTTest {
         ThoughtNFT.MintThoughtInput memory replay = original;
         replay.promptLine = "replay target";
         replay.agentLine = "REPLAY TARGET";
+        replay = _withCanonicalProvenance(token, replay, user);
         _expectMintStringRevert(replay, "QUOTA_EXHAUSTED");
         require(token.totalSupply() == 1, "replay minted");
         require(token.tokenOfWorkHash(_workHashFor(replay.promptLine, replay.agentLine)) == 0, "replay reserved work");
@@ -543,20 +706,31 @@ contract ThoughtNFTTest {
     function testMintRejectsReentrantPathCallbackAndStillMintsOuterWork() public {
         ReentrantPathNFTActive reentrantPath = new ReentrantPathNFTActive();
         ThoughtNFT reentrantToken = new ThoughtNFT(
-            address(reentrantPath), address(registry), address(renderer), address(protocolRegistry), protocolReleaseId
+            address(reentrantPath),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
         );
-        reentrantPath.configure(reentrantToken, defaultSpecId, defaultSpecHash);
+        _configureReentrantPath(reentrantPath, reentrantToken);
 
         ThoughtNFT.MintThoughtInput memory input = ThoughtNFT.MintThoughtInput({
             promptLine: "outer prompt",
             agentLine: "OUTER AGENT",
+            declaredAgent: DEFAULT_DECLARED_AGENT,
+            declaredModel: DEFAULT_DECLARED_MODEL,
             pathId: 1,
             thoughtSpecId: defaultSpecId,
             thoughtSpecHash: defaultSpecHash,
-            provenanceJson: DEFAULT_PROVENANCE,
+            provenanceJson: "",
             deadline: block.timestamp + 1 hours,
-            pathSignature: ""
+            pathSignature: "",
+            creationAttestation: ThoughtNFT.CreationAttestationProof({
+                runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+            })
         });
+        input = _withCanonicalProvenance(reentrantToken, input, user);
 
         vm.prank(user);
         uint256 tokenId = reentrantToken.mint(input);
@@ -606,6 +780,8 @@ contract ThoughtNFTTest {
         require(token.tokenOfWorkHash(mintedWorkHash) == tokenId, "work token mismatch");
         require(_equal(token.promptLineOf(tokenId), input.promptLine), "prompt line mismatch");
         require(_equal(token.agentLineOf(tokenId), input.agentLine), "agent line mismatch");
+        require(_equal(token.declaredAgentOf(tokenId), input.declaredAgent), "declared agent mismatch");
+        require(_equal(token.declaredModelOf(tokenId), input.declaredModel), "declared model mismatch");
         require(_equal(token.provenanceOf(tokenId), input.provenanceJson), "provenance mismatch");
         require(token.promptLineHashOf(tokenId) == promptHash, "prompt hash mismatch");
         require(token.agentLineHashOf(tokenId) == agentHash, "agent hash mismatch");
@@ -613,23 +789,365 @@ contract ThoughtNFTTest {
         require(token.binaryFieldKeccak256Of(tokenId) == binaryHash, "binary hash mismatch");
         require(token.workHashOf(tokenId) == mintedWorkHash, "work hash mismatch");
         require(token.provenanceHashOf(tokenId) == provenanceHash, "provenance hash mismatch");
+        require(token.creationAttestationDigestOf(tokenId) == bytes32(0), "empty proof stored a digest");
         require(token.pathIdOf(tokenId) == 1, "path id mismatch");
         require(token.pathSerialOf(tokenId) == 0, "path serial mismatch");
         require(token.authorOf(tokenId) == user, "author mismatch");
         require(token.mintedAtOf(tokenId) == uint64(block.timestamp), "mint time mismatch");
-
-        ThoughtNFT.ThoughtRecordView memory record = token.recordOf(tokenId);
-        require(_equal(record.promptLine, input.promptLine), "record prompt mismatch");
-        require(_equal(record.agentLine, input.agentLine), "record agent mismatch");
-        require(record.workHash == mintedWorkHash, "record work hash mismatch");
-        require(record.provenanceHash == provenanceHash, "record provenance hash mismatch");
-        require(record.minter == user, "record minter mismatch");
 
         (bytes32 specId, bytes32 specHash, string memory specName, string memory specRef) = token.thoughtSpecOf(tokenId);
         require(specId == defaultSpecId, "resolved spec id mismatch");
         require(specHash == defaultSpecHash, "resolved spec hash mismatch");
         require(_equal(specName, DEFAULT_SPEC_NAME), "resolved spec name mismatch");
         require(_equal(specRef, DEFAULT_SPEC_REF), "resolved spec ref mismatch");
+    }
+
+    function testEmptyProofIsUnattestedAndBypassesPausedVerifier() public {
+        attestationVerifier.pause();
+        ThoughtNFT.MintThoughtInput memory input = _input("unattested prompt", "UNATTESTED AGENT", 1, USER_KEY);
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+
+        require(token.creationAttestationDigestOf(tokenId) == bytes32(0), "unattested digest is nonzero");
+        string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
+        require(
+            _contains(metadata, '"trait_type":"Creation Attestation","value":"Unattested"'), "unattested trait mismatch"
+        );
+        require(_contains(metadata, '"creationAttestation":"Unattested"'), "unattested payload mismatch");
+    }
+
+    function testPausedVerifierRejectsAttestedBeforePathAndSameProofRetriesAfterUnpause() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("paused proof", "PAUSED PROOF", 1, USER_KEY);
+        bytes32 digest;
+        (input, digest) =
+            _withAttestation(token, attestationVerifier, input, user, keccak256("paused-run"), ATTESTOR_KEY);
+        attestationVerifier.pause();
+        _expectMintRevert(input, abi.encodeWithSelector(CreationAttestationVerifier.AttestationPaused.selector));
+        require(path.consumeCallCount() == 0, "paused verifier called PATH");
+        require(token.totalSupply() == 0, "paused verifier minted");
+
+        attestationVerifier.unpause();
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+        require(token.creationAttestationDigestOf(tokenId) == digest, "same proof retry digest mismatch");
+    }
+
+    function testAuthorityRotationInvalidatesPendingProofBeforePath() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("old epoch", "OLD EPOCH", 1, USER_KEY);
+        (input,) = _withAttestation(token, attestationVerifier, input, user, keccak256("old-epoch-run"), ATTESTOR_KEY);
+        attestationVerifier.rotateAuthority(vm.addr(0xA7735703));
+        _expectMintRevert(
+            input,
+            abi.encodeWithSelector(CreationAttestationVerifier.InvalidAuthorityEpoch.selector, uint32(1), uint32(2))
+        );
+        require(path.consumeCallCount() == 0, "stale epoch proof called PATH");
+        require(token.totalSupply() == 0, "stale epoch proof minted");
+    }
+
+    function testValidCreationAttestationStoresDigestAndEmitsEvent() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("attested prompt", "ATTESTED AGENT", 1, USER_KEY);
+        bytes32 runIdHash = keccak256("public-safe-run");
+        bytes32 digest;
+        (input, digest) = _withAttestation(token, attestationVerifier, input, user, runIdHash, ATTESTOR_KEY);
+        bytes32 mintedWorkHash = _workHashFor(input.promptLine, input.agentLine);
+
+        vm.expectEmit(true, true, true, true);
+        emit CreationAttested(
+            1,
+            digest,
+            vm.addr(ATTESTOR_KEY),
+            token.CREATION_ATTESTATION_PROFILE_ID(),
+            mintedWorkHash,
+            runIdHash,
+            user,
+            input.creationAttestation.deadline,
+            input.creationAttestation.authorityEpoch
+        );
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+
+        require(token.creationAttestationDigestOf(tokenId) == digest, "attestation digest not stored");
+        string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
+        require(
+            _contains(metadata, '"trait_type":"Creation Attestation","value":"Inshell THOUGHT App"'),
+            "attested trait mismatch"
+        );
+        require(_contains(metadata, '"creationAttestation":"Inshell THOUGHT App"'), "attested payload mismatch");
+
+        uint256 beforeRetryCalls = path.consumeCallCount();
+        bytes32 agentIdentity = token.agentIdentityHash(keccak256(bytes(input.agentLine)));
+        _expectMintRevert(
+            input, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, agentIdentity, tokenId)
+        );
+        require(path.consumeCallCount() == beforeRetryCalls, "successful proof replay called PATH");
+    }
+
+    function testEveryPartialOrWrongLengthProofFailsBeforePath() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("partial run", "PARTIAL RUN", 1, USER_KEY);
+        input.creationAttestation.runIdHash = keccak256("partial");
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        input = _input("partial deadline", "PARTIAL DEADLINE", 1, USER_KEY);
+        input.creationAttestation.deadline = uint64(block.timestamp + 1 hours);
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        input = _input("partial epoch", "PARTIAL EPOCH", 1, USER_KEY);
+        input.creationAttestation.authorityEpoch = 1;
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        input = _input("partial signature", "PARTIAL SIGNATURE", 1, USER_KEY);
+        input.creationAttestation.signature = new bytes(65);
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        input = _input("missing signature", "MISSING SIGNATURE", 1, USER_KEY);
+        input.creationAttestation.runIdHash = keccak256("missing-signature");
+        input.creationAttestation.deadline = uint64(block.timestamp + 1 hours);
+        input.creationAttestation.authorityEpoch = 1;
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        input.creationAttestation.signature = new bytes(64);
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+        input.creationAttestation.signature = new bytes(66);
+        _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector));
+
+        require(path.consumeCallCount() == 0, "partial proof called PATH");
+        require(token.totalSupply() == 0, "partial proof minted");
+    }
+
+    function testSelectedSpecSubstitutionFailsBeforePathAndOriginalPairRemainsRetryable() public {
+        (bytes32 secondSpecId, bytes32 secondSpecHash,) =
+            registry.registerThoughtSpec("THOUGHT.v3.md", "THOUGHT.v3.md", bytes("# THOUGHT\nVersion: v3\n"));
+        ThoughtNFT.MintThoughtInput memory original = _input("bound spec", "BOUND SPEC", 1, USER_KEY);
+        bytes32 digest;
+        (original, digest) =
+            _withAttestation(token, attestationVerifier, original, user, keccak256("bound-spec-run"), ATTESTOR_KEY);
+        bytes32 work = _workHashFor(token, original.promptLine, original.agentLine);
+        bytes32 agentIdentity = token.agentIdentityHash(keccak256(bytes(original.agentLine)));
+
+        ThoughtNFT.MintThoughtInput memory idOnly = original;
+        idOnly.thoughtSpecId = secondSpecId;
+        _expectMintRevert(
+            idOnly, abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecPair.selector, secondSpecId, defaultSpecHash)
+        );
+        original.thoughtSpecId = defaultSpecId;
+        ThoughtNFT.MintThoughtInput memory hashOnly = original;
+        hashOnly.thoughtSpecHash = secondSpecHash;
+        _expectMintRevert(
+            hashOnly, abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecPair.selector, defaultSpecId, secondSpecHash)
+        );
+        original.thoughtSpecHash = defaultSpecHash;
+
+        ThoughtNFT.MintThoughtInput memory substituted = original;
+        substituted.thoughtSpecId = secondSpecId;
+        substituted.thoughtSpecHash = secondSpecHash;
+        _expectMintRevert(
+            substituted, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        require(path.consumeCallCount() == 0, "selected-spec substitution called PATH");
+        require(token.totalSupply() == 0, "selected-spec substitution changed supply");
+        require(token.tokenOfWorkHash(work) == 0, "selected-spec substitution reserved work");
+        require(token.tokenOfAgentIdentityHash(agentIdentity) == 0, "selected-spec substitution reserved Agent line");
+
+        original.thoughtSpecId = defaultSpecId;
+        original.thoughtSpecHash = defaultSpecHash;
+        vm.prank(user);
+        uint256 tokenId = token.mint(original);
+        require(token.creationAttestationDigestOf(tokenId) == digest, "original selected pair was not retryable");
+        (bytes32 storedId, bytes32 storedHash,,) = token.thoughtSpecOf(tokenId);
+        require(storedId == defaultSpecId && storedHash == defaultSpecHash, "stored selected pair mismatch");
+    }
+
+    function testMalformedInvalidAndFrontRunAttestationsFailBeforePathAndRemainRetryable() public {
+        ThoughtNFT.MintThoughtInput memory partialProofInput = _input("partial prompt", "PARTIAL AGENT", 1, USER_KEY);
+        partialProofInput.creationAttestation.runIdHash = keccak256("partial");
+        _expectMintRevert(
+            partialProofInput, abi.encodeWithSelector(ThoughtNFT.InvalidCreationAttestationProof.selector)
+        );
+        require(path.consumeCallCount() == 0, "partial proof called PATH");
+
+        ThoughtNFT.MintThoughtInput memory input = _input("retry prompt", "RETRY AGENT", 1, USER_KEY);
+        bytes32 digest;
+        (input, digest) =
+            _withAttestation(token, attestationVerifier, input, user, keccak256("retry-run"), ATTESTOR_KEY);
+        require(digest != bytes32(0), "fixture digest is zero");
+        string memory originalProvenance = input.provenanceJson;
+
+        ThoughtNFT.MintThoughtInput memory tampered = input;
+        tampered.declaredAgent = "Tampered Agent";
+        tampered = _withCanonicalProvenance(token, tampered, user);
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        require(path.consumeCallCount() == 0, "tampered declaration called PATH");
+        require(token.totalSupply() == 0, "tampered declaration changed supply");
+        input.declaredAgent = DEFAULT_DECLARED_AGENT;
+        input.provenanceJson = originalProvenance;
+
+        tampered = input;
+        tampered.promptLine = "tampered prompt";
+        tampered = _withCanonicalProvenance(token, tampered, user);
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.promptLine = "retry prompt";
+        input.provenanceJson = originalProvenance;
+        tampered = input;
+        tampered.agentLine = "TAMPERED AGENT";
+        tampered = _withCanonicalProvenance(token, tampered, user);
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.agentLine = "RETRY AGENT";
+        input.provenanceJson = originalProvenance;
+        tampered = input;
+        tampered.provenanceJson = '{"schema":"inshell.thought.provenance.v2.negative-tamper"}';
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.provenanceJson = originalProvenance;
+        tampered = input;
+        tampered.declaredModel = "Tampered Model";
+        tampered = _withCanonicalProvenance(token, tampered, user);
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.declaredModel = DEFAULT_DECLARED_MODEL;
+        input.provenanceJson = originalProvenance;
+        tampered = input;
+        tampered.creationAttestation.runIdHash = keccak256("tampered-run");
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.creationAttestation.runIdHash = keccak256("retry-run");
+        tampered = input;
+        tampered.creationAttestation.deadline += 1;
+        _expectMintRevert(
+            tampered, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        input.creationAttestation.deadline -= 1;
+        tampered = input;
+        tampered.creationAttestation.authorityEpoch += 1;
+        _expectMintRevert(
+            tampered,
+            abi.encodeWithSelector(
+                CreationAttestationVerifier.InvalidAuthorityEpoch.selector,
+                tampered.creationAttestation.authorityEpoch,
+                attestationVerifier.authorityEpoch()
+            )
+        );
+        input.creationAttestation.authorityEpoch -= 1;
+        require(path.consumeCallCount() == 0, "tampered claim called PATH");
+
+        ThoughtNFT.MintThoughtInput memory wrongSigner = _input("wrong signer prompt", "WRONG ATTESTOR", 2, USER_KEY);
+        (wrongSigner,) =
+            _withAttestation(token, attestationVerifier, wrongSigner, user, keccak256("wrong-signer-run"), OTHER_KEY);
+        _expectMintRevert(
+            wrongSigner, abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector)
+        );
+        require(path.consumeCallCount() == 0, "wrong signer called PATH");
+
+        address frontRunner = vm.addr(OTHER_KEY);
+        vm.expectRevert(abi.encodeWithSelector(CreationAttestationVerifier.InvalidAttestationSignature.selector));
+        vm.prank(frontRunner);
+        token.mint(input);
+        require(path.consumeCallCount() == 0, "front-run called PATH");
+
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+        require(token.creationAttestationDigestOf(tokenId) == digest, "retry did not mint original attestation");
+        require(path.consumeCallCount() == 1, "valid retry PATH count mismatch");
+    }
+
+    function testExpiredAttestationFailsBeforePathAndExactDeadlineMints() public {
+        ThoughtNFT.MintThoughtInput memory expired = _input("expired proof", "EXPIRED PROOF", 1, USER_KEY);
+        (expired,) = _withAttestation(token, attestationVerifier, expired, user, keccak256("expired-run"), ATTESTOR_KEY);
+        uint64 expiredDeadline = expired.creationAttestation.deadline;
+        vm.warp(uint256(expiredDeadline) + 1);
+        _expectMintRevert(
+            expired,
+            abi.encodeWithSelector(
+                CreationAttestationVerifier.ExpiredAttestation.selector, expiredDeadline, block.timestamp
+            )
+        );
+        require(path.consumeCallCount() == 0, "expired proof called PATH");
+        require(token.totalSupply() == 0, "expired proof minted");
+
+        ThoughtNFT.MintThoughtInput memory boundary = _input("boundary proof", "BOUNDARY PROOF", 2, USER_KEY);
+        (boundary,) =
+            _withAttestation(token, attestationVerifier, boundary, user, keccak256("boundary-run"), ATTESTOR_KEY);
+        vm.warp(boundary.creationAttestation.deadline);
+        vm.prank(user);
+        uint256 tokenId = token.mint(boundary);
+        require(token.creationAttestationDigestOf(tokenId) != bytes32(0), "deadline boundary was not attested");
+    }
+
+    function testAttestedMetadataIsStableAcrossVerifierGovernanceAndTransfer() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("stable prompt", "STABLE ATTESTATION", 1, USER_KEY);
+        (input,) = _withAttestation(token, attestationVerifier, input, user, keccak256("stable-run"), ATTESTOR_KEY);
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+        bytes32 beforeHash = keccak256(bytes(token.tokenURI(tokenId)));
+
+        attestationVerifier.rotateAuthority(vm.addr(0xA7735703));
+        attestationVerifier.pause();
+        address nextVerifierOwner = address(0xB0B0B);
+        attestationVerifier.transferOwnership(nextVerifierOwner);
+        vm.prank(nextVerifierOwner);
+        attestationVerifier.acceptOwnership();
+        vm.prank(user);
+        token.transferFrom(user, vm.addr(OTHER_KEY), tokenId);
+
+        require(keccak256(bytes(token.tokenURI(tokenId))) == beforeHash, "governance or transfer changed tokenURI");
+    }
+
+    function testReceiverRejectionRollsBackAttestationUniquenessPathAndSupply() public {
+        ReentrantPathNFTActive receiverPath = new ReentrantPathNFTActive();
+        ThoughtNFT receiverToken = new ThoughtNFT(
+            address(receiverPath),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
+        _configureReentrantPath(receiverPath, receiverToken);
+        MintingERC721ReceiverActive receiver = new MintingERC721ReceiverActive();
+        ThoughtNFT.MintThoughtInput memory input = ThoughtNFT.MintThoughtInput({
+            promptLine: "receiver prompt",
+            agentLine: "RECEIVER AGENT",
+            declaredAgent: DEFAULT_DECLARED_AGENT,
+            declaredModel: DEFAULT_DECLARED_MODEL,
+            pathId: 1,
+            thoughtSpecId: defaultSpecId,
+            thoughtSpecHash: defaultSpecHash,
+            provenanceJson: "",
+            deadline: block.timestamp + 1 hours,
+            pathSignature: "",
+            creationAttestation: ThoughtNFT.CreationAttestationProof({
+                runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+            })
+        });
+        bytes32 digest;
+        (input, digest) = _withAttestation(
+            receiverToken, attestationVerifier, input, address(receiver), keccak256("receiver-run"), ATTESTOR_KEY
+        );
+        bytes32 work = _workHashFor(receiverToken, input.promptLine, input.agentLine);
+        bytes32 agentIdentity = receiverToken.agentIdentityHash(keccak256(bytes(input.agentLine)));
+
+        vm.expectRevert(abi.encodeWithSelector(ThoughtNFT.TransferToNonReceiverImplementer.selector));
+        receiver.mint(receiverToken, input);
+        require(receiverToken.totalSupply() == 0, "receiver rejection changed supply");
+        require(receiverToken.tokenOfWorkHash(work) == 0, "receiver rejection reserved work");
+        require(receiverToken.tokenOfAgentIdentityHash(agentIdentity) == 0, "receiver rejection reserved Agent line");
+        require(receiverPath.consumeCallCount() == 0, "receiver rejection consumed PATH");
+        require(receiver.callbackCount() == 0, "receiver callback state did not roll back");
+
+        receiver.setAccept(true);
+        uint256 tokenId = receiver.mint(receiverToken, input);
+        require(receiverToken.ownerOf(tokenId) == address(receiver), "receiver did not own retry mint");
+        require(receiverToken.creationAttestationDigestOf(tokenId) == digest, "receiver retry digest mismatch");
+        require(receiverPath.consumeCallCount() == 1, "receiver retry PATH count mismatch");
+        require(receiver.callbackCount() == 1, "receiver callback count mismatch");
     }
 
     function testInvalidLocalInputDoesNotCallPath() public {
@@ -645,10 +1163,26 @@ contract ThoughtNFTTest {
         );
         require(path.consumeCallCount() == 0, "empty agent called path");
 
+        ThoughtNFT.MintThoughtInput memory emptyModel = _input("valid prompt", "VALID MODEL AGENT", 3, USER_KEY);
+        emptyModel.declaredModel = "";
         _expectMintRevert(
-            _input(
-                "spec prompt", "SPEC AGENT", 3, USER_KEY, defaultSpecId, bytes32(uint256(0xBEEF)), DEFAULT_PROVENANCE
-            ),
+            emptyModel, abi.encodeWithSelector(ThoughtNFT.DisplayLineEmpty.selector, ThoughtNFT.DisplayKind.Model)
+        );
+        require(path.consumeCallCount() == 0, "empty model called path");
+
+        ThoughtNFT.MintThoughtInput memory emptyDeclaredAgent =
+            _input("valid prompt", "VALID DECLARED AGENT", 3, USER_KEY);
+        emptyDeclaredAgent.declaredAgent = "";
+        _expectMintRevert(
+            emptyDeclaredAgent,
+            abi.encodeWithSelector(ThoughtNFT.DisplayLineEmpty.selector, ThoughtNFT.DisplayKind.DeclaredAgent)
+        );
+        require(path.consumeCallCount() == 0, "empty declared Agent called path");
+
+        ThoughtNFT.MintThoughtInput memory invalidSpec = _input("spec prompt", "SPEC AGENT", 3, USER_KEY);
+        invalidSpec.thoughtSpecHash = bytes32(uint256(0xBEEF));
+        _expectMintRevert(
+            invalidSpec,
             abi.encodeWithSelector(ThoughtNFT.InvalidThoughtSpecPair.selector, defaultSpecId, bytes32(uint256(0xBEEF)))
         );
         require(path.consumeCallCount() == 0, "bad spec called path");
@@ -725,21 +1259,44 @@ contract ThoughtNFTTest {
 
     function testUtf8ValidationRejectsMalformedBytes() public {
         _expectPromptUtf8Revert(hex"80");
+        _expectDeclaredAgentUtf8Revert(hex"80");
         _expectPromptUtf8Revert(hex"c0af");
+        _expectDeclaredAgentUtf8Revert(hex"c0af");
         _expectPromptUtf8Revert(hex"e080af");
+        _expectDeclaredAgentUtf8Revert(hex"e080af");
         _expectPromptUtf8Revert(hex"eda080");
+        _expectDeclaredAgentUtf8Revert(hex"eda080");
         _expectPromptUtf8Revert(hex"f4908080");
+        _expectDeclaredAgentUtf8Revert(hex"f4908080");
         _expectPromptUtf8Revert(hex"e282");
+        _expectDeclaredAgentUtf8Revert(hex"e282");
         _expectPromptUtf8Revert(hex"f09f92");
+        _expectDeclaredAgentUtf8Revert(hex"f09f92");
         _expectPromptUtf8Revert(hex"e228a1");
+        _expectDeclaredAgentUtf8Revert(hex"e228a1");
         _expectPromptUtf8Revert(hex"f0288cbc");
+        _expectDeclaredAgentUtf8Revert(hex"f0288cbc");
         _expectPromptUtf8Revert(hex"f5908080");
+        _expectDeclaredAgentUtf8Revert(hex"f5908080");
         _expectPromptUtf8Revert(hex"ff");
+        _expectDeclaredAgentUtf8Revert(hex"ff");
 
         bytes memory rawAgentLine = hex"80";
         ThoughtNFT.MintThoughtInput memory input = _input("VALID PROMPT", string(rawAgentLine), 1, USER_KEY);
         _expectMintRevert(input, abi.encodeWithSelector(ThoughtNFT.InvalidUtf8.selector, ThoughtNFT.DisplayKind.Agent));
         require(path.consumeCallCount() == 0, "invalid Agent utf8 called path");
+
+        bytes memory rawModel = hex"80";
+        ThoughtNFT.MintThoughtInput memory modelInput = _input("VALID PROMPT", "VALID AGENT", 1, USER_KEY);
+        modelInput.declaredModel = string(rawModel);
+        vm.prank(user);
+        (bool ok, bytes memory result) = address(token).call(abi.encodeWithSelector(token.mint.selector, modelInput));
+        require(!ok, "malformed model calldata should revert");
+        require(
+            _bytesEqual(result, abi.encodeWithSelector(ThoughtNFT.InvalidUtf8.selector, ThoughtNFT.DisplayKind.Model)),
+            "malformed model revert mismatch"
+        );
+        require(path.consumeCallCount() == 0, "invalid model utf8 called path");
     }
 
     function testUtf8ValidationRejectsControlsAndInvisibleCharacters() public {
@@ -857,6 +1414,7 @@ contract ThoughtNFTTest {
 
         for (uint256 i = 0; i < codepoints.length; i++) {
             _expectPromptCharacterRevert(_utf8(codepoints[i]), codepoints[i]);
+            _expectDeclaredAgentCharacterRevert(_utf8(codepoints[i]), codepoints[i]);
         }
     }
 
@@ -902,10 +1460,38 @@ contract ThoughtNFTTest {
             _input("trailing ", "VALID AGENT", 2, USER_KEY),
             abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.Prompt)
         );
+        ThoughtNFT.MintThoughtInput memory leadingDeclaredAgent =
+            _input("declared leading", "DECLARED LEADING", 3, USER_KEY);
+        leadingDeclaredAgent.declaredAgent = " leading";
+        _expectMintRevert(
+            leadingDeclaredAgent,
+            abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.DeclaredAgent)
+        );
+        ThoughtNFT.MintThoughtInput memory trailingDeclaredAgent =
+            _input("declared trailing", "DECLARED TRAILING", 3, USER_KEY);
+        trailingDeclaredAgent.declaredAgent = "trailing ";
+        _expectMintRevert(
+            trailingDeclaredAgent,
+            abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.DeclaredAgent)
+        );
+        ThoughtNFT.MintThoughtInput memory allSpaceDeclaredAgent =
+            _input("declared spaces", "DECLARED SPACES", 3, USER_KEY);
+        allSpaceDeclaredAgent.declaredAgent = "   ";
+        _expectMintRevert(
+            allSpaceDeclaredAgent,
+            abi.encodeWithSelector(ThoughtNFT.InvalidDisplaySpacing.selector, ThoughtNFT.DisplayKind.DeclaredAgent)
+        );
         uint256 promptTokenId = _mintAsUser("double  space", "VALID AGENT", 3);
         uint256 agentTokenId = _mintAsUser("valid prompt", "DOUBLE  SPACE", 4);
+        ThoughtNFT.MintThoughtInput memory repeatedDeclaredAgent =
+            _input("declared internal", "DECLARED INTERNAL", 5, USER_KEY);
+        repeatedDeclaredAgent.declaredAgent = "Agent  Label";
+        repeatedDeclaredAgent = _withCanonicalProvenance(token, repeatedDeclaredAgent, user);
+        vm.prank(user);
+        uint256 declaredAgentTokenId = token.mint(repeatedDeclaredAgent);
         require(_equal(token.promptLineOf(promptTokenId), "double  space"), "prompt spaces changed");
         require(_equal(token.agentLineOf(agentTokenId), "DOUBLE  SPACE"), "agent spaces changed");
+        require(_equal(token.declaredAgentOf(declaredAgentTokenId), "Agent  Label"), "declared Agent spaces changed");
     }
 
     function testLetterCaseIsPreservedExactly() public {
@@ -918,13 +1504,54 @@ contract ThoughtNFTTest {
         require(_equal(token.agentLineOf(tokenId), unicode"你好"), "non-latin agent changed");
     }
 
-    function testBothLinesUseExact64ByteLimit() public {
+    function testAllTypedStringsUseExact64ByteLimit() public {
         require(token.MAX_PROMPT_LINE_BYTES() == 64, "prompt byte limit changed");
         require(token.MAX_AGENT_LINE_BYTES() == 64, "agent byte limit changed");
+        require(token.MAX_DECLARED_AGENT_BYTES() == 64, "declared Agent byte limit changed");
+        require(token.MAX_DECLARED_MODEL_BYTES() == 64, "model byte limit changed");
         _mintAsUser(_repeat("a", 64), _repeat("A", 64), 1);
 
+        ThoughtNFT.MintThoughtInput memory maximumModel = _input("valid prompt", "MODEL LIMIT AGENT", 2, USER_KEY);
+        maximumModel.declaredModel = _repeat("M", 64);
+        maximumModel = _withCanonicalProvenance(token, maximumModel, user);
+        vm.prank(user);
+        uint256 modelTokenId = token.mint(maximumModel);
+        require(_equal(token.declaredModelOf(modelTokenId), _repeat("M", 64)), "64-byte model changed");
+
+        ThoughtNFT.MintThoughtInput memory maximumDeclaredAgent =
+            _input("declared agent prompt", "DECLARED AGENT LIMIT", 3, USER_KEY);
+        maximumDeclaredAgent.declaredAgent = _repeat("D", 64);
+        maximumDeclaredAgent = _withCanonicalProvenance(token, maximumDeclaredAgent, user);
+        vm.prank(user);
+        uint256 declaredAgentTokenId = token.mint(maximumDeclaredAgent);
+        require(_equal(token.declaredAgentOf(declaredAgentTokenId), _repeat("D", 64)), "64-byte declared Agent changed");
+
+        ThoughtNFT.MintThoughtInput memory oneByteDeclaredAgent =
+            _input("declared one", "DECLARED AGENT ONE", 4, USER_KEY);
+        oneByteDeclaredAgent.declaredAgent = "D";
+        oneByteDeclaredAgent = _withCanonicalProvenance(token, oneByteDeclaredAgent, user);
+        vm.prank(user);
+        uint256 oneByteTokenId = token.mint(oneByteDeclaredAgent);
+        require(_equal(token.declaredAgentOf(oneByteTokenId), "D"), "1-byte declared Agent changed");
+
+        ThoughtNFT.MintThoughtInput memory thirtyOneByteDeclaredAgent =
+            _input("declared thirty one", "DECLARED AGENT THIRTY ONE", 5, USER_KEY);
+        thirtyOneByteDeclaredAgent.declaredAgent = _repeat("D", 31);
+        thirtyOneByteDeclaredAgent = _withCanonicalProvenance(token, thirtyOneByteDeclaredAgent, user);
+        vm.prank(user);
+        uint256 thirtyOneByteTokenId = token.mint(thirtyOneByteDeclaredAgent);
+        require(_equal(token.declaredAgentOf(thirtyOneByteTokenId), _repeat("D", 31)), "31-byte declared Agent changed");
+
+        ThoughtNFT.MintThoughtInput memory thirtyTwoByteDeclaredAgent =
+            _input("declared thirty two", "DECLARED AGENT THIRTY TWO", 6, USER_KEY);
+        thirtyTwoByteDeclaredAgent.declaredAgent = _repeat("D", 32);
+        thirtyTwoByteDeclaredAgent = _withCanonicalProvenance(token, thirtyTwoByteDeclaredAgent, user);
+        vm.prank(user);
+        uint256 thirtyTwoByteTokenId = token.mint(thirtyTwoByteDeclaredAgent);
+        require(_equal(token.declaredAgentOf(thirtyTwoByteTokenId), _repeat("D", 32)), "32-byte declared Agent changed");
+
         _expectMintRevert(
-            _input(_repeat("a", token.MAX_PROMPT_LINE_BYTES() + 1), "VALID AGENT", 2, USER_KEY),
+            _input(_repeat("a", token.MAX_PROMPT_LINE_BYTES() + 1), "VALID AGENT", 4, USER_KEY),
             abi.encodeWithSelector(
                 ThoughtNFT.DisplayLineTooLarge.selector,
                 ThoughtNFT.DisplayKind.Prompt,
@@ -933,7 +1560,7 @@ contract ThoughtNFTTest {
             )
         );
         _expectMintRevert(
-            _input("valid prompt", _repeat("A", token.MAX_AGENT_LINE_BYTES() + 1), 3, USER_KEY),
+            _input("valid prompt", _repeat("A", token.MAX_AGENT_LINE_BYTES() + 1), 5, USER_KEY),
             abi.encodeWithSelector(
                 ThoughtNFT.DisplayLineTooLarge.selector,
                 ThoughtNFT.DisplayKind.Agent,
@@ -941,6 +1568,139 @@ contract ThoughtNFTTest {
                 token.MAX_AGENT_LINE_BYTES()
             )
         );
+
+        ThoughtNFT.MintThoughtInput memory oversizeDeclaredAgent =
+            _input("valid declared agent prompt", "DECLARED AGENT OVERSIZE", 6, USER_KEY);
+        oversizeDeclaredAgent.declaredAgent = _repeat("D", 65);
+        _expectMintRevert(
+            oversizeDeclaredAgent,
+            abi.encodeWithSelector(
+                ThoughtNFT.DisplayLineTooLarge.selector, ThoughtNFT.DisplayKind.DeclaredAgent, 65, 64
+            )
+        );
+
+        ThoughtNFT.MintThoughtInput memory oversizeModel = _input("valid model prompt", "MODEL OVERSIZE", 7, USER_KEY);
+        oversizeModel.declaredModel = _repeat("M", 65);
+        _expectMintRevert(
+            oversizeModel,
+            abi.encodeWithSelector(ThoughtNFT.DisplayLineTooLarge.selector, ThoughtNFT.DisplayKind.Model, 65, 64)
+        );
+    }
+
+    function testDeclaredModelIsExactDeclarationOnlyContext() public {
+        ThoughtNFT.MintThoughtInput memory first = _input("model prompt one", "MODEL AGENT ONE", 1, USER_KEY);
+        first.declaredModel = unicode"模型  GPT-X";
+        first = _withCanonicalProvenance(token, first, user);
+        bytes32 expectedWorkHash = _workHashFor(first.promptLine, first.agentLine);
+        bytes32 expectedFieldHash = keccak256(token.binaryField(first.promptLine, first.agentLine));
+        vm.prank(user);
+        uint256 firstTokenId = token.mint(first);
+
+        require(_equal(token.declaredModelOf(firstTokenId), unicode"模型  GPT-X"), "model bytes changed");
+        require(token.workHashOf(firstTokenId) == expectedWorkHash, "model changed work hash");
+        require(token.binaryFieldKeccak256Of(firstTokenId) == expectedFieldHash, "model changed loom");
+        require(!_contains(token.svgOf(firstTokenId), first.declaredModel), "model leaked into SVG");
+
+        ThoughtNFT.MintThoughtInput memory duplicate = _input("other prompt", "MODEL AGENT ONE", 2, USER_KEY);
+        duplicate.declaredModel = "Different Model";
+        bytes32 agentIdentity = token.agentIdentityHash(keccak256(bytes(duplicate.agentLine)));
+        _expectMintRevert(
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, agentIdentity, firstTokenId)
+        );
+        require(!path.thoughtConsumed(2), "model variant bypassed Agent uniqueness");
+
+        ThoughtNFT.MintThoughtInput memory sameModel = _input("model prompt two", "MODEL AGENT TWO", 2, USER_KEY);
+        sameModel.declaredModel = unicode"模型  GPT-X";
+        sameModel = _withCanonicalProvenance(token, sameModel, user);
+        vm.prank(user);
+        uint256 secondTokenId = token.mint(sameModel);
+        require(_equal(token.declaredModelOf(secondTokenId), first.declaredModel), "same model did not persist");
+    }
+
+    function testDeclaredAgentIsExactDeclarationOnlyContext() public {
+        ThoughtNFT.MintThoughtInput memory first = _input("agent prompt one", "DECLARATION AGENT ONE", 1, USER_KEY);
+        first.declaredAgent = unicode"Inshell 代理";
+        first = _withCanonicalProvenance(token, first, user);
+        bytes32 expectedWorkHash = _workHashFor(first.promptLine, first.agentLine);
+        bytes32 expectedFieldHash = keccak256(token.binaryField(first.promptLine, first.agentLine));
+        vm.prank(user);
+        uint256 firstTokenId = token.mint(first);
+
+        require(_equal(token.declaredAgentOf(firstTokenId), unicode"Inshell 代理"), "declared Agent bytes changed");
+        require(token.workHashOf(firstTokenId) == expectedWorkHash, "declared Agent changed work hash");
+        require(token.binaryFieldKeccak256Of(firstTokenId) == expectedFieldHash, "declared Agent changed loom");
+        require(!_contains(token.svgOf(firstTokenId), first.declaredAgent), "declared Agent leaked into SVG");
+
+        ThoughtNFT.MintThoughtInput memory duplicate = _input("other prompt", "DECLARATION AGENT ONE", 2, USER_KEY);
+        duplicate.declaredAgent = "Different Agent";
+        bytes32 agentIdentity = token.agentIdentityHash(keccak256(bytes(duplicate.agentLine)));
+        _expectMintRevert(
+            duplicate, abi.encodeWithSelector(ThoughtNFT.AgentLineAlreadyMinted.selector, agentIdentity, firstTokenId)
+        );
+        require(!path.thoughtConsumed(2), "declared Agent variant bypassed Agent-line uniqueness");
+    }
+
+    function testDeclarationAndAttestationChangeMetadataButNotArtworkIdentity() public {
+        ThoughtNFT.MintThoughtInput memory unattested = _input("same artwork", "SAME ARTWORK", 1, USER_KEY);
+        unattested.declaredAgent = "Agent Alpha";
+        unattested = _withCanonicalProvenance(token, unattested, user);
+        vm.prank(user);
+        uint256 unattestedTokenId = token.mint(unattested);
+
+        PermissivePathNFTActive siblingPath = new PermissivePathNFTActive();
+        ThoughtNFT sibling = new ThoughtNFT(
+            address(siblingPath),
+            address(registry),
+            address(renderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(attestationVerifier)
+        );
+        ThoughtNFT.MintThoughtInput memory attested = ThoughtNFT.MintThoughtInput({
+            promptLine: unattested.promptLine,
+            agentLine: unattested.agentLine,
+            declaredAgent: "Agent Beta",
+            declaredModel: unattested.declaredModel,
+            pathId: unattested.pathId,
+            thoughtSpecId: unattested.thoughtSpecId,
+            thoughtSpecHash: unattested.thoughtSpecHash,
+            provenanceJson: unattested.provenanceJson,
+            deadline: block.timestamp + 1 hours,
+            pathSignature: "",
+            creationAttestation: ThoughtNFT.CreationAttestationProof({
+                runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+            })
+        });
+        (attested,) =
+            _withAttestation(sibling, attestationVerifier, attested, user, keccak256("same-artwork-run"), ATTESTOR_KEY);
+        vm.prank(user);
+        uint256 attestedTokenId = sibling.mint(attested);
+
+        require(
+            keccak256(bytes(token.svgOf(unattestedTokenId))) == keccak256(bytes(sibling.svgOf(attestedTokenId))),
+            "declaration or attestation changed SVG"
+        );
+        require(
+            token.binaryFieldKeccak256Of(unattestedTokenId) == sibling.binaryFieldKeccak256Of(attestedTokenId),
+            "declaration or attestation changed loom"
+        );
+        require(
+            token.workHashOf(unattestedTokenId) == sibling.workHashOf(attestedTokenId),
+            "declaration or attestation changed work hash"
+        );
+        require(
+            token.agentIdentityHashOf(unattestedTokenId) == sibling.agentIdentityHashOf(attestedTokenId),
+            "declaration or attestation changed Agent identity"
+        );
+
+        string memory unattestedMetadata = _metadataJsonFromTokenUri(token.tokenURI(unattestedTokenId));
+        string memory attestedMetadata = _metadataJsonFromTokenUri(sibling.tokenURI(attestedTokenId));
+        require(keccak256(bytes(unattestedMetadata)) != keccak256(bytes(attestedMetadata)), "metadata did not change");
+        require(_contains(unattestedMetadata, '"value":"Agent Alpha"'), "first declaration missing");
+        require(_contains(attestedMetadata, '"value":"Agent Beta"'), "second declaration missing");
+        require(_contains(unattestedMetadata, '"value":"Unattested"'), "unattested status missing");
+        require(_contains(attestedMetadata, '"value":"Inshell THOUGHT App"'), "attested status missing");
+        require(siblingPath.consumeCallCount() == 1, "sibling PATH consume mismatch");
     }
 
     function testAgentLineUniquenessRejectsChangedPromptBeforePathConsumption() public {
@@ -999,7 +1759,12 @@ contract ThoughtNFTTest {
     }
 
     function testSvgAndMetadataUseFormalTwoLineRenderer() public {
-        uint256 tokenId = _mintAsUser("a&b<c>\"'", "A&B<C>\"'", 1);
+        ThoughtNFT.MintThoughtInput memory input = _input("a&b<c>\"'", "A&B<C>\"'", 1, USER_KEY);
+        input.declaredAgent = "Agent \"A\"&B";
+        input.declaredModel = "Model \"A\"&B";
+        input = _withCanonicalProvenance(token, input, user);
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
         string memory svg = token.svgOf(tokenId);
         string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
 
@@ -1042,9 +1807,32 @@ contract ThoughtNFTTest {
         );
         require(_contains(metadata, '"trait_type":"Prompt","value":"a&b<c>\\\"\'"'), "prompt trait missing");
         require(_contains(metadata, '"trait_type":"Agent Response","value":"A&B<C>\\\"\'"'), "Agent trait missing");
+        require(
+            _contains(metadata, '"trait_type":"Declared Agent","value":"Agent \\\"A\\\"&B"'),
+            "declared Agent trait missing"
+        );
+        require(
+            _contains(metadata, '"trait_type":"Declared Model","value":"Model \\\"A\\\"&B"'),
+            "declared model trait missing"
+        );
         require(_contains(metadata, '"trait_type":"Texture Density","value":"'), "density trait missing");
-        require(_contains(metadata, '"trait_type":"Binary Contrast","value":"'), "contrast trait missing");
-        require(_contains(metadata, '"trait_type":"Protocol","value":"V2"'), "protocol trait missing");
+        require(
+            _contains(metadata, '"trait_type":"Creation Attestation","value":"Unattested"'), "attestation trait missing"
+        );
+        require(_count(metadata, '"trait_type":') == 6, "front attribute count mismatch");
+        uint256 promptTrait = _indexOf(metadata, '"trait_type":"Prompt"');
+        uint256 agentTrait = _indexOf(metadata, '"trait_type":"Agent Response"');
+        uint256 declaredAgentTrait = _indexOf(metadata, '"trait_type":"Declared Agent"');
+        uint256 declaredModelTrait = _indexOf(metadata, '"trait_type":"Declared Model"');
+        uint256 attestationTrait = _indexOf(metadata, '"trait_type":"Creation Attestation"');
+        uint256 densityTrait = _indexOf(metadata, '"trait_type":"Texture Density"');
+        require(
+            promptTrait < agentTrait && agentTrait < declaredAgentTrait && declaredAgentTrait < declaredModelTrait
+                && declaredModelTrait < attestationTrait && attestationTrait < densityTrait,
+            "front attribute order mismatch"
+        );
+        require(!_contains(metadata, '"trait_type":"Binary Contrast"'), "contrast trait must be absent");
+        require(!_contains(metadata, '"trait_type":"Protocol"'), "protocol must not be a front trait");
         require(
             _contains(metadata, '"renderer":"inshell.thought.svg.v2.binary-weave-32"'),
             "thought object missing renderer"
@@ -1058,8 +1846,24 @@ contract ThoughtNFTTest {
         require(_contains(metadata, '"agentWeight":'), "Agent weight missing");
         require(_contains(metadata, '"loomWeight":'), "loom weight missing");
         require(_contains(metadata, '"bitDistance":'), "bit distance missing");
+        require(
+            _indexOf(metadata, '"loomWeight":') < _indexOf(metadata, '"bitDistance":'),
+            "technical metric order mismatch"
+        );
+        require(_contains(metadata, '"creationAttestationProfileId":"0x'), "attestation profile missing");
+        require(_contains(metadata, '"creationAttestationVerifier":"0x'), "attestation verifier missing");
+        require(
+            _contains(
+                metadata,
+                '"creationAttestationDigest":"0x0000000000000000000000000000000000000000000000000000000000000000"'
+            ),
+            "unattested digest missing"
+        );
         require(_contains(metadata, "\"promptLine\":\"a&b<c>\\\"'\""), "prompt metadata escaping failed");
         require(_contains(metadata, "\"agentLine\":\"A&B<C>\\\"'\""), "agent metadata escaping failed");
+        require(_contains(metadata, '"declaredAgent":"Agent \\\"A\\\"&B"'), "declared Agent escaping failed");
+        require(_contains(metadata, '"declaredModel":"Model \\\"A\\\"&B"'), "model payload escaping failed");
+        require(_contains(metadata, '"creationAttestation":"Unattested"'), "attestation status payload missing");
         require(_contains(metadata, '"provenanceHash":"'), "provenance hash missing");
         require(!_contains(metadata, "Color Font"), "metadata contains color font text");
         require(!_contains(metadata, "colorFont"), "metadata contains color font field");
@@ -1086,6 +1890,55 @@ contract ThoughtNFTTest {
         _measureMint("mint.lines.1", "a", "A");
     }
 
+    function testGasProfileMintOneByteModel() public {
+        _measureMintWithModel("mint.model.1", "M");
+    }
+
+    function testGasProfileMintSixtyFourByteModel() public {
+        _measureMintWithModel("mint.model.64", _repeat("M", 64));
+    }
+
+    function testGasProfileMintOneByteDeclaredAgent() public {
+        _measureMintWithDeclaredAgent("mint.declared-agent.1", "D");
+    }
+
+    function testGasProfileMintThirteenByteDeclaredAgent() public {
+        _measureMintWithDeclaredAgent("mint.declared-agent.13", _repeat("D", 13));
+    }
+
+    function testGasProfileMintThirtyTwoByteDeclaredAgent() public {
+        _measureMintWithDeclaredAgent("mint.declared-agent.32", _repeat("D", 32));
+    }
+
+    function testGasProfileMintSixtyFourByteDeclaredAgent() public {
+        _measureMintWithDeclaredAgent("mint.declared-agent.64", _repeat("D", 64));
+    }
+
+    function testGasProfileMintEmptyCreationAttestation() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("attestation gas", "ATTESTATION GAS", 1, USER_KEY);
+        input = _withCanonicalAgentRunProvenance(token, input, user, keccak256("attestation-gas-run"));
+        bytes memory callData = abi.encodeWithSelector(ThoughtNFT.mint.selector, input);
+        vm.prank(user);
+        uint256 beforeCall = gasleft();
+        token.mint(input);
+        uint256 gasUsed = beforeCall - gasleft();
+        require(gasUsed <= APPROVED_MAX_COMPLETE_MINT_GAS, "empty-proof mint exceeds gas budget");
+        emit GasProfile("mint.attestation.empty", gasUsed, callData.length);
+    }
+
+    function testGasProfileMintEoaCreationAttestation() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("attestation gas", "ATTESTATION GAS", 1, USER_KEY);
+        (input,) =
+            _withAttestation(token, attestationVerifier, input, user, keccak256("attestation-gas-run"), ATTESTOR_KEY);
+        bytes memory callData = abi.encodeWithSelector(ThoughtNFT.mint.selector, input);
+        vm.prank(user);
+        uint256 beforeCall = gasleft();
+        token.mint(input);
+        uint256 gasUsed = beforeCall - gasleft();
+        require(gasUsed <= APPROVED_MAX_COMPLETE_MINT_GAS, "attested mint exceeds gas budget");
+        emit GasProfile("mint.attestation.eoa", gasUsed, callData.length);
+    }
+
     function testGasProfileDeploymentsAndRegularErc721Baseline() public {
         uint256 beforeBaseline = gasleft();
         RegularErc721Baseline baseline = new RegularErc721Baseline("BASELINE", "BASE");
@@ -1097,15 +1950,38 @@ contract ThoughtNFTTest {
         uint256 rendererDeploymentGas = beforeRenderer - gasleft();
         emit GasProfile("deploy.thought-renderer", rendererDeploymentGas, address(measuredRenderer).code.length);
 
+        uint256 beforeVerifier = gasleft();
+        CreationAttestationVerifier measuredVerifier =
+            new CreationAttestationVerifier(address(this), vm.addr(ATTESTOR_KEY));
+        uint256 verifierDeploymentGas = beforeVerifier - gasleft();
+        emit GasProfile(
+            "deploy.creation-attestation-verifier", verifierDeploymentGas, address(measuredVerifier).code.length
+        );
+        require(
+            verifierDeploymentGas <= APPROVED_MAX_VERIFIER_DEPLOYMENT_GAS,
+            "verifier deployment exceeds approved gas budget"
+        );
+
         uint256 beforeToken = gasleft();
         ThoughtNFT measuredToken = new ThoughtNFT(
-            address(path), address(registry), address(measuredRenderer), address(protocolRegistry), protocolReleaseId
+            address(path),
+            address(registry),
+            address(measuredRenderer),
+            address(protocolRegistry),
+            protocolReleaseId,
+            address(measuredVerifier)
         );
         uint256 tokenDeploymentGas = beforeToken - gasleft();
         emit GasProfile("deploy.thought-nft", tokenDeploymentGas, address(measuredToken).code.length);
         require(
             rendererDeploymentGas + tokenDeploymentGas <= APPROVED_MAX_COMBINED_DEPLOYMENT_GAS,
             "combined deployment exceeds approved gas budget"
+        );
+        emit GasProfile(
+            "deploy.attestation-stack",
+            rendererDeploymentGas + verifierDeploymentGas + tokenDeploymentGas,
+            address(measuredRenderer).code.length + address(measuredVerifier).code.length
+                + address(measuredToken).code.length
         );
     }
 
@@ -1191,23 +2067,47 @@ contract ThoughtNFTTest {
         emit GasProfile("tokenURI.short", tokenUriGas, bytes(uri).length);
     }
 
-    function testGasProfileMaximumProvenanceMintAndRead() public {
-        string memory provenance = string.concat('{"payload":"', _repeat("p", token.MAX_PROVENANCE_BYTES() - 14), '"}');
-        require(bytes(provenance).length == token.MAX_PROVENANCE_BYTES(), "maximum provenance fixture mismatch");
-        ThoughtNFT.MintThoughtInput memory input =
-            _input("max provenance", "MAX PROVENANCE", 1, USER_KEY, defaultSpecId, defaultSpecHash, provenance);
+    function testGasProfileTokenUriAttestedResponseOnly() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("query budget", "QUERY BUDGET", 1, USER_KEY);
+        (input,) =
+            _withAttestation(token, attestationVerifier, input, user, keccak256("token-uri-gas-run"), ATTESTOR_KEY);
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+        uint256 beforeTokenUri = gasleft();
+        string memory uri = token.tokenURI(tokenId);
+        uint256 tokenUriGas = beforeTokenUri - gasleft();
+        emit GasProfile("tokenURI.attested", tokenUriGas, bytes(uri).length);
+    }
+
+    function testGasProfileTokenUriSixtyFourByteModelResponseOnly() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("query budget", "QUERY BUDGET", 1, USER_KEY);
+        input.declaredModel = _repeat("M", 64);
+        input = _withCanonicalProvenance(token, input, user);
+        vm.prank(user);
+        uint256 tokenId = token.mint(input);
+        uint256 beforeTokenUri = gasleft();
+        string memory uri = token.tokenURI(tokenId);
+        uint256 tokenUriGas = beforeTokenUri - gasleft();
+        emit GasProfile("tokenURI.model.64", tokenUriGas, bytes(uri).length);
+    }
+
+    function testOpaqueBoundaryAcceptsExplicitlyNonconformingMaximumProvenanceAndRead() public {
+        ThoughtNFT.MintThoughtInput memory input = _input("max provenance", "MAX PROVENANCE", 1, USER_KEY);
+        input.provenanceJson = _nonconformingMaximumOpaqueProvenance(token, input, user);
+        string memory provenance = input.provenanceJson;
+        require(bytes(provenance).length == token.MAX_PROVENANCE_BYTES(), "opaque-boundary fixture mismatch");
 
         vm.prank(user);
         uint256 beforeMint = gasleft();
         uint256 tokenId = token.mint(input);
         uint256 mintGas = beforeMint - gasleft();
-        emit GasProfile("mint.provenance.20000", mintGas, bytes(provenance).length);
+        emit GasProfile("mint.provenance.opaque-negative.20000", mintGas, bytes(provenance).length);
 
         uint256 beforeRead = gasleft();
         string memory returnedProvenance = token.provenanceOf(tokenId);
         uint256 readGas = beforeRead - gasleft();
         require(keccak256(bytes(returnedProvenance)) == keccak256(bytes(provenance)), "provenance read mismatch");
-        emit GasProfile("provenanceOf.20000", readGas, bytes(returnedProvenance).length);
+        emit GasProfile("provenanceOf.opaque-negative.20000", readGas, bytes(returnedProvenance).length);
     }
 
     function testSvgBinaryBackgroundUsesOrthogonalBinaryWeave() public {
@@ -1224,23 +2124,23 @@ contract ThoughtNFTTest {
         require(_contains(svg, 'data-prompt-bit-positions="512"'), "prompt allocation mismatch");
         require(_contains(svg, 'data-agent-bit-positions="512"'), "agent allocation mismatch");
         require(_contains(svg, 'data-pack="msb-first-128-bytes"'), "packing metadata mismatch");
-        require(_contains(svg, 'data-rendered-cells="840"'), "binary background should clear text block cells");
-        require(_contains(svg, 'data-cleared-cells="184"'), "binary background should expose cleared cells");
-        require(_contains(svg, 'data-cell-size="24"'), "binary background should use fixed equal square cells");
-        require(_contains(svg, 'data-origin-x="96"'), "binary background should center grid horizontally");
-        require(_contains(svg, 'data-origin-y="96"'), "binary background should center grid vertically");
-        require(_contains(svg, '<circle id="binary-one" r="6" fill="#006100"/>'), "one bit circle missing");
+        require(_contains(svg, 'data-rendered-cells="892"'), "binary background should clear text block cells");
+        require(_contains(svg, 'data-cleared-cells="132"'), "binary background should expose cleared cells");
+        require(_contains(svg, 'data-cell-size="28"'), "binary background should use fixed equal square cells");
+        require(_contains(svg, 'data-origin-x="32"'), "binary background should center grid horizontally");
+        require(_contains(svg, 'data-origin-y="32"'), "binary background should center grid vertically");
+        require(_contains(svg, '<circle id="binary-one" r="10" fill="#006100"/>'), "one bit circle missing");
         require(
             _contains(
                 svg,
-                '<pattern id="binary-zero-pattern" x="96" y="96" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="12" cy="12" r="7" fill="none" stroke="#006100" stroke-width="2"/></pattern>'
+                '<pattern id="binary-zero-pattern" x="32" y="32" width="28" height="28" patternUnits="userSpaceOnUse"><circle id="binary-zero" cx="14" cy="14" r="10" fill="none" stroke="#006100" stroke-width="1"/></pattern>'
             ),
             "zero bit pattern missing"
         );
         require(
             _contains(
                 svg,
-                '<rect id="binary-zero-field" x="96" y="96" width="768" height="768" fill="url(#binary-zero-pattern)"/>'
+                '<rect id="binary-zero-field" x="32" y="32" width="896" height="896" fill="url(#binary-zero-pattern)"/>'
             ),
             "zero field missing"
         );
@@ -1260,11 +2160,11 @@ contract ThoughtNFTTest {
 
         uint256 denseTokenId = _mintAsUser(_repeat("a", 64), _repeat("B", 64), 2);
         string memory denseSvg = token.svgOf(denseTokenId);
-        require(_contains(denseSvg, 'data-cell-size="24"'), "dense binary background should keep fixed cells");
+        require(_contains(denseSvg, 'data-cell-size="28"'), "dense binary background should keep fixed cells");
 
         uint256 longTokenId = _mintAsUser(_repeat(unicode"你", 21), "B", 3);
         string memory longSvg = token.svgOf(longTokenId);
-        require(_contains(longSvg, 'data-cell-size="24"'), "long binary background should keep fixed cells");
+        require(_contains(longSvg, 'data-cell-size="28"'), "long binary background should keep fixed cells");
     }
 
     function testBinaryFieldIsExactly128BytesAndUsesOrthogonalCheckerboard() public {
@@ -1336,8 +2236,10 @@ contract ThoughtNFTTest {
     }
 
     function testRuntimeCodeSizesRemainDeployable() public view {
-        require(address(token).code.length <= 22 * 1024, "ThoughtNFT exceeds target runtime size");
+        require(address(token).code.length < 24_576, "ThoughtNFT exceeds EIP-170 runtime limit");
+        require(address(token).code.length < 22 * 1024, "ThoughtNFT exceeds internal 22 KiB review gate");
         require(address(renderer).code.length < 24_576, "ThoughtRenderer exceeds EIP-170 runtime limit");
+        require(address(attestationVerifier).code.length < 24_576, "verifier exceeds EIP-170 runtime limit");
     }
 
     function testTypeScriptGoldenSvgAndTokenUriImageMatchExactly() public {
@@ -1345,7 +2247,7 @@ contract ThoughtNFTTest {
         uint256 tokenId = _mintAsUser("a", "b", 1);
         string memory svg = token.svgOf(tokenId);
         require(
-            keccak256(bytes(svg)) == 0x0b9311310a8f9c5a615a766f384eec8bfb9b0a07f400416b34d771717c00f5ca,
+            keccak256(bytes(svg)) == 0x9ecc3ca8c790cf007aa830ebfb23479f0b302f54b264d26fbcea6b0a1e199aa0,
             "TypeScript/Solidity SVG mismatch"
         );
         string memory metadata = _metadataJsonFromTokenUri(token.tokenURI(tokenId));
@@ -1353,21 +2255,13 @@ contract ThoughtNFTTest {
         require(keccak256(bytes(embeddedSvg)) == keccak256(bytes(svg)), "tokenURI SVG mismatch");
         require(
             keccak256(bytes(token.tokenURI(tokenId)))
-                == 0x8565890ca125fd9feb741173fde3383dbced208c3d20b8002790ddee660a8522,
+                == 0xc7029a29c4fcf3e0f28627a8017a119f7a363cebbe7891a5f2ace0de5bf57796,
             "TypeScript/Solidity tokenURI mismatch"
         );
     }
 
     function testManualDirectMintDoesNotRequireAgentReceipt() public {
-        ThoughtNFT.MintThoughtInput memory input = _input(
-            "manual prompt",
-            "manual result",
-            1,
-            USER_KEY,
-            defaultSpecId,
-            defaultSpecHash,
-            '{"schema":"thought.provenance.v2","promptLine":"manual prompt","agentLine":"manual result"}'
-        );
+        ThoughtNFT.MintThoughtInput memory input = _input("manual prompt", "manual result", 1, USER_KEY);
 
         vm.prank(user);
         uint256 tokenId = token.mint(input);
@@ -1411,6 +2305,9 @@ contract ThoughtNFTTest {
             address(token).staticcall(abi.encodeWithSignature("renderThoughtSvg(string)", "RETURN"));
         (bool colorFontOk,) = address(token).staticcall(abi.encodeWithSignature("colorFont()"));
         (bool colorFontDataOk,) = address(token).staticcall(abi.encodeWithSignature("colorFontData()"));
+        (bool previewSvgOk,) =
+            address(token).staticcall(abi.encodeWithSignature("previewSvg(string,string)", "prompt", "Agent"));
+        (bool recordOfOk,) = address(token).staticcall(abi.encodeWithSignature("recordOf(uint256)", 1));
 
         require(!previewWorkOk, "previewWork should not exist");
         require(!previewTextOk, "previewText should not exist");
@@ -1419,6 +2316,8 @@ contract ThoughtNFTTest {
         require(!renderThoughtSvgOk, "renderThoughtSvg should not exist");
         require(!colorFontOk, "colorFont should not exist");
         require(!colorFontDataOk, "colorFontData should not exist");
+        require(!previewSvgOk, "previewSvg should not exist");
+        require(!recordOfOk, "recordOf should not exist");
     }
 
     struct ConsumeAuth {
@@ -1435,6 +2334,26 @@ contract ThoughtNFTTest {
         return token.mint(input);
     }
 
+    function _configureReentrantPath(ReentrantPathNFTActive reentrantPath, ThoughtNFT reentrantToken) private {
+        ThoughtNFT.MintThoughtInput memory nestedInput = ThoughtNFT.MintThoughtInput({
+            promptLine: "nested prompt",
+            agentLine: "NESTED AGENT",
+            declaredAgent: DEFAULT_DECLARED_AGENT,
+            declaredModel: DEFAULT_DECLARED_MODEL,
+            pathId: 77,
+            thoughtSpecId: defaultSpecId,
+            thoughtSpecHash: defaultSpecHash,
+            provenanceJson: "",
+            deadline: block.timestamp + 1 hours,
+            pathSignature: "",
+            creationAttestation: ThoughtNFT.CreationAttestationProof({
+                runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+            })
+        });
+        nestedInput = _withCanonicalProvenance(reentrantToken, nestedInput, address(reentrantPath));
+        reentrantPath.configure(reentrantToken, defaultSpecId, defaultSpecHash, nestedInput.provenanceJson);
+    }
+
     function _measureMint(string memory metric, string memory promptLine, string memory agentLine) private {
         ThoughtNFT.MintThoughtInput memory input = _input(promptLine, agentLine, 1, USER_KEY);
         vm.prank(user);
@@ -1445,11 +2364,37 @@ contract ThoughtNFTTest {
         emit GasProfile(metric, gasUsed, 0);
     }
 
+    function _measureMintWithModel(string memory metric, string memory declaredModel) private {
+        ThoughtNFT.MintThoughtInput memory input = _input("a", "A", 1, USER_KEY);
+        input.declaredModel = declaredModel;
+        input = _withCanonicalProvenance(token, input, user);
+        vm.prank(user);
+        uint256 beforeCall = gasleft();
+        token.mint(input);
+        uint256 gasUsed = beforeCall - gasleft();
+        require(gasUsed <= APPROVED_MAX_COMPLETE_MINT_GAS, "model mint exceeds approved complete gas budget");
+        emit GasProfile(metric, gasUsed, 0);
+    }
+
+    function _measureMintWithDeclaredAgent(string memory metric, string memory declaredAgent) private {
+        ThoughtNFT.MintThoughtInput memory input = _input("a", "A", 1, USER_KEY);
+        input.declaredAgent = declaredAgent;
+        input = _withCanonicalProvenance(token, input, user);
+        bytes memory callData = abi.encodeWithSelector(ThoughtNFT.mint.selector, input);
+        vm.prank(user);
+        uint256 beforeCall = gasleft();
+        token.mint(input);
+        uint256 gasUsed = beforeCall - gasleft();
+        require(gasUsed <= APPROVED_MAX_COMPLETE_MINT_GAS, "declared Agent mint exceeds gas budget");
+        emit GasProfile(metric, gasUsed, callData.length);
+    }
+
     function _input(string memory promptLine, string memory agentLine, uint256 pathId, uint256 privateKey)
         private
         returns (ThoughtNFT.MintThoughtInput memory input)
     {
-        return _input(promptLine, agentLine, pathId, privateKey, defaultSpecId, defaultSpecHash, DEFAULT_PROVENANCE);
+        input = _input(promptLine, agentLine, pathId, privateKey, defaultSpecId, defaultSpecHash, "");
+        input.provenanceJson = _canonicalPositiveOrNegativeFallback(token, input, vm.addr(privateKey));
     }
 
     function _input(
@@ -1465,13 +2410,316 @@ contract ThoughtNFTTest {
         input = ThoughtNFT.MintThoughtInput({
             promptLine: promptLine,
             agentLine: agentLine,
+            declaredAgent: DEFAULT_DECLARED_AGENT,
+            declaredModel: DEFAULT_DECLARED_MODEL,
             pathId: pathId,
             thoughtSpecId: specId,
             thoughtSpecHash: specHash,
             provenanceJson: provenance,
             deadline: auth.deadline,
-            pathSignature: auth.signature
+            pathSignature: auth.signature,
+            creationAttestation: ThoughtNFT.CreationAttestationProof({
+                runIdHash: bytes32(0), deadline: 0, authorityEpoch: 0, signature: ""
+            })
         });
+    }
+
+    function _canonicalPositiveOrNegativeFallback(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter
+    ) private view returns (string memory) {
+        try target.binaryField(input.promptLine, input.agentLine) returns (bytes memory) {
+            return _canonicalTestProvenance(target, input, intendedMinter);
+        } catch {
+            ThoughtNFT.MintThoughtInput memory fallbackInput = ThoughtNFT.MintThoughtInput({
+                promptLine: "negative fixture",
+                agentLine: "NEGATIVE FIXTURE",
+                declaredAgent: DEFAULT_DECLARED_AGENT,
+                declaredModel: DEFAULT_DECLARED_MODEL,
+                pathId: input.pathId,
+                thoughtSpecId: input.thoughtSpecId,
+                thoughtSpecHash: input.thoughtSpecHash,
+                provenanceJson: "",
+                deadline: input.deadline,
+                pathSignature: input.pathSignature,
+                creationAttestation: input.creationAttestation
+            });
+            return _canonicalTestProvenance(target, fallbackInput, intendedMinter);
+        }
+    }
+
+    function _withCanonicalProvenance(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter
+    ) private view returns (ThoughtNFT.MintThoughtInput memory output) {
+        output = input;
+        output.provenanceJson = _canonicalTestProvenance(target, output, intendedMinter);
+    }
+
+    function _withCanonicalAgentRunProvenance(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter,
+        bytes32 runIdHash
+    ) private view returns (ThoughtNFT.MintThoughtInput memory output) {
+        output = input;
+        output.provenanceJson = _canonicalTestProvenanceWithProcess(
+            target, output, intendedMinter, _agentRunProcessJson(target, output, "foundry-fixture", runIdHash)
+        );
+    }
+
+    function _canonicalTestProvenance(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter
+    ) private view returns (string memory) {
+        return _canonicalTestProvenanceWithProcess(target, input, intendedMinter, _manualProcessJson(input));
+    }
+
+    function _nonconformingMaximumOpaqueProvenance(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter
+    ) private view returns (string memory) {
+        string memory oneByte = _canonicalTestProvenanceWithProcess(
+            target,
+            input,
+            intendedMinter,
+            _agentRunProcessJson(target, input, "p", keccak256("explicit-negative-opaque-run"))
+        );
+        uint256 maximum = target.MAX_PROVENANCE_BYTES();
+        require(bytes(oneByte).length <= maximum, "opaque provenance base exceeds maximum");
+        string memory adapter = _repeat("p", maximum - bytes(oneByte).length + 1);
+        string memory provenance = _canonicalTestProvenanceWithProcess(
+            target,
+            input,
+            intendedMinter,
+            _agentRunProcessJson(target, input, adapter, keccak256("explicit-negative-opaque-run"))
+        );
+        require(bytes(provenance).length == maximum, "opaque provenance padding mismatch");
+        return provenance;
+    }
+
+    function _manualProcessJson(ThoughtNFT.MintThoughtInput memory input) private pure returns (string memory) {
+        return string.concat(
+            '{"agentDeclaration":{"label":',
+            _jsonString(input.declaredAgent),
+            ',"source":"manual","status":"declared-unverified"},"kind":"manual","modelDeclaration":{"label":',
+            _jsonString(input.declaredModel),
+            ',"source":"manual","status":"declared-unverified"}}'
+        );
+    }
+
+    function _agentResultEnvelopeJson(ThoughtNFT target, ThoughtNFT.MintThoughtInput memory input)
+        private
+        view
+        returns (string memory)
+    {
+        return string.concat(
+            '{"agent":{"label":',
+            _jsonString(input.declaredAgent),
+            ',"model":{"label":',
+            _jsonString(input.declaredModel),
+            ',"source":"runtime_configured"}},"agentLine":',
+            _jsonString(input.agentLine),
+            ',"release":{"manifestKeccak256":"',
+            _bytes32ToHex(target.protocolManifestHash()),
+            '","protocolReleaseId":"',
+            _bytes32ToHex(target.protocolReleaseId()),
+            '"},"schema":"inshell.thought.agent-result.v2"}'
+        );
+    }
+
+    function _agentRunProcessJson(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        string memory adapter,
+        bytes32 runIdHash
+    ) private view returns (string memory) {
+        bytes32 resultEnvelopeHash = keccak256(bytes(_agentResultEnvelopeJson(target, input)));
+        return string.concat(
+            '{"agentDeclaration":{"label":',
+            _jsonString(input.declaredAgent),
+            ',"source":"runtime_configured","status":"declared-unverified"},"kind":"agent-run",',
+            '"modelDeclaration":{"label":',
+            _jsonString(input.declaredModel),
+            ',"source":"runtime_configured","status":"declared-unverified"},"transport":{"adapter":',
+            _jsonString(adapter),
+            ',"resultEnvelopeKeccak256":"',
+            _bytes32ToHex(resultEnvelopeHash),
+            '","runIdHash":"',
+            _bytes32ToHex(runIdHash),
+            '"}}'
+        );
+    }
+
+    function _canonicalTestProvenanceWithProcess(
+        ThoughtNFT target,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter,
+        string memory process
+    ) private view returns (string memory) {
+        bytes32 promptHash = keccak256(bytes(input.promptLine));
+        bytes32 agentHash = keccak256(bytes(input.agentLine));
+        bytes memory packedField = target.binaryField(input.promptLine, input.agentLine);
+        bytes32 binaryFieldHash = keccak256(packedField);
+        bytes32 work = target.workHash(promptHash, agentHash, binaryFieldHash);
+        bytes32 agentIdentity = target.agentIdentityHash(agentHash);
+
+        string memory mintContext = string.concat(
+            '{"chainId":"',
+            _toString(block.chainid),
+            '","intendedMinter":"',
+            _addressToHex(intendedMinter),
+            '","thoughtNft":"',
+            _addressToHex(address(target)),
+            '"}'
+        );
+        string memory protocolBinding = string.concat(
+            '{"manifestKeccak256":"',
+            _bytes32ToHex(target.protocolManifestHash()),
+            '","protocolReleaseId":"',
+            _bytes32ToHex(target.protocolReleaseId()),
+            '","thoughtSpecHash":"',
+            _bytes32ToHex(input.thoughtSpecHash),
+            '","thoughtSpecId":"',
+            _bytes32ToHex(input.thoughtSpecId),
+            '"}'
+        );
+        string memory workBinding = string.concat(
+            '{"agentIdentityHash":"',
+            _bytes32ToHex(agentIdentity),
+            '","agentLine":',
+            _jsonString(input.agentLine),
+            ',"agentLineKeccak256":"',
+            _bytes32ToHex(agentHash),
+            '","binaryFieldKeccak256":"',
+            _bytes32ToHex(binaryFieldHash),
+            '","binaryFieldPacked":"',
+            _bytesToHex(packedField),
+            '","promptLine":',
+            _jsonString(input.promptLine),
+            ',"promptLineKeccak256":"',
+            _bytes32ToHex(promptHash),
+            '","workHash":"',
+            _bytes32ToHex(work),
+            '"}'
+        );
+        return string.concat(
+            '{"mintContext":',
+            mintContext,
+            ',"process":',
+            process,
+            ',"protocol":',
+            protocolBinding,
+            ',"schema":"inshell.thought.provenance.v2","work":',
+            workBinding,
+            "}"
+        );
+    }
+
+    function _jsonString(string memory value) private pure returns (string memory) {
+        bytes memory input = bytes(value);
+        uint256 outputLength = 2;
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 charCode = uint8(input[i]);
+            if (input[i] == '"' || input[i] == "\\" || input[i] == "\n" || input[i] == "\r" || input[i] == "\t") {
+                outputLength += 2;
+            } else if (charCode < 0x20) {
+                outputLength += 6;
+            } else {
+                outputLength++;
+            }
+        }
+        bytes memory output = new bytes(outputLength);
+        output[0] = '"';
+        uint256 cursor = 1;
+        for (uint256 i = 0; i < input.length; i++) {
+            uint8 charCode = uint8(input[i]);
+            if (input[i] == '"') {
+                output[cursor++] = "\\";
+                output[cursor++] = '"';
+            } else if (input[i] == "\\") {
+                output[cursor++] = "\\";
+                output[cursor++] = "\\";
+            } else if (input[i] == "\n") {
+                output[cursor++] = "\\";
+                output[cursor++] = "n";
+            } else if (input[i] == "\r") {
+                output[cursor++] = "\\";
+                output[cursor++] = "r";
+            } else if (input[i] == "\t") {
+                output[cursor++] = "\\";
+                output[cursor++] = "t";
+            } else if (charCode < 0x20) {
+                output[cursor++] = "\\";
+                output[cursor++] = "u";
+                output[cursor++] = "0";
+                output[cursor++] = "0";
+                output[cursor++] = HEX_DIGITS[charCode >> 4];
+                output[cursor++] = HEX_DIGITS[charCode & 0x0f];
+            } else {
+                output[cursor++] = input[i];
+            }
+        }
+        output[cursor] = '"';
+        return string(output);
+    }
+
+    function _bytesToHex(bytes memory value) private pure returns (string memory) {
+        bytes memory output = new bytes(2 + value.length * 2);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < value.length; i++) {
+            uint8 byteValue = uint8(value[i]);
+            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
+            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
+        }
+        return string(output);
+    }
+
+    function _bytes32ToHex(bytes32 value) private pure returns (string memory) {
+        bytes memory output = new bytes(66);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < 32; i++) {
+            uint8 byteValue = uint8(value[i]);
+            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
+            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
+        }
+        return string(output);
+    }
+
+    function _addressToHex(address account) private pure returns (string memory) {
+        bytes20 value = bytes20(account);
+        bytes memory output = new bytes(42);
+        output[0] = "0";
+        output[1] = "x";
+        for (uint256 i = 0; i < 20; i++) {
+            uint8 byteValue = uint8(value[i]);
+            output[2 + (i * 2)] = HEX_DIGITS[byteValue >> 4];
+            output[3 + (i * 2)] = HEX_DIGITS[byteValue & 0x0f];
+        }
+        return string(output);
+    }
+
+    function _toString(uint256 value) private pure returns (string memory) {
+        if (value == 0) return "0";
+        uint256 digits;
+        uint256 remaining = value;
+        while (remaining != 0) {
+            digits++;
+            remaining /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits--;
+            buffer[digits] = bytes1(uint8(48 + value % 10));
+            value /= 10;
+        }
+        return string(buffer);
     }
 
     function _signConsume(uint256 pathId, uint256 privateKey) private returns (ConsumeAuth memory auth) {
@@ -1494,6 +2742,43 @@ contract ThoughtNFTTest {
         bytes32 digest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", structHash));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         auth.signature = abi.encodePacked(r, s, v);
+    }
+
+    function _withAttestation(
+        ThoughtNFT target,
+        CreationAttestationVerifier verifier,
+        ThoughtNFT.MintThoughtInput memory input,
+        address intendedMinter,
+        bytes32 runIdHash,
+        uint256 authorityKey
+    ) private returns (ThoughtNFT.MintThoughtInput memory output, bytes32 digest) {
+        output = _withCanonicalAgentRunProvenance(target, input, intendedMinter, runIdHash);
+        bytes32 work = _workHashFor(target, output.promptLine, output.agentLine);
+        uint64 attestationDeadline = uint64(block.timestamp + 1 hours);
+        uint32 epoch = verifier.authorityEpoch();
+        ICreationAttestationVerifier.Claim memory claim = ICreationAttestationVerifier.Claim({
+            profileId: target.CREATION_ATTESTATION_PROFILE_ID(),
+            thoughtNft: address(target),
+            protocolReleaseId: target.protocolReleaseId(),
+            thoughtSpecId: output.thoughtSpecId,
+            thoughtSpecHash: output.thoughtSpecHash,
+            workHash: work,
+            provenanceHash: keccak256(bytes(output.provenanceJson)),
+            declaredAgentHash: keccak256(bytes(output.declaredAgent)),
+            declaredModelHash: keccak256(bytes(output.declaredModel)),
+            runIdHash: runIdHash,
+            intendedMinter: intendedMinter,
+            deadline: attestationDeadline,
+            authorityEpoch: epoch
+        });
+        digest = verifier.hashClaim(claim);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authorityKey, digest);
+        output.creationAttestation = ThoughtNFT.CreationAttestationProof({
+            runIdHash: runIdHash,
+            deadline: attestationDeadline,
+            authorityEpoch: epoch,
+            signature: abi.encodePacked(r, s, v)
+        });
     }
 
     function _expectMintRevert(ThoughtNFT.MintThoughtInput memory input, bytes memory revertData) private {
@@ -1520,6 +2805,21 @@ contract ThoughtNFTTest {
         require(path.consumeCallCount() == 0, "invalid utf8 called path");
     }
 
+    function _expectDeclaredAgentUtf8Revert(bytes memory rawDeclaredAgent) private {
+        ThoughtNFT.MintThoughtInput memory input = _input("VALID PROMPT", "VALID AGENT", 1, USER_KEY);
+        input.declaredAgent = string(rawDeclaredAgent);
+        vm.prank(user);
+        (bool ok, bytes memory result) = address(token).call(abi.encodeWithSelector(token.mint.selector, input));
+        require(!ok, "malformed declared Agent calldata should revert");
+        require(
+            _bytesEqual(
+                result, abi.encodeWithSelector(ThoughtNFT.InvalidUtf8.selector, ThoughtNFT.DisplayKind.DeclaredAgent)
+            ),
+            "malformed declared Agent revert mismatch"
+        );
+        require(path.consumeCallCount() == 0, "invalid declared Agent utf8 called path");
+    }
+
     function _expectPromptCharacterRevert(bytes memory rawPromptLine, uint256 codepoint) private {
         ThoughtNFT.MintThoughtInput memory input = _input(string(rawPromptLine), "VALID AGENT", 1, USER_KEY);
         vm.prank(user);
@@ -1535,6 +2835,24 @@ contract ThoughtNFTTest {
             "prohibited raw calldata revert mismatch"
         );
         require(path.consumeCallCount() == 0, "invalid character called path");
+    }
+
+    function _expectDeclaredAgentCharacterRevert(bytes memory rawDeclaredAgent, uint256 codepoint) private {
+        ThoughtNFT.MintThoughtInput memory input = _input("VALID PROMPT", "VALID AGENT", 1, USER_KEY);
+        input.declaredAgent = string(rawDeclaredAgent);
+        vm.prank(user);
+        (bool ok, bytes memory result) = address(token).call(abi.encodeWithSelector(token.mint.selector, input));
+        require(!ok, "prohibited declared Agent calldata should revert");
+        require(
+            _bytesEqual(
+                result,
+                abi.encodeWithSelector(
+                    ThoughtNFT.InvalidDisplayCharacter.selector, ThoughtNFT.DisplayKind.DeclaredAgent, codepoint
+                )
+            ),
+            "prohibited declared Agent revert mismatch"
+        );
+        require(path.consumeCallCount() == 0, "invalid declared Agent character called path");
     }
 
     function _revertSelector(bytes memory result) private pure returns (bytes4 selector) {
@@ -1708,6 +3026,23 @@ contract ThoughtNFTTest {
         }
     }
 
+    function _indexOf(string memory haystack, string memory needle) private pure returns (uint256) {
+        bytes memory source = bytes(haystack);
+        bytes memory target = bytes(needle);
+        if (target.length == 0 || target.length > source.length) return type(uint256).max;
+        for (uint256 i = 0; i <= source.length - target.length; i++) {
+            bool match_ = true;
+            for (uint256 j = 0; j < target.length; j++) {
+                if (source[i + j] != target[j]) {
+                    match_ = false;
+                    break;
+                }
+            }
+            if (match_) return i;
+        }
+        return type(uint256).max;
+    }
+
     function _contains(string memory haystack, string memory needle) private pure returns (bool) {
         return _count(haystack, needle) > 0;
     }
@@ -1721,10 +3056,18 @@ contract ThoughtNFTTest {
     }
 
     function _workHashFor(string memory promptLine, string memory agentLine) private view returns (bytes32) {
+        return _workHashFor(token, promptLine, agentLine);
+    }
+
+    function _workHashFor(ThoughtNFT target, string memory promptLine, string memory agentLine)
+        private
+        pure
+        returns (bytes32)
+    {
         bytes32 promptHash = keccak256(bytes(promptLine));
         bytes32 agentHash = keccak256(bytes(agentLine));
-        bytes32 binaryHash = keccak256(token.binaryField(promptLine, agentLine));
-        return token.workHash(promptHash, agentHash, binaryHash);
+        bytes32 binaryHash = keccak256(target.binaryField(promptLine, agentLine));
+        return target.workHash(promptHash, agentHash, binaryHash);
     }
 
     function _packedBit(bytes memory packed, uint256 bitOffset) private pure returns (uint8) {
@@ -1745,7 +3088,8 @@ contract ThoughtNFTTest {
         for (uint256 i = 0; i < packed.length * 8; i++) {
             uint256 row = i / 32;
             uint256 column = i % 32;
-            bool cleared = (row >= 11 && row <= 14) || (row >= 30 && column >= 2 && column <= 29);
+            bool cleared = (row >= 12 && row <= 14 && column >= 2 && column <= 29)
+                || (row >= 28 && row <= 29 && column >= 4 && column <= 27);
             if (!cleared) count += _packedBit(packed, i);
         }
     }

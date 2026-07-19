@@ -10,12 +10,20 @@ const privateKey =
   process.env.PRIVATE_KEY ??
   "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const pathEvmDir = process.env.PATH_EVM_DIR ?? "/Users/bigu/Projects/path/evm";
-const addressesFile = path.join(rootDir, "evm", "addresses.anvil.json");
+const externalPathNftAddress = process.env.PATH_NFT_ADDRESS?.trim() ?? "";
+const pathPulseAdapterAddress = process.env.PATH_PULSE_ADAPTER_ADDRESS?.trim() ?? "";
+const pulseAuctionAddress = process.env.PULSE_AUCTION_ADDRESS?.trim() ?? "";
+const addressesFile = path.resolve(
+  rootDir,
+  process.env.ADDRESSES_FILE ?? path.join("evm", "addresses.anvil.json"),
+);
 const thoughtSpecName = process.env.THOUGHT_SPEC_NAME ?? "THOUGHT.v2.md";
 const thoughtSpecFile = path.resolve(rootDir, process.env.THOUGHT_SPEC_FILE ?? path.join("specs", thoughtSpecName));
 const thoughtSpecRef = process.env.THOUGHT_SPEC_REF ?? thoughtSpecName;
 const maxThoughtSpecBytes = 20_000;
 const devPathCount = BigInt(process.env.DEV_PATH_COUNT ?? "10");
+const pathReservedCap = BigInt(process.env.PATH_RESERVED_CAP ?? "0");
+const pathSparkClaimDuration = BigInt(process.env.PATH_SPARK_CLAIM_DURATION ?? "604800");
 const explorerUrl = (process.env.THOUGHT_EXPLORER_URL ?? process.env.THOUGHT_INDEXER_URL ?? "").trim();
 const protocolManifestFile = path.resolve(
   rootDir,
@@ -105,15 +113,24 @@ const readProtocolRelease = async () => {
 
   const rendererProfileHash = artifactHash("renderer-profile");
   const workProfileHash = artifactHash("work-profile");
+  const creationAttestationProfileHash = artifactHash("creation-attestation-profile");
   const generatedConstants = await fs.readFile(
     path.join(rootDir, "evm", "src", "ThoughtReleaseConstants.sol"),
     "utf8",
   );
-  if (!generatedConstants.includes(`RENDERER_PROFILE_KECCAK256 = ${rendererProfileHash};`)) {
+  const compactGeneratedConstants = generatedConstants.replace(/\s+/g, "");
+  if (!compactGeneratedConstants.includes(`RENDERER_PROFILE_KECCAK256=${rendererProfileHash};`)) {
     throw new Error("compiled renderer profile constant does not match protocol manifest");
   }
-  if (!generatedConstants.includes(`WORK_PROFILE_KECCAK256 = ${workProfileHash};`)) {
+  if (!compactGeneratedConstants.includes(`WORK_PROFILE_KECCAK256=${workProfileHash};`)) {
     throw new Error("compiled work profile constant does not match protocol manifest");
+  }
+  if (
+    !compactGeneratedConstants.includes(
+      `CREATION_ATTESTATION_PROFILE_KECCAK256=${creationAttestationProfileHash};`,
+    )
+  ) {
+    throw new Error("compiled creation-attestation profile constant does not match protocol manifest");
   }
 
   return {
@@ -123,6 +140,7 @@ const readProtocolRelease = async () => {
     protocolReleaseId,
     rendererProfileHash,
     workProfileHash,
+    creationAttestationProfileHash,
   };
 };
 
@@ -137,17 +155,65 @@ const main = async () => {
   const thoughtSpecId = ethers.id(thoughtSpecName);
   const thoughtSpecHash = ethers.keccak256(thoughtSpecBytes);
 
-  const pathNft = await deploy(
-    deployer,
+  const pathNftArtifact = await readArtifact(
     path.join(pathEvmDir, "artifacts", "src", "PathNFT.sol", "PathNFT.json"),
-    [deployerAddress, "PATH", "PATH", ""],
   );
+  const pathNft = externalPathNftAddress
+    ? new ethers.Contract(externalPathNftAddress, pathNftArtifact.abi, deployer)
+    : await deploy(
+        deployer,
+        path.join(pathEvmDir, "artifacts", "src", "PathNFT.sol", "PathNFT.json"),
+        [
+          deployerAddress,
+          "PATH",
+          "PATH",
+          "",
+          pathReservedCap,
+          pathSparkClaimDuration,
+        ],
+      );
   const pathNftAddress = await pathNft.getAddress();
   const minterRole = ethers.id("MINTER_ROLE");
-  await (await pathNft.grantRole(minterRole, deployerAddress)).wait();
-  await (await pathNft.freezePublicMinter(deployerAddress)).wait();
-  for (let tokenId = 1n; tokenId <= devPathCount; tokenId++) {
-    await (await pathNft.safeMint(deployerAddress, tokenId, "0x")).wait();
+  if (externalPathNftAddress) {
+    if ((await provider.getCode(pathNftAddress)) === "0x") {
+      throw new Error(`external PATH_NFT_ADDRESS has no code: ${pathNftAddress}`);
+    }
+    if (!pathPulseAdapterAddress || !pulseAuctionAddress) {
+      throw new Error("external PATH_NFT_ADDRESS requires PATH_PULSE_ADAPTER_ADDRESS and PULSE_AUCTION_ADDRESS");
+    }
+    const adapterArtifact = await readArtifact(
+      path.join(pathEvmDir, "artifacts", "src", "PathPulseAdapter.sol", "PathPulseAdapter.json"),
+    );
+    const auctionArtifact = await readArtifact(
+      path.join(pathEvmDir, "artifacts", "src", "PulseAuction.sol", "PulseAuction.json"),
+    );
+    const adapter = new ethers.Contract(pathPulseAdapterAddress, adapterArtifact.abi, provider);
+    const auction = new ethers.Contract(pulseAuctionAddress, auctionArtifact.abi, provider);
+    const [adapterPathNft, adapterAuction, wiringFrozen, auctionAdapter, publicMinter, publicMinterFrozen] =
+      await Promise.all([
+        adapter.pathNft(),
+        adapter.auction(),
+        adapter.wiringFrozen(),
+        auction.mintAdapter(),
+        pathNft.publicMinter(),
+        pathNft.publicMinterFrozen(),
+      ]);
+    if (
+      adapterPathNft.toLowerCase() !== pathNftAddress.toLowerCase() ||
+      adapterAuction.toLowerCase() !== pulseAuctionAddress.toLowerCase() ||
+      auctionAdapter.toLowerCase() !== pathPulseAdapterAddress.toLowerCase() ||
+      publicMinter.toLowerCase() !== pathPulseAdapterAddress.toLowerCase() ||
+      !wiringFrozen ||
+      !publicMinterFrozen
+    ) {
+      throw new Error("external PATH auction wiring does not match the THOUGHT deployment");
+    }
+  } else {
+    await (await pathNft.grantRole(minterRole, deployerAddress)).wait();
+    await (await pathNft.freezePublicMinter(deployerAddress)).wait();
+    for (let tokenId = 1n; tokenId <= devPathCount; tokenId++) {
+      await (await pathNft.safeMint(deployerAddress, tokenId, "0x")).wait();
+    }
   }
 
   const thoughtSpecRegistry = await deploy(
@@ -215,6 +281,18 @@ const main = async () => {
     path.join(rootDir, "evm", "out", "ThoughtRenderer.sol", "ThoughtRenderer.json"),
   );
   const thoughtRendererAddress = await thoughtRenderer.getAddress();
+  const creationAttestationVerifier = await deploy(
+    deployer,
+    path.join(
+      rootDir,
+      "evm",
+      "out",
+      "CreationAttestationVerifier.sol",
+      "CreationAttestationVerifier.json",
+    ),
+    [deployerAddress, deployerAddress],
+  );
+  const creationAttestationVerifierAddress = await creationAttestationVerifier.getAddress();
   const thoughtNft = await deploy(
     deployer,
     path.join(rootDir, "evm", "out", "ThoughtNFT.sol", "ThoughtNFT.json"),
@@ -224,6 +302,7 @@ const main = async () => {
       thoughtRendererAddress,
       protocolRegistryAddress,
       protocolRelease.protocolReleaseId,
+      creationAttestationVerifierAddress,
     ],
   );
   const thoughtNftAddress = await thoughtNft.getAddress();
@@ -238,6 +317,12 @@ const main = async () => {
   }
   if ((await thoughtNft.WORK_PROFILE_KECCAK256()) !== protocolRelease.workProfileHash) {
     throw new Error("ThoughtNFT work profile hash does not match manifest");
+  }
+  if ((await thoughtNft.creationAttestationVerifier()) !== creationAttestationVerifierAddress) {
+    throw new Error("ThoughtNFT creation-attestation verifier mismatch");
+  }
+  if ((await creationAttestationVerifier.profileId()) !== await thoughtNft.CREATION_ATTESTATION_PROFILE_ID()) {
+    throw new Error("creation-attestation profile ID mismatch");
   }
 
   await (
@@ -257,19 +342,33 @@ const main = async () => {
     ...(explorerUrl ? { explorerUrl } : {}),
     path: { address: pathNftAddress },
     pathNft: { address: pathNftAddress },
+    ...(pathPulseAdapterAddress ? { pathPulseAdapter: { address: pathPulseAdapterAddress } } : {}),
+    ...(pulseAuctionAddress ? { pulseAuction: { address: pulseAuctionAddress } } : {}),
+    ...(pulseAuctionAddress ? { paymentToken: { address: ethers.ZeroAddress } } : {}),
     pathMovement: { name: "THOUGHT", quota: 1, frozen: true },
-    devPathToken: { id: 1, owner: deployerAddress },
-    devPathTokens: {
-      firstId: 1,
-      lastId: Number(devPathCount),
-      owner: deployerAddress,
-    },
+    ...(!externalPathNftAddress
+      ? {
+          devPathToken: { id: 1, owner: deployerAddress },
+          devPathTokens: {
+            firstId: 1,
+            lastId: Number(devPathCount),
+            owner: deployerAddress,
+          },
+        }
+      : {}),
     thoughtSpecRegistry: { address: thoughtSpecRegistryAddress, owner: deployerAddress },
     protocolRegistry: { address: protocolRegistryAddress, owner: deployerAddress },
     thoughtRenderer: {
       address: thoughtRendererAddress,
       id: await thoughtRenderer.RENDERER_ID(),
       idHash: await thoughtRenderer.RENDERER_ID_HASH(),
+    },
+    creationAttestationVerifier: {
+      address: creationAttestationVerifierAddress,
+      authority: await creationAttestationVerifier.authority(),
+      authorityEpoch: Number(await creationAttestationVerifier.authorityEpoch()),
+      owner: deployerAddress,
+      profileId: await creationAttestationVerifier.profileId(),
     },
     thoughtSpecs: [
       {
@@ -291,6 +390,7 @@ const main = async () => {
       manifestURI: protocolRelease.manifestURI,
       rendererProfileHash: protocolRelease.rendererProfileHash,
       workProfileHash: protocolRelease.workProfileHash,
+      creationAttestationProfileHash: protocolRelease.creationAttestationProfileHash,
       status: protocolRelease.manifest.status ?? "draft-local",
     },
     thoughtSpec: {
@@ -303,6 +403,7 @@ const main = async () => {
     thoughtNft: { address: thoughtNftAddress },
   };
 
+  await fs.mkdir(path.dirname(addressesFile), { recursive: true });
   await fs.writeFile(addressesFile, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
   console.log(JSON.stringify(payload, null, 2));
 };

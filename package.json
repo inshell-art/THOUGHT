@@ -22,6 +22,8 @@
     "ops:pack:sepolia": "node scripts/write-thought-signing-os-pack.mjs",
     "devnode:start": "node scripts/start-devnode.mjs",
     "devnode:deploy": "node scripts/deploy-devnode.mjs",
+    "devnode:gallery": "node scripts/setup-thought-v2-gallery.mjs",
+    "devnode:gallery:mint": "node scripts/mint-thought-v2-gallery.mjs",
     "devnode:mint-paths": "node scripts/mint-dev-paths.mjs",
     "devnode:save-state": "node scripts/save-devnode-state.mjs",
     "devnode:load-state": "node scripts/load-devnode-state.mjs"
@@ -42,6 +44,7 @@
   "dependencies": {
     "@fontsource-variable/roboto-mono": "^5.2.8",
     "@fontsource/source-code-pro": "^5.2.7",
+    "@openzeppelin/contracts": "5.4.0",
     "ethers": "^6.16.0",
     "vite": "^6.3.5"
   },

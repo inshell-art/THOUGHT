@@ -20,6 +20,17 @@
     "promptSourceCells": 512,
     "rows": 32
   },
+  "declaredAgent": {
+    "assurance": "declared-unverified-unless-creation-attested",
+    "attestationCommitment": "keccak256-exact-utf8",
+    "lineProfile": "same-as-prompt-and-agent",
+    "workHashInput": false
+  },
+  "declaredModel": {
+    "assurance": "declared-unverified",
+    "lineProfile": "same-as-prompt-and-agent",
+    "workHashInput": false
+  },
   "forbiddenCodePoints": {
     "defaultIgnorableUnicodeVersion": "17.0.0",
     "ranges": [
@@ -67,6 +78,10 @@
     "agentMaxUtf8Bytes": 64,
     "agentMinUtf8Bytes": 1,
     "allowedWhitespace": "U+0020-internal-only",
+    "declaredAgentMaxUtf8Bytes": 64,
+    "declaredAgentMinUtf8Bytes": 1,
+    "declaredModelMaxUtf8Bytes": 64,
+    "declaredModelMinUtf8Bytes": 1,
     "lineCount": 1,
     "normalization": "none",
     "promptMaxUtf8Bytes": 64,
@@ -76,11 +91,6 @@
   },
   "structuralMetrics": {
     "agentWeight": { "maximum": 512, "minimum": 0 },
-    "binaryContrast": [
-      { "label": "Low", "maximum": 170, "minimum": 0 },
-      { "label": "Medium", "maximum": 341, "minimum": 171 },
-      { "label": "High", "maximum": 512, "minimum": 342 }
-    ],
     "bitDistance": { "maximum": 512, "minimum": 0 },
     "loomWeight": { "maximum": 1024, "minimum": 0 },
     "promptWeight": { "maximum": 512, "minimum": 0 },

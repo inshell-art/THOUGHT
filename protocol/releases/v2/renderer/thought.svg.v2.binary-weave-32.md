@@ -21,16 +21,16 @@ Pack the 1024 field bits row-major and MSB-first into exactly 128 bytes. Prompt 
 
 | Property | Value |
 | --- | --- |
-| field | x=96, y=96, width=768, height=768 |
+| field | x=32, y=32, width=896, height=896 |
 | grid | 32 x 32 |
-| cell | 24 x 24 |
-| center | x=108+24*col, y=108+24*row |
-| one | filled circle r=6 |
-| zero | hollow circle r=7, stroke=2 |
+| cell | 28 x 28 |
+| center | x=46+28*col, y=46+28*row |
+| one | filled circle r=10 |
+| zero | hollow circle r=10, stroke=1 |
 | canvas | `#000000` |
 | field | `#006100`, opacity 1 |
 
-The Agent text block clears rows 11 through 14. The prompt text block clears rows 30 and 31, columns 2 through 29. The SVG emits black clear rectangles at x=92, y=372, width=776, height=76 and x=148, y=820, width=664, height=48. Neither block has a visible frame or non-canvas fill.
+The Agent text block clears rows 12 through 14, columns 2 through 29. The prompt text block clears rows 28 and 29, columns 4 through 27. The SVG emits black clear rectangles at x=92, y=372, width=776, height=76 and x=148, y=820, width=664, height=48. Neither block has a visible frame or non-canvas fill.
 
 Agent text is centered at (480,410), font size 44, clipped at x=94, y=373, width=772, height=74, rx=9. Prompt text is centered at (480,844), font size 16, clipped at x=150, y=821, width=660, height=46, rx=9. Both use `dominant-baseline="middle"`, `xml:space="preserve"`, white fill, and the exact font-family bytes in the reference renderer. Text exceeding its activation width uses the deterministic SVG `<animate>` carousel; short text remains centered.
 
@@ -40,6 +40,6 @@ XML escaping order is `&`, `<`, `>`, `"`, `'`. Attribute order, integer formatti
 
 THOUGHT guarantees deterministic protocol data, loom geometry, SVG source, and `tokenURI()` bytes. It does not guarantee identical rasterized pixels across user agents. Text glyph appearance may vary according to available fonts, shaping engines, emoji support, and rasterizers. Such variation does not alter token identity, stored text, or the canonical loom field.
 
-The accepted line bytes, hashes, 1,024 loom bits, packed 128-byte field, SVG source, metadata JSON, and complete `tokenURI()` are canonical. Browser pixels, font fallback, glyph outlines, antialiasing, emoji presentation, screenshots, and PNG/video previews are viewer output or derived reference previews and are not identity inputs.
+The accepted line bytes, hashes, 1,024 loom bits, packed 128-byte field, SVG source, metadata JSON, and complete `tokenURI()` are canonical. Declared Agent, Declared Model, and Creation Attestation alter metadata only; they never alter SVG bytes or work identity. Browser pixels, font fallback, glyph outlines, antialiasing, emoji presentation, screenshots, and PNG/video previews are viewer output or derived reference previews and are not identity inputs.
 
 Canonical geometry never uses DOM measurement, `canvas.measureText()`, `getBBox()`, font loading callbacks, available-font detection, locale formatting, browser wrapping, or measured truncation. Canonical SVG has no external font, image, or script dependency. Reference rasters must be labeled `derived reference preview` and must never enter line, Agent identity, work, loom, SVG, or tokenURI hashes.

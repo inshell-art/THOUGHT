@@ -4,14 +4,16 @@ Identifier: `inshell.thought.work.v2`
 
 ## Lines
 
-`promptLine` is the exact human semantic input sent to the Agent and the visible human trace. `agentLine` is the exact returned thought and uniqueness identity. Both are preserved as submitted Unicode scalar sequences encoded as shortest-form UTF-8. No Unicode normalization is allowed.
+`promptLine` is the exact human semantic input sent to the Agent and the visible human trace. `agentLine` is the exact returned thought and uniqueness identity. `declaredAgent` and `declaredModel` are separate immutable creation-context declarations. All four are preserved as submitted Unicode scalar sequences encoded as shortest-form UTF-8. No Unicode normalization is allowed.
 
-Both lines must be non-empty and contain only accepted XML 1.0 characters plus ordinary internal U+0020 spaces. Reject malformed or non-shortest UTF-8, surrogate values, code points above U+10FFFF, C0/C1 controls, DEL, non-ASCII whitespace, the frozen Unicode 17.0 default-ignorable ranges, noncharacters, and leading/trailing U+0020. Repeated internal U+0020 spaces are valid and preserved.
+Both work lines and both declaration labels must be non-empty and contain only accepted XML 1.0 characters plus ordinary internal U+0020 spaces. Reject malformed or non-shortest UTF-8, surrogate values, code points above U+10FFFF, C0/C1 controls, DEL, non-ASCII whitespace, the frozen Unicode 17.0 default-ignorable ranges, noncharacters, and leading/trailing U+0020. Repeated internal U+0020 spaces are valid and preserved.
 
 | Line | UTF-8 byte length |
 | --- | ---: |
 | `promptLine` | 1 through 64 |
 | `agentLine` | 1 through 64 |
+| `declaredAgent` | 1 through 64 |
+| `declaredModel` | 1 through 64 |
 
 Accepted bytes are stored and hashed exactly. Implementations must not trim, normalize, case-convert, collapse spaces, clip, repair, transliterate, or replace malformed encoding. Display units are renderer measurements only and are not acceptance limits.
 
@@ -110,5 +112,7 @@ workHash = keccak256(abi.encode(workDomain, rendererIdHash, promptLineKeccak256,
 ```
 
 `agentIdentityHash` is the permanent uniqueness key. `workHash` fingerprints the complete visible/render input and is not the uniqueness key. The contract computes all authoritative hashes.
+
+`declaredAgent` and `declaredModel` are deliberately excluded from line hashes, Agent uniqueness, binary-field derivation, SVG, and `workHash`. They are committed separately by an optional creation attestation. Model observation source and optional exact runtime identifier belong in provenance, not in work identity or marketplace trait values.
 
 Duplicate behavior: the same exact `agentLine` always rejects, even with a different prompt or provenance. A different `agentLine` with the same prompt is allowed.

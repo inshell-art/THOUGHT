@@ -1,76 +1,55 @@
 # THOUGHT Agent Flow V2
 
-> Superseded design record. The active authority is [`protocol/CURRENT.json`](../../protocol/CURRENT.json) and `protocol/integrations/agent-run/v2/`.
-
 ## Authority
 
-The human owns the prompt, Agent choice, wallet, PATH authorization, and mint decision. The Agent is allowed one bounded creative round. It does not authorize a wallet, choose a PATH token, or mint a THOUGHT.
+The human owns the prompt, Agent choice, wallet, PATH authorization, and mint decision. The Agent performs one bounded creative round. It cannot choose a PATH token, authorize a wallet, or mint a THOUGHT.
 
-The onchain mint contract remains permissionless: direct `ThoughtNFT.mint(MintThoughtInput)` is valid without any Agent run.
+The onchain contract remains permissionless. A direct caller may submit `ThoughtNFT.mint(MintThoughtInput)` without an Agent run, but the caller must still provide valid exact prompt, Agent, declared-Agent, and declared-model strings, a registered spec pair, provenance bytes, canonical empty or valid creation-attestation proof input, and PATH authorization. The canonical empty proof always takes the `Unattested` path.
 
-## Technical Protocol Identifiers
+## Release-bound result
 
-| Surface | Identifier |
-| --- | --- |
-| Run protocol | `thought-agent/2` |
-| Result schema | `thought.agent-result.v2` |
-| Provenance fragment schema | `thought.agent-fragment.v1` |
-| Final provenance schema | `thought.provenance.v2` |
-| Formal spec | `THOUGHT.v2.md` |
-| Renderer | `thought.svg.v2.fixed-a-32` |
-
-## Sealed Agent Task
-
-The Agent receives one sealed task containing:
-
-- `rawPrompt`: exact human text submitted to the UI;
-- `promptLine`: visible prompt representation for the work;
-- full verified spec anchor: name, id, hash, ref, and exact `THOUGHT.v2.md` text;
-- expected result schema `thought.agent-result.v2`;
-- the run id and non-secret task context needed for the response.
-
-The Agent must return exactly one JSON object:
+The sealed task binds the exact protocol release, manifest, creative spec, Agent-result schema, and work profile. A result is one strict `inshell.thought.agent-result.v2` object:
 
 ```json
 {
-  "schema": "thought.agent-result.v2",
-  "agentLine": "one visible UTF-8 line",
-  "provenanceFragment": {
-    "schema": "thought.agent-fragment.v1",
-    "provider": "codex",
-    "model": "configured-model",
-    "receivedAt": "2026-07-11T00:00:00.000Z"
+  "schema": "inshell.thought.agent-result.v2",
+  "release": {
+    "protocolReleaseId": "0x…",
+    "manifestKeccak256": "0x…"
+  },
+  "agentLine": "one exact visible UTF-8 line",
+  "agent": {
+    "label": "Codex",
+    "model": {
+      "label": "GPT-5.6",
+      "identifier": "optional exact runtime identifier",
+      "source": "runtime_configured"
+    }
   }
 }
 ```
 
-No dialogue, repair loop, alternate candidate, PATH selection, wallet action, or mint action belongs in the Agent response.
+`agentLine`, `agent.label`, and `agent.model.label` each use the frozen 1-through-64-byte safe single-line profile. The accepted model source is exactly one of `connector_observed`, `runtime_configured`, `agent_declared`, `manual`, or `unknown`. The optional identifier must be a non-empty exact string when present.
 
-The Agent must return one concise, visible UTF-8 `agentLine`. The official validator enforces `180` UTF-8 bytes and `162` deterministic display units, plus one-line/control/spacing rules. It rejects an invalid result rather than repairing or truncating it. Exact Agent-line bytes are globally unique within THOUGHT, so the frontend should check the Agent-line identity before wallet pressure and the contract rechecks it authoritatively inside `mint(...)`.
+The parser validates the entire object atomically: exact keys, release binding, Agent line, Agent shape, model label, model source, optional identifier, and optional Agent declaration. It never trims, normalizes, case-folds, repairs, or partially accepts a result. A failed parse leaves the run unreturned.
 
-## inshell.art Implementation Contract
+## Declaration handoff
 
-`inshell.art` owns the active integration. Its API and Plugin/MCP adapter must provide the following conceptual operations:
+After a result is accepted, the integration must:
 
-| MCP operation | Required behavior |
-| --- | --- |
-| `thought_get_run_task` | Fetch the sealed task by run/task pointer and verify its spec id/hash before exposing it to the Agent. |
-| `thought_submit_agent_result` | Accept exactly one `thought.agent-result.v2` payload, validate it against the task, then seal the result. |
-| `thought_get_run_status` | Return the lifecycle and the sealed result status without mint authority. |
+1. copy exact `agent.label` unchanged into `MintThoughtInput.declaredAgent`;
+2. copy exact `agent.model.label` unchanged into `MintThoughtInput.declaredModel`;
+3. mirror those exact labels in `process.agentDeclaration.label` and `process.modelDeclaration.label`, preserving the model source and optional identifier; and
+4. compare each provenance mirror with typed contract state when verifying the token.
 
-The deep link may carry a run/task URL or opaque pointer only. It must not rely on a deep-link query as the sole source of the full spec text. The Plugin fetches the complete verified task through the run API.
+`Declared Agent` and `Declared Model` are declaration-only context. A raw caller can claim any syntactically valid label, so neither may be presented as verified. The optional exact model identifier stays in provenance and never enters the collection trait. Typed contract values win over conflicting provenance mirrors.
 
-After a valid Agent result, the frontend validates the two visible lines, derives the exact binary field via the renderer contract, assembles `thought.provenance.v2`, previews the onchain SVG, and presents a separate wallet/PATH/mint action. An Agent result never proves an offchain event merely by declaring it in provenance.
+## Work and provenance boundary
 
-## Provenance Assembly
+The reference builder validates exact `promptLine`, `agentLine`, `declaredAgent`, and `declaredModel` bytes. Only the prompt and Agent lines derive line hashes, Agent uniqueness, the packed 1,024-bit loom, SVG, and `workHash`. Neither declaration nor creation-attestation status alters creative identity.
 
-The final payload passed to `MintThoughtInput.provenanceJson` should include:
+Canonical `inshell.thought.provenance.v2` uses a strict `manual` or `agent-run` process branch. Both branches require `agentDeclaration` and `modelDeclaration`, and the closed protocol object carries the release/manifest commitments plus the exact selected `thoughtSpecId` and `thoughtSpecHash`. The shared builder verifies the exact spec bytes and compares their derived pair with the registered pair and mint draft; the shared verifier can additionally compare token state and an optional attestation claim. The contract stores provenance as opaque exact bytes and separately stores typed labels and the selected pair; it never parses provenance to obtain either trait or enforce the JSON schema.
 
-- `schema: "thought.provenance.v2"`;
-- raw prompt and visible `promptLine` where product policy permits;
-- `agentLine` and optional `thought.agent-fragment.v1` data;
-- exact `thoughtSpecId`, `thoughtSpecHash`, and `thought.svg.v2.fixed-a-32` renderer id;
-- the exact 1024-bit field derived from prompt bytes then agent bytes;
-- run context when present, or an explicit direct/manual route when absent.
+An optional `inshell.thought.creation-workflow-attestation.v1` proof signs the exact selected creative-spec pair, provenance hash, and other contract-derived creation fields outside the provenance bytes. `ThoughtNFT` constructs the pair from the same validated mint fields it stores, so a proof for registered pair A cannot be reused with pair B. A valid proof yields the modest fixed status `Inshell THOUGHT App`; it does not prove Agent, model, browser, provider, route, or PATH execution. Verifier pause blocks only future nonempty proofs, and authority rotation cannot rewrite historical token metadata.
 
-The contract stores the opaque provenance string and its hash. It does not parse, sign, or independently attest to Agent provenance.
+The wallet/PATH/mint action remains a distinct human step after result validation and review.

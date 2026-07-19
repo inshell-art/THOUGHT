@@ -1,18 +1,28 @@
 import { describe, expect, it } from "vitest";
 
 import tokenVectors from "../protocol/releases/v2/conformance/token-uri-vectors.json";
-import provenanceVectors from "../protocol/releases/v2/conformance/provenance-vectors.json";
 import { keccak256, toUtf8Bytes } from "ethers";
 
 import { deriveProtocolReleaseId } from "./thought-v2-protocol";
+import { buildVerifiedCanonicalProvenance, type ThoughtProtocolBinding } from "./thought-v2-provenance";
 import { buildThoughtV2Metadata, buildThoughtV2TokenUri } from "./thought-v2-token-uri";
 
 describe("THOUGHT V2 canonical tokenURI", () => {
+  const emptyDigest = `0x${"00".repeat(32)}` as const;
+  const verifier = `0x${"44".repeat(20)}` as const;
+
   it("reproduces the frozen one-byte metadata and tokenURI vector exactly", () => {
     const manifestKeccak256 = `0x${"11".repeat(32)}` as const;
-    const protocol = provenanceVectors.valid[0]!.record.protocol;
+    const expected = tokenVectors.vectors[0]!;
+    const tokenProvenance = JSON.parse(expected.provenance.canonicalJson);
+    const protocol = tokenProvenance.protocol;
+    const metadata = JSON.parse(expected.metadata);
     const input = {
       agentLine: "b",
+      declaredAgent: "Codex",
+      declaredModel: "Model A",
+      creationAttestationDigest: emptyDigest,
+      creationAttestationVerifier: verifier,
       manifestKeccak256,
       minter: `0x${"33".repeat(20)}` as const,
       mintedAt: 1_700_000_000n,
@@ -20,14 +30,13 @@ describe("THOUGHT V2 canonical tokenURI", () => {
       pathSerial: 0n,
       promptLine: "a",
       protocolReleaseId: deriveProtocolReleaseId(manifestKeccak256),
-      provenanceJson: provenanceVectors.valid[0]!.canonicalJson,
-      rendererProfileKeccak256: protocol.rendererProfile.keccak256 as `0x${string}`,
-      thoughtSpecHash: keccak256(toUtf8Bytes("fixture thought spec")) as `0x${string}`,
-      thoughtSpecId: keccak256(toUtf8Bytes("THOUGHT.v2.md")) as `0x${string}`,
+      provenanceJson: expected.provenance.canonicalJson,
+      rendererProfileKeccak256: metadata.properties.rendererProfileKeccak256 as `0x${string}`,
+      thoughtSpecHash: protocol.thoughtSpecHash as `0x${string}`,
+      thoughtSpecId: protocol.thoughtSpecId as `0x${string}`,
       tokenId: 1n,
-      workProfileKeccak256: protocol.workProfile.keccak256 as `0x${string}`,
+      workProfileKeccak256: metadata.properties.workProfileKeccak256 as `0x${string}`,
     };
-    const expected = tokenVectors.vectors[0]!;
     expect(buildThoughtV2Metadata(input)).toBe(expected.metadata);
     expect(buildThoughtV2TokenUri(input)).toBe(expected.tokenURI);
   });
@@ -37,12 +46,14 @@ describe("THOUGHT V2 canonical tokenURI", () => {
     const order = [
       '"trait_type":"Prompt"',
       '"trait_type":"Agent Response"',
+      '"trait_type":"Declared Agent"',
+      '"trait_type":"Declared Model"',
+      '"trait_type":"Creation Attestation"',
       '"trait_type":"Texture Density"',
-      '"trait_type":"Binary Contrast"',
-      '"trait_type":"Protocol"',
     ].map((value) => metadata.indexOf(value));
     expect(order).toEqual([...order].sort((a, b) => a - b));
-    expect(metadata).not.toContain("Declared Agent");
+    expect(metadata).not.toContain('"trait_type":"Protocol"');
+    expect(metadata).not.toContain('"trait_type":"Binary Contrast"');
     for (const key of ["promptWeight", "agentWeight", "loomWeight", "bitDistance"]) {
       expect(metadata).toContain(`"${key}":`);
     }
@@ -52,27 +63,80 @@ describe("THOUGHT V2 canonical tokenURI", () => {
     const manifestKeccak256 = keccak256(
       toUtf8Bytes("inshell.thought.protocol.v2.test"),
     ) as `0x${string}`;
+    const protocolReleaseId = deriveProtocolReleaseId(manifestKeccak256);
+    const rendererProfileKeccak256 = "0xc68ec09234f316cfdb19b96456e04f76f4f4674b3bb6596117cc39d124d1f6e1";
+    const workProfileKeccak256 = "0xfaa37b147f7ea37a790f35b67707d895e1b4b11481434289d444faace3d72674";
+    const thoughtSpecHash = keccak256(
+      toUtf8Bytes("# THOUGHT.v2.md\n\nVersion: v2\n\nThe contract mints final visible V2 lines only.\n"),
+    ) as `0x${string}`;
+    const thoughtNft = "0xa0cb889707d426a7a386870a03bc70d1b0697598" as const;
+    const minter = "0xe05fcc23807536bee418f142d19fa0d21bb0cff7" as const;
+    const protocol: ThoughtProtocolBinding = {
+      manifestKeccak256,
+      protocolReleaseId,
+      thoughtSpecHash,
+      thoughtSpecId: keccak256(toUtf8Bytes("THOUGHT.v2.md")) as `0x${string}`,
+    };
+    const exactSpecBytes = toUtf8Bytes(
+      "# THOUGHT.v2.md\n\nVersion: v2\n\nThe contract mints final visible V2 lines only.\n",
+    );
+    const selectedPair = { thoughtSpecId: protocol.thoughtSpecId, thoughtSpecHash };
+    const provenance = buildVerifiedCanonicalProvenance({
+      protocol,
+      selectedSpec: {
+        specName: "THOUGHT.v2.md",
+        exactSpecBytes,
+        registeredPair: selectedPair,
+        mintPair: selectedPair,
+        tokenStatePair: selectedPair,
+      },
+      promptLine: "a",
+      agentLine: "b",
+      process: {
+        agentDeclaration: {
+          label: "Fixture Agent",
+          source: "manual",
+          status: "declared-unverified",
+        },
+        kind: "manual",
+        modelDeclaration: {
+          label: "Fixture Model",
+          source: "manual",
+          status: "declared-unverified",
+        },
+      },
+      mintContext: {
+        chainId: "31337",
+        intendedMinter: minter,
+        thoughtNft,
+      },
+    }, {
+      declaredAgent: "Fixture Agent",
+      declaredModel: "Fixture Model",
+    });
     const tokenURI = buildThoughtV2TokenUri({
       tokenId: 1n,
       promptLine: "a",
       agentLine: "b",
-      provenanceJson: '{"app":"THOUGHT","version":"v2","route":"codex","agentVerified":false}',
-      protocolReleaseId: deriveProtocolReleaseId(manifestKeccak256),
+      declaredAgent: "Fixture Agent",
+      declaredModel: "Fixture Model",
+      creationAttestationDigest: emptyDigest,
+      creationAttestationVerifier: "0xc7183455a4c133ae270771860664b6b7ec320bb1",
+      provenanceJson: provenance.canonicalJson,
+      protocolReleaseId,
       manifestKeccak256,
-      rendererProfileKeccak256: "0x6c124e260dcbfe801614b89da24bb31d407303e7cd93cc3e6a6ac372c862de88",
-      workProfileKeccak256: "0x8b590ab95432b0dd5002a4fb1419475751bdf0210a73338bf633533005d182bb",
+      rendererProfileKeccak256,
+      workProfileKeccak256,
       thoughtSpecId: keccak256(toUtf8Bytes("THOUGHT.v2.md")) as `0x${string}`,
-      thoughtSpecHash: keccak256(
-        toUtf8Bytes("# THOUGHT.v2.md\n\nVersion: v2\n\nThe contract mints final visible V2 lines only.\n"),
-      ) as `0x${string}`,
+      thoughtSpecHash,
       pathId: 1n,
       pathSerial: 0n,
-      minter: "0xe05fcc23807536bee418f142d19fa0d21bb0cff7",
+      minter,
       mintedAt: 1_700_000_000n,
     });
 
     expect(keccak256(toUtf8Bytes(tokenURI))).toBe(
-      "0x8565890ca125fd9feb741173fde3383dbced208c3d20b8002790ddee660a8522",
+      "0xc7029a29c4fcf3e0f28627a8017a119f7a363cebbe7891a5f2ace0de5bf57796",
     );
   });
 });

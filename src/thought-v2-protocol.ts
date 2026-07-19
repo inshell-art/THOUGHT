@@ -1,6 +1,6 @@
 import { AbiCoder, getBytes, hexlify, id, keccak256, toUtf8Bytes } from "ethers";
 
-export type ThoughtLineKind = "prompt" | "agent";
+export type ThoughtLineKind = "prompt" | "agent" | "declaredAgent" | "model";
 
 export type ThoughtLineMeasure = {
   byteLength: number;
@@ -17,6 +17,25 @@ export type ThoughtWorkHashes = {
   workHash: string;
 };
 
+export const THOUGHT_MODEL_SOURCES = [
+  "connector_observed",
+  "runtime_configured",
+  "agent_declared",
+  "manual",
+  "unknown",
+] as const;
+
+export type ThoughtModelSource = typeof THOUGHT_MODEL_SOURCES[number];
+
+export type ThoughtDeclaredModel = {
+  label: string;
+  identifier?: string;
+  source: ThoughtModelSource;
+};
+
+export const isThoughtModelSource = (value: unknown): value is ThoughtModelSource =>
+  typeof value === "string" && (THOUGHT_MODEL_SOURCES as readonly string[]).includes(value);
+
 export type ThoughtTraits = {
   promptBytes: number;
   agentBytes: number;
@@ -25,7 +44,6 @@ export type ThoughtTraits = {
   loomWeight: number;
   bitDistance: number;
   textureDensity: "Open" | "Balanced" | "Dense";
-  binaryContrast: "Low" | "Medium" | "High";
 };
 
 export const THOUGHT_PROTOCOL_ID = "inshell.thought.protocol.v2" as const;
@@ -35,6 +53,24 @@ export const THOUGHT_AGENT_DECLARATION_ID = "inshell.thought.agent-declaration.v
 export const THOUGHT_RENDERER_ID = "inshell.thought.svg.v2.binary-weave-32" as const;
 export const THOUGHT_PROVENANCE_ID = "inshell.thought.provenance.v2" as const;
 export const THOUGHT_AGENT_RUN_ID = "inshell.thought.agent-run.v2" as const;
+export const THOUGHT_CREATION_ATTESTATION_PROFILE =
+  "inshell.thought.creation-workflow-attestation.v1" as const;
+export const THOUGHT_CREATION_ATTESTATION_PROFILE_ID = id(
+  THOUGHT_CREATION_ATTESTATION_PROFILE,
+) as `0x${string}`;
+export const THOUGHT_CREATION_ATTESTATION_STATUSES = [
+  "Inshell THOUGHT App",
+  "Unattested",
+] as const;
+
+export const THOUGHT_V2_ATTRIBUTE_ORDER = [
+  "Prompt",
+  "Agent Response",
+  "Declared Agent",
+  "Declared Model",
+  "Creation Attestation",
+  "Texture Density",
+] as const;
 
 export const AGENT_IDENTITY_DOMAIN_TEXT = "INSHELL_THOUGHT_V2_AGENT_IDENTITY" as const;
 export const WORK_DOMAIN_TEXT = "INSHELL_THOUGHT_V2_WORK" as const;
@@ -46,6 +82,8 @@ export const RENDERER_ID_HASH = id(THOUGHT_RENDERER_ID);
 
 export const MAX_PROMPT_LINE_BYTES = 64;
 export const MAX_AGENT_LINE_BYTES = 64;
+export const MAX_DECLARED_AGENT_BYTES = 64;
+export const MAX_DECLARED_MODEL_BYTES = 64;
 export const MAX_PROVENANCE_BYTES = 20_000;
 export const BINARY_FIELD_BITS = 1024;
 export const BINARY_FIELD_BYTES = 128;
@@ -356,7 +394,6 @@ export const deriveThoughtTraits = (promptLine: string, agentLine: string): Thou
     loomWeight,
     bitDistance,
     textureDensity: loomWeight <= 460 ? "Open" : loomWeight <= 563 ? "Balanced" : "Dense",
-    binaryContrast: bitDistance <= 170 ? "Low" : bitDistance <= 341 ? "Medium" : "High",
   };
 };
 

@@ -15,6 +15,12 @@ const generatedPaths = [
   bundlePath,
   path.join(releaseRoot, "provenance", "examples", "manual.json"),
   path.join(releaseRoot, "contract", "vectors", "hash-vectors.json"),
+  ...fs.readdirSync(path.join(releaseRoot, "contract", "abi")).sort()
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => path.join(releaseRoot, "contract", "abi", name)),
+  ...fs.readdirSync(path.join(releaseRoot, "attestation", "fixtures")).sort()
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => path.join(releaseRoot, "attestation", "fixtures", name)),
   ...fs.readdirSync(path.join(releaseRoot, "conformance")).sort()
     .map((name) => path.join(releaseRoot, "conformance", name)),
   ...fs.readdirSync(path.join(releaseRoot, "renderer", "fixtures")).sort()
@@ -66,6 +72,13 @@ for (const artifact of manifest.artifacts) {
   paths.add(artifact.path);
   const data = fs.readFileSync(path.join(releaseRoot, artifact.path));
   assertTextFilePolicy(artifact.path, data);
+  if (artifact.mediaType.includes("json")) {
+    try {
+      JSON.parse(data.toString("utf8"));
+    } catch (error) {
+      throw new Error(`${artifact.path}: invalid JSON: ${error.message}`);
+    }
+  }
   if (data.length !== artifact.byteLength) throw new Error(`${artifact.path}: byte length mismatch`);
   if (keccak256(data) !== artifact.keccak256) throw new Error(`${artifact.path}: Keccak-256 mismatch`);
 }

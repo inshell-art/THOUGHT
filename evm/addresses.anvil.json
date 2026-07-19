@@ -1,55 +1,79 @@
 {
   "rpcUrl": "http://127.0.0.1:8545",
   "chainId": 31337,
+  "path": {
+    "address": "0x158d291D8b47F056751cfF47d1eEcd19FDF9B6f8"
+  },
   "pathNft": {
-    "address": "0x25C0a2F0A077F537Bd11897F04946794c2f6f1Ef"
+    "address": "0x158d291D8b47F056751cfF47d1eEcd19FDF9B6f8"
+  },
+  "pathPulseAdapter": {
+    "address": "0x2F54D1563963fC04770E85AF819c89Dc807f6a06"
+  },
+  "pulseAuction": {
+    "address": "0xF342E904702b1D021F03f519D6D9614916b03f37"
+  },
+  "paymentToken": {
+    "address": "0x0000000000000000000000000000000000000000"
   },
   "pathMovement": {
     "name": "THOUGHT",
     "quota": 1,
     "frozen": true
   },
-  "devPathToken": {
-    "id": 1,
-    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-  },
-  "devPathTokens": {
-    "firstId": 1,
-    "lastId": 10,
-    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-  },
-  "seedGenerator": {
-    "address": "0x906B067e392e2c5f9E4f101f36C0b8CdA4885EBf"
-  },
-  "colorFontV1": {
-    "address": "0xD94A92749C0bb33c4e4bA7980c6dAD0e3eFfb720"
-  },
-  "thoughtPreviewer": {
-    "address": "0xDf951d2061b12922BFbF22cb17B17f3b39183570"
-  },
   "thoughtSpecRegistry": {
-    "address": "0x4f42528B7bF8Da96516bECb22c1c6f53a8Ac7312"
+    "address": "0x4eaB29997D332A666c3C366217Ab177cF9A7C436",
+    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "protocolRegistry": {
+    "address": "0x627b9A657eac8c3463AD17009a424dFE3FDbd0b1",
+    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  },
+  "thoughtRenderer": {
+    "address": "0x8E45C0936fa1a65bDaD3222bEFeC6a03C83372cE",
+    "id": "inshell.thought.svg.v2.binary-weave-32",
+    "idHash": "0x25744370b60846d2470a55891ed1493a7d90d8d8e52893a62d266cf00f96ba39"
+  },
+  "creationAttestationVerifier": {
+    "address": "0xBEe6FFc1E8627F51CcDF0b4399a1e1abc5165f15",
+    "authority": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "authorityEpoch": 1,
+    "owner": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669"
   },
   "thoughtSpecs": [
     {
-      "specName": "THOUGHT.v1.md",
-      "specId": "0xe201170ae183f114064f4492cbc4942f7d3d68b74a08d3dc4b4f61edec213d78",
-      "specHash": "0x1abb9da7ba36102726375510e66afe255f8c6e0d771b4c3b90c5d22a9b8eb909",
-      "ref": "THOUGHT.v1.md",
-      "pointer": "0x63e6832bd328c5Dc18E94A6565b30B653D3475F1",
-      "byteLength": 8549
+      "specName": "THOUGHT.v2.md",
+      "specId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+      "specHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+      "ref": "THOUGHT.v2.md",
+      "pointer": "0xA36EC2c1aE309eb243Ca41F7045e0728027C00E1",
+      "byteLength": 4150
     }
   ],
-  "recommendedThoughtSpecName": "THOUGHT.v1.md",
-  "recommendedThoughtSpecId": "0xe201170ae183f114064f4492cbc4942f7d3d68b74a08d3dc4b4f61edec213d78",
-  "recommendedThoughtSpecHash": "0x1abb9da7ba36102726375510e66afe255f8c6e0d771b4c3b90c5d22a9b8eb909",
+  "recommendedThoughtSpecName": "THOUGHT.v2.md",
+  "recommendedThoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+  "recommendedThoughtSpecHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+  "protocolRelease": {
+    "id": "0x6b46ce9c3cecbee25ec33b44115846bf8b3c3cd7d246305154e3ff330af47449",
+    "manifestFile": "protocol/releases/v2/release.manifest.draft.json",
+    "manifestHash": "0xb512227b92505b5986559fb132d72823828f22c5ab5e2c68daa8672cb93332db",
+    "manifestURI": "dev://thought/protocol/v2/0xb512227b92505b5986559fb132d72823828f22c5ab5e2c68daa8672cb93332db",
+    "rendererProfileHash": "0xc68ec09234f316cfdb19b96456e04f76f4f4674b3bb6596117cc39d124d1f6e1",
+    "workProfileHash": "0xfaa37b147f7ea37a790f35b67707d895e1b4b11481434289d444faace3d72674",
+    "creationAttestationProfileHash": "0xa8b7ef8ccfcfe936afe42aa2efef61bd4ba91844a0b6d097a2dfeff5a2eb287c",
+    "status": "draft-local"
+  },
   "thoughtSpec": {
-    "specName": "THOUGHT.v1.md",
-    "id": "0xe201170ae183f114064f4492cbc4942f7d3d68b74a08d3dc4b4f61edec213d78",
-    "hash": "0x1abb9da7ba36102726375510e66afe255f8c6e0d771b4c3b90c5d22a9b8eb909",
-    "ref": "THOUGHT.v1.md"
+    "specName": "THOUGHT.v2.md",
+    "id": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+    "hash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+    "ref": "THOUGHT.v2.md"
+  },
+  "thought": {
+    "address": "0xC32609C91d6B6b51D48f2611308FEf121B02041f"
   },
   "thoughtNft": {
-    "address": "0xe14058B1c3def306e2cb37535647A04De03Db092"
+    "address": "0xC32609C91d6B6b51D48f2611308FEf121B02041f"
   }
 }

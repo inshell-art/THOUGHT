@@ -1,9 +1,12 @@
 import { keccak256, toUtf8Bytes } from "ethers";
 
 import {
+  assertThoughtLine,
   deriveThoughtTraits,
   RENDERER_ID_HASH,
+  THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
   THOUGHT_RENDERER_ID,
+  THOUGHT_V2_ATTRIBUTE_ORDER,
   THOUGHT_WORK_PROFILE_ID,
   thoughtWorkHashes,
 } from "./thought-v2-protocol";
@@ -13,6 +16,10 @@ export type ThoughtV2TokenUriInput = {
   tokenId: bigint;
   promptLine: string;
   agentLine: string;
+  declaredAgent: string;
+  declaredModel: string;
+  creationAttestationDigest: `0x${string}`;
+  creationAttestationVerifier: `0x${string}`;
   provenanceJson: string;
   protocolReleaseId: `0x${string}`;
   manifestKeccak256: `0x${string}`;
@@ -51,17 +58,25 @@ const base64 = (bytes: Uint8Array): string => {
 const jsonString = (value: string): string => JSON.stringify(value);
 
 const assertInput = (input: ThoughtV2TokenUriInput): void => {
+  assertThoughtLine(input.promptLine, "prompt");
+  assertThoughtLine(input.agentLine, "agent");
+  assertThoughtLine(input.declaredAgent, "declaredAgent");
+  assertThoughtLine(input.declaredModel, "model");
   for (const [label, value] of [
     ["protocolReleaseId", input.protocolReleaseId],
     ["manifestKeccak256", input.manifestKeccak256],
     ["rendererProfileKeccak256", input.rendererProfileKeccak256],
     ["workProfileKeccak256", input.workProfileKeccak256],
+    ["creationAttestationDigest", input.creationAttestationDigest],
     ["thoughtSpecId", input.thoughtSpecId],
     ["thoughtSpecHash", input.thoughtSpecHash],
   ] as const) {
     if (!bytes32Pattern.test(value)) throw new Error(`${label} must be lowercase bytes32`);
   }
   if (!addressPattern.test(input.minter)) throw new Error("minter must be a lowercase address");
+  if (!addressPattern.test(input.creationAttestationVerifier)) {
+    throw new Error("creationAttestationVerifier must be a lowercase address");
+  }
 };
 
 export const buildThoughtV2Metadata = (input: ThoughtV2TokenUriInput): string => {
@@ -71,9 +86,19 @@ export const buildThoughtV2Metadata = (input: ThoughtV2TokenUriInput): string =>
   const hashes = thoughtWorkHashes(input.promptLine, input.agentLine);
   const traits = deriveThoughtTraits(input.promptLine, input.agentLine);
   const provenanceHash = keccak256(toUtf8Bytes(input.provenanceJson));
-  const attributes = `[{"trait_type":"Prompt","value":${jsonString(input.promptLine)}},{"trait_type":"Agent Response","value":${jsonString(input.agentLine)}},{"trait_type":"Texture Density","value":"${traits.textureDensity}"},{"trait_type":"Binary Contrast","value":"${traits.binaryContrast}"},{"trait_type":"Protocol","value":"V2"}]`;
-  const properties = `{"promptBytes":${traits.promptBytes},"agentBytes":${traits.agentBytes},"promptWeight":${traits.promptWeight},"agentWeight":${traits.agentWeight},"loomWeight":${traits.loomWeight},"bitDistance":${traits.bitDistance},"protocolReleaseId":"${input.protocolReleaseId}","manifestKeccak256":"${input.manifestKeccak256}","rendererId":"${THOUGHT_RENDERER_ID}","rendererProfileKeccak256":"${input.rendererProfileKeccak256}","workProfileId":"${THOUGHT_WORK_PROFILE_ID}","workProfileKeccak256":"${input.workProfileKeccak256}","provenanceKeccak256":"${provenanceHash}"}`;
-  const thought = `{"renderer":"${THOUGHT_RENDERER_ID}","protocolReleaseId":"${input.protocolReleaseId}","manifestKeccak256":"${input.manifestKeccak256}","promptLine":${jsonString(input.promptLine)},"agentLine":${jsonString(input.agentLine)},"binaryFieldPacked":"${hashes.binaryFieldPacked}","binaryFieldKeccak256":"${hashes.binaryFieldKeccak256}","promptLineKeccak256":"${hashes.promptLineKeccak256}","agentLineKeccak256":"${hashes.agentLineKeccak256}","agentIdentityHash":"${hashes.agentIdentityHash}","workHash":"${hashes.workHash}","provenanceHash":"${provenanceHash}","thoughtSpecId":"${input.thoughtSpecId}","thoughtSpecHash":"${input.thoughtSpecHash}","pathId":"${input.pathId}","pathSerial":"${input.pathSerial}","minter":"${input.minter}","mintedAt":"${input.mintedAt}","provenance":${jsonString(input.provenanceJson)}}`;
+  const creationAttestation = input.creationAttestationDigest === `0x${"00".repeat(32)}`
+    ? "Unattested"
+    : "Inshell THOUGHT App";
+  const attributes = JSON.stringify([
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[0], value: input.promptLine },
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[1], value: input.agentLine },
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[2], value: input.declaredAgent },
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[3], value: input.declaredModel },
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[4], value: creationAttestation },
+    { trait_type: THOUGHT_V2_ATTRIBUTE_ORDER[5], value: traits.textureDensity },
+  ]);
+  const properties = `{"promptBytes":${traits.promptBytes},"agentBytes":${traits.agentBytes},"promptWeight":${traits.promptWeight},"agentWeight":${traits.agentWeight},"loomWeight":${traits.loomWeight},"bitDistance":${traits.bitDistance},"protocolReleaseId":"${input.protocolReleaseId}","manifestKeccak256":"${input.manifestKeccak256}","rendererId":"${THOUGHT_RENDERER_ID}","rendererProfileKeccak256":"${input.rendererProfileKeccak256}","workProfileId":"${THOUGHT_WORK_PROFILE_ID}","workProfileKeccak256":"${input.workProfileKeccak256}","creationAttestationProfileId":"${THOUGHT_CREATION_ATTESTATION_PROFILE_ID}","creationAttestationVerifier":"${input.creationAttestationVerifier}","creationAttestationDigest":"${input.creationAttestationDigest}","provenanceKeccak256":"${provenanceHash}"}`;
+  const thought = `{"renderer":"${THOUGHT_RENDERER_ID}","protocolReleaseId":"${input.protocolReleaseId}","manifestKeccak256":"${input.manifestKeccak256}","promptLine":${jsonString(input.promptLine)},"agentLine":${jsonString(input.agentLine)},"declaredAgent":${jsonString(input.declaredAgent)},"declaredModel":${jsonString(input.declaredModel)},"creationAttestation":"${creationAttestation}","binaryFieldPacked":"${hashes.binaryFieldPacked}","binaryFieldKeccak256":"${hashes.binaryFieldKeccak256}","promptLineKeccak256":"${hashes.promptLineKeccak256}","agentLineKeccak256":"${hashes.agentLineKeccak256}","agentIdentityHash":"${hashes.agentIdentityHash}","workHash":"${hashes.workHash}","provenanceHash":"${provenanceHash}","thoughtSpecId":"${input.thoughtSpecId}","thoughtSpecHash":"${input.thoughtSpecHash}","pathId":"${input.pathId}","pathSerial":"${input.pathSerial}","minter":"${input.minter}","mintedAt":"${input.mintedAt}","provenance":${jsonString(input.provenanceJson)}}`;
   return `{"name":"THOUGHT #${input.tokenId}","description":"A human prompt transformed by an Agent into a fully onchain work.","image":"${svgDataUri}","attributes":${attributes},"properties":${properties},"thought":${thought}}`;
 };
 
