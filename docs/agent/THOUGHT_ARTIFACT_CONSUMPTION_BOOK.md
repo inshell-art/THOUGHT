@@ -326,7 +326,7 @@ consumer-facing contract interface and ABIs, contract vectors, mint schema,
 provenance specification/schema, renderer/work profiles, and all conformance
 vectors. `npm run protocol:check` proves deterministic regeneration and exact
 source/bundle/manifest identity. The source candidate is consolidated as
-`thought-v2-contract-release-candidate-20260719`; the generated release remains
+`thought-v2-contract-release-candidate-20260719-r1`; the generated release remains
 a draft until its exact manifest bytes are separately approved for production.
 
 `npm run artifact:build` remains the older render-component bridge. It does not

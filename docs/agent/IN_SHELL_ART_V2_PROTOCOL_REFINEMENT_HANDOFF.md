@@ -2,7 +2,7 @@
 
 Date: 2026-07-19
 
-Candidate source tag: `thought-v2-contract-release-candidate-20260719`
+Candidate source tag: `thought-v2-contract-release-candidate-20260719-r1`
 
 ## Status and boundary
 

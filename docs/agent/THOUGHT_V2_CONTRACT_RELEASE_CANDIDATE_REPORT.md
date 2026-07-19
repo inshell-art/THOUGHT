@@ -4,7 +4,7 @@ Date: 2026-07-19
 
 Status: contract-side implementation and deterministic draft package finalized,
 locally verified, and consolidated as candidate tag
-`thought-v2-contract-release-candidate-20260719`; production approval,
+`thought-v2-contract-release-candidate-20260719-r1`; production approval,
 immutable publication, protocol registration, public-chain deployment, and
 production consumer rollout remain separate operator actions
 
@@ -34,12 +34,17 @@ repository: /Users/bigu/Projects/THOUGHT
 branch:     codex/thought-v2-protocol-refinement
 base HEAD:      ec46cbf2f9ed5f7627c374bdf9963a38b5dad4c3
 base tag:       thought-v2-protocol-release-binding-20260716
-candidate tag:  thought-v2-contract-release-candidate-20260719
+candidate tag:  thought-v2-contract-release-candidate-20260719-r1
 ```
 
 The base tag is historical source evidence only. The candidate tag identifies
 the complete reviewed source state described here; resolve its exact commit
-with `git rev-parse thought-v2-contract-release-candidate-20260719`.
+with `git rev-parse thought-v2-contract-release-candidate-20260719-r1`.
+
+The `-r1` tag supersedes the initial same-day candidate tag. Contract,
+protocol, manifest, ABI, and generated bundle bytes are unchanged; `-r1`
+corrects only the tracked disposable Anvil address record to the verified
+`0x888162...` candidate deployment described below.
 
 ## Exact Candidate Identity
 

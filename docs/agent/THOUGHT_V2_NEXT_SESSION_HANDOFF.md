@@ -8,7 +8,7 @@ Date: 2026-07-19
 repo:       /Users/bigu/Projects/THOUGHT
 branch:     codex/thought-v2-protocol-refinement
 source tag: thought-v2-protocol-release-binding-20260716
-candidate:  thought-v2-contract-release-candidate-20260719
+candidate:  thought-v2-contract-release-candidate-20260719-r1
 ```
 
 The previously dirty implementation tree was audited and consolidated into the
