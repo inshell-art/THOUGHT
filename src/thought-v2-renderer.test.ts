@@ -11,7 +11,7 @@ import {
   THOUGHT_V2_RENDER_CONTRACT,
 } from "./thought-v2-renderer";
 
-describe("thought v2 renderer", () => {
+describe("THOUGHT binary-weave attempt renderer", () => {
   it("renders the canonical 32x32 orthogonal binary weave", () => {
     const svg = buildThoughtV2Svg({ promptLine: "ab", agentLine: "C" });
     const bits = fixedBinaryFieldOf("ab", "C");

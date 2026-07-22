@@ -1,14 +1,39 @@
 # THOUGHT EVM Contracts
 
-This directory contains the active THOUGHT contract and the preserved V1 archive.
+This directory contains the current THOUGHT V2 contract candidate and preserved unpublished attempts.
 
-## Active Formal Contract
+## Current THOUGHT V2 Candidate
 
-- `src/ThoughtNFT.sol`: the public, unversioned ERC-721 contract. Its mint surface is `mint(MintThoughtInput)`.
-- `src/ThoughtRenderer.sol`: the immutable renderer dependency pinned by renderer-id hash at `ThoughtNFT` construction.
-- `src/CreationAttestationVerifier.sol`: the separate EIP-712 verifier with two-step ownership, service-key rotation, epochs, and pause controls.
-- `src/ThoughtSpecRegistry.sol`: the immutable-owner, append-only registry for exact `THOUGHT.vN.md` bytes.
-- `src/ThoughtSpecRegistryV2.sol`: the immutable-owner, append-only registry for compact protocol-release commitments.
+- `src/v2/ThoughtNFTV2.sol`: Terminal English ERC-721 mint foundation.
+- `src/v2/ThoughtV2WorkProfile.sol`: exact 76-character, 1-through-64-byte line validator.
+- `src/v2/ThoughtV2Identity.sol`: ordered prompt-plus-Agent identity and renderer-bound work hash.
+- `src/v2/ThoughtV2ContextProfile.sol`: separate declaration-label validation.
+- `src/v2/IThoughtRendererV2.sol`: renderer boundary for the pending native path-glyph implementation.
+- `test/v2/ThoughtNFTV2.t.sol`: contract, identity, atomicity, and validation tests.
+- `src/ThoughtSpecRegistry.sol`: shared append-only exact-spec registry.
+- `src/ThoughtSpecRegistryV2.sol`: shared append-only compact protocol-release registry.
+- `src/CreationAttestationVerifier.sol`: shared EIP-712 creation-attestation verifier.
+
+This implementation is V2—not V3—because the earlier binary-weave work was
+never published or deployed. Current V2 is not deployable yet: the path-glyph
+renderer, metadata/provenance profiles, release artifacts, and deployment
+tooling remain release gates. Candidate metadata/provenance profiles exist,
+but are not final release artifacts while the renderer and manifest are open.
+
+`ThoughtNFTV2` stores exact `declaredAgent` and `declaredModel` labels under the
+separate visible-UTF-8 context profile, exposes each label and exact hash,
+passes both labels to the renderer metadata boundary, and binds both hashes in
+an optional creation-attestation claim. They remain declarations rather than
+verified Agent/model identity and never affect pair identity or artwork.
+
+## Historical Binary-Weave Attempt — Unpublished
+
+The following unversioned contracts and all deployment notes below belong to
+the superseded binary-weave/visible-Unicode attempt. They are retained as
+development evidence only and must not be treated as current V2.
+
+- `src/ThoughtNFT.sol`: historical unversioned ERC-721 attempt.
+- `src/ThoughtRenderer.sol`: historical binary-weave renderer attempt.
 - `src/ContractCodeStorage.sol`: immutable code-pointer storage used by the registry.
 
 `ThoughtNFT` has six immutable constructor bindings:
@@ -49,7 +74,7 @@ Visible-line limits are deterministic and enforced before PATH consumption:
 | `declaredAgent` | 1 through 64 |
 | `declaredModel` | 1 through 64 |
 
-## Renderer and Metadata
+## Historical Attempt Renderer and Metadata
 
 `tokenURI` returns marketplace-compatible onchain JSON with an embedded 960x960 SVG image. The public description is:
 
@@ -78,7 +103,7 @@ V1 Sepolia rehearsal source and pre-deployment material are preserved as archive
 - `test/legacy/ThoughtNFTV1.t.sol`
 - `../scripts/deploy-evm-v1-local.sh`
 
-V1 is not the active contract surface. Do not deploy it for new THOUGHT work.
+V1 is not a current contract surface. Do not deploy it for new THOUGHT work.
 
 See [../docs/ops/THOUGHT_V1_SEPOLIA_ARCHIVE.md](../docs/ops/THOUGHT_V1_SEPOLIA_ARCHIVE.md) for the archived-material inventory and the recorded V1 Sepolia deployment evidence.
 
@@ -91,13 +116,13 @@ forge test
 # Repo root
 npm run build:evm
 npm run test:evm
-npm run deploy:evm-local
-npm run ops:bundle:sepolia
+npm run attempt:deploy:evm-local
+npm run attempt:ops:bundle:sepolia
 ```
 
-`deploy-evm-local.sh` registers raw `specs/THOUGHT.v2.md` bytes and a local protocol manifest, verifies profile hashes against generated contract constants, deploys the active unversioned contracts and verifier, configures PATH movement `THOUGHT` with quota `1`, and freezes that PATH movement by default.
+`deploy-evm-local.sh` currently deploys the historical binary-weave attempt. Do not use it for current V2.
 
-## Sepolia and Mainnet Requirements
+## Historical Attempt Deployment Notes — Do Not Use
 
 - The `ThoughtSpecRegistry` owner is an explicit immutable constructor argument. On Sepolia and mainnet it must be the Ledger-backed long-term ADMIN address, not a software deployer.
 - Register the exact raw `THOUGHT.v2.md` bytes before public minting. The deployment scripts reject BOM, CRLF, filename, and version-header mismatches before deployment.
@@ -107,6 +132,6 @@ npm run ops:bundle:sepolia
 - Verify `pathNft`, both registries and owners, release ID/hash/URI, renderer/work-profile hashes, verifier address/profile/owner/authority/epoch/pause state, spec registration, PATH minter, quota, and frozen state after deployment.
 - Mainnet execution uses the same formal signing workflow as Sepolia, but must be an explicitly reviewed release plan. Never substitute a software deployer for the Ledger ADMIN owner.
 
-## Agent and Plugin Boundary
+## Historical Attempt Agent and Plugin Boundary
 
 The current Agent flow is defined in [../docs/agent/THOUGHT_AGENT_FLOW_V2.md](../docs/agent/THOUGHT_AGENT_FLOW_V2.md). The active `inshell.art` integration owns browser, run API, Plugin/MCP transport, task sealing, Agent result validation, provenance assembly, and wallet UX. The EVM contract only consumes PATH and mints a valid `MintThoughtInput`.

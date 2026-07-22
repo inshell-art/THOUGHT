@@ -7,7 +7,7 @@ import { deriveProtocolReleaseId } from "./thought-v2-protocol";
 import { buildVerifiedCanonicalProvenance, type ThoughtProtocolBinding } from "./thought-v2-provenance";
 import { buildThoughtV2Metadata, buildThoughtV2TokenUri } from "./thought-v2-token-uri";
 
-describe("THOUGHT V2 canonical tokenURI", () => {
+describe("THOUGHT binary-weave attempt tokenURI", () => {
   const emptyDigest = `0x${"00".repeat(32)}` as const;
   const verifier = `0x${"44".repeat(20)}` as const;
 

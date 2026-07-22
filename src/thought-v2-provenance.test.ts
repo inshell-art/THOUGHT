@@ -193,7 +193,7 @@ const attestationFacts = (
   };
 };
 
-describe("thought v2 canonical provenance correction", () => {
+describe("THOUGHT binary-weave attempt provenance", () => {
   it("freezes one strict closed schema for the corrected field tree", () => {
     expect(provenanceSchema.required).toEqual(["mintContext", "process", "protocol", "schema", "work"]);
     expect(provenanceSchema.additionalProperties).toBe(false);

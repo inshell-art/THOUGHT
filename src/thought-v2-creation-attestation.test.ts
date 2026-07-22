@@ -15,9 +15,9 @@ import {
   hashCreationAttestationClaim,
   hashCreationAttestationStruct,
   isEmptyCreationAttestationProof,
+  THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
   type ThoughtCreationAttestationClaim,
 } from "./thought-v2-creation-attestation";
-import { THOUGHT_CREATION_ATTESTATION_PROFILE_ID } from "./thought-v2-protocol";
 import { verifyProvenance } from "./thought-v2-provenance";
 
 const verifier = `0x${"22".repeat(20)}` as const;
@@ -41,7 +41,7 @@ const claim = (): ThoughtCreationAttestationClaim => ({
   authorityEpoch: 1n,
 });
 
-describe("THOUGHT V2 creation attestation", () => {
+describe("THOUGHT binary-weave attempt creation attestation", () => {
   it("replays every generated ASCII, Unicode, one-byte, and boundary claim vector", () => {
     expect(fixtureVectors.profileId).toBe(THOUGHT_CREATION_ATTESTATION_PROFILE_ID);
     expect(fixtureVectors.typeString).toBe(CREATION_ATTESTATION_TYPE_STRING);

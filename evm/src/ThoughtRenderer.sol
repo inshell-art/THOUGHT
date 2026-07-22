@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// Historical, unpublished binary-weave attempt. Not the current V2 renderer.
 pragma solidity ^0.8.28;
 
 import {Base64} from "./Base64.sol";

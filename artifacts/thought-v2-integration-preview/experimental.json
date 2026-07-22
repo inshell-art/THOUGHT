@@ -1,0 +1,10 @@
+{
+  "artifactId": "thought-v2-noncanonical-integration-preview-20260722-r1",
+  "classification": "noncanonical-integration-preview",
+  "manifestPath": "artifacts/thought-v2-integration-preview/releases/thought-v2-noncanonical-integration-preview-20260722-r1/manifest.json",
+  "manifestSha256": "7fb50a9153ab2a28e44890875f43e5f8e65c55727a1701686a3290dd932e849d",
+  "productionConsumable": false,
+  "registrationAuthorized": false,
+  "schema": "inshell.thought.integration-preview-pointer.v1",
+  "sourceTag": "thought-v2-noncanonical-integration-preview-20260722-r1"
+}

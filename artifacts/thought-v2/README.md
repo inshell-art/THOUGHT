@@ -1,4 +1,8 @@
-# THOUGHT Artifact Bridge
+# THOUGHT binary-weave attempt artifacts
+
+> Historical and unpublished. These artifacts belong to the superseded
+> binary-weave/visible-Unicode attempt. They are retained for development
+> evidence only and must not be pinned or rolled out as current THOUGHT V2.
 
 This directory publishes render artifacts for downstream repos.
 

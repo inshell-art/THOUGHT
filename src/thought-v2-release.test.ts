@@ -10,7 +10,7 @@ import { deriveProtocolReleaseId } from "./thought-v2-protocol";
 
 const cloneBundle = () => structuredClone(embeddedThoughtV2ReleaseBundle);
 
-describe("THOUGHT V2 exact release bundle", () => {
+describe("THOUGHT binary-weave attempt exact bundle", () => {
   it("verifies every embedded byte offline and exposes immutable release facts", async () => {
     const release = await verifyProtocolRelease(cloneBundle(), {
       protocolReleaseId: embeddedThoughtV2ReleaseBundle.expectedProtocolReleaseId,

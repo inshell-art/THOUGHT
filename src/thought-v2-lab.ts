@@ -103,7 +103,11 @@ if (!app) throw new Error("missing #thought-v2-lab");
 app.dataset.galleryState = "loading";
 
 const header = element("header", "thought-v2-gallery__header");
-const eyebrow = element("p", "thought-v2-gallery__eyebrow", "ANVIL / ONCHAIN TOKENURI()");
+const eyebrow = element(
+  "p",
+  "thought-v2-gallery__eyebrow",
+  "ARCHIVED BINARY-WEAVE ATTEMPT / ANVIL TOKENURI()",
+);
 const title = element("h1", "thought-v2-gallery__title", "THOUGHT");
 const subline = element("p", "thought-v2-gallery__subline", "Connecting to the local chain…");
 const status = element("p", "thought-v2-gallery__status", "Loading gallery runtime");

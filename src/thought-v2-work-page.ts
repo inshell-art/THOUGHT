@@ -651,10 +651,14 @@ const loadWork = async () => {
       throw new Error(`on-chain provenance verification failed: ${issues.join("; ")}`);
     }
 
-    document.title = `${metadata.name} — THOUGHT V2`;
+    document.title = `${metadata.name} — THOUGHT Binary-Weave Attempt`;
     const masthead = element("header", "thought-v2-gallery__header thought-work-page__masthead");
     masthead.replaceChildren(
-      element("p", "thought-v2-gallery__eyebrow", "ANVIL / COMPLETE ON-CHAIN WORK RECORD"),
+      element(
+        "p",
+        "thought-v2-gallery__eyebrow",
+        "ARCHIVED BINARY-WEAVE ATTEMPT / ANVIL RECORD",
+      ),
       element("h1", "thought-v2-gallery__title", "THOUGHT"),
       element(
         "p",

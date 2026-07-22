@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// Historical, unpublished binary-weave attempt. Current V2 lives in src/v2/.
 pragma solidity ^0.8.28;
 
 import {ICreationAttestationVerifier} from "./ICreationAttestationVerifier.sol";

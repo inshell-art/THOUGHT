@@ -55,7 +55,7 @@ const frozenRejectedCodepoints = [
   ...Array.from({ length: 17 }, (_, plane) => [plane * 0x10000 + 0xfffe, plane * 0x10000 + 0xffff]).flat(),
 ];
 
-describe("THOUGHT V2 protocol", () => {
+describe("THOUGHT binary-weave attempt protocol", () => {
   it("separates Agent identity from complete work identity", () => {
     const first = thoughtWorkHashes("first prompt", "same Agent");
     const changedPrompt = thoughtWorkHashes("second prompt", "same Agent");
@@ -314,14 +314,17 @@ describe("THOUGHT V2 protocol", () => {
     expect(thoughtWorkHashes("A", "B").binaryFieldKeccak256).toBe(keccak256(getBytes(packedHex)));
   });
 
-  it("serializes compact canonical JSON and verifies current manifest bytes", () => {
+  it("serializes compact canonical JSON and preserves archived attempt manifest bytes", () => {
     expect(canonicalJsonStringify({ z: 1, a: { y: 2, b: 3 } })).toBe(
       '{"a":{"b":3,"y":2},"z":1}',
     );
-    const current = JSON.parse(fs.readFileSync("protocol/CURRENT.json", "utf8"));
-    const manifest = fs.readFileSync(path.join("protocol", current.manifest));
-    expect(manifest).toHaveLength(current.byteLength);
-    expect(keccak256(manifest)).toBe(current.keccak256);
-    expect(crypto.createHash("sha256").update(manifest).digest("hex")).toBe(current.sha256);
+    const manifest = fs.readFileSync(
+      path.join("protocol", "releases/v2/release-manifest.json"),
+    );
+    expect(manifest).toHaveLength(13_185);
+    expect(keccak256(manifest))
+      .toBe("0x4fb509061538e6dc87bde4a8a4cfbfa34ff26c089409d55de5ba8bfdfa17a0b8");
+    expect(crypto.createHash("sha256").update(manifest).digest("hex"))
+      .toBe("490da98199b64cbc67956d695deb6766cd4c0046f49b99e10e2728c77976bb46");
   });
 });

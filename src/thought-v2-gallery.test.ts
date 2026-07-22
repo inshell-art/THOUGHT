@@ -73,7 +73,7 @@ const filteredIds = (
     (token) => token.tokenId,
   );
 
-describe("THOUGHT V2 onchain gallery metadata", () => {
+describe("THOUGHT binary-weave attempt gallery metadata", () => {
   it("parses the canonical contract tokenURI and embedded SVG", () => {
     const metadata = parseThoughtTokenUri(tokenVectors.vectors[0]!.tokenURI);
 
