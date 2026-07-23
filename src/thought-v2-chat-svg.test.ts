@@ -3,12 +3,16 @@ import { describe, expect, it } from "vitest";
 import {
   buildThoughtChatSvg,
   THOUGHT_CHAT_AGENT_FIELD_Y,
+  THOUGHT_CHAT_ARTBOARD,
   THOUGHT_CHAT_BACKGROUND,
   THOUGHT_CHAT_CANVAS,
+  THOUGHT_CHAT_CANVAS_TRANSFORM,
   THOUGHT_CHAT_CHARACTER_ADVANCE,
   THOUGHT_CHAT_FIELD_HEIGHT,
   THOUGHT_CHAT_FIELD_WIDTH,
   THOUGHT_CHAT_FIELD_X,
+  THOUGHT_CHAT_FRAME_COLOR,
+  THOUGHT_CHAT_FRAME_SIZE,
   THOUGHT_CHAT_FONT_PROFILES,
   THOUGHT_CHAT_FONT_SIZE,
   THOUGHT_CHAT_GREEN,
@@ -25,22 +29,41 @@ import {
 } from "./thought-v2-chat-svg";
 
 describe("THOUGHT English chat SVG foreignObject experiment", () => {
-  it("renders one background and two invisible XHTML text fields", () => {
+  it("renders an artifact-owned canvas frame and two frameless XHTML text fields", () => {
     const svg = buildThoughtChatSvg({
       promptLine: "Can silence carry a thought?",
       agentLine: "Only if someone listens.",
     });
 
-    expect(svg.match(/<rect\b/g)).toHaveLength(1);
+    expect(svg.match(/<rect\b/g)).toHaveLength(2);
     expect(svg.match(/<foreignObject\b/g)).toHaveLength(2);
     expect(svg.match(/xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g)).toHaveLength(2);
     expect(svg).not.toContain("<text");
     expect(svg).not.toContain("<tspan");
     expect(svg).not.toContain("<circle");
     expect(svg).not.toContain("stroke=");
+    expect(svg).toContain(
+      `<rect id="work-frame" width="${THOUGHT_CHAT_ARTBOARD}" height="${THOUGHT_CHAT_ARTBOARD}" fill="${THOUGHT_CHAT_FRAME_COLOR}"/>`,
+    );
+    expect(svg).toContain(
+      `<g id="work-canvas" transform="${THOUGHT_CHAT_CANVAS_TRANSFORM}">`,
+    );
+    expect(svg).toContain(
+      `<rect id="canvas-bg" width="${THOUGHT_CHAT_CANVAS}" height="${THOUGHT_CHAT_CANVAS}" fill="${THOUGHT_CHAT_BACKGROUND}"/>`,
+    );
     expect(svg).toContain(`fill="${THOUGHT_CHAT_BACKGROUND}"`);
     expect(svg.match(new RegExp(`color:${THOUGHT_CHAT_GREEN}`, "g"))).toHaveLength(2);
     expect(svg.match(new RegExp(`font-size:${THOUGHT_CHAT_FONT_SIZE}px`, "g"))).toHaveLength(2);
+  });
+
+  it("places the unchanged 960-unit canvas inside a 32-unit outer frame", () => {
+    expect(THOUGHT_CHAT_CANVAS).toBe(960);
+    expect(THOUGHT_CHAT_FRAME_SIZE).toBe(32);
+    expect(THOUGHT_CHAT_FRAME_COLOR).toBe("#404040");
+    expect(THOUGHT_CHAT_ARTBOARD).toBe(1024);
+    expect(THOUGHT_CHAT_CANVAS_TRANSFORM).toBe("translate(32 32)");
+    expect(buildThoughtChatSvg({ promptLine: "Prompt", agentLine: "Agent" }))
+      .not.toContain("scale(");
   });
 
   it("positions equal text fields at the top right and bottom left", () => {

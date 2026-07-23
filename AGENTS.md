@@ -23,7 +23,7 @@
 - Failed THOUGHT mints must not consume PATH, reserve text hashes, or increment supply.
 - `promptLine` and `agentLine` are exact 1-through-64-byte Terminal English lines under the closed 76-character US-ASCII repertoire. Reject outer spaces, repeated internal spaces, unsupported bytes, controls, and non-ASCII before PATH consumption. Never trim, collapse, normalize, case-fold, translate, or repair accepted input. Punctuation-only lines are valid. The candidate normative profile is `protocol/current/v2/work/thought.work.v2.md`.
 - The exact ordered `(promptLine, agentLine)` pair is globally unique. Reusing either line with a different counterpart remains valid; reversing the pair is distinct.
-- `declaredAgent` and `declaredModel` are exact 1-through-64-byte labels under `inshell.thought.context.v2.visible-utf8-64`. Preserve them in typed state, `Declared Agent` / `Declared Model` metadata traits, canonical provenance declarations, and creation-attestation hash inputs. Their status remains `declared-unverified` even when the creation attestation is valid. They do not affect conversation identity, work hash, or SVG artwork.
+- `declaredAgent` and `declaredModel` are exact 1-through-64-byte labels under `inshell.thought.context.v2.visible-utf8-64`. Preserve them in typed state, canonical provenance declarations, and creation-attestation hash inputs. A nonzero valid creation-attestation digest gates their publication as `Attested Agent` / `Attested Model` metadata traits; unattested tokens omit Agent/Model traits. Their semantic status remains `declared-unverified` even when the creation attestation is valid. They do not affect conversation identity, work hash, or SVG artwork.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
 - `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
 - There is no active/frozen/latest THOUGHT spec at contract level. Do not introduce a required-latest spec gate in `ThoughtNFTV2`.
@@ -38,7 +38,7 @@
 
 ## SVG rendering
 - The current V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
-- The final 960x960 artwork uses a black background, `#00ba00` glyph fill, prompt at the upper right, and Agent response at the lower left.
+- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#404040` outer frame. The canvas is not scaled. It uses `#00ba00` glyph fill, prompt at the upper right, and Agent response at the lower left.
 - Canonical glyphs must be reviewed native SVG paths with deterministic metrics and wrapping. Do not use SVG `<text>`, `foreignObject`, browser font lookup, fallback fonts, or an embedded WOFF/TTF in the final onchain renderer. Source Code Pro remains a study reference only.
 
 ## Security

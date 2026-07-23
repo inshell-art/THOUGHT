@@ -28,11 +28,13 @@ The human supplies the prompt, reviews the result, chooses a PATH, authorizes th
 The exact ordered pair `(promptLine, agentLine)` identifies a work. Repeating either line with a different counterpart remains a distinct conversation; repeating the exact pair is rejected. Both lines accept `1..64` bytes from the frozen 76-character Terminal English repertoire, with no outer or repeated internal spaces. Punctuation-only lines remain valid.
 
 Every mint also carries exact `declaredAgent` and `declaredModel` context
-labels. They appear as `Declared Agent` and `Declared Model` traits, remain
-`declared-unverified`, and are mirrored into canonical provenance. Official
-creation attestation binds their exact UTF-8 hashes but does not prove the
-labels objectively true. Declarations do not affect conversation identity,
-work hash, or artwork.
+labels as typed state and canonical provenance declarations. Official
+creation attestation binds their exact UTF-8 hashes. Only a token with a valid
+nonzero attestation digest publishes them as `Attested Agent` and `Attested
+Model` marketplace traits; an unattested token omits Agent/Model traits. The
+labels remain `declared-unverified` because attestation proves the authorized
+App signed the claim, not that the labels are objectively true. Declarations
+do not affect conversation identity, work hash, or artwork.
 
 ## Current V2 Candidate Source
 
@@ -52,7 +54,7 @@ The historical binary-weave attempt remains in the old unversioned contract, `pr
 
 The V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
 
-The canonical 960x960 SVG will use a black background and deterministic project-owned path glyphs in `#00ba00`, with the prompt at the upper right and Agent response at the lower left. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the final renderer. Glyph implementation, parity vectors, and release measurements remain pending.
+The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#404040` outer frame. The canvas is not scaled. Deterministic project-owned path glyphs use `#00ba00`, with the prompt at the upper right and Agent response at the lower left. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the final renderer. Glyph implementation, parity vectors, and release measurements remain pending.
 
 ## Development
 

@@ -9,7 +9,11 @@
       "declaredModelOf",
       "declaredModelHashOf"
     ],
-    "metadataTraits": ["Declared Agent", "Declared Model"],
+    "metadataTraits": {
+      "attested": ["Attested Agent", "Attested Model"],
+      "gate": "nonzero-creation-attestation-digest",
+      "unattested": []
+    },
     "provenancePaths": [
       "process.agentDeclaration",
       "process.modelDeclaration"
@@ -28,6 +32,14 @@
     "workProfile": "inshell.thought.work.v2.terminal-english-64"
   },
   "registrationAuthorized": false,
+  "rendererGeometry": {
+    "artboard": "1024x1024",
+    "canvas": "960x960@32,32",
+    "canvasScale": 1,
+    "frameColor": "#404040",
+    "frameUnitsPerSide": 32,
+    "glyphColor": "#00ba00"
+  },
   "release": "v2",
   "requiredArtifactRoles": [
     { "path": "agent/thought.agent-declaration.v1.schema.json", "role": "agent-declaration-schema" },

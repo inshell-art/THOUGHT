@@ -212,7 +212,9 @@ const compatibility = {
     canonicalId: identifiers.renderer,
     canonicalIdKeccak256: id(identifiers.renderer),
     finalImplementationIncluded: false,
-    packagedImplementation: "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object",
+    geometry: releaseInput.rendererGeometry,
+    packagedImplementation:
+      "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040",
   },
   selectedSpec: {
     byteLength: specBytes.length,
@@ -247,7 +249,7 @@ writeJson(path.join(releaseDir, "limitations.json"), {
   deploymentAuthorized: false,
   limitations: [
     "native SVG path-glyph renderer is not implemented",
-    "packaged renderer is Anvil-only and uses Source Code Pro plus foreignObject",
+    "packaged 1024x1024 outer-frame renderer is Anvil-only and uses Source Code Pro plus foreignObject",
     "final renderer profile and vectors are absent",
     "final release manifest and registry records are absent",
     "no Sepolia or mainnet deployment metadata is included",

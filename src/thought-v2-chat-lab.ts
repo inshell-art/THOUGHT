@@ -2,6 +2,7 @@ import "./thought-v2-chat-lab.css";
 
 import {
   loadThoughtV2AnvilGallery,
+  optionalTraitValue,
   traitValue,
   type ThoughtV2AnvilRuntime,
   type ThoughtV2OnchainToken,
@@ -11,7 +12,7 @@ import {
   THOUGHT_V2_ALLOWED_CHARACTERS,
   THOUGHT_V2_MAX_LINE_BYTES,
 } from "./thought-v2-terminal-work-profile";
-import { THOUGHT_V2_METADATA_ATTRIBUTE_ORDER } from "./thought-v2-terminal-study-metadata";
+import { THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER } from "./thought-v2-terminal-study-metadata";
 
 type ThemeMode = "light" | "dark";
 type ViewMode = "grid" | "list";
@@ -28,7 +29,7 @@ let runtime: ThoughtV2AnvilRuntime;
 let tokens: ThoughtV2OnchainToken[] = [];
 
 const selectedTraits = new Map<string, Set<string>>(
-  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.map((traitType) => [traitType, new Set<string>()]),
+  THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER.map((traitType) => [traitType, new Set<string>()]),
 );
 
 const escapeHtml = (value: string): string => value
@@ -58,7 +59,10 @@ const countBy = (values: string[]): Map<string, number> => {
 };
 
 const facet = (traitType: string): string => {
-  const rawValues = tokens.map((token) => traitValue(token, traitType));
+  const rawValues = tokens.flatMap((token) => {
+    const value = optionalTraitValue(token, traitType);
+    return value === undefined ? [] : [value];
+  });
   const counts = countBy(rawValues.map(String));
   const numeric = rawValues.every((value) => typeof value === "number");
   const values = [...new Set(rawValues.map(String))]
@@ -127,7 +131,7 @@ const renderShell = (): void => {
     <div class="chat-gallery__collection">
       <aside class="chat-gallery__filters" aria-label="On-chain metadata trait filters">
         <div class="chat-gallery__filter-heading"><span>TRAIT FILTERS</span><button type="button" class="chat-gallery__clear">CLEAR</button></div>
-        ${THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.map(facet).join("")}
+        ${THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER.map(facet).join("")}
       </aside>
       <section class="chat-gallery__works" aria-label="On-chain THOUGHT token gallery">
         <div class="chat-gallery__result-line">
@@ -199,7 +203,9 @@ const visibleTokens = (): ThoughtV2OnchainToken[] => {
   const query = search?.value.trim().toLocaleLowerCase() ?? "";
   return tokens.filter((token) => {
     for (const [traitType, selectedValues] of selectedTraits) {
-      if (!matchesSet(selectedValues, String(traitValue(token, traitType)))) return false;
+      if (selectedValues.size === 0) continue;
+      const value = optionalTraitValue(token, traitType);
+      if (value === undefined || !matchesSet(selectedValues, String(value))) return false;
     }
     if (!query) return true;
     return [token.metadata.thought.promptLine, token.metadata.thought.agentLine]
@@ -222,7 +228,9 @@ const renderGallery = (): void => {
   app.dataset.galleryReady = "true";
   app.dataset.visibleCount = String(visible.length);
   app.dataset.tokenCount = String(tokens.length);
-  app.dataset.metadataAttributes = String(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.length);
+  app.dataset.metadataAttributes = [...new Set(tokens.map(({ metadata }) => metadata.attributes.length))]
+    .sort((left, right) => left - right)
+    .join(",");
   app.dataset.source = runtime.gallery.source;
   app.dataset.viewMode = viewMode;
   app.dataset.imageMode = "contract-token-uri";

@@ -11,9 +11,10 @@ import {
   THOUGHT_V2_CONTEXT_PROFILE_ID,
 } from "./thought-v2-context-profile";
 import {
-  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
   THOUGHT_V2_METADATA_PROFILE_ID,
   THOUGHT_V2_PROVENANCE_PROFILE_ID,
+  THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
 } from "./thought-v2-terminal-study-metadata";
 import {
   THOUGHT_V2_RENDERER_ID,
@@ -34,10 +35,34 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
     expect(metadataProfile.id).toBe(THOUGHT_V2_METADATA_PROFILE_ID);
     expect(workProfile.id).toBe(THOUGHT_V2_WORK_PROFILE_ID);
     expect(releaseInput.registrationAuthorized).toBe(false);
+    expect(workProfile.renderGeometry).toEqual({
+      artboard: { height: 1024, width: 1024 },
+      canvas: {
+        color: "#000000",
+        height: 960,
+        scale: 1,
+        width: 960,
+        x: 32,
+        y: 32,
+      },
+      frame: { color: "#404040", unitsPerSide: 32 },
+      glyphColor: "#00ba00",
+    });
+    expect(releaseInput.rendererGeometry).toMatchObject({
+      artboard: "1024x1024",
+      canvas: "960x960@32,32",
+      canvasScale: 1,
+      frameColor: "#404040",
+      frameUnitsPerSide: 32,
+      glyphColor: "#00ba00",
+    });
   });
 
-  it("freezes declaration trait order and exact typed/provenance parity", () => {
-    expect(metadataProfile.attributeOrder).toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
+  it("freezes the attestation-gated trait orders and exact typed/provenance parity", () => {
+    expect(metadataProfile.attributeOrder).toEqual({
+      attested: THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+      unattested: THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
+    });
     expect(metadataProfile.traitExclusions).toEqual({
       conversationForm: "fixture-only",
       workProfileId: "technical-property",
@@ -45,15 +70,21 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
     expect(metadataProfile.declarations).toMatchObject({
       assurance: "declared-unverified",
       attestationBindsExactHashes: true,
+      attestedTraitTypes: ["Attested Agent", "Attested Model"],
       contextProfileId: THOUGHT_V2_CONTEXT_PROFILE_ID,
-      traitTypes: ["Declared Agent", "Declared Model"],
+      marketplaceTraitGate: "nonzero-creation-attestation-digest",
       typedStateAuthoritative: true,
+      unattestedTraitTypes: [],
       workIdentityInput: false,
     });
     expect(workProfile.declarations).toMatchObject({
       assurance: "declared-unverified",
       contextProfileId: THOUGHT_V2_CONTEXT_PROFILE_ID,
-      metadataTraits: ["Declared Agent", "Declared Model"],
+      metadataTraits: {
+        attested: ["Attested Agent", "Attested Model"],
+        gate: "nonzero-creation-attestation-digest",
+        unattested: [],
+      },
       provenanceRequired: true,
       workIdentityInput: false,
     });
@@ -65,6 +96,11 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
         "declaredModelOf",
         "declaredModelHashOf",
       ],
+      metadataTraits: {
+        attested: ["Attested Agent", "Attested Model"],
+        gate: "nonzero-creation-attestation-digest",
+        unattested: [],
+      },
       typedMintFields: ["declaredAgent", "declaredModel"],
       workIdentityInput: false,
     });

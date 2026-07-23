@@ -28,6 +28,7 @@
     "devnode:start": "node scripts/start-devnode.mjs",
     "devnode:v2:start": "DEVNODE_EPHEMERAL=1 DEVNODE_PORT=8546 node scripts/start-devnode.mjs",
     "devnode:v2:gallery": "RPC_URL=http://127.0.0.1:8546 npm run build:evm && RPC_URL=http://127.0.0.1:8546 vite-node --script scripts/setup-thought-v2-current-gallery.ts",
+    "conformance:v2:app-contract": "vite-node --script scripts/check-thought-v2-app-contract-boundary.ts",
     "devnode:deploy": "node scripts/deploy-devnode.mjs",
     "attempt:devnode:gallery": "node scripts/setup-thought-v2-gallery.mjs",
     "attempt:devnode:gallery:mint": "node scripts/mint-thought-v2-gallery.mjs",

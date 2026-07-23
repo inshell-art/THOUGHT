@@ -31,7 +31,11 @@ contract ThoughtRendererV2DevSourceCodeProTest {
         );
         require(
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
-                == keccak256(bytes("inshell.thought.renderer.v2.dev-source-code-pro-foreign-object")),
+                == keccak256(
+                    bytes(
+                        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040"
+                    )
+                ),
             "dev implementation ID drift"
         );
     }
@@ -41,8 +45,22 @@ contract ThoughtRendererV2DevSourceCodeProTest {
         require(_contains(svg, "<foreignObject data-line=\"prompt\""), "missing prompt field");
         require(_contains(svg, "<foreignObject data-line=\"agent\""), "missing agent field");
         require(_contains(svg, "font/woff2;base64,d09GMmRldi1mb250"), "missing embedded font");
+        require(
+            _contains(svg, '<rect id="work-frame" width="1024" height="1024" fill="#404040"/>'),
+            "missing approved outer work frame"
+        );
+        require(
+            _contains(svg, '<g id="work-canvas" transform="translate(32 32)">'),
+            "missing framed canvas transform"
+        );
+        require(!_contains(svg, "scale("), "inner canvas must not be scaled");
+        require(
+            _contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>'),
+            "missing black inner canvas"
+        );
         require(_contains(svg, "fill=\"#000000\""), "missing black field");
         require(_contains(svg, "color:#00ba00"), "missing canonical green");
+        require(!_contains(svg, "stroke="), "chat message frame returned");
         require(_contains(svg, "Are you there?"), "missing prompt");
         require(_contains(svg, "I am here."), "missing response");
     }
@@ -77,9 +95,7 @@ contract ThoughtRendererV2DevSourceCodeProTest {
     function testTokenUriUsesAllAndOnlyCanonicalMarketplaceTraits() public view {
         string memory metadata = _metadataJsonFromTokenUri(renderer.tokenURI(_data(bytes32(0))));
         string memory exactAttributes = string.concat(
-            '"attributes":[{"trait_type":"Declared Agent","value":"Not applicable"},',
-            '{"trait_type":"Declared Model","value":"Not applicable"},',
-            '{"trait_type":"Creation Attestation","value":"Unattested"},',
+            '"attributes":[{"trait_type":"Creation Attestation","value":"Unattested"},',
             '{"display_type":"number","max_value":64,"trait_type":"Prompt Bytes","value":14},',
             '{"display_type":"number","max_value":64,"trait_type":"Agent Bytes","value":10},',
             '{"display_type":"number","max_value":128,"trait_type":"Pair Bytes","value":24},',
@@ -87,12 +103,27 @@ contract ThoughtRendererV2DevSourceCodeProTest {
             '{"trait_type":"Agent Length","value":"Compact"}]'
         );
         require(_contains(metadata, exactAttributes), "canonical attribute order or values drifted");
-        require(_count(metadata, '"trait_type":') == 8, "unexpected marketplace trait count");
+        require(_count(metadata, '"trait_type":') == 6, "unexpected unattested marketplace trait count");
+        require(!_contains(metadata, '"trait_type":"Attested Agent"'), "unattested Agent became a trait");
+        require(!_contains(metadata, '"trait_type":"Attested Model"'), "unattested model became a trait");
+        require(!_contains(metadata, '"trait_type":"Declared Agent"'), "legacy declaration trait leaked");
+        require(!_contains(metadata, '"trait_type":"Declared Model"'), "legacy declaration trait leaked");
         require(!_contains(metadata, "Conversation Form"), "fixture conversation form leaked into traits");
         require(!_contains(metadata, "Work Profile"), "work profile leaked into traits");
         require(_count(metadata, '"status":"declared-unverified"') == 2, "declaration statuses drifted");
 
         string memory attested = _metadataJsonFromTokenUri(renderer.tokenURI(_data(keccak256("attested"))));
+        require(
+            _contains(
+                attested,
+                string.concat(
+                    '"attributes":[{"trait_type":"Attested Agent","value":"Not applicable"},',
+                    '{"trait_type":"Attested Model","value":"Not applicable"},',
+                    '{"trait_type":"Creation Attestation","value":"Inshell THOUGHT App"},'
+                )
+            ),
+            "attested declaration trait gate drifted"
+        );
         require(
             _contains(attested, '"trait_type":"Creation Attestation","value":"Inshell THOUGHT App"'),
             "attested trait mismatch"
@@ -101,7 +132,9 @@ contract ThoughtRendererV2DevSourceCodeProTest {
             _contains(attested, '"verifier":"0x0000000000000000000000000000000000a77357"'),
             "attestation verifier missing from metadata"
         );
-        require(_count(attested, '"trait_type":') == 8, "attestation changed trait surface");
+        require(_count(attested, '"trait_type":') == 8, "unexpected attested marketplace trait count");
+        require(!_contains(attested, '"trait_type":"Declared Agent"'), "legacy declaration trait leaked");
+        require(!_contains(attested, '"trait_type":"Declared Model"'), "legacy declaration trait leaked");
     }
 
     function _data(bytes32 attestationDigest) private pure returns (IThoughtRendererV2.TokenData memory) {

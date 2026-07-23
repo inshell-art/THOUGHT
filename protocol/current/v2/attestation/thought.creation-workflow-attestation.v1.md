@@ -65,14 +65,16 @@ commits to.
 A valid signature maps to metadata status `Inshell THOUGHT App`: an authorized
 Inshell signer bound the exact claim fields under this profile. It does not
 prove that a named Agent or model executed, that one inference occurred, or
-that the declarations are objectively true. `Declared Agent` and `Declared
-Model` always remain `declared-unverified`. Provenance remains opaque exact
-bytes to Solidity.
+that the declarations are objectively true. The resulting nonzero digest
+gates publication of the exact declaration labels as `Attested Agent` and
+`Attested Model` marketplace traits, but the underlying declarations remain
+`declared-unverified`. Provenance remains opaque exact bytes to Solidity.
 
 The sole unattested proof encoding is an all-zero `runIdHash`, deadline, and
 authority epoch with empty signature bytes. It skips verifier execution,
-stores digest zero, and maps to `Unattested`. Partially populated proofs are
-invalid.
+stores digest zero, maps to `Unattested`, and omits Agent/Model marketplace
+traits. The typed declarations and their canonical provenance records remain
+present. Partially populated proofs are invalid.
 
 ## Verification and replay
 

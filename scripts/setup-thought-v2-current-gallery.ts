@@ -52,9 +52,9 @@ import {
 import {
   THOUGHT_V2_METADATA_PROFILE_ID,
   THOUGHT_V2_METADATA_PROFILE_ID_HASH,
-  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
   THOUGHT_V2_CREATION_ATTESTATION_PROFILE_ID,
   THOUGHT_V2_PROVENANCE_PROFILE_ID,
+  thoughtV2MetadataAttributeOrder,
 } from "../src/thought-v2-terminal-study-metadata";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -73,7 +73,7 @@ const fontFile = path.join(
   "node_modules/@fontsource/source-code-pro/files/source-code-pro-latin-400-normal.woff2",
 );
 const rendererImplementationId =
-  "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object";
+  "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040";
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(
@@ -526,6 +526,10 @@ const main = async (): Promise<void> => {
     const attributes = metadata.attributes as Array<Record<string, unknown>> | undefined;
     const expectedDigest = expectedAttestation?.digest ?? zeroBytes32;
     const expectedStatus = expectedAttestation ? "Inshell THOUGHT App" : "Unattested";
+    const expectedAttributeOrder = thoughtV2MetadataAttributeOrder(expectedStatus);
+    const attributeTypes = attributes?.map(({ trait_type }) => trait_type);
+    const attestedAgent = attributes?.find(({ trait_type }) => trait_type === "Attested Agent");
+    const attestedModel = attributes?.find(({ trait_type }) => trait_type === "Attested Model");
     if (
       promptLine !== fixture.promptLine
       || agentLine !== fixture.agentLine
@@ -536,7 +540,11 @@ const main = async (): Promise<void> => {
       || thought?.provenanceJson !== storedProvenance
       || thought?.provenanceHash !== storedHash
       || thought?.workHash !== workHash
-      || attributes?.length !== THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.length
+      || attributes?.length !== expectedAttributeOrder.length
+      || attributeTypes?.some((traitType, index) => traitType !== expectedAttributeOrder[index])
+      || (expectedAttestation
+        ? attestedAgent?.value !== fixture.declaredAgent || attestedModel?.value !== fixture.declaredModel
+        : attestedAgent !== undefined || attestedModel !== undefined)
     ) {
       throw new Error(`on-chain tokenURI/provenance parity failed for THOUGHT #${fixture.tokenNumber}`);
     }
