@@ -67,12 +67,29 @@ under `inshell.thought.context.v2.visible-utf8-64`. The Terminal English
 repertoire does not apply to those declarations. Repeated internal U+0020 is
 preserved for declarations even though it is rejected in artwork lines.
 
-Both labels are exact typed mint fields, canonical metadata traits, and
-required provenance declarations. Their exact UTF-8 hashes are bound into an
-official creation-attestation claim. Their status is always
+Both labels are exact typed mint fields and required provenance declarations.
+Their exact UTF-8 hashes are bound into an official creation-attestation claim.
+A nonzero valid creation-attestation digest publishes the exact labels as
+`Attested Agent` and `Attested Model` marketplace traits. An unattested token
+omits Agent/Model traits while retaining both typed labels and provenance
+declarations. Their status is always
 `declared-unverified`: attestation proves that an authorized signer bound the
 labels to the claim, not that the labels are objectively true. Declarations do
 not affect conversation identity, work hash, or SVG artwork.
+
+## Visual geometry
+
+The SVG uses a 1024-by-1024 artboard. Its work canvas remains exactly
+960-by-960 and is translated to `(32,32)` without scaling. The surrounding
+32-unit frame is `#404040`; the canvas is `#000000`; glyphs are `#00ba00`.
+Prompt and Agent layout coordinates remain relative to the original 960-unit
+canvas.
+
+The frame is artifact-owned and must be present in the renderer output.
+Marketplaces and other consumers must display the token image as supplied and
+must not add a second frame. Source Code Pro and `foreignObject` are permitted
+only in the disposable Anvil implementation; the release renderer must use
+reviewed native SVG path glyphs.
 
 ## Ordered conversation identity
 

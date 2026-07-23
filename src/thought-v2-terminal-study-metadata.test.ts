@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import { thoughtChatGalleryFixtures } from "./thought-v2-chat-gallery";
 import {
+  buildThoughtV2MetadataAttributes,
   buildThoughtV2StudyRecord,
   buildThoughtV2StudyTokenMetadata,
   thoughtV2ConversationForm,
   thoughtV2LengthClass,
   thoughtV2StudyProvenanceBytes,
-  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER,
+  THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
   THOUGHT_V2_STUDY_PROVENANCE_SCHEMA,
 } from "./thought-v2-terminal-study-metadata";
 
@@ -34,7 +37,7 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     }
   });
 
-  it("exposes all and only canonical metadata traits for gallery filtering", () => {
+  it("gates Agent/model traits on creation attestation", () => {
     const expectedNumericTraits = new Map<string, number>([
       ["Prompt Bytes", 64],
       ["Agent Bytes", 64],
@@ -43,9 +46,9 @@ describe("THOUGHT V2 study metadata and provenance", () => {
 
     for (const fixture of thoughtChatGalleryFixtures) {
       expect(fixture.attributes.map(({ trait_type }) => trait_type), fixture.id)
-        .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
+        .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
       expect(new Set(fixture.attributes.map(({ trait_type }) => trait_type)).size, fixture.id)
-        .toBe(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.length);
+        .toBe(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER.length);
 
       for (const attribute of fixture.attributes) {
         const maxValue = expectedNumericTraits.get(attribute.trait_type);
@@ -60,8 +63,27 @@ describe("THOUGHT V2 study metadata and provenance", () => {
       }
     }
 
-    expect(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER).not.toContain("Conversation Form");
-    expect(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER).not.toContain("Work Profile");
+    const fixture = thoughtChatGalleryFixtures[0]!;
+    const attestedAttributes = buildThoughtV2MetadataAttributes({
+      agentBytes: fixture.agentBytes,
+      agentLengthClass: fixture.agentLengthClass,
+      creationAttestation: "Inshell THOUGHT App",
+      declaredAgent: fixture.declaredAgent,
+      declaredModel: fixture.declaredModel,
+      pairBytes: fixture.pairBytes,
+      promptBytes: fixture.promptBytes,
+      promptLengthClass: fixture.promptLengthClass,
+    });
+    expect(attestedAttributes.map(({ trait_type }) => trait_type))
+      .toEqual(THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER);
+    expect(attestedAttributes.slice(0, 2)).toEqual([
+      { trait_type: "Attested Agent", value: fixture.declaredAgent },
+      { trait_type: "Attested Model", value: fixture.declaredModel },
+    ]);
+    expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER)
+      .toEqual(THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER);
+    expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER).not.toContain("Conversation Form");
+    expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER).not.toContain("Work Profile");
   });
 
   it("builds deterministic canonical provenance for every study work", () => {
@@ -90,9 +112,9 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     const serialized = JSON.stringify(metadata);
 
     expect(metadata.thought.provenanceHash).toBe(fixture.provenanceHash);
-    expect(metadata.attributes).toHaveLength(8);
+    expect(metadata.attributes).toHaveLength(6);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
-      .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
+      .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .not.toContain("Conversation Form");
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
@@ -143,10 +165,14 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     expect(first.workHash).toBe(second.workHash);
     expect(first.provenance.process.agentDeclaration.label).toBe("Inshell THOUGHT App");
     expect(first.provenance.process.modelDeclaration.label).toBe("Example Model");
-    expect(first.attributes.slice(0, 2)).toEqual([
-      { trait_type: "Declared Agent", value: "Inshell THOUGHT App" },
-      { trait_type: "Declared Model", value: "Example Model" },
-    ]);
+    expect(first.attributes.map(({ trait_type }) => trait_type))
+      .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
+    expect(first.attributes.some(({ trait_type }) =>
+      trait_type === "Attested Agent" || trait_type === "Declared Agent"
+    )).toBe(false);
+    expect(first.attributes.some(({ trait_type }) =>
+      trait_type === "Attested Model" || trait_type === "Declared Model"
+    )).toBe(false);
   });
 });
 

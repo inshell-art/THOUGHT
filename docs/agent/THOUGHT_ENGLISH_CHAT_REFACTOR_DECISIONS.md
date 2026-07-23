@@ -233,28 +233,33 @@ hashes, `conversationIdentityHash`, `workHash`, renderer id, protocol release,
 selected THOUGHT spec, provenance hash and payload, and creation-attestation
 state.
 
-The old unpublished V2 attempt's `Declared Agent` and `Declared Model` traits
-remain valuable and are carried into current V2. They are exact typed mint
-fields under `inshell.thought.context.v2.visible-utf8-64`, appear in canonical
-provenance as `process.agentDeclaration` and `process.modelDeclaration`, and
-appear in technical metadata with their exact UTF-8 Keccak-256 hashes, source,
-and `declared-unverified` status. Their exact hashes are creation-attestation
-claim inputs. A valid attestation proves the authorized signer bound the
-declarations to the mint facts; it does not prove either declaration true.
-Neither declaration affects conversation identity, work hash, or artwork.
+The old unpublished V2 attempt's Agent and model declarations remain valuable
+and are carried into current V2 as exact typed mint fields under
+`inshell.thought.context.v2.visible-utf8-64`. They appear in canonical
+provenance as `process.agentDeclaration` and `process.modelDeclaration`, and in
+technical metadata with their exact UTF-8 Keccak-256 hashes, source, and
+`declared-unverified` status. Their exact hashes are creation-attestation claim
+inputs. A valid attestation proves the authorized signer bound the declarations
+to the mint facts; it does not prove either declaration true. Neither
+declaration affects conversation identity, work hash, or artwork.
 
-The current canonical marketplace attribute order is:
+The creation attestation is the marketplace trait gate. Attested metadata uses
+this canonical attribute order:
 
-1. `Declared Agent`
-2. `Declared Model`
+1. `Attested Agent`
+2. `Attested Model`
 3. `Creation Attestation`
 4. `Prompt Bytes`
 5. `Agent Bytes`
 6. `Pair Bytes`
 7. `Prompt Length`
 8. `Agent Length`
-9. `Conversation Form`
-10. `Work Profile`
+
+Unattested metadata omits Agent/Model traits and begins at `Creation
+Attestation`, preserving the remaining six entries in the same order. The
+typed declarations and provenance remain present for both cases. `Conversation
+Form` is fixture-only and `Work Profile` is a technical property, so neither is
+a marketplace trait.
 
 This order is pinned by `inshell.thought.metadata.v2.terminal-chat` and the
 renderer compatibility boundary. The final manifest must hash and list the
@@ -286,8 +291,9 @@ The final producer-to-consumer handoff must require the `inshell.art` agent to:
   context profile, preserve their declaration sources, and keep their status
   `declared-unverified` even for officially attested works;
 - maintain typed-state parity for declaration labels across mint input,
-  canonical provenance, metadata traits, metadata declaration objects, and
-  the two declaration hashes in the creation-attestation claim;
+  canonical provenance, metadata declaration objects, and the two declaration
+  hashes in the creation-attestation claim; publish `Attested Agent` and
+  `Attested Model` marketplace traits only for a valid official attestation;
 - validate input before Agent execution and wallet intent, while reporting
   invalid input without silently modifying it;
 - preserve punctuation-only works and avoid adding an App-only letter-or-digit

@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseEmbeddedJsonDataUri,
   parseEmbeddedSvgDataUri,
+  optionalTraitValue,
   traitValue,
   type ThoughtV2OnchainToken,
 } from "./thought-v2-anvil-gallery";
@@ -34,11 +35,11 @@ describe("THOUGHT V2 Anvil gallery decoding", () => {
     )).toThrow();
   });
 
-  it("reads string and numeric canonical traits and rejects missing facets", () => {
+  it("reads required and attestation-gated traits without inventing missing facets", () => {
     const token = {
       tokenId: 4,
       traits: new Map([
-        ["Declared Agent", { trait_type: "Declared Agent", value: "Inshell THOUGHT App" }],
+        ["Attested Agent", { trait_type: "Attested Agent", value: "Inshell THOUGHT App" }],
         ["Prompt Bytes", {
           display_type: "number" as const,
           max_value: 64,
@@ -48,8 +49,9 @@ describe("THOUGHT V2 Anvil gallery decoding", () => {
       ]),
     } as ThoughtV2OnchainToken;
 
-    expect(traitValue(token, "Declared Agent")).toBe("Inshell THOUGHT App");
+    expect(traitValue(token, "Attested Agent")).toBe("Inshell THOUGHT App");
     expect(traitValue(token, "Prompt Bytes")).toBe(13);
+    expect(optionalTraitValue(token, "Attested Model")).toBeUndefined();
     expect(() => traitValue(token, "Conversation Form")).toThrow(
       "THOUGHT #4 is missing Conversation Form",
     );

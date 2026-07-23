@@ -64,9 +64,11 @@ export const THOUGHT_V2_STUDY_DECLARATIONS: ThoughtV2StudyDeclarations = {
   },
 };
 
-export const THOUGHT_V2_METADATA_ATTRIBUTE_ORDER = [
-  "Declared Agent",
-  "Declared Model",
+export type ThoughtV2CreationAttestationStatus =
+  | "Inshell THOUGHT App"
+  | "Unattested";
+
+export const THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER = [
   "Creation Attestation",
   "Prompt Bytes",
   "Agent Bytes",
@@ -74,6 +76,22 @@ export const THOUGHT_V2_METADATA_ATTRIBUTE_ORDER = [
   "Prompt Length",
   "Agent Length",
 ] as const;
+
+export const THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER = [
+  "Attested Agent",
+  "Attested Model",
+  ...THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
+] as const;
+
+export const THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER = [
+  ...THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+] as const;
+
+export const thoughtV2MetadataAttributeOrder = (
+  status: ThoughtV2CreationAttestationStatus,
+): readonly string[] => status === "Inshell THOUGHT App"
+  ? THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER
+  : THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER;
 
 export type ThoughtV2MetadataAttribute = {
   trait_type: string;
@@ -199,6 +217,39 @@ export const thoughtV2LengthClass = (byteLength: number): ThoughtV2LengthClass =
 const isPunctuationOnly = (value: string): boolean =>
   !/[A-Za-z0-9]/.test(value);
 
+export const buildThoughtV2MetadataAttributes = ({
+  agentBytes,
+  agentLengthClass,
+  creationAttestation,
+  declaredAgent,
+  declaredModel,
+  pairBytes,
+  promptBytes,
+  promptLengthClass,
+}: {
+  agentBytes: number;
+  agentLengthClass: ThoughtV2LengthClass;
+  creationAttestation: ThoughtV2CreationAttestationStatus;
+  declaredAgent: string;
+  declaredModel: string;
+  pairBytes: number;
+  promptBytes: number;
+  promptLengthClass: ThoughtV2LengthClass;
+}): ThoughtV2MetadataAttribute[] => [
+  ...(creationAttestation === "Inshell THOUGHT App"
+    ? [
+      { trait_type: "Attested Agent", value: declaredAgent },
+      { trait_type: "Attested Model", value: declaredModel },
+    ]
+    : []),
+  { trait_type: "Creation Attestation", value: creationAttestation },
+  { display_type: "number", max_value: 64, trait_type: "Prompt Bytes", value: promptBytes },
+  { display_type: "number", max_value: 64, trait_type: "Agent Bytes", value: agentBytes },
+  { display_type: "number", max_value: 128, trait_type: "Pair Bytes", value: pairBytes },
+  { trait_type: "Prompt Length", value: promptLengthClass },
+  { trait_type: "Agent Length", value: agentLengthClass },
+];
+
 export const thoughtV2ConversationForm = (
   promptLine: string,
   agentLine: string,
@@ -225,16 +276,16 @@ export const buildThoughtV2StudyRecord = (
   const promptLengthClass = thoughtV2LengthClass(promptBytes);
   const agentLengthClass = thoughtV2LengthClass(agentBytes);
   const conversationForm = thoughtV2ConversationForm(promptLine, agentLine);
-  const attributes: ThoughtV2MetadataAttribute[] = [
-    { trait_type: "Declared Agent", value: declaredAgent },
-    { trait_type: "Declared Model", value: declaredModel },
-    { trait_type: "Creation Attestation", value: "Unattested" },
-    { display_type: "number", max_value: 64, trait_type: "Prompt Bytes", value: promptBytes },
-    { display_type: "number", max_value: 64, trait_type: "Agent Bytes", value: agentBytes },
-    { display_type: "number", max_value: 128, trait_type: "Pair Bytes", value: pairBytes },
-    { trait_type: "Prompt Length", value: promptLengthClass },
-    { trait_type: "Agent Length", value: agentLengthClass },
-  ];
+  const attributes = buildThoughtV2MetadataAttributes({
+    agentBytes,
+    agentLengthClass,
+    creationAttestation: "Unattested",
+    declaredAgent,
+    declaredModel,
+    pairBytes,
+    promptBytes,
+    promptLengthClass,
+  });
 
   const provenance: ThoughtV2StudyProvenance = {
     mintContext: {

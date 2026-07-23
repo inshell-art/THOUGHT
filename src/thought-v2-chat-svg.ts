@@ -9,6 +9,12 @@ import {
 export const THOUGHT_CHAT_SOURCE_MAX_BYTES = THOUGHT_ENGLISH_MAX_BYTES;
 export const THOUGHT_CHAT_CANVAS = 960;
 export const THOUGHT_CHAT_BACKGROUND = "#000000";
+export const THOUGHT_CHAT_FRAME_SIZE = 32;
+export const THOUGHT_CHAT_FRAME_COLOR = "#404040";
+export const THOUGHT_CHAT_ARTBOARD =
+  THOUGHT_CHAT_CANVAS + (THOUGHT_CHAT_FRAME_SIZE * 2);
+export const THOUGHT_CHAT_CANVAS_TRANSFORM =
+  `translate(${THOUGHT_CHAT_FRAME_SIZE} ${THOUGHT_CHAT_FRAME_SIZE})`;
 export const THOUGHT_CHAT_GREEN_MIN_CHANNEL = 0x61;
 export const THOUGHT_CHAT_GREEN_CHANNEL = 0xba;
 export const THOUGHT_CHAT_GREEN_MAX_CHANNEL = 0xff;
@@ -126,11 +132,14 @@ export const buildThoughtChatSvg = ({
   const prompt = textField("prompt", promptLine, fontProfile, green);
   const agent = textField("agent", agentLine, fontProfile, green);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${THOUGHT_CHAT_CANVAS} ${THOUGHT_CHAT_CANVAS}" width="${THOUGHT_CHAT_CANVAS}" height="${THOUGHT_CHAT_CANVAS}" role="img" data-renderer="foreign-object-text-fields" data-font-profile="${fontProfile}" data-green="${green}" aria-label="Prompt and Agent response in a chat layout">
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${THOUGHT_CHAT_ARTBOARD} ${THOUGHT_CHAT_ARTBOARD}" width="${THOUGHT_CHAT_ARTBOARD}" height="${THOUGHT_CHAT_ARTBOARD}" role="img" data-renderer="foreign-object-text-fields" data-font-profile="${fontProfile}" data-green="${green}" aria-label="Prompt and Agent response in a chat layout">
   <style>@font-face{font-family:'THOUGHT Source Code Pro';font-style:normal;font-weight:400;src:url('${sourceCodeProLatin400}') format('woff2')}</style>
-  <rect width="${THOUGHT_CHAT_CANVAS}" height="${THOUGHT_CHAT_CANVAS}" fill="${THOUGHT_CHAT_BACKGROUND}"/>
-  ${prompt}
-  ${agent}
+  <rect id="work-frame" width="${THOUGHT_CHAT_ARTBOARD}" height="${THOUGHT_CHAT_ARTBOARD}" fill="${THOUGHT_CHAT_FRAME_COLOR}"/>
+  <g id="work-canvas" transform="${THOUGHT_CHAT_CANVAS_TRANSFORM}">
+    <rect id="canvas-bg" width="${THOUGHT_CHAT_CANVAS}" height="${THOUGHT_CHAT_CANVAS}" fill="${THOUGHT_CHAT_BACKGROUND}"/>
+    ${prompt}
+    ${agent}
+  </g>
 </svg>`;
 };
 

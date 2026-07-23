@@ -2,9 +2,9 @@ import { Contract, JsonRpcProvider, keccak256, toUtf8Bytes } from "ethers";
 
 import { deriveThoughtV2WorkHashes } from "./thought-v2-terminal-work-profile";
 import {
-  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
   THOUGHT_V2_METADATA_PROFILE_ID,
   THOUGHT_V2_PROVENANCE_PROFILE_ID,
+  thoughtV2MetadataAttributeOrder,
   type ThoughtV2MetadataAttribute,
 } from "./thought-v2-terminal-study-metadata";
 import { verifyThoughtV2Provenance } from "./thought-v2-terminal-provenance";
@@ -156,9 +156,25 @@ export type ThoughtV2OnchainTokenDetail = ThoughtV2OnchainToken & {
   };
 };
 
-const tokenAbi = [
+export const THOUGHT_V2_TOKEN_READ_ABI = [
   "function totalSupply() view returns (uint256)",
   "function tokenURI(uint256 tokenId) view returns (string)",
+  "function pathNft() view returns (address)",
+  "function thoughtSpecRegistry() view returns (address)",
+  "function thoughtRenderer() view returns (address)",
+  "function creationAttestationVerifier() view returns (address)",
+  "function protocolRegistry() view returns (address)",
+  "function protocolReleaseId() view returns (bytes32)",
+  "function WORK_PROFILE_ID() view returns (string)",
+  "function CONTEXT_PROFILE_ID() view returns (string)",
+  "function METADATA_PROFILE_ID() view returns (string)",
+  "function RENDERER_ID() view returns (string)",
+  "function CREATION_ATTESTATION_PROFILE_ID() view returns (bytes32)",
+  "function MAX_PROMPT_LINE_BYTES() view returns (uint256)",
+  "function MAX_AGENT_LINE_BYTES() view returns (uint256)",
+  "function MAX_DECLARED_AGENT_BYTES() view returns (uint256)",
+  "function MAX_DECLARED_MODEL_BYTES() view returns (uint256)",
+  "function MAX_PROVENANCE_BYTES() view returns (uint256)",
   "function ownerOf(uint256 tokenId) view returns (address)",
   "function promptLineOf(uint256 tokenId) view returns (string)",
   "function agentLineOf(uint256 tokenId) view returns (string)",
@@ -180,7 +196,7 @@ const tokenAbi = [
 
 const bytes32Pattern = /^0x[0-9a-f]{64}$/;
 
-const assertRuntime = (value: unknown): ThoughtV2AnvilRuntime => {
+export const assertThoughtV2AnvilRuntime = (value: unknown): ThoughtV2AnvilRuntime => {
   if (!value || typeof value !== "object") throw new Error("Anvil runtime config is not an object");
   const runtime = value as ThoughtV2AnvilRuntime;
   if (
@@ -222,7 +238,7 @@ export const parseEmbeddedSvgDataUri = (uri: string): string => {
   return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
 };
 
-const validateMetadata = (
+export const validateThoughtV2TokenMetadata = (
   metadataValue: unknown,
   tokenId: number,
   runtime: ThoughtV2AnvilRuntime,
@@ -230,13 +246,18 @@ const validateMetadata = (
   if (!metadataValue || typeof metadataValue !== "object") throw new Error(`THOUGHT #${tokenId} metadata is not an object`);
   const metadata = metadataValue as ThoughtV2TokenMetadata;
   const thought = metadata.thought;
+  const attestationDigest = thought?.creationAttestation?.digest;
+  const expectedAttestationStatus = attestationDigest === `0x${"00".repeat(32)}`
+    ? "Unattested"
+    : "Inshell THOUGHT App";
+  const expectedAttributeOrder = thoughtV2MetadataAttributeOrder(expectedAttestationStatus);
   if (
     metadata.name !== `THOUGHT #${tokenId}`
     || metadata.background_color !== "000000"
     || !metadata.image?.startsWith("data:image/svg+xml;base64,")
     || !Array.isArray(metadata.attributes)
-    || metadata.attributes.length !== THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.length
-    || metadata.attributes.some((attribute, index) => attribute.trait_type !== THOUGHT_V2_METADATA_ATTRIBUTE_ORDER[index])
+    || metadata.attributes.length !== expectedAttributeOrder.length
+    || metadata.attributes.some((attribute, index) => attribute.trait_type !== expectedAttributeOrder[index])
     || thought?.metadataProfileId !== THOUGHT_V2_METADATA_PROFILE_ID
     || thought?.provenanceProfileId !== THOUGHT_V2_PROVENANCE_PROFILE_ID
     || thought?.rendererImplementationId !== runtime.renderer.implementationId
@@ -250,6 +271,7 @@ const validateMetadata = (
     || thought?.protocol?.thoughtSpecHash !== runtime.selectedSpec.hash
     || thought?.creationAttestation?.profileId !== runtime.attestation.profileId
     || thought?.creationAttestation?.verifier.toLowerCase() !== runtime.attestation.verifier.toLowerCase()
+    || !bytes32Pattern.test(attestationDigest ?? "")
     || !bytes32Pattern.test(thought?.workHash ?? "")
   ) {
     throw new Error(`THOUGHT #${tokenId} tokenURI canonical metadata parity failed`);
@@ -285,9 +307,12 @@ const validateMetadata = (
   const attestationTrait = metadata.attributes.find(
     ({ trait_type }) => trait_type === "Creation Attestation",
   );
-  const expectedAttestationStatus = thought.creationAttestation.digest === `0x${"00".repeat(32)}`
-    ? "Unattested"
-    : "Inshell THOUGHT App";
+  const attestedAgentTrait = metadata.attributes.find(
+    ({ trait_type }) => trait_type === "Attested Agent",
+  );
+  const attestedModelTrait = metadata.attributes.find(
+    ({ trait_type }) => trait_type === "Attested Model",
+  );
   if (
     thought.creationAttestation.status !== expectedAttestationStatus
     || attestationTrait?.value !== expectedAttestationStatus
@@ -295,6 +320,12 @@ const validateMetadata = (
     throw new Error(`THOUGHT #${tokenId} creation-attestation metadata parity failed`);
   }
   if (expectedAttestationStatus === "Inshell THOUGHT App") {
+    if (
+      attestedAgentTrait?.value !== thought.declarations.agent.label
+      || attestedModelTrait?.value !== thought.declarations.model.label
+    ) {
+      throw new Error(`THOUGHT #${tokenId} attested declaration traits drifted`);
+    }
     if (provenance.parsed?.process.kind !== "agent-run") {
       throw new Error(`THOUGHT #${tokenId} attested provenance is not an Agent run`);
     }
@@ -316,6 +347,8 @@ const validateMetadata = (
     if (!attestationVerification.conforming) {
       throw new Error(`THOUGHT #${tokenId} creation-attestation binding drifted`);
     }
+  } else if (attestedAgentTrait || attestedModelTrait) {
+    throw new Error(`THOUGHT #${tokenId} unattested metadata exposed Agent/model traits`);
   }
   return metadata;
 };
@@ -323,34 +356,41 @@ const validateMetadata = (
 export const loadThoughtV2AnvilRuntime = async (): Promise<ThoughtV2AnvilRuntime> => {
   const response = await fetch(THOUGHT_V2_ANVIL_RUNTIME_PATH, { cache: "no-store" });
   if (!response.ok) throw new Error(`Anvil runtime config returned HTTP ${response.status}`);
-  return assertRuntime(await response.json());
+  return assertThoughtV2AnvilRuntime(await response.json());
 };
 
-export const createThoughtV2AnvilClient = async (): Promise<{
+export type ThoughtV2AnvilClient = {
   contract: Contract;
   provider: JsonRpcProvider;
   runtime: ThoughtV2AnvilRuntime;
-}> => {
-  const runtime = await loadThoughtV2AnvilRuntime();
+};
+
+export const createThoughtV2AnvilClientFromRuntime = async (
+  runtimeValue: unknown,
+): Promise<ThoughtV2AnvilClient> => {
+  const runtime = assertThoughtV2AnvilRuntime(runtimeValue);
   const provider = new JsonRpcProvider(runtime.rpcUrl);
   const network = await provider.getNetwork();
   if (Number(network.chainId) !== runtime.chainId) throw new Error("Anvil RPC chain does not match runtime config");
   if ((await provider.getCode(runtime.contracts.thoughtNft)) === "0x") throw new Error("configured ThoughtNFTV2 has no bytecode");
   return {
-    contract: new Contract(runtime.contracts.thoughtNft, tokenAbi, provider),
+    contract: new Contract(runtime.contracts.thoughtNft, THOUGHT_V2_TOKEN_READ_ABI, provider),
     provider,
     runtime,
   };
 };
 
-const loadTokenUri = async (
+export const createThoughtV2AnvilClient = async (): Promise<ThoughtV2AnvilClient> =>
+  createThoughtV2AnvilClientFromRuntime(await loadThoughtV2AnvilRuntime());
+
+export const loadThoughtV2AnvilToken = async (
   contract: Contract,
   runtime: ThoughtV2AnvilRuntime,
   tokenId: number,
 ): Promise<ThoughtV2OnchainToken> => {
   const tokenUri = await contract.tokenURI(tokenId) as string;
   const parsed = parseEmbeddedJsonDataUri(tokenUri);
-  const metadata = validateMetadata(parsed.value, tokenId, runtime);
+  const metadata = validateThoughtV2TokenMetadata(parsed.value, tokenId, runtime);
   return {
     metadata,
     metadataJson: parsed.json,
@@ -373,20 +413,21 @@ export const loadThoughtV2AnvilGallery = async (): Promise<{
   const batchSize = 4;
   for (let start = 1; start <= supply; start += batchSize) {
     const ids = Array.from({ length: Math.min(batchSize, supply - start + 1) }, (_, index) => start + index);
-    tokens.push(...await Promise.all(ids.map((tokenId) => loadTokenUri(contract, runtime, tokenId))));
+    tokens.push(...await Promise.all(ids.map((tokenId) => loadThoughtV2AnvilToken(contract, runtime, tokenId))));
   }
   return { runtime, tokens };
 };
 
-export const loadThoughtV2AnvilTokenDetail = async (
+export const loadThoughtV2AnvilTokenDetailFromClient = async (
+  contract: Contract,
+  runtime: ThoughtV2AnvilRuntime,
   tokenId: number,
-): Promise<{ runtime: ThoughtV2AnvilRuntime; token: ThoughtV2OnchainTokenDetail }> => {
-  const { contract, runtime } = await createThoughtV2AnvilClient();
+): Promise<ThoughtV2OnchainTokenDetail> => {
   const supply = Number(await contract.totalSupply());
   if (!Number.isSafeInteger(tokenId) || tokenId < 1 || tokenId > supply) {
     throw new Error(`THOUGHT token ID must be between 1 and ${supply}`);
   }
-  const token = await loadTokenUri(contract, runtime, tokenId);
+  const token = await loadThoughtV2AnvilToken(contract, runtime, tokenId);
   const [
     owner,
     promptLine,
@@ -446,32 +487,39 @@ export const loadThoughtV2AnvilTokenDetail = async (
     throw new Error(`THOUGHT #${tokenId} direct typed state and tokenURI disagree`);
   }
   return {
-    runtime,
-    token: {
-      ...token,
-      direct: {
-        agentLine,
-        author,
-        creationAttestationDigest,
-        declaredAgent,
-        declaredModel,
-        mintedAt,
-        owner,
-        pathId,
-        pathSerial,
-        promptLine,
-        protocolManifestHash,
-        protocolManifestUri,
-        provenanceHash,
-        provenanceJson,
-        specHash: thoughtSpec[1],
-        specId: thoughtSpec[0],
-        specName: thoughtSpec[2],
-        specRef: thoughtSpec[3],
-        svg,
-        workHash,
-      },
+    ...token,
+    direct: {
+      agentLine,
+      author,
+      creationAttestationDigest,
+      declaredAgent,
+      declaredModel,
+      mintedAt,
+      owner,
+      pathId,
+      pathSerial,
+      promptLine,
+      protocolManifestHash,
+      protocolManifestUri,
+      provenanceHash,
+      provenanceJson,
+      specHash: thoughtSpec[1],
+      specId: thoughtSpec[0],
+      specName: thoughtSpec[2],
+      specRef: thoughtSpec[3],
+      svg,
+      workHash,
     },
+  };
+};
+
+export const loadThoughtV2AnvilTokenDetail = async (
+  tokenId: number,
+): Promise<{ runtime: ThoughtV2AnvilRuntime; token: ThoughtV2OnchainTokenDetail }> => {
+  const { contract, runtime } = await createThoughtV2AnvilClient();
+  return {
+    runtime,
+    token: await loadThoughtV2AnvilTokenDetailFromClient(contract, runtime, tokenId),
   };
 };
 
@@ -484,4 +532,12 @@ export const traitValue = (
     throw new Error(`THOUGHT #${token.tokenId} is missing ${traitType}`);
   }
   return value;
+};
+
+export const optionalTraitValue = (
+  token: ThoughtV2OnchainToken,
+  traitType: string,
+): string | number | undefined => {
+  const value = token.traits.get(traitType)?.value;
+  return typeof value === "string" || typeof value === "number" ? value : undefined;
 };

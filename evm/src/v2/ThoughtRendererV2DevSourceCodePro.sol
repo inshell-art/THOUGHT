@@ -23,7 +23,8 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
     string public constant CONTEXT_PROFILE_ID = ThoughtV2Constants.CONTEXT_PROFILE_ID;
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
 
-    string public constant IMPLEMENTATION_ID = "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object";
+    string public constant IMPLEMENTATION_ID =
+        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040";
     string public constant FONT_PROFILE_ID = "source-code-pro-latin-400-normal.woff2";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
@@ -87,13 +88,16 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
             "</span></div></foreignObject>"
         );
         return string.concat(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="960" viewBox="0 0 960 960" role="img" data-renderer="',
+            '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" data-renderer="',
             IMPLEMENTATION_ID,
             '" aria-label="Prompt and Agent response in a terminal chat layout">',
             style,
-            '<rect width="960" height="960" fill="#000000"/>',
+            '<rect id="work-frame" width="1024" height="1024" fill="#404040"/>',
+            '<g id="work-canvas" transform="translate(32 32)">',
+            '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
             prompt,
             agent,
+            "</g>",
             "</svg>"
         );
     }
@@ -101,12 +105,8 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
     function _attributes(TokenData calldata data) private pure returns (string memory) {
         uint256 promptBytes = bytes(data.promptLine).length;
         uint256 agentBytes = bytes(data.agentLine).length;
-        return string.concat(
-            '[{"trait_type":"Declared Agent","value":',
-            _jsonString(data.declaredAgent),
-            '},{"trait_type":"Declared Model","value":',
-            _jsonString(data.declaredModel),
-            '},{"trait_type":"Creation Attestation","value":"',
+        string memory contractTraits = string.concat(
+            '{"trait_type":"Creation Attestation","value":"',
             _creationAttestationStatus(data.creationAttestationDigest),
             '"},{"display_type":"number","max_value":64,"trait_type":"Prompt Bytes","value":',
             _toString(promptBytes),
@@ -119,6 +119,17 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
             '"},{"trait_type":"Agent Length","value":"',
             _lengthClass(agentBytes),
             '"}]'
+        );
+        if (data.creationAttestationDigest == bytes32(0)) {
+            return string.concat("[", contractTraits);
+        }
+        return string.concat(
+            '[{"trait_type":"Attested Agent","value":',
+            _jsonString(data.declaredAgent),
+            '},{"trait_type":"Attested Model","value":',
+            _jsonString(data.declaredModel),
+            "},",
+            contractTraits
         );
     }
 

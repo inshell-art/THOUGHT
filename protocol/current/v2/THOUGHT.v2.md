@@ -30,9 +30,11 @@ line hashes in order. The work hash also commits to the renderer identity.
 
 `declaredAgent` and `declaredModel` are exact 1-through-64-byte visible UTF-8
 context labels. They remain `declared-unverified`, including when an official
-creation attestation is valid. They are typed contract state, metadata traits,
-canonical provenance declarations, and creation-attestation hash inputs. They
-do not affect conversation identity, work hash, or the artwork.
+creation attestation is valid. They are typed contract state, canonical
+provenance declarations, and creation-attestation hash inputs. A nonzero valid
+creation-attestation digest gates their publication as `Attested Agent` and
+`Attested Model` marketplace traits. Unattested tokens omit Agent/Model traits.
+They do not affect conversation identity, work hash, or the artwork.
 
 Every mint selects an exact registered THOUGHT specification ID/hash pair and
 an exact registered protocol release. Multiple registered specification
@@ -57,6 +59,10 @@ mint must not consume PATH, reserve the ordered pair, or increment supply.
 
 The current final renderer identity is
 `inshell.thought.svg.v2.terminal-chat-path-glyphs`. Its canonical implementation
-uses reviewed native SVG paths with deterministic glyph metrics and wrapping.
+uses a 1024-by-1024 SVG artboard. A 32-unit `#404040` outer frame surrounds
+an unchanged 960-by-960 black canvas translated to `(32,32)` with no scaling.
+Prompt and Agent coordinates remain in that 960-unit canvas coordinate system.
+The implementation uses reviewed native SVG paths with deterministic glyph
+metrics and wrapping.
 Source Code Pro, SVG text, `foreignObject`, browser font lookup, and font files
 are study tools only and are not release-ready renderer dependencies.

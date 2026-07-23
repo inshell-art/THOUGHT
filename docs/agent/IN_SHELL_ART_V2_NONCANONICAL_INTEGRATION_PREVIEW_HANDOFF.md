@@ -1,8 +1,8 @@
 # THOUGHT V2 noncanonical integration-preview handoff
 
-Artifact ID: `thought-v2-noncanonical-integration-preview-20260722-r1`
+Artifact ID: `thought-v2-noncanonical-integration-preview-20260723-r2`
 
-Source tag: `thought-v2-noncanonical-integration-preview-20260722-r1`
+Source tag: `thought-v2-noncanonical-integration-preview-20260723-r2`
 
 Classification: `experimental / noncanonical integration preview`
 
@@ -20,6 +20,17 @@ The canonical native path-glyph renderer is not implemented. The included
 `ThoughtRendererV2DevSourceCodePro` is chain-gated to Anvil chain `31337`, uses
 an embedded Source Code Pro study font and SVG `foreignObject`, and must not be
 shipped or treated as final artwork.
+
+The included renderer does implement the approved V2 geometry for integration:
+
+- `1024 × 1024` SVG artboard;
+- `32` units of `#404040` frame on every side;
+- unchanged `960 × 960` black canvas at `(32,32)`;
+- no canvas scaling;
+- `#00ba00` prompt and Agent text within the original canvas coordinates.
+
+The frame is part of the token image. Consumers must not add a second artwork
+frame. Only the font/text mechanism is temporary.
 
 ## How to resolve and verify
 
@@ -142,7 +153,7 @@ runtime state for local reads. Never pin generated Anvil addresses.
 The exact preview source and generated artifacts passed:
 
 - TypeScript/frontend build;
-- 145 TypeScript/frontend tests across 27 files;
+- 156 TypeScript/frontend tests across 30 files;
 - Solidity compilation with Solidity `0.8.28`;
 - 177 Solidity tests across 7 suites;
 - deterministic preview regeneration and complete manifest/checksum readback;
@@ -151,6 +162,7 @@ The exact preview source and generated artifacts passed:
   records;
 - all 66 `ThoughtNFTV2.tokenURI()` results checked against stored work,
   declaration, provenance, selected-spec and attestation state.
+- App/Contract boundary conformance against the fresh deployment.
 
 The rehearsal's canonical provenance payloads ranged from 1,168 to 1,527
 bytes. Its addresses and mock authority were disposable and are intentionally

@@ -24,7 +24,11 @@ but are not final release artifacts while the renderer and manifest are open.
 separate visible-UTF-8 context profile, exposes each label and exact hash,
 passes both labels to the renderer metadata boundary, and binds both hashes in
 an optional creation-attestation claim. They remain declarations rather than
-verified Agent/model identity and never affect pair identity or artwork.
+verified Agent/model identity and never affect pair identity or artwork. The
+renderer exposes them as `Attested Agent` and `Attested Model` marketplace
+traits only when the stored creation-attestation digest is nonzero. Unattested
+tokens retain the typed declarations and provenance but omit Agent/Model
+marketplace traits.
 
 ## Historical Binary-Weave Attempt — Unpublished
 

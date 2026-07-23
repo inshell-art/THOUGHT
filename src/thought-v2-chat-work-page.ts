@@ -97,6 +97,7 @@ const renderToken = (
     kind?: string;
     modelDeclaration?: { source?: string };
   } | undefined;
+  const isAttested = thought.creationAttestation.status === "Inshell THOUGHT App";
   const mintedDate = new Date(Number(direct.mintedAt) * 1000).toISOString();
 
   document.title = `THOUGHT ${number} — On-chain V2 Token`;
@@ -158,6 +159,9 @@ const renderToken = (
           <div><dt>${escapeHtml(attribute.trait_type)}</dt><dd>${escapeHtml(String(attribute.value))}</dd></div>
         `).join("")}
       </dl>
+      <p class="chat-work-section__note">${isAttested
+        ? "A valid Creation Attestation gates the Attested Agent and Attested Model marketplace traits. The underlying labels remain declarations, not objective proof of provider execution."
+        : "This token is Unattested, so Agent and Model are intentionally absent from marketplace traits. Its submitted declarations remain available in typed state and provenance below."}</p>
     </section>
 
     <section class="chat-work-section">
@@ -169,9 +173,9 @@ const renderToken = (
         ${fact("Minted at", `${direct.mintedAt} / ${mintedDate}`)}
         ${fact("PATH ID", direct.pathId.toString())}
         ${fact("PATH serial", direct.pathSerial.toString())}
-        ${fact("Declared Agent", direct.declaredAgent)}
+        ${fact("Typed declared Agent", direct.declaredAgent)}
         ${fact("Declared Agent hash", thought.declarations.agent.keccak256)}
-        ${fact("Declared Model", direct.declaredModel)}
+        ${fact("Typed declared Model", direct.declaredModel)}
         ${fact("Declared Model hash", thought.declarations.model.keccak256)}
         ${fact("Declaration status", "declared-unverified")}
         ${fact("Work identity input", "false")}
