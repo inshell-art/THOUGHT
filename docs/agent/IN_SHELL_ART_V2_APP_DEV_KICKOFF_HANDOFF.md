@@ -107,7 +107,7 @@ branch: codex/thought-v2-chat-svg-experiment
 source tag: thought-v2-noncanonical-integration-preview-20260723-r3
 artifact ID: thought-v2-noncanonical-integration-preview-20260723-r3
 artifact pointer: artifacts/thought-v2-integration-preview/experimental.json
-manifest SHA-256: generated with the r3 integration-preview bundle
+manifest SHA-256: df8fc2112bf64152a4354c88f79d1d1b508cd9e43687eab46496d8174edbcb2b
 ```
 
 Run `npm run integration-preview:v2:check` before consuming it. Pin the exact
