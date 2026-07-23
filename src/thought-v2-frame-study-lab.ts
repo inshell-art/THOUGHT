@@ -10,6 +10,7 @@ import {
   normalizeThoughtV2FrameColor,
   renderThoughtV2OuterFrameStudySvg,
   THOUGHT_V2_FRAME_STUDY_CANVAS_SIZE,
+  THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS,
   THOUGHT_V2_FRAME_STUDY_DEFAULT_COLOR,
   THOUGHT_V2_FRAME_STUDY_DEFAULT_WIDTH,
   THOUGHT_V2_FRAME_STUDY_MAX_WIDTH,
@@ -20,7 +21,6 @@ import {
 type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "thought-v2-chat-theme";
-const FRAME_PRESETS = ["#202020", "#404040", "#4d4d4d", "#5a5a5a", "#00ba00"] as const;
 const app = document.getElementById("thought-frame-lab");
 if (!app) throw new Error("missing #thought-frame-lab");
 
@@ -125,10 +125,17 @@ const renderShell = (): void => {
         <input class="frame-control__hex" id="frame-color-hex" type="text" value="${frameColor}" maxlength="7" spellcheck="false" aria-label="Six-digit frame hex color" />
       </div>
       <div class="frame-control__presets" role="group" aria-label="Frame color presets">
-        ${FRAME_PRESETS.map((color) => `
-          <button type="button" data-frame-color="${color}" title="${color}" aria-label="Use frame color ${color}">
-            <span style="background:${color}"></span>${color}
-          </button>
+        ${THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS.map((group) => `
+          <div class="frame-control__preset-group" data-preset-group="${group.id}">
+            <span class="frame-control__preset-label">${group.label}</span>
+            <div class="frame-control__preset-grid">
+              ${group.colors.map((color) => `
+                <button type="button" data-frame-color="${color}" title="${color}" aria-label="Use frame color ${color}" aria-pressed="${color === frameColor}">
+                  <span style="background:${color}"></span>${color}
+                </button>
+              `).join("")}
+            </div>
+          </div>
         `).join("")}
       </div>
     </section>
@@ -250,6 +257,9 @@ const setFrameColor = (value: string): void => {
   const hex = app.querySelector<HTMLInputElement>("#frame-color-hex");
   if (picker) picker.value = frameColor;
   if (hex) hex.value = frameColor;
+  for (const button of app.querySelectorAll<HTMLButtonElement>("button[data-frame-color]")) {
+    button.setAttribute("aria-pressed", button.dataset.frameColor === frameColor ? "true" : "false");
+  }
   scheduleStudyRender();
 };
 

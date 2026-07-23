@@ -33,7 +33,7 @@ contract ThoughtRendererV2DevSourceCodeProTest {
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
                 == keccak256(
                     bytes(
-                        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040"
+                        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100"
                     )
                 ),
             "dev implementation ID drift"
@@ -46,7 +46,7 @@ contract ThoughtRendererV2DevSourceCodeProTest {
         require(_contains(svg, "<foreignObject data-line=\"agent\""), "missing agent field");
         require(_contains(svg, "font/woff2;base64,d09GMmRldi1mb250"), "missing embedded font");
         require(
-            _contains(svg, '<rect id="work-frame" width="1024" height="1024" fill="#404040"/>'),
+            _contains(svg, '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>'),
             "missing approved outer work frame"
         );
         require(

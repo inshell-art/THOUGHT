@@ -59,7 +59,7 @@ mint must not consume PATH, reserve the ordered pair, or increment supply.
 
 The current final renderer identity is
 `inshell.thought.svg.v2.terminal-chat-path-glyphs`. Its canonical implementation
-uses a 1024-by-1024 SVG artboard. A 32-unit `#404040` outer frame surrounds
+uses a 1024-by-1024 SVG artboard. A 32-unit `#006100` outer frame surrounds
 an unchanged 960-by-960 black canvas translated to `(32,32)` with no scaling.
 Prompt and Agent coordinates remain in that 960-unit canvas coordinate system.
 The implementation uses reviewed native SVG paths with deterministic glyph

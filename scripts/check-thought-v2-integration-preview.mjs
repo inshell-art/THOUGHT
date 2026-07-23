@@ -60,11 +60,11 @@ if (manifest.compatibility?.renderer?.finalImplementationIncluded !== false) {
 }
 if (
   manifest.compatibility?.renderer?.packagedImplementation
-    !== "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040"
+    !== "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100"
   || manifest.compatibility?.renderer?.geometry?.artboard !== "1024x1024"
   || manifest.compatibility?.renderer?.geometry?.canvas !== "960x960@32,32"
   || manifest.compatibility?.renderer?.geometry?.canvasScale !== 1
-  || manifest.compatibility?.renderer?.geometry?.frameColor !== "#404040"
+  || manifest.compatibility?.renderer?.geometry?.frameColor !== "#006100"
   || manifest.compatibility?.renderer?.geometry?.frameUnitsPerSide !== 32
 ) fail("preview renderer geometry drifted");
 

@@ -239,6 +239,22 @@ code {
 
 .frame-control__presets {
   display: grid;
+  gap: 10px;
+}
+
+.frame-control__preset-group {
+  display: grid;
+  gap: 6px;
+}
+
+.frame-control__preset-label {
+  color: var(--page-muted);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+}
+
+.frame-control__preset-grid {
+  display: grid;
   grid-template-columns: repeat(5, minmax(72px, 1fr));
   gap: 6px;
 }
@@ -253,9 +269,14 @@ code {
 }
 
 .frame-control__presets button:hover,
-.frame-control__presets button:focus-visible {
+.frame-control__presets button:focus-visible,
+.frame-control__presets button[aria-pressed="true"] {
   border-color: var(--page-green);
   color: var(--page-value);
+}
+
+.frame-control__presets button[aria-pressed="true"] {
+  box-shadow: inset 0 -2px 0 var(--page-green);
 }
 
 .frame-control__presets span {
@@ -548,7 +569,7 @@ code {
     white-space: normal;
   }
 
-  .frame-control__presets {
+  .frame-control__preset-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

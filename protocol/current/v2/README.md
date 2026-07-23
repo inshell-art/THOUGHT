@@ -11,7 +11,7 @@ manifest, registration, and immutable consumer handoff remain release gates.
 
 The renderer geometry is fixed for implementation: a 1024x1024 SVG artboard
 contains the unchanged 960x960 black work canvas at `(32,32)`, surrounded by
-a 32-unit `#404040` artifact-owned frame. The canvas is not scaled. The
+a 32-unit `#006100` artifact-owned frame. The canvas is not scaled. The
 disposable Anvil renderer demonstrates this geometry with Source Code Pro and
 `foreignObject`; those text dependencies remain noncanonical and must be
 replaced by reviewed native path glyphs before release.

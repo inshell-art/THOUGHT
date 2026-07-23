@@ -36,7 +36,7 @@
     "artboard": "1024x1024",
     "canvas": "960x960@32,32",
     "canvasScale": 1,
-    "frameColor": "#404040",
+    "frameColor": "#006100",
     "frameUnitsPerSide": 32,
     "glyphColor": "#00ba00"
   },

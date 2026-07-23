@@ -24,7 +24,7 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
 
     string public constant IMPLEMENTATION_ID =
-        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040";
+        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100";
     string public constant FONT_PROFILE_ID = "source-code-pro-latin-400-normal.woff2";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
@@ -92,7 +92,7 @@ contract ThoughtRendererV2DevSourceCodePro is IThoughtRendererV2 {
             IMPLEMENTATION_ID,
             '" aria-label="Prompt and Agent response in a terminal chat layout">',
             style,
-            '<rect id="work-frame" width="1024" height="1024" fill="#404040"/>',
+            '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>',
             '<g id="work-canvas" transform="translate(32 32)">',
             '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
             prompt,

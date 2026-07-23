@@ -4,6 +4,7 @@ import {
   normalizeThoughtV2FrameColor,
   renderThoughtV2OuterFrameStudySvg,
   THOUGHT_V2_FRAME_STUDY_CANVAS_SIZE,
+  THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS,
   THOUGHT_V2_FRAME_STUDY_DEFAULT_COLOR,
   THOUGHT_V2_FRAME_STUDY_DEFAULT_WIDTH,
   thoughtV2FrameContrastOnBlack,
@@ -43,7 +44,7 @@ describe("THOUGHT V2 outside-frame study", () => {
     expect(svg).toContain('data-frame-width="32"');
     expect(svg).toContain('data-canvas-size="960"');
     expect(svg).toContain(
-      '<rect id="work-frame" width="1024" height="1024" fill="#404040"/>',
+      '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>',
     );
     expect(svg).toContain('<g id="work-canvas" transform="translate(32 32)">');
     expect(svg).toContain(
@@ -71,5 +72,24 @@ describe("THOUGHT V2 outside-frame study", () => {
     expect(() => normalizeThoughtV2FrameColor("#fff")).toThrow(
       "six-digit hex color",
     );
+  });
+
+  it("offers neutral references plus broad pure and muted green studies", () => {
+    const pureGreen = THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS.find(
+      ({ id }) => id === "pure-green",
+    );
+    const mutedGreen = THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS.find(
+      ({ id }) => id === "muted-green",
+    );
+
+    expect(pureGreen?.colors).toHaveLength(10);
+    expect(pureGreen?.colors).toEqual(expect.arrayContaining([
+      "#006100",
+      "#00ba00",
+      "#00ff00",
+    ]));
+    expect(mutedGreen?.colors).toHaveLength(5);
+    expect(pureGreen?.colors)
+      .toContain(THOUGHT_V2_FRAME_STUDY_DEFAULT_COLOR);
   });
 });

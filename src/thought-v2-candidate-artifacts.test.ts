@@ -45,14 +45,14 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
         x: 32,
         y: 32,
       },
-      frame: { color: "#404040", unitsPerSide: 32 },
+      frame: { color: "#006100", unitsPerSide: 32 },
       glyphColor: "#00ba00",
     });
     expect(releaseInput.rendererGeometry).toMatchObject({
       artboard: "1024x1024",
       canvas: "960x960@32,32",
       canvasScale: 1,
-      frameColor: "#404040",
+      frameColor: "#006100",
       frameUnitsPerSide: 32,
       glyphColor: "#00ba00",
     });

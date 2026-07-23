@@ -73,7 +73,7 @@ const fontFile = path.join(
   "node_modules/@fontsource/source-code-pro/files/source-code-pro-latin-400-normal.woff2",
 );
 const rendererImplementationId =
-  "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040";
+  "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100";
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(

@@ -1,8 +1,8 @@
 # THOUGHT V2 noncanonical integration-preview handoff
 
-Artifact ID: `thought-v2-noncanonical-integration-preview-20260723-r2`
+Artifact ID: `thought-v2-noncanonical-integration-preview-20260723-r3`
 
-Source tag: `thought-v2-noncanonical-integration-preview-20260723-r2`
+Source tag: `thought-v2-noncanonical-integration-preview-20260723-r3`
 
 Classification: `experimental / noncanonical integration preview`
 
@@ -24,7 +24,7 @@ shipped or treated as final artwork.
 The included renderer does implement the approved V2 geometry for integration:
 
 - `1024 × 1024` SVG artboard;
-- `32` units of `#404040` frame on every side;
+- `32` units of `#006100` frame on every side;
 - unchanged `960 × 960` black canvas at `(32,32)`;
 - no canvas scaling;
 - `#00ba00` prompt and Agent text within the original canvas coordinates.

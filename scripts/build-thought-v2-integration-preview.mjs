@@ -214,7 +214,7 @@ const compatibility = {
     finalImplementationIncluded: false,
     geometry: releaseInput.rendererGeometry,
     packagedImplementation:
-      "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-404040",
+      "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100",
   },
   selectedSpec: {
     byteLength: specBytes.length,

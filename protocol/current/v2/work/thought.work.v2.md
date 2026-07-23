@@ -81,7 +81,7 @@ not affect conversation identity, work hash, or SVG artwork.
 
 The SVG uses a 1024-by-1024 artboard. Its work canvas remains exactly
 960-by-960 and is translated to `(32,32)` without scaling. The surrounding
-32-unit frame is `#404040`; the canvas is `#000000`; glyphs are `#00ba00`.
+32-unit frame is `#006100`; the canvas is `#000000`; glyphs are `#00ba00`.
 Prompt and Agent layout coordinates remain relative to the original 960-unit
 canvas.
 

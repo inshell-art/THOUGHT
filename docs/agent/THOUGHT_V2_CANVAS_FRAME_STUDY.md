@@ -33,7 +33,7 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
 
 ```xml
 <svg width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect id="work-frame" width="1024" height="1024" fill="#404040"/>
+  <rect id="work-frame" width="1024" height="1024" fill="#006100"/>
   <g id="work-canvas" transform="translate(32 32)">
     <rect id="canvas-bg" width="960" height="960" fill="#000000"/>
     ...
@@ -43,7 +43,7 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
 
 - outer SVG artboard is `1024 × 1024`;
 - frame size is `32` SVG units on every side;
-- frame color is `#404040`;
+- frame color is `#006100`, the original dark THOUGHT terminal green;
 - the black internal canvas remains exactly `960 × 960`;
 - the internal canvas is translated by `32,32` and is not scaled;
 - prompt and Agent fields keep their existing positions relative to that

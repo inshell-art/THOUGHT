@@ -59,7 +59,7 @@ describe("THOUGHT English chat SVG foreignObject experiment", () => {
   it("places the unchanged 960-unit canvas inside a 32-unit outer frame", () => {
     expect(THOUGHT_CHAT_CANVAS).toBe(960);
     expect(THOUGHT_CHAT_FRAME_SIZE).toBe(32);
-    expect(THOUGHT_CHAT_FRAME_COLOR).toBe("#404040");
+    expect(THOUGHT_CHAT_FRAME_COLOR).toBe("#006100");
     expect(THOUGHT_CHAT_ARTBOARD).toBe(1024);
     expect(THOUGHT_CHAT_CANVAS_TRANSFORM).toBe("translate(32 32)");
     expect(buildThoughtChatSvg({ promptLine: "Prompt", agentLine: "Agent" }))

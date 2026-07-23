@@ -1,7 +1,35 @@
 export const THOUGHT_V2_FRAME_STUDY_CANVAS_SIZE = 960;
 export const THOUGHT_V2_FRAME_STUDY_DEFAULT_WIDTH = 32;
 export const THOUGHT_V2_FRAME_STUDY_MAX_WIDTH = 128;
-export const THOUGHT_V2_FRAME_STUDY_DEFAULT_COLOR = "#404040";
+export const THOUGHT_V2_FRAME_STUDY_DEFAULT_COLOR = "#006100";
+export const THOUGHT_V2_FRAME_STUDY_COLOR_PRESET_GROUPS = [
+  {
+    id: "neutral",
+    label: "NEUTRAL REFERENCE",
+    colors: ["#202020", "#404040", "#4d4d4d", "#5a5a5a"],
+  },
+  {
+    id: "pure-green",
+    label: "PURE TERMINAL GREEN",
+    colors: [
+      "#003300",
+      "#004d00",
+      "#006100",
+      "#007a00",
+      "#009400",
+      "#00a600",
+      "#00ba00",
+      "#00cc00",
+      "#00e000",
+      "#00ff00",
+    ],
+  },
+  {
+    id: "muted-green",
+    label: "MUTED GREEN",
+    colors: ["#1f3b1f", "#2f522f", "#3f6b3f", "#4f804f", "#609660"],
+  },
+] as const;
 
 export type ThoughtV2FrameStudyGeometry = {
   artboardSize: number;

@@ -104,10 +104,10 @@ Use this exact source tag and artifact:
 ```text
 repository: /Users/bigu/Projects/THOUGHT
 branch: codex/thought-v2-chat-svg-experiment
-source tag: thought-v2-noncanonical-integration-preview-20260723-r2
-artifact ID: thought-v2-noncanonical-integration-preview-20260723-r2
+source tag: thought-v2-noncanonical-integration-preview-20260723-r3
+artifact ID: thought-v2-noncanonical-integration-preview-20260723-r3
 artifact pointer: artifacts/thought-v2-integration-preview/experimental.json
-manifest SHA-256: b4793e08dfb659b53b56b1dc3f34ea8a9cd4b88c07d53c8516897db6812c8510
+manifest SHA-256: generated with the r3 integration-preview bundle
 ```
 
 Run `npm run integration-preview:v2:check` before consuming it. Pin the exact
@@ -125,7 +125,7 @@ Display the token image exactly as supplied:
 
 ```text
 SVG artboard:       1024 × 1024
-outer frame:        32 units per side, #404040
+outer frame:        32 units per side, #006100
 inner canvas:       960 × 960 at x=32, y=32
 canvas scale:       1 (no scaling)
 canvas/glyph color: #000000 / #00ba00
