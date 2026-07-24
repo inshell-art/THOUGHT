@@ -1,0 +1,22 @@
+{
+  "canonicalManifestBytes": 34501,
+  "compactFixedWidthDataFloor": {
+    "commandTagBits": 4899,
+    "commandTagWidthBits": 3,
+    "coordinateStreamBits": 48960,
+    "coordinateWidthBits": 10,
+    "excludes": "decoder/runtime, SVG serialization, family metadata, placement, wrapping, and retrieval",
+    "glyphOffsetBits": 847,
+    "glyphOffsetCount": 77,
+    "glyphOffsetWidthBits": 11,
+    "totalBits": 54706,
+    "totalBytesRoundedUp": 6839
+  },
+  "gzipBytesInformational": 7986,
+  "maximumDecimalPrecision": 2,
+  "normalizedPathBytes": 23911,
+  "numericOperands": 4896,
+  "pathCommands": 1633,
+  "rawPathBits": 191288,
+  "rawPathBytes": 23911
+}

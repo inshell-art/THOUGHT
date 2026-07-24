@@ -68,12 +68,20 @@ const runtimeConfigFile = path.resolve(
 const specName = "THOUGHT.v2.md";
 const specFile = path.join(rootDir, "protocol/current/v2/THOUGHT.v2.md");
 const specRef = "dev://thought/v2/current/THOUGHT.v2.md";
-const fontFile = path.join(
+const glyphDefinitionsPart1File = path.join(
   rootDir,
-  "node_modules/@fontsource/source-code-pro/files/source-code-pro-latin-400-normal.woff2",
+  "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag",
+);
+const glyphDefinitionsPart2File = path.join(
+  rootDir,
+  "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag",
+);
+const glyphDefinitionsIndexFile = path.join(
+  rootDir,
+  "protocol/current/v2/renderer/humanist-smooth-index.bin",
 );
 const rendererImplementationId =
-  "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100";
+  "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00";
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(
@@ -115,7 +123,7 @@ const deployDataPointer = async (
 ): Promise<string> => {
   const runtime = concat(["0x00", payload]);
   const runtimeLength = getBytes(runtime).length;
-  if (runtimeLength > 24_576) throw new Error(`font pointer runtime is ${runtimeLength}/24576 bytes`);
+  if (runtimeLength > 24_576) throw new Error(`data pointer runtime is ${runtimeLength}/24576 bytes`);
   const creation = concat([
     "0x61",
     zeroPadValue(toBeHex(runtimeLength), 2),
@@ -123,7 +131,7 @@ const deployDataPointer = async (
     runtime,
   ]);
   const receipt = await (await signer.sendTransaction({ data: creation })).wait();
-  if (!receipt?.contractAddress) throw new Error("font data pointer deployment failed");
+  if (!receipt?.contractAddress) throw new Error("renderer data pointer deployment failed");
   return receipt.contractAddress;
 };
 
@@ -176,10 +184,18 @@ const main = async (): Promise<void> => {
   const signer = new NonceManager(account);
   const minter = deployerAddress.toLowerCase() as `0x${string}`;
 
-  const [pathArtifact, specBytes, fontBytes] = await Promise.all([
+  const [
+    pathArtifact,
+    specBytes,
+    glyphDefinitionsPart1,
+    glyphDefinitionsPart2,
+    glyphDefinitionsIndex,
+  ] = await Promise.all([
     readArtifact(pathArtifactFile),
     fs.readFile(specFile),
-    fs.readFile(fontFile),
+    fs.readFile(glyphDefinitionsPart1File),
+    fs.readFile(glyphDefinitionsPart2File),
+    fs.readFile(glyphDefinitionsIndexFile),
   ]);
   if (specBytes.includes(0x0d) || specBytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) {
     throw new Error("current THOUGHT spec must use exact UTF-8 without BOM or CRLF");
@@ -190,7 +206,12 @@ const main = async (): Promise<void> => {
   }
   const thoughtSpecId = id(specName) as `0x${string}`;
   const thoughtSpecHash = keccak256(specBytes) as `0x${string}`;
-  const fontHash = keccak256(fontBytes) as `0x${string}`;
+  const glyphDefinitionsPart1Hash = keccak256(glyphDefinitionsPart1) as `0x${string}`;
+  const glyphDefinitionsPart2Hash = keccak256(glyphDefinitionsPart2) as `0x${string}`;
+  const glyphDefinitionsIndexHash = keccak256(glyphDefinitionsIndex) as `0x${string}`;
+  const glyphDefinitionsHash = keccak256(
+    concat([glyphDefinitionsPart1, glyphDefinitionsPart2]),
+  ) as `0x${string}`;
 
   console.log(`Deploying disposable current V2 gallery from ${deployerAddress}...`);
   const pathNft = await deploy(signer, pathArtifactFile, [deployerAddress, "PATH", "PATH", "", 0n, 604_800n]);
@@ -214,14 +235,23 @@ const main = async (): Promise<void> => {
 
   const protocolRegistry = await deploy(signer, outFile("ThoughtSpecRegistryV2"), [deployerAddress]);
   const protocolRegistryAddress = await protocolRegistry.getAddress();
-  const fontPointer = await deployDataPointer(signer, fontBytes);
-  if (keccak256(`0x${(await provider.getCode(fontPointer)).slice(4)}`) !== fontHash) {
-    throw new Error("Source Code Pro pointer readback failed");
+  const glyphDefinitionsPointer1 = await deployDataPointer(signer, glyphDefinitionsPart1);
+  const glyphDefinitionsPointer2 = await deployDataPointer(signer, glyphDefinitionsPart2);
+  const glyphDefinitionsIndexPointer = await deployDataPointer(signer, glyphDefinitionsIndex);
+  if (
+    keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer1)).slice(4)}`)
+      !== glyphDefinitionsPart1Hash
+    || keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer2)).slice(4)}`)
+      !== glyphDefinitionsPart2Hash
+    || keccak256(`0x${(await provider.getCode(glyphDefinitionsIndexPointer)).slice(4)}`)
+      !== glyphDefinitionsIndexHash
+  ) {
+    throw new Error("Humanist Smooth definition/index pointer readback failed");
   }
   const renderer = await deploy(
     signer,
-    outFile("ThoughtRendererV2DevSourceCodePro"),
-    [fontPointer, fontHash],
+    outFile("ThoughtRendererV2"),
+    [glyphDefinitionsPointer1, glyphDefinitionsPointer2, glyphDefinitionsIndexPointer],
   );
   const rendererAddress = await renderer.getAddress();
 
@@ -232,6 +262,12 @@ const main = async (): Promise<void> => {
     ["metadata-profile", "protocol/current/v2/metadata/thought.metadata.v2.profile.json"],
     ["provenance-schema", "protocol/current/v2/provenance/thought.provenance.v2.schema.json"],
     ["creation-attestation-profile", "protocol/current/v2/attestation/thought.creation-workflow-attestation.v1.md"],
+    ["renderer-profile", "protocol/current/v2/renderer/thought.renderer.v2.profile.json"],
+    ["renderer-glyph-definitions-1", "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"],
+    ["renderer-glyph-definitions-2", "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"],
+    ["renderer-glyph-definition-index", "protocol/current/v2/renderer/humanist-smooth-index.bin"],
+    ["renderer-glyph-license", "protocol/current/v2/renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md"],
+    ["renderer-glyph-notice", "protocol/current/v2/renderer/NOTICE-HUMANIST-SMOOTH.md"],
   ].map(async ([role, artifactPath]) => ({
     keccak256: await hashFile(artifactPath!),
     path: artifactPath!,
@@ -240,12 +276,17 @@ const main = async (): Promise<void> => {
   const manifest = {
     artifacts: manifestArtifacts,
     chainId: network.chainId.toString(),
-    font: {
-      embeddedByPointer: true,
-      family: "Source Code Pro",
-      keccak256: fontHash,
-      releaseReady: false,
-      role: "temporary-anvil-study-font",
+    glyphLibrary: {
+      definitionsKeccak256: glyphDefinitionsHash,
+      definitionsPart1Keccak256: glyphDefinitionsPart1Hash,
+      definitionsPart2Keccak256: glyphDefinitionsPart2Hash,
+      indexKeccak256: glyphDefinitionsIndexHash,
+      family: "Humanist Smooth",
+      libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
+      librarySetId: "inshell.thought.glyph-library.set-03",
+      releaseReady: true,
+      role: "canonical-native-svg-paths",
+      visualBaseline: 5.58,
     },
     identifiers: {
       contextProfile: THOUGHT_V2_CONTEXT_PROFILE_ID,
@@ -261,8 +302,9 @@ const main = async (): Promise<void> => {
     productionRegistrationAuthorized: false,
     rendererImplementation: {
       id: rendererImplementationId,
-      releaseReady: false,
-      usesForeignObject: true,
+      releaseReady: true,
+      usesForeignObject: false,
+      usesSvgText: false,
     },
     schema: "inshell.thought.protocol.v2.disposable-anvil-manifest.v1",
     selectedSpec: { name: specName, thoughtSpecHash, thoughtSpecId },
@@ -584,10 +626,16 @@ const main = async (): Promise<void> => {
     },
     renderer: {
       canonicalRendererId: THOUGHT_V2_RENDERER_ID,
-      fontHash,
-      fontPointer,
+      glyphDefinitionsHash,
+      glyphDefinitionsPart1Hash,
+      glyphDefinitionsPart2Hash,
+      glyphDefinitionsIndexHash,
+      glyphDefinitionsIndexPointer,
+      glyphDefinitionsPointer1,
+      glyphDefinitionsPointer2,
+      glyphLibraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
       implementationId: rendererImplementationId,
-      releaseReady: false,
+      releaseReady: true,
     },
     rpcUrl,
     schema: "inshell.thought.v2.anvil-gallery-runtime.v1",

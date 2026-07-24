@@ -1,0 +1,278 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "constructionTypes": [
+    {
+      "id": "block-run",
+      "name": "Block Run"
+    },
+    {
+      "id": "segment-mask",
+      "name": "Segment Mask"
+    },
+    {
+      "id": "conventional-outline",
+      "name": "Conventional Outline"
+    }
+  ],
+  "declaredOn": "2026-07-24",
+  "defaultTileProfile": "tight-v1",
+  "fixtureText": "Abc GIMNTU 04? &",
+  "fontCount": 3,
+  "fonts": [
+    {
+      "byteReport": "byte-reports/tile-vertical-ledger.json",
+      "byteReportSha256": "a05a8631869acc97fa0c0ff6cb1b420492a21ae663317eb0febf5b1fe107ad1d",
+      "construction": "block-run",
+      "familyId": "S401",
+      "file": "fonts/tile-vertical-ledger/glyphs.json",
+      "fixtures": {
+        "repertoire": {
+          "file": "fixtures/tile-vertical-ledger/tight-repertoire.svg",
+          "sha256": "778018118abb8195680a0d98655dae398daa3a473794eef14b4c563bd37b4036"
+        },
+        "tight": {
+          "file": "fixtures/tile-vertical-ledger/tight.svg",
+          "sha256": "ecc3c4d612018a6f9924e59aac91ff6ce9a30e6e9ce9552aba558302718abcd9"
+        }
+      },
+      "glyphCount": 76,
+      "gzipBytesInformational": 1030,
+      "memberId": "inshell.thought.glyph-library.set-04.tile-vertical-ledger",
+      "name": "Tile Vertical Ledger",
+      "normalization": {
+        "ordinaryMatrix": [
+          1,
+          0,
+          0,
+          1,
+          1.1,
+          0
+        ],
+        "safeCharacters": "",
+        "safeMatrix": [
+          1,
+          0,
+          0,
+          1,
+          1.1,
+          0
+        ]
+      },
+      "rawPathBytes": 14013,
+      "review": {
+        "foregroundContrast": "pass",
+        "sourceGeometry": "preserved",
+        "tightProfile": "approved",
+        "tileBackgrounds": "pass"
+      },
+      "sha256": "9b820b6717891ebb52f90a90527d438bfee567408b247ece128555e951e9bff7",
+      "slug": "tile-vertical-ledger",
+      "sourceGeometry": {
+        "familyId": "S11",
+        "fileSha256": "1bf0c3ef11c91821c8fe76778bd5ccd308b8efd579d2cb427b9cc6864b9278bb",
+        "memberId": "inshell.thought.glyph-library.set-01.vertical-ledger",
+        "name": "Vertical Ledger",
+        "pathSha256": "2413c845b6025f02e708224a2418b3a39e2f6714d1a979079b6869a0c16d7d1d",
+        "setId": "inshell.thought.glyph-library.set-01",
+        "slug": "vertical-ledger"
+      }
+    },
+    {
+      "byteReport": "byte-reports/tile-column-relay.json",
+      "byteReportSha256": "3ccc6c6f749849e09ab41aef331d919bb2bd7e086de71a0118c01b56452ec1ec",
+      "construction": "segment-mask",
+      "familyId": "S402",
+      "file": "fonts/tile-column-relay/glyphs.json",
+      "fixtures": {
+        "repertoire": {
+          "file": "fixtures/tile-column-relay/tight-repertoire.svg",
+          "sha256": "1fdad8cff0b408e5fd650b970b5fe62ef91beda6f0d753e124ce9789ef92c372"
+        },
+        "tight": {
+          "file": "fixtures/tile-column-relay/tight.svg",
+          "sha256": "56ad558a12cbd36e3883e5825f12eaed85f4efb87bf30c50d96ba38fcb997f37"
+        }
+      },
+      "glyphCount": 76,
+      "gzipBytesInformational": 2456,
+      "memberId": "inshell.thought.glyph-library.set-04.tile-column-relay",
+      "name": "Tile Column Relay",
+      "normalization": {
+        "ordinaryMatrix": [
+          0.917808,
+          0,
+          0,
+          0.917431,
+          1.27411,
+          0.283028
+        ],
+        "safeCharacters": "",
+        "safeMatrix": [
+          0.917808,
+          0,
+          0,
+          0.917431,
+          1.27411,
+          0.283028
+        ]
+      },
+      "rawPathBytes": 59444,
+      "review": {
+        "foregroundContrast": "pass",
+        "sourceGeometry": "preserved",
+        "tightProfile": "approved",
+        "tileBackgrounds": "pass"
+      },
+      "sha256": "0aa9cdc4197d0149706a8cd7c8ebd5935ffdaddb969638f871283c5be98df5bf",
+      "slug": "tile-column-relay",
+      "sourceGeometry": {
+        "familyId": "S202",
+        "fileSha256": "4276dc130fece04b9c12bb2112ee4205a706a9ff9f2361384ff1acc008698254",
+        "memberId": "inshell.thought.glyph-library.set-02.column-relay",
+        "name": "Column Relay",
+        "pathSha256": "188adc7d1d47e71a573ea73b843f4f4f05e9dc613d087ab0a651e85760011f62",
+        "setId": "inshell.thought.glyph-library.set-02",
+        "slug": "column-relay"
+      }
+    },
+    {
+      "byteReport": "byte-reports/tile-humanist-smooth.json",
+      "byteReportSha256": "ab380b171274e798d14adf0cbafe4d1229be5a816dd546cd6f8918657747764a",
+      "construction": "conventional-outline",
+      "familyId": "S403",
+      "file": "fonts/tile-humanist-smooth/glyphs.json",
+      "fixtures": {
+        "repertoire": {
+          "file": "fixtures/tile-humanist-smooth/tight-repertoire.svg",
+          "sha256": "6de090394acc39702212d8256772ff67a2d3d96d9eba3de0a9a825710efd8a46"
+        },
+        "tight": {
+          "file": "fixtures/tile-humanist-smooth/tight.svg",
+          "sha256": "d42df9961d2beaea305ad74060ad731e91e7957b9862b747b6c0fb8f426fb87d"
+        }
+      },
+      "glyphCount": 76,
+      "gzipBytesInformational": 7986,
+      "memberId": "inshell.thought.glyph-library.set-04.tile-humanist-smooth",
+      "name": "Tile Humanist Smooth",
+      "normalization": {
+        "ordinaryMatrix": [
+          1,
+          0,
+          0,
+          1.221996,
+          1,
+          -0.278717
+        ],
+        "safeCharacters": "gjpqy,;()/",
+        "safeMatrix": [
+          1,
+          0,
+          0,
+          1,
+          1,
+          0
+        ]
+      },
+      "rawPathBytes": 23911,
+      "review": {
+        "foregroundContrast": "pass",
+        "sourceGeometry": "preserved",
+        "tightProfile": "approved",
+        "tileBackgrounds": "pass"
+      },
+      "sha256": "0a8616e66bf1c305c96876bc7ead1221639b5d3b995c09cb117886bcc618a9d0",
+      "slug": "tile-humanist-smooth",
+      "sourceGeometry": {
+        "familyId": "S301",
+        "fileSha256": "66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8",
+        "memberId": "inshell.thought.glyph-library.set-03.humanist-smooth",
+        "name": "Humanist Smooth",
+        "pathSha256": "8b636ac92349472dcbf43186fb57d9c1ffbd4ce3ba2b5aa3dad0a79ce33a1f81",
+        "setId": "inshell.thought.glyph-library.set-03",
+        "slug": "humanist-smooth"
+      }
+    }
+  ],
+  "id": "inshell.thought.glyph-library.set-04",
+  "license": "SEE-LICENSE-FILES",
+  "name": "THOUGHT Glyph Library — Fourth Set",
+  "ordinal": 4,
+  "ordinalLabel": "4th Set",
+  "palette": {
+    "authoritativeRepertoire": "A-Z",
+    "canonicalByteLength": 510,
+    "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+    "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+    "canonicalTextFile": "COLOR_FONT.v1.txt",
+    "currentProtocolDependency": false,
+    "entriesFile": "palette.json",
+    "format": "LETTER:INDEX:ALIAS_TERM:HEX",
+    "id": "inshell.colorfont.v1",
+    "role": "tile-background",
+    "sourceStatus": "archived-v1-palette-source",
+    "version": "1"
+  },
+  "private": true,
+  "qualificationStatus": "declared-tight-background-tile",
+  "reviewSummary": {
+    "blackForegroundGlyphs": 59,
+    "foregroundContrastPass": 3,
+    "metricsOnlySpace": 1,
+    "paletteBackgroundGlyphs": 52,
+    "sourceGeometryPreserved": 3,
+    "tightProfilePass": 3,
+    "whiteBackgroundGlyphs": 23,
+    "whiteForegroundGlyphs": 16
+  },
+  "schema": "inshell.thought.glyph-library-set.v1",
+  "slug": "fourth-set",
+  "tilePolicy": {
+    "authoritativeMapRepertoire": "uppercase A-Z only",
+    "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+    "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+    "currentProtocolDependency": false,
+    "foreground": {
+      "blackLetters": "ADEFHJKLOPQRSVWXYZ",
+      "candidates": [
+        "#000000",
+        "#ffffff"
+      ],
+      "minimumChosenContrast": 4.7734,
+      "mode": "maximum-wcag-contrast",
+      "outlineRequired": false,
+      "tieBreak": "#000000",
+      "whiteLetters": "BCGIMNTU"
+    },
+    "lowercase": {
+      "authority": "Set 4 extension",
+      "mode": "uppercase-alias-background",
+      "range": "a-z"
+    },
+    "nonletters": {
+      "authority": "Set 4 extension",
+      "color": "#ffffff",
+      "mode": "neutral-white-background",
+      "range": "digits and restricted punctuation"
+    },
+    "paletteId": "inshell.colorfont.v1",
+    "paletteRole": "tile-background",
+    "paletteVersion": "1",
+    "perGlyphColorDuplication": false,
+    "setRepertoire": "76 restricted characters",
+    "sourceStatus": "archived-v1-palette-source",
+    "space": {
+      "drawsBackground": false,
+      "drawsGlyph": false,
+      "key": "SPACE",
+      "mode": "metrics-only"
+    },
+    "uppercase": {
+      "mode": "direct-authoritative-background",
+      "range": "A-Z"
+    }
+  },
+  "tilePolicyFile": "tile-policy.json",
+  "tileProfilesFile": "tile-profiles.json",
+  "version": 1
+}

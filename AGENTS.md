@@ -38,7 +38,7 @@
 
 ## SVG rendering
 - The current V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
-- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. It uses `#00ba00` glyph fill, prompt at the upper right, and Agent response at the lower left.
+- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. It uses Humanist Smooth native SVG paths with `#00ff00` glyph fill, prompt at the upper right, and Agent response at the lower left.
 - Canonical glyphs must be reviewed native SVG paths with deterministic metrics and wrapping. Do not use SVG `<text>`, `foreignObject`, browser font lookup, fallback fonts, or an embedded WOFF/TTF in the final onchain renderer. Source Code Pro remains a study reference only.
 
 ## Security

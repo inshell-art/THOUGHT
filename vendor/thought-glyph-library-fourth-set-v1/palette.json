@@ -1,0 +1,171 @@
+{
+  "canonicalByteLength": 510,
+  "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+  "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+  "canonicalTextFile": "COLOR_FONT.v1.txt",
+  "currentProtocolDependency": false,
+  "entries": [
+    {
+      "aliasTerm": "aqua",
+      "hex": "#00ffff",
+      "index": 1,
+      "letter": "A"
+    },
+    {
+      "aliasTerm": "blue",
+      "hex": "#0000ff",
+      "index": 2,
+      "letter": "B"
+    },
+    {
+      "aliasTerm": "coffee",
+      "hex": "#6f4e37",
+      "index": 3,
+      "letter": "C"
+    },
+    {
+      "aliasTerm": "denim",
+      "hex": "#6699ff",
+      "index": 4,
+      "letter": "D"
+    },
+    {
+      "aliasTerm": "eggshell",
+      "hex": "#fff9e3",
+      "index": 5,
+      "letter": "E"
+    },
+    {
+      "aliasTerm": "fuchsia",
+      "hex": "#ff00ff",
+      "index": 6,
+      "letter": "F"
+    },
+    {
+      "aliasTerm": "green",
+      "hex": "#008000",
+      "index": 7,
+      "letter": "G"
+    },
+    {
+      "aliasTerm": "honey",
+      "hex": "#ffcc00",
+      "index": 8,
+      "letter": "H"
+    },
+    {
+      "aliasTerm": "indigo",
+      "hex": "#4b0082",
+      "index": 9,
+      "letter": "I"
+    },
+    {
+      "aliasTerm": "jade green",
+      "hex": "#00a86b",
+      "index": 10,
+      "letter": "J"
+    },
+    {
+      "aliasTerm": "khaki",
+      "hex": "#c3b091",
+      "index": 11,
+      "letter": "K"
+    },
+    {
+      "aliasTerm": "lime",
+      "hex": "#00ff00",
+      "index": 12,
+      "letter": "L"
+    },
+    {
+      "aliasTerm": "maroon",
+      "hex": "#800000",
+      "index": 13,
+      "letter": "M"
+    },
+    {
+      "aliasTerm": "navy",
+      "hex": "#0a1172",
+      "index": 14,
+      "letter": "N"
+    },
+    {
+      "aliasTerm": "orange",
+      "hex": "#ffa500",
+      "index": 15,
+      "letter": "O"
+    },
+    {
+      "aliasTerm": "pink",
+      "hex": "#ffaadd",
+      "index": 16,
+      "letter": "P"
+    },
+    {
+      "aliasTerm": "quicksilver",
+      "hex": "#a6a6a6",
+      "index": 17,
+      "letter": "Q"
+    },
+    {
+      "aliasTerm": "red",
+      "hex": "#ff0000",
+      "index": 18,
+      "letter": "R"
+    },
+    {
+      "aliasTerm": "salmon",
+      "hex": "#fa8072",
+      "index": 19,
+      "letter": "S"
+    },
+    {
+      "aliasTerm": "teal",
+      "hex": "#008080",
+      "index": 20,
+      "letter": "T"
+    },
+    {
+      "aliasTerm": "ultramarine",
+      "hex": "#5533ff",
+      "index": 21,
+      "letter": "U"
+    },
+    {
+      "aliasTerm": "violet",
+      "hex": "#aa55ff",
+      "index": 22,
+      "letter": "V"
+    },
+    {
+      "aliasTerm": "wheat",
+      "hex": "#f5deb3",
+      "index": 23,
+      "letter": "W"
+    },
+    {
+      "aliasTerm": "xray",
+      "hex": "#bbcccc",
+      "index": 24,
+      "letter": "X"
+    },
+    {
+      "aliasTerm": "yellow",
+      "hex": "#ffff00",
+      "index": 25,
+      "letter": "Y"
+    },
+    {
+      "aliasTerm": "zombie gray",
+      "hex": "#778877",
+      "index": 26,
+      "letter": "Z"
+    }
+  ],
+  "format": "LETTER:INDEX:ALIAS_TERM:HEX",
+  "id": "inshell.colorfont.v1",
+  "schema": "inshell.colorfont.palette.v1",
+  "sourceStatus": "archived-v1-palette-source",
+  "uppercaseRepertoire": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+  "version": "1"
+}

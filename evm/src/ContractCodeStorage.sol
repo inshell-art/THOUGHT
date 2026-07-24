@@ -50,4 +50,54 @@ library ContractCodeStorage {
             extcodecopy(pointer, add(data, 0x20), 1, dataSize)
         }
     }
+
+    function readSlice(address pointer, uint256 offset, uint256 length)
+        internal
+        view
+        returns (bytes memory data)
+    {
+        if (pointer == address(0)) {
+            revert ContractCodeStorageInvalidPointer(pointer);
+        }
+
+        uint256 codeSize;
+        assembly ("memory-safe") {
+            codeSize := extcodesize(pointer)
+        }
+        if (codeSize <= 1 || offset > codeSize - 1 || length > codeSize - 1 - offset) {
+            revert ContractCodeStorageInvalidPointer(pointer);
+        }
+
+        data = new bytes(length);
+        assembly ("memory-safe") {
+            extcodecopy(pointer, add(data, 0x20), add(offset, 1), length)
+        }
+    }
+
+    function copySlice(
+        address pointer,
+        bytes memory destination,
+        uint256 destinationOffset,
+        uint256 sourceOffset,
+        uint256 length
+    ) internal view {
+        if (pointer == address(0)) {
+            revert ContractCodeStorageInvalidPointer(pointer);
+        }
+
+        uint256 codeSize;
+        assembly ("memory-safe") {
+            codeSize := extcodesize(pointer)
+        }
+        if (
+            codeSize <= 1 || sourceOffset > codeSize - 1 || length > codeSize - 1 - sourceOffset
+                || destinationOffset > destination.length || length > destination.length - destinationOffset
+        ) {
+            revert ContractCodeStorageInvalidPointer(pointer);
+        }
+
+        assembly ("memory-safe") {
+            extcodecopy(pointer, add(add(destination, 0x20), destinationOffset), add(sourceOffset, 1), length)
+        }
+    }
 }

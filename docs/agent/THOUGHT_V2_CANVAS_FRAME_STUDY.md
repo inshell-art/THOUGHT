@@ -1,5 +1,10 @@
 # THOUGHT V2 canvas-frame study
 
+> Resolved 2026-07-24. Current V2 adopts a 1024×1024 SVG artboard, 32-unit
+> `#006100` outer frame, unscaled 960×960 black canvas at `(32,32)`, and
+> `#00ff00` Humanist Smooth native-path glyphs. Any Source Code Pro /
+> `foreignObject` language below is historical study context only.
+
 Date: 2026-07-23
 Branch: `codex/thought-v2-canvas-frame-study`
 Status: geometry approved for the current V2 implementation candidate
@@ -49,9 +54,10 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
 - prompt and Agent fields keep their existing positions relative to that
   internal canvas;
 - prompt and Agent fields remain frameless;
-- Source Code Pro and `foreignObject` remain temporary Anvil study
-  dependencies;
-- canonical green remains `#00ba00`.
+- Humanist Smooth native paths are the selected glyph implementation;
+- canonical glyph green is `#00ff00`;
+- SVG `<text>`, `foreignObject`, browser font lookup, and embedded font files
+  are excluded from the canonical renderer.
 
 The frame is encoded in the SVG from the renderer. Galleries, marketplaces,
 and detail pages display the exact token image and must not recreate a second
@@ -59,9 +65,8 @@ frame with CSS.
 
 ## Decision boundary
 
-The width, color, artboard, canvas size, and no-scaling rule are approved for
-the current V2 implementation candidate. The Source Code Pro /
-`foreignObject` renderer remains an Anvil-only implementation preview. This
-decision does not authorize a stable artifact, registry entry, Sepolia or
-mainnet deployment, or production rollout; those still require the native
-path-glyph renderer, parity vectors, review, and a clean release.
+The width, colors, artboard, canvas size, no-scaling rule, and Humanist Smooth
+native-path renderer are approved for the current V2 implementation
+candidate. This decision does not authorize a stable artifact, registry
+entry, Sepolia or mainnet deployment, or production rollout; those still
+require parity review and a clean release.

@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "inshell.thought.glyph-metrics.study.v1",
+  "title": "THOUGHT glyph study metrics",
+  "type": "object",
+  "required": [
+    "schema",
+    "emSquare",
+    "baseline",
+    "fixedAdvanceWidth",
+    "capHeight",
+    "xHeight",
+    "ascenderBound",
+    "descenderBound",
+    "safeBearings",
+    "maximumGlyphBounds",
+    "numericPrecision",
+    "pathCommands",
+    "pathCoordinateMode",
+    "fillRule",
+    "transformsInSource",
+    "space"
+  ],
+  "properties": {
+    "schema": { "const": "inshell.thought.glyph-metrics.study.v1" },
+    "emSquare": { "const": 8 },
+    "baseline": { "const": 7 },
+    "fixedAdvanceWidth": { "const": 6 },
+    "capHeight": { "type": "number" },
+    "xHeight": { "type": "number" },
+    "ascenderBound": { "type": "number" },
+    "descenderBound": { "type": "number" },
+    "safeBearings": {
+      "type": "object",
+      "required": ["left", "right"],
+      "properties": {
+        "left": { "type": "number", "minimum": 0 },
+        "right": { "type": "number", "minimum": 0 }
+      }
+    },
+    "maximumGlyphBounds": {
+      "type": "object",
+      "required": ["xMin", "yMin", "xMax", "yMax"],
+      "properties": {
+        "xMin": { "type": "number" },
+        "yMin": { "type": "number" },
+        "xMax": { "type": "number" },
+        "yMax": { "type": "number" }
+      }
+    },
+    "numericPrecision": { "const": 2 },
+    "pathCommands": {
+      "const": ["M", "L", "H", "V", "Q", "C", "Z"]
+    },
+    "pathCoordinateMode": { "const": "absolute" },
+    "fillRule": { "const": "evenodd" },
+    "transformsInSource": { "const": false },
+    "space": {
+      "type": "object",
+      "required": ["advanceWidth", "drawsPath"],
+      "properties": {
+        "advanceWidth": { "const": 6 },
+        "drawsPath": { "const": false }
+      }
+    }
+  }
+}

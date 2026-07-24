@@ -6,24 +6,26 @@
     <meta name="color-scheme" content="light dark" />
     <script>
       (() => {
-        const storageKey = "thought-v2-chat-theme";
-        let theme;
+        const storageKey = "thought-v2-frame-study-theme-mode";
+        let mode = "auto";
         try {
           const stored = window.localStorage.getItem(storageKey);
-          if (stored === "light" || stored === "dark") theme = stored;
+          if (stored === "auto" || stored === "light" || stored === "dark") mode = stored;
         } catch {
           // Storage can be unavailable in privacy-restricted contexts.
         }
-        if (!theme) theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const theme = mode === "auto" ? systemTheme : mode;
+        document.documentElement.dataset.themeMode = mode;
         document.documentElement.dataset.theme = theme;
         document.documentElement.style.colorScheme = theme;
       })();
     </script>
     <link rel="icon" href="data:," />
-    <title>THOUGHT V2 — Original Outer Frame Lab</title>
+    <title>THOUGHT V2 — Glyph Sets 1 + 2 + 3 + 4 Frame Lab</title>
   </head>
   <body>
-    <main id="thought-frame-lab" class="frame-lab" aria-label="THOUGHT V2 original outside-frame study"></main>
+    <main id="thought-frame-lab" class="frame-lab" aria-label="THOUGHT V2 native-path glyph sets and outside-frame study"></main>
     <script type="module" src="/src/thought-v2-frame-study-lab.ts"></script>
   </body>
 </html>

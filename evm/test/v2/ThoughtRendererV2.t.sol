@@ -3,24 +3,33 @@ pragma solidity ^0.8.28;
 
 import {ContractCodeStorage} from "../../src/ContractCodeStorage.sol";
 import {IThoughtRendererV2} from "../../src/v2/IThoughtRendererV2.sol";
-import {ThoughtRendererV2DevSourceCodePro} from "../../src/v2/ThoughtRendererV2DevSourceCodePro.sol";
+import {ThoughtRendererV2} from "../../src/v2/ThoughtRendererV2.sol";
 
 interface VmRendererV2 {
     function expectRevert(bytes calldata revertData) external;
+    function readFile(string calldata path) external view returns (string memory data);
+    function readFileBinary(string calldata path) external view returns (bytes memory data);
 }
 
-contract ThoughtRendererV2DevSourceCodeProTest {
+contract ThoughtRendererV2Test {
     VmRendererV2 private constant VM = VmRendererV2(address(uint160(uint256(keccak256("hevm cheat code")))));
 
-    ThoughtRendererV2DevSourceCodePro private renderer;
+    ThoughtRendererV2 private renderer;
 
     function setUp() public {
-        bytes memory font = hex"774f46326465762d666f6e74";
-        address pointer = ContractCodeStorage.write(font);
-        renderer = new ThoughtRendererV2DevSourceCodePro(pointer, keccak256(font));
+        address pointer1 = ContractCodeStorage.write(
+            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
+        );
+        address pointer2 = ContractCodeStorage.write(
+            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
+        );
+        address indexPointer = ContractCodeStorage.write(
+            VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin")
+        );
+        renderer = new ThoughtRendererV2(pointer1, pointer2, indexPointer);
     }
 
-    function testDevRendererIsExplicitlyTemporaryButContractCompatible() public view {
+    function testRendererBindsApprovedHumanistSmoothConfiguration() public view {
         require(
             renderer.RENDERER_ID_HASH() == keccak256(bytes("inshell.thought.svg.v2.terminal-chat-path-glyphs")),
             "renderer compatibility ID drift"
@@ -33,18 +42,22 @@ contract ThoughtRendererV2DevSourceCodeProTest {
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
                 == keccak256(
                     bytes(
-                        "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100"
+                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00"
                     )
                 ),
-            "dev implementation ID drift"
+            "implementation ID drift"
         );
+        require(
+            keccak256(bytes(renderer.GLYPH_LIBRARY_MEMBER_ID()))
+                == keccak256(bytes("inshell.thought.glyph-library.set-03.humanist-smooth")),
+            "glyph member drift"
+        );
+        require(renderer.GLYPH_VISUAL_BASELINE_HUNDREDTHS() == 558, "visual baseline drift");
+        require(renderer.MAX_COLUMNS() == 29 && renderer.MAX_ROWS() == 4, "wrapping bounds drift");
     }
 
-    function testRenderEmbedsFontAndTerminalChatComposition() public view {
+    function testRenderUsesOnlyNativePathsAndApprovedTerminalChatComposition() public view {
         string memory svg = renderer.render("Are you there?", "I am here.");
-        require(_contains(svg, "<foreignObject data-line=\"prompt\""), "missing prompt field");
-        require(_contains(svg, "<foreignObject data-line=\"agent\""), "missing agent field");
-        require(_contains(svg, "font/woff2;base64,d09GMmRldi1mb250"), "missing embedded font");
         require(
             _contains(svg, '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>'),
             "missing approved outer work frame"
@@ -53,29 +66,62 @@ contract ThoughtRendererV2DevSourceCodeProTest {
             _contains(svg, '<g id="work-canvas" transform="translate(32 32)">'),
             "missing framed canvas transform"
         );
-        require(!_contains(svg, "scale("), "inner canvas must not be scaled");
         require(
             _contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>'),
             "missing black inner canvas"
         );
-        require(_contains(svg, "fill=\"#000000\""), "missing black field");
-        require(_contains(svg, "color:#00ba00"), "missing canonical green");
+        require(_contains(svg, "<defs><path"), "missing canonical path definitions");
+        require(_contains(svg, 'id="humanist-smooth-g0041"'), "used prompt glyph definition missing");
+        require(_contains(svg, 'id="humanist-smooth-g0049"'), "used Agent glyph definition missing");
+        require(!_contains(svg, 'id="humanist-smooth-g005a"'), "unused glyph definition returned");
+        require(_contains(svg, '<g id="prompt-line" fill="#00ff00"'), "missing canonical prompt green");
+        require(_contains(svg, '<g id="agent-line" fill="#00ff00"'), "missing canonical Agent green");
+        require(
+            _contains(
+                svg,
+                '<use href="#humanist-smooth-g0041" transform="translate(499.2 140.8) scale(4.8)"/>'
+            ),
+            "prompt placement drift"
+        );
+        require(
+            _contains(
+                svg,
+                '<use href="#humanist-smooth-g0049" transform="translate(57.6 780.8) scale(4.8)"/>'
+            ),
+            "Agent placement drift"
+        );
+        require(!_contains(svg, "<foreignObject"), "foreignObject returned");
+        require(!_contains(svg, "<text"), "SVG text returned");
+        require(!_contains(svg, "@font-face"), "embedded font returned");
+        require(!_contains(svg, "<style"), "browser style dependency returned");
         require(!_contains(svg, "stroke="), "chat message frame returned");
-        require(_contains(svg, "Are you there?"), "missing prompt");
-        require(_contains(svg, "I am here."), "missing response");
+        require(_contains(svg, 'data-source="Are you there?"'), "missing exact prompt source");
+        require(_contains(svg, 'data-source="I am here."'), "missing exact Agent source");
     }
 
-    function testConstructorRejectsMissingCodeAndFontHashMismatch() public {
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2DevSourceCodePro.InvalidFontPointer.selector));
-        new ThoughtRendererV2DevSourceCodePro(address(0), keccak256("font"));
+    function testConstructorRejectsMissingOrMismatchedDefinitionParts() public {
+        address pointer1 = ContractCodeStorage.write(
+            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
+        );
+        address pointer2 = ContractCodeStorage.write(
+            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
+        );
+        address indexPointer = ContractCodeStorage.write(
+            VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin")
+        );
 
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2DevSourceCodePro.InvalidFontPointer.selector));
-        new ThoughtRendererV2DevSourceCodePro(address(0x1234), keccak256("font"));
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
+        new ThoughtRendererV2(address(0), pointer2, indexPointer);
 
-        bytes memory font = hex"774f46326465762d666f6e74";
-        address pointer = ContractCodeStorage.write(font);
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2DevSourceCodePro.InvalidFontPointer.selector));
-        new ThoughtRendererV2DevSourceCodePro(pointer, keccak256("wrong font"));
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 2));
+        new ThoughtRendererV2(pointer1, address(0x1234), indexPointer);
+
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 3));
+        new ThoughtRendererV2(pointer1, pointer2, address(0x1234));
+
+        address wrongPointer = ContractCodeStorage.write(bytes("wrong definitions"));
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
+        new ThoughtRendererV2(wrongPointer, pointer2, indexPointer);
     }
 
     function testRenderEscapesApprovedTerminalPunctuation() public view {
@@ -89,7 +135,23 @@ contract ThoughtRendererV2DevSourceCodeProTest {
         IThoughtRendererV2.TokenData memory data = _data(bytes32(0));
         string memory uri = renderer.tokenURI(data);
         require(_startsWith(uri, "data:application/json;base64,"), "metadata URI prefix mismatch");
-        require(bytes(uri).length > 2_000, "metadata URI unexpectedly incomplete");
+        string memory metadata = _metadataJsonFromTokenUri(uri);
+        require(_contains(metadata, '"name":"THOUGHT #1"'), "metadata name missing");
+        require(_contains(metadata, '"image":"data:image/svg+xml;base64,'), "embedded image missing");
+        require(_contains(metadata, '"properties":{'), "properties missing");
+        require(_contains(metadata, '"thought":{'), "THOUGHT extension missing");
+    }
+
+    function testRepresentativeRenderingStaysWithinPracticalEthCallBudget() public view {
+        uint256 gasBefore = gasleft();
+        renderer.render("Are you there?", "I am here.");
+        uint256 renderGas = gasBefore - gasleft();
+        require(renderGas < 5_000_000, "representative render gas regression");
+
+        gasBefore = gasleft();
+        renderer.tokenURI(_data(bytes32(0)));
+        uint256 tokenUriGas = gasBefore - gasleft();
+        require(tokenUriGas < 10_000_000, "representative tokenURI gas regression");
     }
 
     function testTokenUriUsesAllAndOnlyCanonicalMarketplaceTraits() public view {

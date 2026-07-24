@@ -1,0 +1,68 @@
+{
+  "compactFixedWidthDataFloor": {
+    "combinedRoundedBytes": 11059,
+    "fonts": [
+      {
+        "slug": "humanist-smooth",
+        "totalBits": 54706,
+        "totalBytesRoundedUp": 6839
+      },
+      {
+        "slug": "humanist-quantized",
+        "totalBits": 33763,
+        "totalBytesRoundedUp": 4221
+      }
+    ],
+    "sumOfPerFontRoundedBytes": 11060,
+    "totalBits": 88469
+  },
+  "conclusion": "Third Set conventional outlines are smaller as expanded SVG paths than the dot comparison, while the dot bitmap grammar remains much smaller as compact source data. No compact figure is a deployed-bytecode claim.",
+  "ethereumRuntimeCodeLimitBytes": 24576,
+  "exclusions": [
+    "decoder and executable runtime",
+    "SVG path serialization",
+    "family metadata and validation",
+    "glyph placement, wrapping, lookup, retrieval, and contract API"
+  ],
+  "expandedNativeSvg": {
+    "fonts": [
+      {
+        "gzipBytesInformational": 7986,
+        "rawPathBits": 191288,
+        "rawPathBytes": 23911,
+        "slug": "humanist-smooth"
+      },
+      {
+        "gzipBytesInformational": 3756,
+        "rawPathBits": 145880,
+        "rawPathBytes": 18235,
+        "slug": "humanist-quantized"
+      }
+    ],
+    "totalPathBits": 337168,
+    "totalPathBytes": 42146
+  },
+  "externalComparisonBaseline": {
+    "compact": {
+      "bitPackedBitmapBytes": 329,
+      "bitPackedBitmapPlusCurrentDescriptorBits": 3369,
+      "bitPackedBitmapPlusCurrentDescriptorBytes": 422,
+      "bitmapBits": 2625,
+      "byteAlignedBitmapBytes": 375,
+      "byteAlignedBitmapPlusCurrentDescriptorBytes": 468,
+      "familyGrammarDescriptorBytes": 93
+    },
+    "expanded": {
+      "gzipPathBytesInformational": 4328,
+      "numericOperands": 27758,
+      "pathCommands": 8998,
+      "rawPathBits": 1082776,
+      "rawPathBytes": 135347
+    },
+    "setMembership": "inshell.thought.glyph-library.set-01.circuit-nodes",
+    "slug": "circuit-nodes"
+  },
+  "fontCount": 2,
+  "schema": "inshell.thought.glyph-library.storage-model.study.v1",
+  "setId": "inshell.thought.glyph-library.set-03"
+}

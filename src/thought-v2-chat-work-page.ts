@@ -133,12 +133,12 @@ const renderToken = (
             <button type="button" data-theme="dark" aria-pressed="${themeMode === "dark"}">DARK</button>
           </div>
         </div>
-        <p>The artwork is the exact contract image at canonical #00ba00. This page does not reconstruct or recolor it.</p>
+        <p>The artwork is the exact contract image at canonical #00ff00. This page does not reconstruct or recolor it.</p>
       </div>
     </section>
 
     <figure class="chat-work-artwork">
-      <img src="${token.metadata.image}" width="960" height="960" alt="THOUGHT ${token.tokenId}: ${escapeHtml(thought.promptLine)} / ${escapeHtml(thought.agentLine)}" />
+      <img src="${token.metadata.image}" width="1024" height="1024" alt="THOUGHT ${token.tokenId}: ${escapeHtml(thought.promptLine)} / ${escapeHtml(thought.agentLine)}" />
     </figure>
 
     <section class="chat-work-lines" aria-label="Exact work lines">
@@ -206,7 +206,8 @@ const renderToken = (
         ${fact("Renderer ID", thought.rendererId)}
         ${fact("Renderer implementation", thought.rendererImplementationId)}
         ${fact("Renderer release ready", String(thought.rendererReleaseReady))}
-        ${fact("Font hash", runtime.renderer.fontHash)}
+        ${fact("Glyph family", runtime.renderer.glyphLibraryMemberId)}
+        ${fact("Glyph definitions hash", runtime.renderer.glyphDefinitionsHash)}
         ${fact("Metadata profile", thought.metadataProfileId)}
         ${fact("Work profile", thought.workProfileId)}
       </dl>

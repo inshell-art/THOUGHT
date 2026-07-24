@@ -1,0 +1,46 @@
+{
+  "canonicalManifestBytes": 38076,
+  "colorStorage": {
+    "blackRgb24Bytes": 3,
+    "compactSharedPaintDataFloorBytes": 88,
+    "foregroundMaskBytes": 4,
+    "paletteRgb24DataFloorBytes": 78,
+    "perGlyphColorDuplication": false,
+    "sharedCanonicalTextBytes": 510,
+    "whiteRgb24Bytes": 3
+  },
+  "construction": "conventional-outline",
+  "exclusions": [
+    "SVG path decoder and renderer runtime",
+    "package metadata, documentation, and validation",
+    "hashes, aliases, and developer-facing audit mirrors",
+    "deployed bytecode and gas"
+  ],
+  "familyId": "S403",
+  "geometry": {
+    "gzipBytesInformational": 7986,
+    "numericOperands": 4896,
+    "pathCommands": 1633,
+    "pathSha256": "8b636ac92349472dcbf43186fb57d9c1ffbd4ce3ba2b5aa3dad0a79ce33a1f81",
+    "rawPathBits": 191288,
+    "rawPathBytes": 23911,
+    "sourceFamilyId": "S301",
+    "sourceFamilySlug": "humanist-smooth",
+    "sourceFileSha256": "66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8",
+    "sourceMemberId": "inshell.thought.glyph-library.set-03.humanist-smooth",
+    "sourceSetId": "inshell.thought.glyph-library.set-03"
+  },
+  "glyphCount": 76,
+  "memberId": "inshell.thought.glyph-library.set-04.tile-humanist-smooth",
+  "schema": "inshell.thought.glyph-library.byte-report.study.v1",
+  "setId": "inshell.thought.glyph-library.set-04",
+  "slug": "tile-humanist-smooth",
+  "tilePresentation": {
+    "monospaced": true,
+    "normalizationBytes": 184,
+    "normalizationSha256": "91c2812822627cdb68f3e817d4769abbbaad15821a5a4f9fc0cfab9f22f1759e",
+    "profileId": "tight-v1",
+    "renderedAdvanceWidth": 6.5,
+    "sourceFixedAdvanceWidth": 6
+  }
+}

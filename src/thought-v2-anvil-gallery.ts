@@ -45,10 +45,16 @@ export type ThoughtV2AnvilRuntime = {
   };
   renderer: {
     canonicalRendererId: string;
-    fontHash: string;
-    fontPointer: string;
+    glyphDefinitionsHash: string;
+    glyphDefinitionsPart1Hash: string;
+    glyphDefinitionsPart2Hash: string;
+    glyphDefinitionsIndexHash: string;
+    glyphDefinitionsIndexPointer: string;
+    glyphDefinitionsPointer1: string;
+    glyphDefinitionsPointer2: string;
+    glyphLibraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth";
     implementationId: string;
-    releaseReady: false;
+    releaseReady: true;
   };
   rpcUrl: string;
   schema: "inshell.thought.v2.anvil-gallery-runtime.v1";
@@ -106,7 +112,7 @@ export type ThoughtV2TokenMetadata = {
     protocol: {
       manifestKeccak256: string;
       protocolReleaseId: string;
-      releaseStatus: "registered-disposable-anvil";
+      releaseStatus: "registered";
       thoughtSpecHash: string;
       thoughtSpecId: string;
     };
@@ -116,8 +122,8 @@ export type ThoughtV2TokenMetadata = {
     rendererId: string;
     rendererIdHash: string;
     rendererImplementationId: string;
-    rendererReleaseReady: false;
-    status: "minted-anvil-development";
+    rendererReleaseReady: true;
+    status: "minted";
     workHash: string;
     workProfileId: string;
   };
@@ -212,6 +218,14 @@ export const assertThoughtV2AnvilRuntime = (value: unknown): ThoughtV2AnvilRunti
     || runtime.attestation.verifier?.toLowerCase() !== runtime.contracts?.creationAttestationVerifier?.toLowerCase()
     || typeof runtime.rpcUrl !== "string"
     || typeof runtime.contracts?.thoughtNft !== "string"
+    || runtime.renderer?.releaseReady !== true
+    || runtime.renderer?.glyphLibraryMemberId
+      !== "inshell.thought.glyph-library.set-03.humanist-smooth"
+    || !bytes32Pattern.test(runtime.renderer?.glyphDefinitionsHash ?? "")
+    || !bytes32Pattern.test(runtime.renderer?.glyphDefinitionsIndexHash ?? "")
+    || typeof runtime.renderer?.glyphDefinitionsPointer1 !== "string"
+    || typeof runtime.renderer?.glyphDefinitionsPointer2 !== "string"
+    || typeof runtime.renderer?.glyphDefinitionsIndexPointer !== "string"
   ) {
     throw new Error("Anvil runtime config does not describe a ready current-V2 gallery");
   }
@@ -261,7 +275,7 @@ export const validateThoughtV2TokenMetadata = (
     || thought?.metadataProfileId !== THOUGHT_V2_METADATA_PROFILE_ID
     || thought?.provenanceProfileId !== THOUGHT_V2_PROVENANCE_PROFILE_ID
     || thought?.rendererImplementationId !== runtime.renderer.implementationId
-    || thought?.rendererReleaseReady !== false
+    || thought?.rendererReleaseReady !== true
     || thought?.mint?.tokenId !== String(tokenId)
     || thought?.mint?.chainId !== String(runtime.chainId)
     || thought?.mint?.contract.toLowerCase() !== runtime.contracts.thoughtNft.toLowerCase()

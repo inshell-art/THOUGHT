@@ -1,0 +1,637 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "colorBinding": {
+    "authoritativeMapRepertoire": "uppercase A-Z only",
+    "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+    "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+    "currentProtocolDependency": false,
+    "foreground": {
+      "blackLetters": "ADEFHJKLOPQRSVWXYZ",
+      "candidates": [
+        "#000000",
+        "#ffffff"
+      ],
+      "minimumChosenContrast": 4.7734,
+      "mode": "maximum-wcag-contrast",
+      "outlineRequired": false,
+      "tieBreak": "#000000",
+      "whiteLetters": "BCGIMNTU"
+    },
+    "lowercase": {
+      "authority": "Set 4 extension",
+      "mode": "uppercase-alias-background",
+      "range": "a-z"
+    },
+    "nonletters": {
+      "authority": "Set 4 extension",
+      "color": "#ffffff",
+      "mode": "neutral-white-background",
+      "range": "digits and restricted punctuation"
+    },
+    "paletteId": "inshell.colorfont.v1",
+    "paletteRole": "tile-background",
+    "paletteVersion": "1",
+    "perGlyphColorDuplication": false,
+    "setRepertoire": "76 restricted characters",
+    "sourceStatus": "archived-v1-palette-source",
+    "space": {
+      "drawsBackground": false,
+      "drawsGlyph": false,
+      "key": "SPACE",
+      "mode": "metrics-only"
+    },
+    "uppercase": {
+      "mode": "direct-authoritative-background",
+      "range": "A-Z"
+    }
+  },
+  "experiment": {
+    "setMembership": "inshell.thought.glyph-library.set-04.tile-vertical-ledger",
+    "status": "declared-tight-background-tile"
+  },
+  "family": {
+    "classification": "background-tile-svg-glyphs",
+    "construction": {
+      "approach": "block-run",
+      "colorLayer": "shared-background-tile",
+      "connectors": "none",
+      "mark": "block",
+      "mode": "run-v",
+      "opticalScaleX": 0.94,
+      "opticalScaleY": 0.96,
+      "sourceApproach": "run-v"
+    },
+    "id": "S401",
+    "name": "Tile Vertical Ledger",
+    "slug": "tile-vertical-ledger",
+    "thesis": "Vertical Ledger geometry sits on Color Font v1 background tiles using the Tight profile."
+  },
+  "glyphs": [
+    {
+      "advanceWidth": 6,
+      "character": " ",
+      "codepoint": 32,
+      "d": ""
+    },
+    {
+      "advanceWidth": 6,
+      "character": "A",
+      "codepoint": 65,
+      "d": "M0.89 1.52H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM4.32 1.52H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "B",
+      "codepoint": 66,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V3.15H4.32ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "C",
+      "codepoint": 67,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "D",
+      "codepoint": 68,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "E",
+      "codepoint": 69,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "F",
+      "codepoint": 70,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM4.32 0.65H4.91V1.41H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "G",
+      "codepoint": 71,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 3.27H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "H",
+      "codepoint": 72,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM2.61 3.27H3.2V4.03H2.61ZM3.46 3.27H4.05V4.03H3.46ZM4.32 0.65H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "I",
+      "codepoint": 73,
+      "d": "M1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "J",
+      "codepoint": 74,
+      "d": "M0.89 5.02H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V5.78H3.46ZM4.32 0.65H4.91V1.41H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "K",
+      "codepoint": 75,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 4.14H3.2V4.9H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 5.02H4.05V5.78H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "L",
+      "codepoint": 76,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.89H4.05V6.65H3.46ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "M",
+      "codepoint": 77,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 1.52H2.34V2.28H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 1.52H4.05V2.28H3.46ZM4.32 0.65H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "N",
+      "codepoint": 78,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 1.52H2.34V2.28H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 3.27H4.05V4.03H3.46ZM4.32 0.65H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "O",
+      "codepoint": 79,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "P",
+      "codepoint": 80,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM4.32 1.52H4.91V3.15H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "Q",
+      "codepoint": 81,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.02H4.05V5.78H3.46ZM4.32 1.52H4.91V4.9H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "R",
+      "codepoint": 82,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.9H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.02H4.05V5.78H3.46ZM4.32 1.52H4.91V3.15H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "S",
+      "codepoint": 83,
+      "d": "M0.89 1.52H1.49V3.15H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "T",
+      "codepoint": 84,
+      "d": "M0.89 0.65H1.49V1.41H0.89ZM1.75 0.65H2.34V1.41H1.75ZM2.61 0.65H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM4.32 0.65H4.91V1.41H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "U",
+      "codepoint": 85,
+      "d": "M0.89 0.65H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "V",
+      "codepoint": 86,
+      "d": "M0.89 0.65H1.49V4.9H0.89ZM1.75 5.02H2.34V5.78H1.75ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.02H4.05V5.78H3.46ZM4.32 0.65H4.91V4.9H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "W",
+      "codepoint": 87,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 5.02H2.34V5.78H1.75ZM2.61 3.27H3.2V4.9H2.61ZM3.46 5.02H4.05V5.78H3.46ZM4.32 0.65H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "X",
+      "codepoint": 88,
+      "d": "M0.89 0.65H1.49V2.28H0.89ZM0.89 5.02H1.49V6.65H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 4.14H2.34V4.9H1.75ZM2.61 3.27H3.2V4.03H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 4.14H4.05V4.9H3.46ZM4.32 0.65H4.91V2.28H4.32ZM4.32 5.02H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "Y",
+      "codepoint": 89,
+      "d": "M0.89 0.65H1.49V2.28H0.89ZM1.75 2.4H2.34V3.15H1.75ZM2.61 3.27H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 0.65H4.91V2.28H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "Z",
+      "codepoint": 90,
+      "d": "M0.89 0.65H1.49V1.41H0.89ZM0.89 5.02H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 4.14H2.34V4.9H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 2.4H4.05V3.15H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V2.28H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "a",
+      "codepoint": 97,
+      "d": "M0.89 4.14H1.49V5.78H0.89ZM1.75 1.52H2.34V2.28H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 2.4H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "b",
+      "codepoint": 98,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 3.27H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "c",
+      "codepoint": 99,
+      "d": "M0.89 3.27H1.49V5.78H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "d",
+      "codepoint": 100,
+      "d": "M0.89 3.27H1.49V5.78H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "e",
+      "codepoint": 101,
+      "d": "M0.89 3.27H1.49V5.78H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 4.14H2.34V4.9H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 4.14H4.05V4.9H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 3.27H4.91V4.9H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "f",
+      "codepoint": 102,
+      "d": "M0.89 3.27H1.49V4.03H0.89ZM1.75 1.52H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM3.46 0.65H4.05V1.41H3.46ZM4.32 1.52H4.91V2.28H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "g",
+      "codepoint": 103,
+      "d": "M0.89 2.4H1.49V4.03H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 1.52H2.34V2.28H1.75ZM1.75 4.14H2.34V4.9H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 4.14H4.05V4.9H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "h",
+      "codepoint": 104,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 3.27H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "i",
+      "codepoint": 105,
+      "d": "M1.75 2.4H2.34V3.15H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 2.4H3.2V6.65H2.61ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "j",
+      "codepoint": 106,
+      "d": "M0.89 5.02H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 2.4H4.05V5.78H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "k",
+      "codepoint": 107,
+      "d": "M0.89 0.65H1.49V6.65H0.89ZM1.75 4.14H2.34V4.9H1.75ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.02H3.2V5.78H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "l",
+      "codepoint": 108,
+      "d": "M0.89 0.65H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 5.89H3.2V6.65H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "m",
+      "codepoint": 109,
+      "d": "M0.89 2.4H1.49V6.65H0.89ZM1.75 2.4H2.34V3.15H1.75ZM2.61 3.27H3.2V4.9H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 3.27H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "n",
+      "codepoint": 110,
+      "d": "M0.89 2.4H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 3.27H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "o",
+      "codepoint": 111,
+      "d": "M0.89 3.27H1.49V5.78H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 3.27H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "p",
+      "codepoint": 112,
+      "d": "M0.89 1.52H1.49V6.65H0.89ZM1.75 1.52H2.34V2.28H1.75ZM1.75 4.14H2.34V4.9H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V4.9H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 4.14H4.05V4.9H3.46ZM4.32 2.4H4.91V4.03H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "q",
+      "codepoint": 113,
+      "d": "M0.89 2.4H1.49V4.03H0.89ZM1.75 1.52H2.34V2.28H1.75ZM1.75 4.14H2.34V4.9H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V4.9H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 4.14H4.05V4.9H3.46ZM4.32 1.52H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "r",
+      "codepoint": 114,
+      "d": "M0.89 2.4H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 3.27H4.91V4.03H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "s",
+      "codepoint": 115,
+      "d": "M0.89 3.27H1.49V4.03H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 4.14H2.34V4.9H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V3.15H3.46ZM3.46 4.14H4.05V4.9H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 2.4H4.91V3.15H4.32ZM4.32 5.02H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "t",
+      "codepoint": 116,
+      "d": "M0.89 2.4H1.49V3.15H0.89ZM1.75 0.65H2.34V5.78H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.02H4.05V5.78H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "u",
+      "codepoint": 117,
+      "d": "M0.89 2.4H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.02H4.05V5.78H3.46ZM4.32 2.4H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "v",
+      "codepoint": 118,
+      "d": "M0.89 2.4H1.49V4.9H0.89ZM1.75 5.02H2.34V5.78H1.75ZM2.61 5.89H3.2V6.65H2.61ZM3.46 5.02H4.05V5.78H3.46ZM4.32 2.4H4.91V4.9H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "w",
+      "codepoint": 119,
+      "d": "M0.89 2.4H1.49V5.78H0.89ZM1.75 5.89H2.34V6.65H1.75ZM2.61 4.14H3.2V5.78H2.61ZM3.46 5.89H4.05V6.65H3.46ZM4.32 2.4H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "x",
+      "codepoint": 120,
+      "d": "M0.89 2.4H1.49V3.15H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.02H2.34V5.78H1.75ZM2.61 4.14H3.2V4.9H2.61ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.02H4.05V5.78H3.46ZM4.32 2.4H4.91V3.15H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "y",
+      "codepoint": 121,
+      "d": "M0.89 1.52H1.49V4.03H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 4.14H2.34V4.9H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 4.14H4.05V4.9H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "z",
+      "codepoint": 122,
+      "d": "M0.89 2.4H1.49V3.15H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 5.02H2.34V6.65H1.75ZM2.61 2.4H3.2V3.15H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 2.4H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 2.4H4.91V3.15H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "0",
+      "codepoint": 48,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 2.4H3.2V3.15H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V2.28H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "1",
+      "codepoint": 49,
+      "d": "M1.75 1.52H2.34V2.28H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V6.65H2.61ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "2",
+      "codepoint": 50,
+      "d": "M0.89 1.52H1.49V2.28H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 5.02H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V3.15H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "3",
+      "codepoint": 51,
+      "d": "M0.89 0.65H1.49V1.41H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V3.15H4.32ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "4",
+      "codepoint": 52,
+      "d": "M0.89 3.27H1.49V4.9H0.89ZM1.75 2.4H2.34V3.15H1.75ZM1.75 4.14H2.34V4.9H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V4.9H2.61ZM3.46 0.65H4.05V6.65H3.46ZM4.32 4.14H4.91V4.9H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "5",
+      "codepoint": 53,
+      "d": "M0.89 0.65H1.49V4.03H0.89ZM0.89 5.89H1.49V6.65H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 0.65H4.91V1.41H4.32ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "6",
+      "codepoint": 54,
+      "d": "M0.89 1.52H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "7",
+      "codepoint": 55,
+      "d": "M0.89 0.65H1.49V1.41H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 4.14H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 2.4H4.05V3.15H3.46ZM4.32 0.65H4.91V2.28H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "8",
+      "codepoint": 56,
+      "d": "M0.89 1.52H1.49V3.15H0.89ZM0.89 4.14H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V3.15H4.32ZM4.32 4.14H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "9",
+      "codepoint": 57,
+      "d": "M0.89 1.52H1.49V3.15H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 3.27H3.2V4.03H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM3.46 5.89H4.05V6.65H3.46ZM4.32 1.52H4.91V5.78H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": ".",
+      "codepoint": 46,
+      "d": "M1.75 5.02H2.34V6.65H1.75ZM2.61 5.02H3.2V6.65H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": ",",
+      "codepoint": 44,
+      "d": "M1.75 5.89H2.34V6.65H1.75ZM2.61 4.14H3.2V5.78H2.61ZM3.46 4.14H4.05V5.78H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "?",
+      "codepoint": 63,
+      "d": "M0.89 1.52H1.49V2.28H0.89ZM1.75 0.65H2.34V1.41H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 4.14H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 3.27H4.05V4.03H3.46ZM4.32 1.52H4.91V3.15H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "!",
+      "codepoint": 33,
+      "d": "M2.61 0.65H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": ":",
+      "codepoint": 58,
+      "d": "M2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V4.9H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": ";",
+      "codepoint": 59,
+      "d": "M1.75 5.89H2.34V6.65H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 4.14H3.2V5.78H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "'",
+      "codepoint": 39,
+      "d": "M1.75 2.4H2.34V3.15H1.75ZM2.61 0.65H3.2V2.28H2.61Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "\"",
+      "codepoint": 34,
+      "d": "M0.89 2.4H1.49V3.15H0.89ZM1.75 0.65H2.34V2.28H1.75ZM2.61 2.4H3.2V3.15H2.61ZM3.46 0.65H4.05V2.28H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "-",
+      "codepoint": 45,
+      "d": "M1.75 3.27H2.34V4.03H1.75ZM2.61 3.27H3.2V4.03H2.61ZM3.46 3.27H4.05V4.03H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "(",
+      "codepoint": 40,
+      "d": "M1.75 2.4H2.34V4.9H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 5.02H3.2V5.78H2.61ZM3.46 0.65H4.05V1.41H3.46ZM3.46 5.89H4.05V6.65H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": ")",
+      "codepoint": 41,
+      "d": "M1.75 0.65H2.34V1.41H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 1.52H3.2V2.28H2.61ZM2.61 5.02H3.2V5.78H2.61ZM3.46 2.4H4.05V4.9H3.46Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "/",
+      "codepoint": 47,
+      "d": "M0.89 5.02H1.49V6.65H0.89ZM1.75 4.14H2.34V4.9H1.75ZM2.61 3.27H3.2V4.03H2.61ZM3.46 2.4H4.05V3.15H3.46ZM4.32 0.65H4.91V2.28H4.32Z"
+    },
+    {
+      "advanceWidth": 6,
+      "character": "&",
+      "codepoint": 38,
+      "d": "M0.89 1.52H1.49V3.15H0.89ZM0.89 4.14H1.49V5.78H0.89ZM1.75 0.65H2.34V1.41H1.75ZM1.75 3.27H2.34V4.03H1.75ZM1.75 5.89H2.34V6.65H1.75ZM2.61 0.65H3.2V1.41H2.61ZM2.61 2.4H3.2V4.9H2.61ZM2.61 5.89H3.2V6.65H2.61ZM3.46 1.52H4.05V2.28H3.46ZM3.46 5.02H4.05V5.78H3.46ZM4.32 3.27H4.91V4.9H4.32ZM4.32 5.89H4.91V6.65H4.32Z"
+    }
+  ],
+  "librarySet": {
+    "id": "inshell.thought.glyph-library.set-04",
+    "memberId": "inshell.thought.glyph-library.set-04.tile-vertical-ledger",
+    "name": "THOUGHT Glyph Library — Fourth Set",
+    "ordinal": 4,
+    "ordinalLabel": "4th Set",
+    "qualificationStatus": "declared-tight-background-tile",
+    "slug": "fourth-set",
+    "version": 1
+  },
+  "metrics": {
+    "ascenderBound": 0.3,
+    "baseline": 7,
+    "capHeight": 6.3,
+    "descenderBound": 7.2,
+    "emSquare": 8,
+    "fillRule": "evenodd",
+    "fixedAdvanceWidth": 6,
+    "maximumGlyphBounds": {
+      "xMax": 5.55,
+      "xMin": 0.45,
+      "yMax": 7.2,
+      "yMin": 0.3
+    },
+    "numericPrecision": 2,
+    "pathCommands": [
+      "M",
+      "L",
+      "H",
+      "V",
+      "Q",
+      "C",
+      "Z"
+    ],
+    "pathCoordinateMode": "absolute",
+    "safeBearings": {
+      "left": 0.45,
+      "right": 0.45
+    },
+    "schema": "inshell.thought.glyph-metrics.study.v1",
+    "space": {
+      "advanceWidth": 6,
+      "drawsPath": false
+    },
+    "transformsInSource": false,
+    "xHeight": 4.55
+  },
+  "provenance": {
+    "colorMap": {
+      "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+      "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+      "currentProtocolDependency": false,
+      "id": "inshell.colorfont.v1",
+      "role": "tile-background",
+      "sourceStatus": "archived-v1-palette-source",
+      "version": "1"
+    },
+    "sourceGeometry": {
+      "construction": "block-run",
+      "sourceFamilyId": "S11",
+      "sourceFamilyName": "Vertical Ledger",
+      "sourceFamilySlug": "vertical-ledger",
+      "sourceFile": "../sets/first-set/fonts/vertical-ledger/glyphs.json",
+      "sourceMemberId": "inshell.thought.glyph-library.set-01.vertical-ledger",
+      "sourceQualificationStatus": "study-qualified",
+      "sourceSetId": "inshell.thought.glyph-library.set-01",
+      "sourceSetName": "THOUGHT Glyph Library — First Set",
+      "sourceSetSlug": "first-set"
+    }
+  },
+  "schema": "inshell.thought.glyph-manifest.study.v1",
+  "sourceGeometry": {
+    "construction": "block-run",
+    "sourceFamilyId": "S11",
+    "sourceFamilyName": "Vertical Ledger",
+    "sourceFamilySlug": "vertical-ledger",
+    "sourceFile": "../sets/first-set/fonts/vertical-ledger/glyphs.json",
+    "sourceMemberId": "inshell.thought.glyph-library.set-01.vertical-ledger",
+    "sourceQualificationStatus": "study-qualified",
+    "sourceSetId": "inshell.thought.glyph-library.set-01",
+    "sourceSetName": "THOUGHT Glyph Library — First Set",
+    "sourceSetSlug": "first-set"
+  },
+  "tilePresentation": {
+    "monospaced": true,
+    "normalization": {
+      "ordinaryMatrix": [
+        1,
+        0,
+        0,
+        1,
+        1.1,
+        0
+      ],
+      "safeCharacters": "",
+      "safeMatrix": [
+        1,
+        0,
+        0,
+        1,
+        1.1,
+        0
+      ]
+    },
+    "profileId": "tight-v1",
+    "profileLabel": "Tight",
+    "renderedAdvanceWidth": 6.5,
+    "sourceFixedAdvanceWidth": 6,
+    "spaceAdvanceWidth": 6.5
+  }
+}

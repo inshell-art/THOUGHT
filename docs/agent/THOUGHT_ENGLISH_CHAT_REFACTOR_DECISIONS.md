@@ -188,23 +188,22 @@ outlines, positions, wrapping, and composition remain defined by the token.
 The V2 renderer ID is
 `inshell.thought.svg.v2.terminal-chat-path-glyphs`. Its frozen composition is:
 
-- 960 by 960 SVG view box;
-- pure black `#000000` background;
-- pure green `#00ba00` glyph fill;
+- 1024 by 1024 SVG artboard with a 32-unit `#006100` frame;
+- unscaled 960 by 960 pure black `#000000` canvas at `(32,32)`;
+- pure green `#00ff00` glyph fill;
 - prompt at the top right and Agent line at the bottom left;
-- 48-unit reference glyph scale and 64-unit line height;
+- Humanist Smooth fixed 6-unit advance at 4.8 scale and 64-unit line height;
 - 57.6-unit horizontal inset on both sides, equal to two Source Code Pro study
   character advances;
 - 844.8-unit text-field width and 256-unit field height;
 - greedy word wrapping, hard character breaks only when one word exceeds the
   row capacity, no inserted hyphens, and exact deterministic baselines;
-- Source Code Pro is the visual study reference only; the canonical token uses
-  reviewed SVG path glyphs and no font resource.
+- Humanist Smooth is the approved reviewed SVG path family; Source Code Pro
+  remains a historical study reference only.
 
-The final row capacity and baseline coordinates must be derived from and
-frozen with the reviewed V2 path-glyph metrics before release publication.
-The artwork-green slider is a lab instrument only; `#00ba00` is the immutable
-V2 artwork color.
+The reviewed renderer freezes a 29-column, 4-row capacity and adopts Humanist
+Smooth’s native 5.58 visual baseline explicitly. The artwork-green slider is
+a lab instrument only; `#00ff00` is the immutable V2 artwork color.
 
 The raw prompt and Agent strings must remain available in contract getters,
 metadata, and canonical provenance. The path-based SVG is the visual encoding,

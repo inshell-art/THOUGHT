@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "inshell.thought.glyph-manifest.study.v1",
+  "title": "THOUGHT glyph study manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "family",
+    "canonicalOrder",
+    "metrics",
+    "glyphs"
+  ],
+  "properties": {
+    "schema": {
+      "const": "inshell.thought.glyph-manifest.study.v1"
+    },
+    "librarySet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "ordinal",
+        "ordinalLabel",
+        "slug",
+        "version",
+        "qualificationStatus",
+        "memberId"
+      ],
+      "properties": {
+        "id": { "const": "inshell.thought.glyph-library.set-01" },
+        "name": { "const": "THOUGHT Glyph Library — First Set" },
+        "ordinal": { "const": 1 },
+        "ordinalLabel": { "const": "1st Set" },
+        "slug": { "const": "first-set" },
+        "version": { "const": 1 },
+        "qualificationStatus": { "const": "study-qualified" },
+        "memberId": {
+          "type": "string",
+          "pattern": "^inshell\\.thought\\.glyph-library\\.set-01\\.[a-z0-9]+(?:-[a-z0-9]+)*$"
+        }
+      }
+    },
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "slug",
+        "name",
+        "thesis",
+        "construction"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^S[0-9]{2}$" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "thesis": { "type": "string", "minLength": 1 },
+        "construction": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "mark", "connectors", "opticalScaleX", "opticalScaleY"],
+          "properties": {
+            "mode": { "type": "string", "minLength": 1 },
+            "mark": { "type": "string", "minLength": 1 },
+            "connectors": { "type": "string", "minLength": 1 },
+            "opticalScaleX": { "type": "number", "minimum": 0.9, "maximum": 1 },
+            "opticalScaleY": { "type": "number", "minimum": 0.9, "maximum": 1 }
+          }
+        }
+      }
+    },
+    "canonicalOrder": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 76
+    },
+    "metrics": {
+      "$ref": "glyph-metrics.schema.json"
+    },
+    "glyphs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 76,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["character", "codepoint", "advanceWidth", "d"],
+        "properties": {
+          "character": { "type": "string", "minLength": 1, "maxLength": 1 },
+          "codepoint": { "type": "integer", "minimum": 32, "maximum": 126 },
+          "advanceWidth": { "const": 6 },
+          "d": { "type": "string" }
+        }
+      }
+    }
+  }
+}

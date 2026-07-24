@@ -104,7 +104,7 @@ const renderShell = (): void => {
       <div><span>CONTRACT</span><strong title="${runtime.contracts.thoughtNft}">${shortHash(runtime.contracts.thoughtNft)}</strong></div>
       <div><span>REGISTERED RELEASE</span><strong title="${runtime.protocolRelease.id}">${shortHash(runtime.protocolRelease.id)}</strong></div>
       <div><span>RENDERER</span><strong>${escapeHtml(runtime.renderer.implementationId)}</strong></div>
-      <p>Every card is decoded from ThoughtNFTV2.tokenURI(). Source Code Pro and foreignObject are temporary Anvil review dependencies; this renderer is explicitly not release-ready.</p>
+      <p>Every card is decoded from ThoughtNFTV2.tokenURI(). The current renderer uses the approved Humanist Smooth native SVG paths and carries no browser-font dependency.</p>
     </section>
 
     <section class="chat-gallery__toolbar" aria-label="Gallery controls">
@@ -160,8 +160,8 @@ const renderCard = (token: ThoughtV2OnchainToken): HTMLElement => {
   const image = document.createElement("img");
   image.src = token.metadata.image;
   image.alt = `THOUGHT ${token.tokenId}: ${thought.promptLine} / ${thought.agentLine}`;
-  image.width = 960;
-  image.height = 960;
+  image.width = 1024;
+  image.height = 1024;
   image.loading = "lazy";
   image.decoding = "async";
   artwork.append(image);

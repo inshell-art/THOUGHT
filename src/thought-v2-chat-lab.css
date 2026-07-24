@@ -11,7 +11,7 @@
   --page-faint: #4f584f;
   --page-divider: #303630;
   --page-divider-green: rgb(0 186 0 / 28%);
-  --page-green: #00ba00;
+  --page-green: #00ff00;
   --page-green-soft: #71a871;
   --page-input: #202420;
   --page-hover: #202620;
@@ -305,7 +305,7 @@ input[type="checkbox"] {
 
 .chat-gallery__contrast input {
   width: 100%;
-  accent-color: var(--artwork-green, #00ba00);
+  accent-color: var(--artwork-green, #00ff00);
 }
 
 .chat-gallery__contrast output {
@@ -314,7 +314,7 @@ input[type="checkbox"] {
 }
 
 .chat-gallery__contrast-color {
-  color: var(--artwork-green, #00ba00) !important;
+  color: var(--artwork-green, #00ff00) !important;
 }
 
 .chat-gallery__collection {

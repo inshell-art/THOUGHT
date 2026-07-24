@@ -166,28 +166,56 @@ try {
     "function RENDERER_ID() view returns (string)",
     "function METADATA_PROFILE_ID() view returns (string)",
     "function IMPLEMENTATION_ID() view returns (string)",
-    "function fontPointer() view returns (address)",
-    "function fontKeccak256() view returns (bytes32)",
+    "function GLYPH_LIBRARY_MEMBER_ID() view returns (string)",
+    "function glyphDefinitionsPointer1() view returns (address)",
+    "function glyphDefinitionsPointer2() view returns (address)",
+    "function glyphDefinitionsIndexPointer() view returns (address)",
+    "function glyphDefinitionsKeccak256() view returns (bytes32)",
+    "function GLYPH_DEFINITIONS_INDEX_KECCAK256() view returns (bytes32)",
   ], provider);
   const [
     rendererProfileId,
     rendererMetadataProfileId,
     rendererImplementationId,
-    fontPointer,
-    fontHash,
+    glyphLibraryMemberId,
+    glyphDefinitionsPointer1,
+    glyphDefinitionsPointer2,
+    glyphDefinitionsIndexPointer,
+    glyphDefinitionsHash,
+    glyphDefinitionsIndexHash,
   ] = await Promise.all([
     renderer.RENDERER_ID(),
     renderer.METADATA_PROFILE_ID(),
     renderer.IMPLEMENTATION_ID(),
-    renderer.fontPointer(),
-    renderer.fontKeccak256(),
+    renderer.GLYPH_LIBRARY_MEMBER_ID(),
+    renderer.glyphDefinitionsPointer1(),
+    renderer.glyphDefinitionsPointer2(),
+    renderer.glyphDefinitionsIndexPointer(),
+    renderer.glyphDefinitionsKeccak256(),
+    renderer.GLYPH_DEFINITIONS_INDEX_KECCAK256(),
   ]);
   equal(rendererProfileId, runtime.renderer.canonicalRendererId, "renderer canonical ID");
   equal(rendererMetadataProfileId, THOUGHT_V2_METADATA_PROFILE_ID, "renderer metadata profile");
   equal(rendererImplementationId, runtime.renderer.implementationId, "renderer implementation ID");
-  equalAddress(fontPointer, runtime.renderer.fontPointer, "study font pointer");
-  equal(fontHash, runtime.renderer.fontHash, "study font hash");
-  if (runtime.renderer.releaseReady) fail("disposable Source Code Pro renderer cannot be release-ready");
+  equal(glyphLibraryMemberId, runtime.renderer.glyphLibraryMemberId, "renderer glyph-library member");
+  equalAddress(
+    glyphDefinitionsPointer1,
+    runtime.renderer.glyphDefinitionsPointer1,
+    "glyph definitions pointer 1",
+  );
+  equalAddress(
+    glyphDefinitionsPointer2,
+    runtime.renderer.glyphDefinitionsPointer2,
+    "glyph definitions pointer 2",
+  );
+  equalAddress(
+    glyphDefinitionsIndexPointer,
+    runtime.renderer.glyphDefinitionsIndexPointer,
+    "glyph definitions index pointer",
+  );
+  equal(glyphDefinitionsHash, runtime.renderer.glyphDefinitionsHash, "glyph definitions hash");
+  equal(glyphDefinitionsIndexHash, runtime.renderer.glyphDefinitionsIndexHash, "glyph definitions index hash");
+  if (!runtime.renderer.releaseReady) fail("canonical Humanist Smooth renderer must be release-ready");
 
   const supply = Number(supplyValue);
   equal(supply, runtime.gallery.mintedSupply, "gallery supply");

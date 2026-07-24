@@ -10,7 +10,7 @@
   --work-faint: #4d564d;
   --work-divider: #303630;
   --work-divider-green: rgb(0 186 0 / 28%);
-  --work-green: #00ba00;
+  --work-green: #00ff00;
   --work-green-soft: #70a770;
   --work-button: #202420;
 
@@ -253,7 +253,7 @@ summary {
 
 .chat-work-contrast input {
   width: 100%;
-  accent-color: var(--artwork-green, #00ba00);
+  accent-color: var(--artwork-green, #00ff00);
 }
 
 .chat-work-contrast output {
@@ -261,7 +261,7 @@ summary {
 }
 
 .chat-work-contrast__color {
-  color: var(--artwork-green, #00ba00);
+  color: var(--artwork-green, #00ff00);
 }
 
 .chat-work-artwork {

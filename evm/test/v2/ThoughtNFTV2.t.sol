@@ -747,7 +747,7 @@ contract ThoughtNFTV2Test {
     }
 
     function testRuntimeBytecodeRemainsDeployable() public view {
-        require(address(token).code.length == 17_351, "update reviewed V2 runtime size");
+        require(address(token).code.length == 17_088, "update reviewed V2 runtime size");
         require(address(token).code.length < 24_576, "V2 exceeds EIP-170");
     }
 

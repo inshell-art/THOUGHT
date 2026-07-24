@@ -32,5 +32,5 @@ library ThoughtV2Constants {
     uint256 internal constant FIELD_WIDTH_TENTHS = 8_448;
     uint256 internal constant FIELD_HEIGHT = 256;
     string internal constant BACKGROUND_COLOR = "#000000";
-    string internal constant GLYPH_COLOR = "#00ba00";
+    string internal constant GLYPH_COLOR = "#00ff00";
 }

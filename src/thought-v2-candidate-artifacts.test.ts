@@ -6,6 +6,7 @@ import mintInputSchema from "../protocol/current/v2/contract/thought.mint-input.
 import metadataProfile from "../protocol/current/v2/metadata/thought.metadata.v2.profile.json";
 import provenanceSchema from "../protocol/current/v2/provenance/thought.provenance.v2.schema.json";
 import releaseInput from "../protocol/current/v2/release-input.json";
+import rendererProfile from "../protocol/current/v2/renderer/thought.renderer.v2.profile.json";
 import workProfile from "../protocol/current/v2/work/thought.work.v2.profile.json";
 import {
   THOUGHT_V2_CONTEXT_PROFILE_ID,
@@ -46,7 +47,7 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
         y: 32,
       },
       frame: { color: "#006100", unitsPerSide: 32 },
-      glyphColor: "#00ba00",
+      glyphColor: "#00ff00",
     });
     expect(releaseInput.rendererGeometry).toMatchObject({
       artboard: "1024x1024",
@@ -54,7 +55,44 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
       canvasScale: 1,
       frameColor: "#006100",
       frameUnitsPerSide: 32,
-      glyphColor: "#00ba00",
+      glyphColor: "#00ff00",
+    });
+    expect(rendererProfile).toMatchObject({
+      colors: { canvas: "#000000", frame: "#006100", glyph: "#00ff00" },
+      glyphSource: {
+        familyId: "S301",
+        libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
+        librarySetId: "inshell.thought.glyph-library.set-03",
+        pathDefinitionIndex: {
+          byteLength: 375,
+          entryCount: 75,
+          entryEncoding: "uint8-part,uint16be-offset,uint16be-length",
+          keccak256: "0x113d43ed0e3a6ce486779bca9734801493dd9c5c629e4816b8be3d445f1b9825",
+        },
+      },
+      id: THOUGHT_V2_RENDERER_ID,
+      implementationId:
+        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00",
+      metrics: {
+        fixedAdvance: 6,
+        glyphScale: 4.8,
+        maxColumns: 29,
+        maxRows: 4,
+        visualBaseline: 5.58,
+      },
+      restrictions: {
+        embeddedFont: false,
+        fallbackFonts: false,
+        foreignObject: false,
+        svgText: false,
+        systemFontLookup: false,
+      },
+    });
+    expect(rendererProfile.glyphSource.pathDefinitions).toHaveLength(2);
+    expect(rendererProfile.qualification).toMatchObject({
+      adoptedByThoughtV2: true,
+      rendererReleaseReady: true,
+      visualReview: "pass",
     });
   });
 
@@ -151,6 +189,12 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
       expect.objectContaining({ role: "metadata-profile" }),
       expect.objectContaining({ role: "mint-input-schema" }),
       expect.objectContaining({ role: "provenance-schema" }),
+      expect.objectContaining({ role: "renderer-profile" }),
+      expect.objectContaining({ role: "renderer-glyph-definitions-1" }),
+      expect.objectContaining({ role: "renderer-glyph-definitions-2" }),
+      expect.objectContaining({ role: "renderer-glyph-definition-index" }),
+      expect.objectContaining({ role: "renderer-glyph-license" }),
+      expect.objectContaining({ role: "renderer-glyph-notice" }),
       expect.objectContaining({ role: "contract-abi" }),
       expect.objectContaining({ role: "creation-attestation-verifier-abi" }),
       expect.objectContaining({ role: "work-hash-vectors" }),

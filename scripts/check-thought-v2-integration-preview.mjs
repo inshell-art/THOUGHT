@@ -55,17 +55,18 @@ if (
   || manifest.flags?.productionConsumable !== false
   || manifest.flags?.registrationAuthorized !== false
 ) fail("manifest identity or safety flags changed");
-if (manifest.compatibility?.renderer?.finalImplementationIncluded !== false) {
-  fail("preview claims to include a final renderer");
+if (manifest.compatibility?.renderer?.finalImplementationIncluded !== true) {
+  fail("preview does not include the adopted native-path renderer");
 }
 if (
   manifest.compatibility?.renderer?.packagedImplementation
-    !== "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100"
+    !== "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00"
   || manifest.compatibility?.renderer?.geometry?.artboard !== "1024x1024"
   || manifest.compatibility?.renderer?.geometry?.canvas !== "960x960@32,32"
   || manifest.compatibility?.renderer?.geometry?.canvasScale !== 1
   || manifest.compatibility?.renderer?.geometry?.frameColor !== "#006100"
   || manifest.compatibility?.renderer?.geometry?.frameUnitsPerSide !== 32
+  || manifest.compatibility?.renderer?.geometry?.glyphColor !== "#00ff00"
 ) fail("preview renderer geometry drifted");
 
 const declared = new Set();
@@ -103,7 +104,7 @@ for (const file of expectedChecksums) {
 const limitations = JSON.parse(fs.readFileSync(path.join(releaseDir, "limitations.json"), "utf8"));
 if (
   limitations.candidateOrStable !== false
-  || limitations.canonicalRendererIncluded !== false
+  || limitations.canonicalRendererIncluded !== true
   || limitations.deploymentAuthorized !== false
   || limitations.productionConsumable !== false
   || limitations.registrationAuthorized !== false

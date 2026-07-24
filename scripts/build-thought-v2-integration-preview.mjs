@@ -97,13 +97,16 @@ if (releaseInput.registrationAuthorized !== false || releaseInput.status !== "im
   throw new Error("integration preview requires an unauthorized implementation-candidate release input");
 }
 
-const rendererSource = read("evm/src/v2/ThoughtRendererV2DevSourceCodePro.sol").toString("utf8");
+const rendererSource = read("evm/src/v2/ThoughtRendererV2.sol").toString("utf8");
 if (
-  !rendererSource.includes("DevRendererAnvilOnly")
-  || !rendererSource.includes("block.chainid != 31_337")
-  || !rendererSource.includes("<foreignObject")
+  !rendererSource.includes("inshell.thought.glyph-library.set-03.humanist-smooth")
+  || !rendererSource.includes("GLYPH_DEFINITIONS_PART_1_KECCAK256")
+  || !rendererSource.includes("GLYPH_DEFINITIONS_INDEX_KECCAK256")
+  || !rendererSource.includes("glyphDefinitionsIndexPointer")
+  || rendererSource.includes("<foreignObject")
+  || rendererSource.includes("<text")
 ) {
-  throw new Error("temporary renderer must remain explicitly Anvil-only and noncanonical");
+  throw new Error("canonical Humanist Smooth native-path renderer boundary drifted");
 }
 
 fs.rmSync(releaseDir, { recursive: true, force: true });
@@ -137,9 +140,9 @@ const compiledContracts = [
     contractName: "IThoughtRendererV2",
   },
   {
-    artifact: "evm/out/ThoughtRendererV2DevSourceCodePro.sol/ThoughtRendererV2DevSourceCodePro.json",
-    classification: "temporary-anvil-only-renderer",
-    contractName: "ThoughtRendererV2DevSourceCodePro",
+    artifact: "evm/out/ThoughtRendererV2.sol/ThoughtRendererV2.json",
+    classification: "current-native-path-renderer-candidate",
+    contractName: "ThoughtRendererV2",
   },
   {
     artifact: "evm/out/CreationAttestationVerifier.sol/CreationAttestationVerifier.json",
@@ -211,10 +214,10 @@ const compatibility = {
   renderer: {
     canonicalId: identifiers.renderer,
     canonicalIdKeccak256: id(identifiers.renderer),
-    finalImplementationIncluded: false,
+    finalImplementationIncluded: true,
     geometry: releaseInput.rendererGeometry,
     packagedImplementation:
-      "inshell.thought.renderer.v2.dev-source-code-pro-foreign-object-outer-frame-32-006100",
+      "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00",
   },
   selectedSpec: {
     byteLength: specBytes.length,
@@ -245,12 +248,10 @@ writeJson(path.join(releaseDir, "contract/index.json"), {
 
 writeJson(path.join(releaseDir, "limitations.json"), {
   candidateOrStable: false,
-  canonicalRendererIncluded: false,
+  canonicalRendererIncluded: true,
   deploymentAuthorized: false,
   limitations: [
-    "native SVG path-glyph renderer is not implemented",
-    "packaged 1024x1024 outer-frame renderer is Anvil-only and uses Source Code Pro plus foreignObject",
-    "final renderer profile and vectors are absent",
+    "canonical Humanist Smooth renderer is included but this package remains an integration preview",
     "final release manifest and registry records are absent",
     "no Sepolia or mainnet deployment metadata is included",
     "no production attestation authority or private-key workflow is included",
