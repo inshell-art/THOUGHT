@@ -183,7 +183,6 @@ const usesForRows = (
   rows: string[],
   field: typeof PROMPT_FIELD | typeof AGENT_FIELD,
   horizontalAlign: "left" | "right",
-  verticalAlign: "top" | "bottom",
 ): string => {
   const glyphs = new Set(font.glyphs.map(({ character }) => character));
   const fourthSet = isFourthSetFont(font);
@@ -193,9 +192,8 @@ const usesForRows = (
   }
   const cellWidth = fourthSet ? TIGHT_TILE_WIDTH : GLYPH_WIDTH;
   const contentHeight = rows.length * LINE_HEIGHT;
-  const firstY = verticalAlign === "top"
-    ? field.y + ((LINE_HEIGHT - GLYPH_HEIGHT) / 2)
-    : field.y + field.height - contentHeight + ((LINE_HEIGHT - GLYPH_HEIGHT) / 2);
+  const firstY =
+    field.y + field.height - contentHeight + ((LINE_HEIGHT - GLYPH_HEIGHT) / 2);
 
   return rows.map((row, rowIndex) => {
     let x = horizontalAlign === "right"
@@ -312,5 +310,5 @@ export const renderThoughtV2GlyphLibraryFrameStudySvg = (
     : `fill="${textColor}"`;
   const agentPaint = promptPaint;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${geometry.artboardSize}" height="${geometry.artboardSize}" viewBox="0 0 ${geometry.artboardSize} ${geometry.artboardSize}" role="img" aria-label="THOUGHT native path glyph study" data-frame-study="outer-canvas" data-frame-width="${geometry.frameWidth}" data-frame-color="${frameColor}" data-text-color="${textColorAttribute}" data-canvas-size="${geometry.canvasSize}" data-glyph-family="${escapeXml(font.family.slug)}"><title>THOUGHT native path glyph study</title><metadata ${metadata}${metricMetadata}${fourthSetMetadata}/><rect id="work-frame" width="${geometry.artboardSize}" height="${geometry.artboardSize}" fill="${frameColor}"/><g id="work-canvas" transform="${geometry.canvasTransform}"><rect id="canvas-bg" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="#000000"/>${definitionsForText(font, `${promptLine}${agentLine}`)}<g id="prompt-line" ${promptPaint} data-source="${escapeXml(promptLine)}" data-rows="${promptRows.length}">${usesForRows(font, promptRows, PROMPT_FIELD, "right", "top")}</g><g id="agent-line" ${agentPaint} data-source="${escapeXml(agentLine)}" data-rows="${agentRows.length}">${usesForRows(font, agentRows, AGENT_FIELD, "left", "bottom")}</g></g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${geometry.artboardSize}" height="${geometry.artboardSize}" viewBox="0 0 ${geometry.artboardSize} ${geometry.artboardSize}" role="img" aria-label="THOUGHT native path glyph study" data-frame-study="outer-canvas" data-frame-width="${geometry.frameWidth}" data-frame-color="${frameColor}" data-text-color="${textColorAttribute}" data-canvas-size="${geometry.canvasSize}" data-glyph-family="${escapeXml(font.family.slug)}" data-field-vertical-align="bottom"><title>THOUGHT native path glyph study</title><metadata ${metadata}${metricMetadata}${fourthSetMetadata}/><rect id="work-frame" width="${geometry.artboardSize}" height="${geometry.artboardSize}" fill="${frameColor}"/><g id="work-canvas" transform="${geometry.canvasTransform}"><rect id="canvas-bg" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="#000000"/>${definitionsForText(font, `${promptLine}${agentLine}`)}<g id="prompt-line" ${promptPaint} data-source="${escapeXml(promptLine)}" data-rows="${promptRows.length}" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="bottom">${usesForRows(font, promptRows, PROMPT_FIELD, "right")}</g><g id="agent-line" ${agentPaint} data-source="${escapeXml(agentLine)}" data-rows="${agentRows.length}" data-field-x="57.6" data-field-y="576" data-field-width="844.8" data-field-height="256" data-field-bottom="832" data-horizontal-align="left" data-vertical-align="bottom">${usesForRows(font, agentRows, AGENT_FIELD, "left")}</g></g></svg>`;
 };

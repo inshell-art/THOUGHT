@@ -24,17 +24,15 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
 
     string public constant IMPLEMENTATION_ID =
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00";
+        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields";
     string public constant GLYPH_LIBRARY_SET_ID = "inshell.thought.glyph-library.set-03";
     string public constant GLYPH_LIBRARY_MEMBER_ID = "inshell.thought.glyph-library.set-03.humanist-smooth";
     string public constant GLYPH_FAMILY_NAME = "Humanist Smooth";
     string public constant GLYPH_LICENSE = "OFL-1.1";
     string public constant GLYPH_COLOR = "#00ff00";
     string public constant FRAME_COLOR = "#006100";
-    bytes32 public constant GLYPH_SOURCE_SHA256 =
-        0x66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8;
-    bytes32 public constant GLYPH_SOURCE_KECCAK256 =
-        0xdb76b1d4ed56646a65d138f47690a98c52593446a6c79841c1804637d0c4dc70;
+    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8;
+    bytes32 public constant GLYPH_SOURCE_KECCAK256 = 0xdb76b1d4ed56646a65d138f47690a98c52593446a6c79841c1804637d0c4dc70;
     bytes32 public constant GLYPH_DEFINITIONS_PART_1_KECCAK256 =
         0x3397ceb983a0e0fcbeee7154eebe059501315c7f34b1730ce9d37f2982425f5e;
     bytes32 public constant GLYPH_DEFINITIONS_PART_2_KECCAK256 =
@@ -47,6 +45,10 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     uint256 public constant MAX_COLUMNS = 29;
     uint256 public constant MAX_ROWS = 4;
     string public constant WRAP_PROFILE = "greedy-space-then-fixed-cell-overlong-word";
+    uint256 private constant PROMPT_FIELD_BOTTOM_TENTHS = 3_840;
+    uint256 private constant AGENT_FIELD_BOTTOM_TENTHS = 8_320;
+    uint256 private constant LINE_HEIGHT_TENTHS = 640;
+    uint256 private constant GLYPH_CELL_Y_INSET_TENTHS = 128;
     string private constant CANONICAL_ORDER =
         " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
@@ -61,15 +63,9 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         address glyphDefinitionsPointer2_,
         address glyphDefinitionsIndexPointer_
     ) {
-        bytes memory part1 = _validatedDefinitionsPart(
-            glyphDefinitionsPointer1_, GLYPH_DEFINITIONS_PART_1_KECCAK256, 1
-        );
-        bytes memory part2 = _validatedDefinitionsPart(
-            glyphDefinitionsPointer2_, GLYPH_DEFINITIONS_PART_2_KECCAK256, 2
-        );
-        _validatedDefinitionsPart(
-            glyphDefinitionsIndexPointer_, GLYPH_DEFINITIONS_INDEX_KECCAK256, 3
-        );
+        bytes memory part1 = _validatedDefinitionsPart(glyphDefinitionsPointer1_, GLYPH_DEFINITIONS_PART_1_KECCAK256, 1);
+        bytes memory part2 = _validatedDefinitionsPart(glyphDefinitionsPointer2_, GLYPH_DEFINITIONS_PART_2_KECCAK256, 2);
+        _validatedDefinitionsPart(glyphDefinitionsIndexPointer_, GLYPH_DEFINITIONS_INDEX_KECCAK256, 3);
         glyphDefinitionsPointer1 = glyphDefinitionsPointer1_;
         glyphDefinitionsPointer2 = glyphDefinitionsPointer2_;
         glyphDefinitionsIndexPointer = glyphDefinitionsIndexPointer_;
@@ -115,7 +111,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             GLYPH_LIBRARY_MEMBER_ID,
             '" data-glyph-visual-baseline="5.58" data-wrap="',
             WRAP_PROFILE,
-            '" aria-label="Prompt and Agent response in a terminal chat layout">',
+            '" data-field-vertical-align="bottom" aria-label="Prompt and Agent response in a terminal chat layout">',
             '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>',
             '<g id="work-canvas" transform="translate(32 32)">',
             '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
@@ -124,14 +120,14 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             _xmlEscape(promptLine),
             '" data-rows="',
             _toString(promptRowCount),
-            '">',
+            '" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="bottom">',
             _renderRows(promptRows, promptRowCount, true),
             "</g>",
             '<g id="agent-line" fill="#00ff00" data-source="',
             _xmlEscape(agentLine),
             '" data-rows="',
             _toString(agentRowCount),
-            '">',
+            '" data-field-x="57.6" data-field-y="576" data-field-width="844.8" data-field-height="256" data-field-bottom="832" data-horizontal-align="left" data-vertical-align="bottom">',
             _renderRows(agentRows, agentRowCount, false),
             "</g>",
             "</g>",
@@ -151,11 +147,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         if (keccak256(definitions) != expectedHash) revert InvalidGlyphDefinitionsPointer(part);
     }
 
-    function _definitions(string calldata promptLine, string calldata agentLine)
-        private
-        view
-        returns (string memory)
-    {
+    function _definitions(string calldata promptLine, string calldata agentLine) private view returns (string memory) {
         bool[128] memory used;
         _markUsed(used, bytes(promptLine));
         _markUsed(used, bytes(agentLine));
@@ -165,7 +157,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         uint256 definitionsLength;
         for (uint256 orderIndex = 1; orderIndex < order.length; orderIndex++) {
             if (!used[uint8(order[orderIndex])]) continue;
-            (, , uint256 length) = _glyphLocation(index, orderIndex - 1);
+            (,, uint256 length) = _glyphLocation(index, orderIndex - 1);
             definitionsLength += length;
         }
 
@@ -173,8 +165,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         uint256 destinationOffset;
         for (uint256 orderIndex = 1; orderIndex < order.length; orderIndex++) {
             if (!used[uint8(order[orderIndex])]) continue;
-            (uint8 part, uint256 sourceOffset, uint256 length) =
-                _glyphLocation(index, orderIndex - 1);
+            (uint8 part, uint256 sourceOffset, uint256 length) = _glyphLocation(index, orderIndex - 1);
             ContractCodeStorage.copySlice(
                 part == 1 ? glyphDefinitionsPointer1 : glyphDefinitionsPointer2,
                 definitions,
@@ -238,7 +229,8 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         pure
         returns (string memory output)
     {
-        uint256 yTenths = prompt ? 1_408 : 8_448 - (rowCount * 640);
+        uint256 fieldBottomTenths = prompt ? PROMPT_FIELD_BOTTOM_TENTHS : AGENT_FIELD_BOTTOM_TENTHS;
+        uint256 yTenths = fieldBottomTenths - (rowCount * LINE_HEIGHT_TENTHS) + GLYPH_CELL_Y_INSET_TENTHS;
         for (uint256 rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             bytes memory row = rows[rowIndex];
             uint256 xTenths = prompt ? 9_024 - (row.length * 288) : 576;
@@ -258,7 +250,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
                 }
                 xTenths += 288;
             }
-            yTenths += 640;
+            yTenths += LINE_HEIGHT_TENTHS;
         }
     }
 

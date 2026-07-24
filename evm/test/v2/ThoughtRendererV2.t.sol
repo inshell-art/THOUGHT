@@ -23,9 +23,8 @@ contract ThoughtRendererV2Test {
         address pointer2 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
         );
-        address indexPointer = ContractCodeStorage.write(
-            VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin")
-        );
+        address indexPointer =
+            ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
         renderer = new ThoughtRendererV2(pointer1, pointer2, indexPointer);
     }
 
@@ -42,7 +41,7 @@ contract ThoughtRendererV2Test {
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
                 == keccak256(
                     bytes(
-                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00"
+                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields"
                     )
                 ),
             "implementation ID drift"
@@ -62,10 +61,7 @@ contract ThoughtRendererV2Test {
             _contains(svg, '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>'),
             "missing approved outer work frame"
         );
-        require(
-            _contains(svg, '<g id="work-canvas" transform="translate(32 32)">'),
-            "missing framed canvas transform"
-        );
+        require(_contains(svg, '<g id="work-canvas" transform="translate(32 32)">'), "missing framed canvas transform");
         require(
             _contains(svg, '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>'),
             "missing black inner canvas"
@@ -76,18 +72,25 @@ contract ThoughtRendererV2Test {
         require(!_contains(svg, 'id="humanist-smooth-g005a"'), "unused glyph definition returned");
         require(_contains(svg, '<g id="prompt-line" fill="#00ff00"'), "missing canonical prompt green");
         require(_contains(svg, '<g id="agent-line" fill="#00ff00"'), "missing canonical Agent green");
+        require(_contains(svg, 'data-field-vertical-align="bottom"'), "fixed field alignment missing");
         require(
             _contains(
-                svg,
-                '<use href="#humanist-smooth-g0041" transform="translate(499.2 140.8) scale(4.8)"/>'
+                svg, 'data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384"'
             ),
-            "prompt placement drift"
+            "prompt field geometry drift"
         );
         require(
             _contains(
-                svg,
-                '<use href="#humanist-smooth-g0049" transform="translate(57.6 780.8) scale(4.8)"/>'
+                svg, 'data-field-y="576" data-field-width="844.8" data-field-height="256" data-field-bottom="832"'
             ),
+            "Agent field geometry drift"
+        );
+        require(
+            _contains(svg, '<use href="#humanist-smooth-g0041" transform="translate(499.2 332.8) scale(4.8)"/>'),
+            "prompt placement drift"
+        );
+        require(
+            _contains(svg, '<use href="#humanist-smooth-g0049" transform="translate(57.6 780.8) scale(4.8)"/>'),
             "Agent placement drift"
         );
         require(!_contains(svg, "<foreignObject"), "foreignObject returned");
@@ -99,6 +102,54 @@ contract ThoughtRendererV2Test {
         require(_contains(svg, 'data-source="I am here."'), "missing exact Agent source");
     }
 
+    function testPromptAndAgentFieldsKeepFixedBottomsAcrossOneThroughFourRows() public view {
+        string memory oneRow = renderer.render("A", "A");
+        require(
+            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(873.6 332.8) scale(4.8)"/>'),
+            "one-row prompt bottom drift"
+        );
+        require(
+            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            "one-row Agent bottom drift"
+        );
+
+        string memory twoRows = renderer.render("AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB", "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB");
+        require(
+            _contains(twoRows, '<use href="#humanist-smooth-g0042" transform="translate(470.4 332.8) scale(4.8)"/>'),
+            "two-row prompt bottom drift"
+        );
+        require(
+            _contains(twoRows, '<use href="#humanist-smooth-g0042" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            "two-row Agent bottom drift"
+        );
+
+        string memory threeRows = renderer.render(
+            "AAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCC",
+            "AAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCC"
+        );
+        require(
+            _contains(threeRows, '<use href="#humanist-smooth-g0043" transform="translate(326.4 332.8) scale(4.8)"/>'),
+            "three-row prompt bottom drift"
+        );
+        require(
+            _contains(threeRows, '<use href="#humanist-smooth-g0043" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            "three-row Agent bottom drift"
+        );
+
+        string memory fourRows = renderer.render(
+            "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD",
+            "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD"
+        );
+        require(
+            _contains(fourRows, '<use href="#humanist-smooth-g0044" transform="translate(470.4 332.8) scale(4.8)"/>'),
+            "four-row prompt bottom drift"
+        );
+        require(
+            _contains(fourRows, '<use href="#humanist-smooth-g0044" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            "four-row Agent bottom drift"
+        );
+    }
+
     function testConstructorRejectsMissingOrMismatchedDefinitionParts() public {
         address pointer1 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
@@ -106,9 +157,8 @@ contract ThoughtRendererV2Test {
         address pointer2 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
         );
-        address indexPointer = ContractCodeStorage.write(
-            VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin")
-        );
+        address indexPointer =
+            ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
 
         VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
         new ThoughtRendererV2(address(0), pointer2, indexPointer);

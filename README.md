@@ -42,7 +42,8 @@ do not affect conversation identity, work hash, or artwork.
 - [evm/src/v2/ThoughtV2WorkProfile.sol](evm/src/v2/ThoughtV2WorkProfile.sol): Terminal English validator.
 - [evm/src/v2/ThoughtV2ContextProfile.sol](evm/src/v2/ThoughtV2ContextProfile.sol): declaration-label validator.
 - [evm/src/v2/ThoughtV2Identity.sol](evm/src/v2/ThoughtV2Identity.sol): ordered conversation and renderer-bound work hashes.
-- [evm/src/v2/IThoughtRendererV2.sol](evm/src/v2/IThoughtRendererV2.sol): renderer boundary; the path-glyph implementation is still pending.
+- [evm/src/v2/IThoughtRendererV2.sol](evm/src/v2/IThoughtRendererV2.sol): renderer boundary.
+- [evm/src/v2/ThoughtRendererV2.sol](evm/src/v2/ThoughtRendererV2.sol): current Humanist Smooth native-path implementation candidate.
 - [evm/src/ThoughtSpecRegistry.sol](evm/src/ThoughtSpecRegistry.sol): append-only exact-spec registry.
 - [evm/src/ThoughtSpecRegistryV2.sol](evm/src/ThoughtSpecRegistryV2.sol): append-only compact protocol-release registry.
 - [protocol/current/v2/README.md](protocol/current/v2/README.md): current unregistered V2 protocol candidate, including declaration, metadata, provenance, and mint-input artifacts.
@@ -54,7 +55,7 @@ The historical binary-weave attempt remains in the old unversioned contract, `pr
 
 The V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
 
-The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. Deterministic project-owned path glyphs use `#00ba00`, with the prompt at the upper right and Agent response at the lower left. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the final renderer. Glyph implementation, parity vectors, and release measurements remain pending.
+The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. Humanist Smooth native path glyphs use `#00ff00`, with the prompt at the upper right and Agent response at the lower left. Both fixed 844.8-by-256 text fields pack wrapped rows upward from a fixed bottom: prompt bottom `384`, Agent bottom `832`. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the renderer.
 
 ## Development
 

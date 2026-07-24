@@ -153,6 +153,26 @@ const profile = {
   geometry: {
     artboard: { height: 1024, width: 1024 },
     canvas: { height: 960, scale: 1, width: 960, x: 32, y: 32 },
+    fields: {
+      agent: {
+        bottom: 832,
+        height: 256,
+        horizontalAlign: "left",
+        verticalAlign: "bottom",
+        width: 844.8,
+        x: 57.6,
+        y: 576,
+      },
+      prompt: {
+        bottom: 384,
+        height: 256,
+        horizontalAlign: "right",
+        verticalAlign: "bottom",
+        width: 844.8,
+        x: 57.6,
+        y: 128,
+      },
+    },
     frameUnitsPerSide: 32,
   },
   glyphSource: {
@@ -179,7 +199,7 @@ const profile = {
   },
   id: "inshell.thought.svg.v2.terminal-chat-path-glyphs",
   implementationId:
-    "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00",
+    "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields",
   metrics: {
     emSquare: 8,
     fillRule: "evenodd",

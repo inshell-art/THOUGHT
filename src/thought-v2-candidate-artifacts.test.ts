@@ -53,12 +53,46 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
       artboard: "1024x1024",
       canvas: "960x960@32,32",
       canvasScale: 1,
+      fields: {
+        agent: {
+          bottom: 832,
+          horizontalAlign: "left",
+          verticalAlign: "bottom",
+        },
+        prompt: {
+          bottom: 384,
+          horizontalAlign: "right",
+          verticalAlign: "bottom",
+        },
+      },
       frameColor: "#006100",
       frameUnitsPerSide: 32,
       glyphColor: "#00ff00",
     });
     expect(rendererProfile).toMatchObject({
       colors: { canvas: "#000000", frame: "#006100", glyph: "#00ff00" },
+      geometry: {
+        fields: {
+          agent: {
+            bottom: 832,
+            height: 256,
+            horizontalAlign: "left",
+            verticalAlign: "bottom",
+            width: 844.8,
+            x: 57.6,
+            y: 576,
+          },
+          prompt: {
+            bottom: 384,
+            height: 256,
+            horizontalAlign: "right",
+            verticalAlign: "bottom",
+            width: 844.8,
+            x: 57.6,
+            y: 128,
+          },
+        },
+      },
       glyphSource: {
         familyId: "S301",
         libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
@@ -72,7 +106,7 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
       },
       id: THOUGHT_V2_RENDERER_ID,
       implementationId:
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00",
+        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields",
       metrics: {
         fixedAdvance: 6,
         glyphScale: 4.8,

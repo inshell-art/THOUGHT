@@ -189,7 +189,10 @@ describe("THOUGHT V2 glyph-library frame study", () => {
     expect(svg).toContain('data-text-color="#00ff00"');
     expect(svg).toContain('<g id="prompt-line" fill="#00ff00"');
     expect(svg).toContain('<g id="agent-line" fill="#00ff00"');
-    expect(svg).toContain('transform="translate(153.6 140.8) scale(4.8)"');
+    expect(svg).toContain('data-field-vertical-align="bottom"');
+    expect(svg).toContain('data-field-bottom="384"');
+    expect(svg).toContain('data-field-bottom="832"');
+    expect(svg).toContain('transform="translate(153.6 332.8) scale(4.8)"');
     expect(svg).toContain('transform="translate(57.6 780.8) scale(4.8)"');
     expect(svg).not.toMatch(/<text[\s>]/);
     expect(svg).not.toContain("<foreignObject");
@@ -204,6 +207,47 @@ describe("THOUGHT V2 glyph-library frame study", () => {
     expect(svg.match(/<use href=/g)).toHaveLength(
       [...`${prompt}${agent}`].filter((character) => character !== " ").length,
     );
+  });
+
+  it("bottom-aligns both fixed text fields across one through four wrapped rows", () => {
+    const lines = [
+      { rows: 1, value: "A" },
+      { rows: 2, value: "A".repeat(15) + " " + "B".repeat(15) },
+      {
+        rows: 3,
+        value: ["A", "B", "C"].map((character) => character.repeat(20)).join(" "),
+      },
+      {
+        rows: 4,
+        value: ["A", "B", "C", "D"].map((character) => character.repeat(15)).join(" "),
+      },
+    ];
+
+    for (const { rows, value } of lines) {
+      const svg = renderThoughtV2GlyphLibraryFrameStudySvg(
+        font,
+        value,
+        value,
+        32,
+        "#006100",
+        THOUGHT_V2_GLYPH_STUDY_DEFAULT_FOREGROUND,
+      );
+      const prompt = /<g id="prompt-line"[^>]*>(.*?)<\/g>/.exec(svg)?.[1];
+      const agent = /<g id="agent-line"[^>]*>(.*?)<\/g>/.exec(svg)?.[1];
+      expect(prompt).toBeTruthy();
+      expect(agent).toBeTruthy();
+
+      const yPositions = (group: string | undefined): number[] =>
+        [...(group ?? "").matchAll(/translate\([^ ]+ ([0-9.]+)\) scale\(4\.8\)/g)]
+          .map((match) => Number(match[1]));
+      const promptYs = yPositions(prompt);
+      const agentYs = yPositions(agent);
+
+      expect(Math.max(...promptYs)).toBe(332.8);
+      expect(Math.min(...promptYs)).toBe(332.8 - ((rows - 1) * 64));
+      expect(Math.max(...agentYs)).toBe(780.8);
+      expect(Math.min(...agentYs)).toBe(780.8 - ((rows - 1) * 64));
+    }
   });
 
   it("rejects text outside the shared Terminal English profile", () => {

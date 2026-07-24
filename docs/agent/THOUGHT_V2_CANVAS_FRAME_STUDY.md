@@ -51,8 +51,11 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
 - frame color is `#006100`, the original dark THOUGHT terminal green;
 - the black internal canvas remains exactly `960 × 960`;
 - the internal canvas is translated by `32,32` and is not scaled;
-- prompt and Agent fields keep their existing positions relative to that
-  internal canvas;
+- prompt and Agent fields keep their fixed positions relative to that internal
+  canvas: prompt `(57.6,128,844.8,256)`, Agent
+  `(57.6,576,844.8,256)`;
+- both fields are bottom aligned, fixing their final glyph-row baselines at
+  `332.8` and `780.8`;
 - prompt and Agent fields remain frameless;
 - Humanist Smooth native paths are the selected glyph implementation;
 - canonical glyph green is `#00ff00`;
