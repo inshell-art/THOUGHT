@@ -17,20 +17,27 @@ interface VmThoughtV2 {
 contract MockPathNFTV2 {
     bool public shouldRevert;
     uint256 public consumeCallCount;
+    bool public serialOverrideSet;
+    uint32 public serialOverride;
 
     function setShouldRevert(bool value) external {
         shouldRevert = value;
     }
 
+    function setSerialOverride(uint32 value) external {
+        serialOverride = value;
+        serialOverrideSet = true;
+    }
+
     function consumeUnit(uint256 pathId, bytes32 movement, address claimer, uint256, bytes calldata)
         external
-        returns (uint256 serial)
+        returns (uint32 serial)
     {
         require(!shouldRevert, "PATH_REVERT");
         require(movement == bytes32("THOUGHT"), "BAD_MOVEMENT");
         require(claimer != address(0), "BAD_CLAIMER");
         consumeCallCount += 1;
-        return pathId * 10;
+        return serialOverrideSet ? serialOverride : uint32(pathId * 10);
     }
 }
 
@@ -322,6 +329,19 @@ contract ThoughtNFTV2Test {
         require(token.ownerOf(tokenId) == address(0xCAFE), "transfer failed");
         require(token.authorOf(tokenId) == USER, "transfer changed author");
         require(keccak256(bytes(token.tokenURI(tokenId))) == tokenUriHash, "transfer changed metadata");
+    }
+
+    function testMintWidensCanonicalUint32PathSerialToStoredUint256() public {
+        uint32 canonicalSerial = type(uint32).max;
+        path.setSerialOverride(canonicalSerial);
+
+        ThoughtNFTV2.MintThoughtInput memory input = _input("Can the boundary hold?", "The serial widens safely.", 8);
+        VM.prank(USER);
+        uint256 tokenId = token.mint(input);
+
+        uint256 storedSerial = token.pathSerialOf(tokenId);
+        require(storedSerial == uint256(canonicalSerial), "uint32 PATH serial widening mismatch");
+        require(path.consumeCallCount() == 1, "PATH consume count mismatch");
     }
 
     function testConstructorPinsDependenciesAndRejectsInvalidTargetsAndRelease() public {
@@ -747,7 +767,7 @@ contract ThoughtNFTV2Test {
     }
 
     function testRuntimeBytecodeRemainsDeployable() public view {
-        require(address(token).code.length == 17_088, "update reviewed V2 runtime size");
+        require(address(token).code.length == 17_252, "update reviewed V2 runtime size");
         require(address(token).code.length < 24_576, "V2 exceeds EIP-170");
     }
 

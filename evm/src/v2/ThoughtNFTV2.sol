@@ -13,7 +13,7 @@ import {ThoughtV2WorkProfile} from "./ThoughtV2WorkProfile.sol";
 interface IPathNFTV2 {
     function consumeUnit(uint256 pathId, bytes32 movement, address claimer, uint256 deadline, bytes calldata signature)
         external
-        returns (uint256);
+        returns (uint32);
 }
 
 interface IThoughtSpecRegistryV2 {
