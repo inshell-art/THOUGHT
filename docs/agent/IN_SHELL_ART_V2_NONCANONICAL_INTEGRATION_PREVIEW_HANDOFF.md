@@ -1,10 +1,15 @@
 # THOUGHT V2 Humanist Smooth renderer integration handoff
 
-Artifact ID: `thought-v2-noncanonical-integration-preview-20260725-r6`
+Artifact ID: `thought-v2-noncanonical-integration-preview-20260725-r7`
 
 Intended consumer: THOUGHT App owner in `/Users/bigu/Projects/inshell.art`
 
 Classification: `experimental / noncanonical integration preview`
+
+This revision supersedes r6 because r6 packages stale `ThoughtNFTV2`
+bytecode whose local PATH interface declares `consumeUnit()` as returning
+`uint256`. The renderer, THOUGHT App boundary, and public `ThoughtNFTV2` ABI
+remain unchanged.
 
 ## Decision now implemented
 
@@ -70,7 +75,7 @@ Read these files first:
 Consume the immutable experimental artifact:
 
   artifact ID:
-    thought-v2-noncanonical-integration-preview-20260725-r6
+    thought-v2-noncanonical-integration-preview-20260725-r7
   pointer:
     artifacts/thought-v2-integration-preview/experimental.json
 
@@ -108,8 +113,12 @@ bottom, so its final glyph-row baseline is always 780.8. Do not vertically
 center or independently reflow either field.
 
 Keep the current App/Contract mint, provenance and Creation Attestation
-boundary unchanged. This handoff changes the renderer implementation and
-renderer artifact facts; it does not authorize an App-side contract refactor.
+boundary unchanged. Replace the r6 compiled `ThoughtNFTV2` bytecode with the
+r7 artifact and redeploy disposable Anvil fixtures. The public
+`ThoughtNFTV2` ABI is byte-for-byte unchanged. The App's existing canonical
+PATH ABI already declares `consumeUnit()` as returning `uint32`, so no App
+client change is required. This handoff does not authorize an App-side
+contract refactor.
 
 Run App tests against disposable Anvil and report:
 
@@ -137,6 +146,20 @@ The integration preview includes:
   binary glyph-location index;
 - current TypeScript provenance, work-profile and attestation references.
 
+Relative to r6, `ThoughtNFTV2` now declares the canonical PATH dependency as:
+
+```solidity
+consumeUnit(uint256, bytes32, address, uint256, bytes)
+    external
+    returns (uint32);
+```
+
+The returned serial is widened into THOUGHT's existing `uint256` storage,
+events, public getter, metadata and provenance-facing token facts. The
+external `ThoughtNFTV2` ABI, mint behavior and token API do not change. A
+boundary test covers `type(uint32).max`, and the reviewed runtime size is
+17,252 bytes.
+
 The two Humanist Smooth definition fragments and compact glyph-location index
 are immutable code-storage payloads. `ThoughtRendererV2` accepts all three
 pointer addresses in its constructor and fails closed unless their exact
@@ -151,7 +174,7 @@ and the combined complete-library definitions hash for consumer verification.
 - ordered prompt-plus-Agent uniqueness;
 - Terminal English validation;
 - selected-spec registry validation;
-- PATH consumption;
+- PATH consumption behavior;
 - exact provenance storage and hashing;
 - Creation Attestation claim fields;
 - Attested Agent/Model trait gate;

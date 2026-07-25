@@ -2,7 +2,7 @@
 
 > Superseded for renderer/artifact integration on 2026-07-24. Use
 > `IN_SHELL_ART_V2_NONCANONICAL_INTEGRATION_PREVIEW_HANDOFF.md` and the
-> `thought-v2-noncanonical-integration-preview-20260725-r6` artifact. The
+> `thought-v2-noncanonical-integration-preview-20260725-r7` artifact. The
 > mint/provenance/attestation boundary below remains useful background, but
 > its r3 artifact pin and temporary Source Code Pro renderer facts are stale.
 

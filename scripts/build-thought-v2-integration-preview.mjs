@@ -240,6 +240,7 @@ writeJson(path.join(releaseDir, "contract/index.json"), {
       movement: "THOUGHT",
       ownerRepository: "PATH",
       requiredMethod: "consumeUnit(uint256,bytes32,address,uint256,bytes)",
+      requiredReturnType: "uint32",
     },
   },
   persistentNetworkDeployments: [],

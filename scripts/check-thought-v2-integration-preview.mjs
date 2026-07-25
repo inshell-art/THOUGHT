@@ -116,6 +116,11 @@ if (
 
 const contractIndex = JSON.parse(fs.readFileSync(path.join(releaseDir, "contract/index.json"), "utf8"));
 if ((contractIndex.persistentNetworkDeployments ?? []).length !== 0) fail("persistent deployment included");
+if (
+  contractIndex.externalDependencies?.pathNft?.requiredMethod
+    !== "consumeUnit(uint256,bytes32,address,uint256,bytes)"
+  || contractIndex.externalDependencies?.pathNft?.requiredReturnType !== "uint32"
+) fail("canonical PATH consumeUnit dependency drifted");
 for (const contract of contractIndex.contracts ?? []) {
   const compiled = JSON.parse(fs.readFileSync(path.join(releaseDir, contract.artifact), "utf8"));
   if (!Array.isArray(compiled.abi) || compiled.contractName !== contract.contractName) {
