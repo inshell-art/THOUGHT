@@ -1,10 +1,10 @@
 {
-  "artifactId": "thought-v2-noncanonical-integration-preview-20260724-r5",
+  "artifactId": "thought-v2-noncanonical-integration-preview-20260725-r6",
   "classification": "noncanonical-integration-preview",
-  "manifestPath": "artifacts/thought-v2-integration-preview/releases/thought-v2-noncanonical-integration-preview-20260724-r5/manifest.json",
-  "manifestSha256": "a207e7f0fcf9abdddbc53f8154d73424d8155ef63a61ec40237e6a5d50d8b89f",
+  "manifestPath": "artifacts/thought-v2-integration-preview/releases/thought-v2-noncanonical-integration-preview-20260725-r6/manifest.json",
+  "manifestSha256": "f2706d73601fe65b4e94038b2422fa1bc3e856d28432d3ada49c2852e949871b",
   "productionConsumable": false,
   "registrationAuthorized": false,
   "schema": "inshell.thought.integration-preview-pointer.v1",
-  "sourceTag": "thought-v2-noncanonical-integration-preview-20260724-r5"
+  "sourceTag": "thought-v2-noncanonical-integration-preview-20260725-r6"
 }

@@ -189,10 +189,11 @@ describe("THOUGHT V2 glyph-library frame study", () => {
     expect(svg).toContain('data-text-color="#00ff00"');
     expect(svg).toContain('<g id="prompt-line" fill="#00ff00"');
     expect(svg).toContain('<g id="agent-line" fill="#00ff00"');
-    expect(svg).toContain('data-field-vertical-align="bottom"');
+    expect(svg).toContain('data-prompt-vertical-align="top"');
+    expect(svg).toContain('data-agent-vertical-align="bottom"');
     expect(svg).toContain('data-field-bottom="384"');
     expect(svg).toContain('data-field-bottom="832"');
-    expect(svg).toContain('transform="translate(153.6 332.8) scale(4.8)"');
+    expect(svg).toContain('transform="translate(153.6 140.8) scale(4.8)"');
     expect(svg).toContain('transform="translate(57.6 780.8) scale(4.8)"');
     expect(svg).not.toMatch(/<text[\s>]/);
     expect(svg).not.toContain("<foreignObject");
@@ -209,7 +210,7 @@ describe("THOUGHT V2 glyph-library frame study", () => {
     );
   });
 
-  it("bottom-aligns both fixed text fields across one through four wrapped rows", () => {
+  it("top-aligns the fixed prompt field and bottom-aligns the fixed Agent field", () => {
     const lines = [
       { rows: 1, value: "A" },
       { rows: 2, value: "A".repeat(15) + " " + "B".repeat(15) },
@@ -243,8 +244,8 @@ describe("THOUGHT V2 glyph-library frame study", () => {
       const promptYs = yPositions(prompt);
       const agentYs = yPositions(agent);
 
-      expect(Math.max(...promptYs)).toBe(332.8);
-      expect(Math.min(...promptYs)).toBe(332.8 - ((rows - 1) * 64));
+      expect(Math.min(...promptYs)).toBe(140.8);
+      expect(Math.max(...promptYs)).toBe(140.8 + ((rows - 1) * 64));
       expect(Math.max(...agentYs)).toBe(780.8);
       expect(Math.min(...agentYs)).toBe(780.8 - ((rows - 1) * 64));
     }

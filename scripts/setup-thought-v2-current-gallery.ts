@@ -81,7 +81,7 @@ const glyphDefinitionsIndexFile = path.join(
   "protocol/current/v2/renderer/humanist-smooth-index.bin",
 );
 const rendererImplementationId =
-  "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields";
+  "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(

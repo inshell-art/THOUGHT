@@ -55,7 +55,7 @@ The historical binary-weave attempt remains in the old unversioned contract, `pr
 
 The V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
 
-The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. Humanist Smooth native path glyphs use `#00ff00`, with the prompt at the upper right and Agent response at the lower left. Both fixed 844.8-by-256 text fields pack wrapped rows upward from a fixed bottom: prompt bottom `384`, Agent bottom `832`. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the renderer.
+The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. Humanist Smooth native path glyphs use `#00ff00`, with the prompt at the upper right and Agent response at the lower left. Both fields are fixed at 844.8 by 256 units: prompt rows grow downward from a fixed top and Agent rows grow upward from a fixed bottom. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the renderer.
 
 ## Development
 

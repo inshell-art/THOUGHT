@@ -60,12 +60,12 @@ if (manifest.compatibility?.renderer?.finalImplementationIncluded !== true) {
 }
 if (
   manifest.compatibility?.renderer?.packagedImplementation
-    !== "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields"
+    !== "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
   || manifest.compatibility?.renderer?.geometry?.artboard !== "1024x1024"
   || manifest.compatibility?.renderer?.geometry?.canvas !== "960x960@32,32"
   || manifest.compatibility?.renderer?.geometry?.canvasScale !== 1
   || manifest.compatibility?.renderer?.geometry?.fields?.prompt?.bottom !== 384
-  || manifest.compatibility?.renderer?.geometry?.fields?.prompt?.verticalAlign !== "bottom"
+  || manifest.compatibility?.renderer?.geometry?.fields?.prompt?.verticalAlign !== "top"
   || manifest.compatibility?.renderer?.geometry?.fields?.agent?.bottom !== 832
   || manifest.compatibility?.renderer?.geometry?.fields?.agent?.verticalAlign !== "bottom"
   || manifest.compatibility?.renderer?.geometry?.frameColor !== "#006100"

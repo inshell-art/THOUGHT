@@ -217,7 +217,7 @@ const compatibility = {
     finalImplementationIncluded: true,
     geometry: releaseInput.rendererGeometry,
     packagedImplementation:
-      "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields",
+      "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
   },
   selectedSpec: {
     byteLength: specBytes.length,

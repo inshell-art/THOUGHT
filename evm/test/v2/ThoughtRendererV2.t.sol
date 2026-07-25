@@ -41,7 +41,7 @@ contract ThoughtRendererV2Test {
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
                 == keccak256(
                     bytes(
-                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields"
+                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
                     )
                 ),
             "implementation ID drift"
@@ -72,10 +72,12 @@ contract ThoughtRendererV2Test {
         require(!_contains(svg, 'id="humanist-smooth-g005a"'), "unused glyph definition returned");
         require(_contains(svg, '<g id="prompt-line" fill="#00ff00"'), "missing canonical prompt green");
         require(_contains(svg, '<g id="agent-line" fill="#00ff00"'), "missing canonical Agent green");
-        require(_contains(svg, 'data-field-vertical-align="bottom"'), "fixed field alignment missing");
+        require(_contains(svg, 'data-prompt-vertical-align="top"'), "fixed prompt alignment missing");
+        require(_contains(svg, 'data-agent-vertical-align="bottom"'), "fixed Agent alignment missing");
         require(
             _contains(
-                svg, 'data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384"'
+                svg,
+                'data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="top"'
             ),
             "prompt field geometry drift"
         );
@@ -86,7 +88,7 @@ contract ThoughtRendererV2Test {
             "Agent field geometry drift"
         );
         require(
-            _contains(svg, '<use href="#humanist-smooth-g0041" transform="translate(499.2 332.8) scale(4.8)"/>'),
+            _contains(svg, '<use href="#humanist-smooth-g0041" transform="translate(499.2 140.8) scale(4.8)"/>'),
             "prompt placement drift"
         );
         require(
@@ -102,11 +104,11 @@ contract ThoughtRendererV2Test {
         require(_contains(svg, 'data-source="I am here."'), "missing exact Agent source");
     }
 
-    function testPromptAndAgentFieldsKeepFixedBottomsAcrossOneThroughFourRows() public view {
+    function testPromptKeepsFixedTopAndAgentKeepsFixedBottomAcrossOneThroughFourRows() public view {
         string memory oneRow = renderer.render("A", "A");
         require(
-            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(873.6 332.8) scale(4.8)"/>'),
-            "one-row prompt bottom drift"
+            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(873.6 140.8) scale(4.8)"/>'),
+            "one-row prompt top drift"
         );
         require(
             _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(57.6 780.8) scale(4.8)"/>'),
@@ -115,8 +117,8 @@ contract ThoughtRendererV2Test {
 
         string memory twoRows = renderer.render("AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB", "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB");
         require(
-            _contains(twoRows, '<use href="#humanist-smooth-g0042" transform="translate(470.4 332.8) scale(4.8)"/>'),
-            "two-row prompt bottom drift"
+            _contains(twoRows, '<use href="#humanist-smooth-g0041" transform="translate(470.4 140.8) scale(4.8)"/>'),
+            "two-row prompt top drift"
         );
         require(
             _contains(twoRows, '<use href="#humanist-smooth-g0042" transform="translate(57.6 780.8) scale(4.8)"/>'),
@@ -128,8 +130,8 @@ contract ThoughtRendererV2Test {
             "AAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCC"
         );
         require(
-            _contains(threeRows, '<use href="#humanist-smooth-g0043" transform="translate(326.4 332.8) scale(4.8)"/>'),
-            "three-row prompt bottom drift"
+            _contains(threeRows, '<use href="#humanist-smooth-g0041" transform="translate(326.4 140.8) scale(4.8)"/>'),
+            "three-row prompt top drift"
         );
         require(
             _contains(threeRows, '<use href="#humanist-smooth-g0043" transform="translate(57.6 780.8) scale(4.8)"/>'),
@@ -141,8 +143,8 @@ contract ThoughtRendererV2Test {
             "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD"
         );
         require(
-            _contains(fourRows, '<use href="#humanist-smooth-g0044" transform="translate(470.4 332.8) scale(4.8)"/>'),
-            "four-row prompt bottom drift"
+            _contains(fourRows, '<use href="#humanist-smooth-g0041" transform="translate(470.4 140.8) scale(4.8)"/>'),
+            "four-row prompt top drift"
         );
         require(
             _contains(fourRows, '<use href="#humanist-smooth-g0044" transform="translate(57.6 780.8) scale(4.8)"/>'),

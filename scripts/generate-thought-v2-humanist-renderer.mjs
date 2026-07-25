@@ -167,7 +167,7 @@ const profile = {
         bottom: 384,
         height: 256,
         horizontalAlign: "right",
-        verticalAlign: "bottom",
+        verticalAlign: "top",
         width: 844.8,
         x: 57.6,
         y: 128,
@@ -199,7 +199,7 @@ const profile = {
   },
   id: "inshell.thought.svg.v2.terminal-chat-path-glyphs",
   implementationId:
-    "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields",
+    "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
   metrics: {
     emSquare: 8,
     fillRule: "evenodd",

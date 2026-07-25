@@ -62,7 +62,7 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
         prompt: {
           bottom: 384,
           horizontalAlign: "right",
-          verticalAlign: "bottom",
+          verticalAlign: "top",
         },
       },
       frameColor: "#006100",
@@ -86,7 +86,7 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
             bottom: 384,
             height: 256,
             horizontalAlign: "right",
-            verticalAlign: "bottom",
+            verticalAlign: "top",
             width: 844.8,
             x: 57.6,
             y: 128,
@@ -106,7 +106,7 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
       },
       id: THOUGHT_V2_RENDERER_ID,
       implementationId:
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields",
+        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
       metrics: {
         fixedAdvance: 6,
         glyphScale: 4.8,

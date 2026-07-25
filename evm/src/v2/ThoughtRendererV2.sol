@@ -24,7 +24,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
 
     string public constant IMPLEMENTATION_ID =
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields";
+        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
     string public constant GLYPH_LIBRARY_SET_ID = "inshell.thought.glyph-library.set-03";
     string public constant GLYPH_LIBRARY_MEMBER_ID = "inshell.thought.glyph-library.set-03.humanist-smooth";
     string public constant GLYPH_FAMILY_NAME = "Humanist Smooth";
@@ -45,7 +45,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     uint256 public constant MAX_COLUMNS = 29;
     uint256 public constant MAX_ROWS = 4;
     string public constant WRAP_PROFILE = "greedy-space-then-fixed-cell-overlong-word";
-    uint256 private constant PROMPT_FIELD_BOTTOM_TENTHS = 3_840;
+    uint256 private constant PROMPT_FIELD_TOP_TENTHS = 1_280;
     uint256 private constant AGENT_FIELD_BOTTOM_TENTHS = 8_320;
     uint256 private constant LINE_HEIGHT_TENTHS = 640;
     uint256 private constant GLYPH_CELL_Y_INSET_TENTHS = 128;
@@ -111,7 +111,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             GLYPH_LIBRARY_MEMBER_ID,
             '" data-glyph-visual-baseline="5.58" data-wrap="',
             WRAP_PROFILE,
-            '" data-field-vertical-align="bottom" aria-label="Prompt and Agent response in a terminal chat layout">',
+            '" data-prompt-vertical-align="top" data-agent-vertical-align="bottom" aria-label="Prompt and Agent response in a terminal chat layout">',
             '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>',
             '<g id="work-canvas" transform="translate(32 32)">',
             '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
@@ -120,7 +120,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             _xmlEscape(promptLine),
             '" data-rows="',
             _toString(promptRowCount),
-            '" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="bottom">',
+            '" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="top">',
             _renderRows(promptRows, promptRowCount, true),
             "</g>",
             '<g id="agent-line" fill="#00ff00" data-source="',
@@ -229,8 +229,9 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         pure
         returns (string memory output)
     {
-        uint256 fieldBottomTenths = prompt ? PROMPT_FIELD_BOTTOM_TENTHS : AGENT_FIELD_BOTTOM_TENTHS;
-        uint256 yTenths = fieldBottomTenths - (rowCount * LINE_HEIGHT_TENTHS) + GLYPH_CELL_Y_INSET_TENTHS;
+        uint256 yTenths = prompt
+            ? PROMPT_FIELD_TOP_TENTHS + GLYPH_CELL_Y_INSET_TENTHS
+            : AGENT_FIELD_BOTTOM_TENTHS - (rowCount * LINE_HEIGHT_TENTHS) + GLYPH_CELL_Y_INSET_TENTHS;
         for (uint256 rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             bytes memory row = rows[rowIndex];
             uint256 xTenths = prompt ? 9_024 - (row.length * 288) : 576;

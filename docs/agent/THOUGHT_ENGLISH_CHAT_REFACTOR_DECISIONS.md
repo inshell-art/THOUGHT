@@ -196,13 +196,14 @@ The V2 renderer ID is
 - 57.6-unit horizontal inset on both sides, equal to two Source Code Pro study
   character advances;
 - 844.8-unit text-field width and 256-unit field height;
-- fixed prompt field at `(57.6,128)` with bottom `384`, right aligned and
-  bottom packed;
+- fixed prompt field at `(57.6,128)` with bottom `384`, right aligned and top
+  packed;
 - fixed Agent field at `(57.6,576)` with bottom `832`, left aligned and bottom
   packed;
-- the final prompt glyph-row baseline is always `332.8` and the final Agent
+- the first prompt glyph-row baseline is always `140.8` and the final Agent
   glyph-row baseline is always `780.8`, independent of whether a field uses
-  one, two, three, or four rows;
+  one, two, three, or four rows; prompt rows grow downward and Agent rows grow
+  upward;
 - greedy word wrapping, hard character breaks only when one word exceeds the
   row capacity, no inserted hyphens, and exact deterministic baselines;
 - Humanist Smooth is the approved reviewed SVG path family; Source Code Pro

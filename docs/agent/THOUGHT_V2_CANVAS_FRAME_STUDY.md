@@ -54,8 +54,9 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
 - prompt and Agent fields keep their fixed positions relative to that internal
   canvas: prompt `(57.6,128,844.8,256)`, Agent
   `(57.6,576,844.8,256)`;
-- both fields are bottom aligned, fixing their final glyph-row baselines at
-  `332.8` and `780.8`;
+- the prompt field is top aligned, fixing its first glyph-row baseline at
+  `140.8`; the Agent field is bottom aligned, fixing its final glyph-row
+  baseline at `780.8`;
 - prompt and Agent fields remain frameless;
 - Humanist Smooth native paths are the selected glyph implementation;
 - canonical glyph green is `#00ff00`;
