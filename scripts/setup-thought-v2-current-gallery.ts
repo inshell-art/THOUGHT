@@ -32,7 +32,7 @@ import {
   hashCreationAttestationClaim,
   type ThoughtCreationAttestationClaim,
   type ThoughtCreationAttestationProof,
-} from "../src/thought-v2-creation-attestation";
+} from "../src/thought-v2-current-creation-attestation";
 import { thoughtChatGalleryFixtures } from "../src/thought-v2-chat-gallery";
 import {
   buildVerifiedCanonicalThoughtV2Provenance,
@@ -65,6 +65,53 @@ const runtimeConfigFile = path.resolve(
   rootDir,
   process.env.THOUGHT_V2_RUNTIME_CONFIG ?? "public/thought-v2-gallery.anvil.json",
 );
+const tokenUriFixtureFile = path.resolve(
+  rootDir,
+  process.env.THOUGHT_V2_TOKEN_URI_FIXTURES
+    ?? "artifacts/thought-v2-integration-preview/runtime-fixtures/neutral-agent-model-token-uri-examples.anvil.json",
+);
+const rendererExperiment = process.env.THOUGHT_V2_RENDERER_EXPERIMENT ?? "";
+const set5RendererExperiments = {
+  "classic-book": {
+    contractName: "ThoughtSvgRendererV2ClassicBook",
+    familyName: "Classic Book 76",
+    implementationId: "inshell.thought.renderer.v2.classic-book-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+    packedBytes: 2_540,
+    packedKeccak256: "0xa1505ed49c1e2b8d78d088de1a6b0b1cefcd6087cd47415bb29c39b4a3394430",
+    packedSha256: "3ab51d7dcdce7e358e7c76002b8f78ddaa448a99de2116a238f7e22209f2bd60",
+  },
+  "classic-compact": {
+    contractName: "ThoughtSvgRendererV2ClassicCompact",
+    familyName: "Classic Compact 76",
+    implementationId: "inshell.thought.renderer.v2.classic-compact-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+    packedBytes: 2_631,
+    packedKeccak256: "0x14c2bf9e9c2c5638980db8fd101c296e42fa8031fa59529b71b48e3fe9b027ea",
+    packedSha256: "204bf9e84103b57175e1dc0be06b3f42e91a4d0f8fb5b8b7457b52ff63c79393",
+  },
+  "classic-line": {
+    contractName: "ThoughtSvgRendererV2ClassicLine",
+    familyName: "Classic Line 76",
+    implementationId: "inshell.thought.renderer.v2.classic-line-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+    packedBytes: 2_514,
+    packedKeccak256: "0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77",
+    packedSha256: "d06f7403b4963d8f46e6e8559c7ab0e4a21a65aa3681b210bfe433d74ea56b42",
+  },
+  "classic-round": {
+    contractName: "ThoughtSvgRendererV2ClassicRound",
+    familyName: "Classic Round 76",
+    implementationId: "inshell.thought.renderer.v2.classic-round-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+    packedBytes: 2_696,
+    packedKeccak256: "0x55bf4234750664a8fc608d089e3f59074e3e1ae15f7082029888a6291d0de323",
+    packedSha256: "72ea88523caf278828b833368c4a3a289f7b80866ac464325d04f031c48e3a01",
+  },
+} as const;
+type Set5RendererSlug = keyof typeof set5RendererExperiments;
+const set5Experiment = rendererExperiment === ""
+  ? undefined
+  : set5RendererExperiments[rendererExperiment as Set5RendererSlug];
+if (rendererExperiment !== "" && !set5Experiment) {
+  throw new Error(`unsupported THOUGHT V2 renderer experiment ${rendererExperiment}`);
+}
 const specName = "THOUGHT.v2.md";
 const specFile = path.join(rootDir, "protocol/current/v2/THOUGHT.v2.md");
 const specRef = "dev://thought/v2/current/THOUGHT.v2.md";
@@ -80,8 +127,10 @@ const glyphDefinitionsIndexFile = path.join(
   rootDir,
   "protocol/current/v2/renderer/humanist-smooth-index.bin",
 );
-const rendererImplementationId =
+const humanistRendererImplementationId =
   "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
+const rendererImplementationId =
+  set5Experiment?.implementationId ?? humanistRendererImplementationId;
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(
@@ -90,6 +139,34 @@ const consumeAuthorizationTypehash = id(
 const abiCoder = AbiCoder.defaultAbiCoder();
 
 type Artifact = { abi: unknown[]; bytecode: string };
+
+type GalleryMintFixture = {
+  agentLine: string;
+  creationAttestationFixture: "mock-attested" | "unattested";
+  agent: string;
+  model: string;
+  promptLine: string;
+  tokenNumber: number;
+};
+
+const set5BoundaryFixtures: GalleryMintFixture[] = [
+  {
+    agentLine: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?",
+    creationAttestationFixture: "unattested",
+    agent: "Boundary fixture",
+    model: "Maximum distinct 64",
+    promptLine: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789?!",
+    tokenNumber: thoughtChatGalleryFixtures.length + 1,
+  },
+  {
+    agentLine: "?!:;'\"-()/&ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0",
+    creationAttestationFixture: "unattested",
+    agent: "Boundary fixture",
+    model: "All visible glyphs",
+    promptLine: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,",
+    tokenNumber: thoughtChatGalleryFixtures.length + 2,
+  },
+];
 
 const outFile = (contract: string): string =>
   path.join(rootDir, "evm/out", `${contract}.sol`, `${contract}.json`);
@@ -183,6 +260,9 @@ const main = async (): Promise<void> => {
   }
   const signer = new NonceManager(account);
   const minter = deployerAddress.toLowerCase() as `0x${string}`;
+  const galleryFixtures: GalleryMintFixture[] = set5Experiment
+    ? [...thoughtChatGalleryFixtures, ...set5BoundaryFixtures]
+    : thoughtChatGalleryFixtures;
 
   const [
     pathArtifact,
@@ -190,12 +270,19 @@ const main = async (): Promise<void> => {
     glyphDefinitionsPart1,
     glyphDefinitionsPart2,
     glyphDefinitionsIndex,
+    set5Packed,
   ] = await Promise.all([
     readArtifact(pathArtifactFile),
     fs.readFile(specFile),
     fs.readFile(glyphDefinitionsPart1File),
     fs.readFile(glyphDefinitionsPart2File),
     fs.readFile(glyphDefinitionsIndexFile),
+    set5Experiment
+      ? fs.readFile(path.join(
+        rootDir,
+        `protocol/current/v2/renderer/experiments/${rendererExperiment}/${rendererExperiment}.im76.bin`,
+      ))
+      : Promise.resolve(Buffer.alloc(0)),
   ]);
   if (specBytes.includes(0x0d) || specBytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) {
     throw new Error("current THOUGHT spec must use exact UTF-8 without BOM or CRLF");
@@ -212,13 +299,25 @@ const main = async (): Promise<void> => {
   const glyphDefinitionsHash = keccak256(
     concat([glyphDefinitionsPart1, glyphDefinitionsPart2]),
   ) as `0x${string}`;
+  const set5PackedHash = keccak256(set5Packed) as `0x${string}`;
+  if (
+    set5Experiment
+    && (
+      set5Packed.length !== set5Experiment.packedBytes
+      || set5PackedHash !== set5Experiment.packedKeccak256
+    )
+  ) {
+    throw new Error(`${set5Experiment.familyName} IM76 payload drifted`);
+  }
 
-  console.log(`Deploying disposable current V2 gallery from ${deployerAddress}...`);
+  console.log(
+    `Deploying disposable current V2 ${set5Experiment ? `${set5Experiment.familyName} benchmark` : "gallery"} from ${deployerAddress}...`,
+  );
   const pathNft = await deploy(signer, pathArtifactFile, [deployerAddress, "PATH", "PATH", "", 0n, 604_800n]);
   const pathAddress = await pathNft.getAddress();
   await (await pathNft.grantRole(id("MINTER_ROLE"), deployerAddress)).wait();
   await (await pathNft.freezePublicMinter(deployerAddress)).wait();
-  for (let pathId = 1n; pathId <= BigInt(thoughtChatGalleryFixtures.length); pathId += 1n) {
+  for (let pathId = 1n; pathId <= BigInt(galleryFixtures.length); pathId += 1n) {
     await (await pathNft.safeMint(deployerAddress, pathId, "0x")).wait();
   }
 
@@ -235,39 +334,82 @@ const main = async (): Promise<void> => {
 
   const protocolRegistry = await deploy(signer, outFile("ThoughtSpecRegistryV2"), [deployerAddress]);
   const protocolRegistryAddress = await protocolRegistry.getAddress();
-  const glyphDefinitionsPointer1 = await deployDataPointer(signer, glyphDefinitionsPart1);
-  const glyphDefinitionsPointer2 = await deployDataPointer(signer, glyphDefinitionsPart2);
-  const glyphDefinitionsIndexPointer = await deployDataPointer(signer, glyphDefinitionsIndex);
-  if (
-    keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer1)).slice(4)}`)
-      !== glyphDefinitionsPart1Hash
-    || keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer2)).slice(4)}`)
-      !== glyphDefinitionsPart2Hash
-    || keccak256(`0x${(await provider.getCode(glyphDefinitionsIndexPointer)).slice(4)}`)
-      !== glyphDefinitionsIndexHash
-  ) {
-    throw new Error("Humanist Smooth definition/index pointer readback failed");
+  let glyphDefinitionsPointer1: string;
+  let glyphDefinitionsPointer2: string;
+  let glyphDefinitionsIndexPointer: string;
+  let renderer: Contract;
+  let svgRendererAddress: string | null = null;
+  if (set5Experiment) {
+    glyphDefinitionsPointer1 = await deployDataPointer(signer, set5Packed);
+    glyphDefinitionsPointer2 = zeroBytes32.slice(0, 42);
+    glyphDefinitionsIndexPointer = zeroBytes32.slice(0, 42);
+    if (
+      keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer1)).slice(4)}`)
+        !== set5PackedHash
+    ) {
+      throw new Error(`${set5Experiment.familyName} IM76 pointer readback failed`);
+    }
+    const svgRenderer = await deploy(
+      signer,
+      outFile(set5Experiment.contractName),
+      [glyphDefinitionsPointer1],
+    );
+    svgRendererAddress = await svgRenderer.getAddress();
+    renderer = await deploy(signer, outFile("ThoughtRendererV2Split"), [svgRendererAddress]);
+    if (
+      await renderer.IMPLEMENTATION_ID() !== set5Experiment.implementationId
+      || await renderer.GLYPH_LIBRARY_MEMBER_ID()
+        !== `inshell.thought.glyph-library.set-05.${rendererExperiment}`
+      || await renderer.glyphDefinitionsKeccak256() !== set5PackedHash
+    ) {
+      throw new Error(`${set5Experiment.familyName} renderer descriptor readback failed`);
+    }
+  } else {
+    glyphDefinitionsPointer1 = await deployDataPointer(signer, glyphDefinitionsPart1);
+    glyphDefinitionsPointer2 = await deployDataPointer(signer, glyphDefinitionsPart2);
+    glyphDefinitionsIndexPointer = await deployDataPointer(signer, glyphDefinitionsIndex);
+    if (
+      keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer1)).slice(4)}`)
+        !== glyphDefinitionsPart1Hash
+      || keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer2)).slice(4)}`)
+        !== glyphDefinitionsPart2Hash
+      || keccak256(`0x${(await provider.getCode(glyphDefinitionsIndexPointer)).slice(4)}`)
+        !== glyphDefinitionsIndexHash
+    ) {
+      throw new Error("Humanist Smooth definition/index pointer readback failed");
+    }
+    renderer = await deploy(
+      signer,
+      outFile("ThoughtRendererV2"),
+      [glyphDefinitionsPointer1, glyphDefinitionsPointer2, glyphDefinitionsIndexPointer],
+    );
   }
-  const renderer = await deploy(
-    signer,
-    outFile("ThoughtRendererV2"),
-    [glyphDefinitionsPointer1, glyphDefinitionsPointer2, glyphDefinitionsIndexPointer],
-  );
   const rendererAddress = await renderer.getAddress();
 
+  const rendererManifestArtifacts = set5Experiment
+    ? [
+      ["renderer-profile", `protocol/current/v2/renderer/experiments/${rendererExperiment}/thought.renderer.v2.${rendererExperiment}.experiment.json`],
+      ["renderer-glyph-packed-im76", `protocol/current/v2/renderer/experiments/${rendererExperiment}/${rendererExperiment}.im76.bin`],
+      ["renderer-glyph-package-manifest", "vendor/thought-glyph-library-fifth-set-v8/manifest.json"],
+      ["renderer-glyph-license", "vendor/thought-glyph-library-fifth-set-v8/UNLICENSED.md"],
+      ["renderer-glyph-notice", "vendor/thought-glyph-library-fifth-set-v8/NOTICE.md"],
+    ]
+    : [
+      ["renderer-profile", "protocol/current/v2/renderer/thought.renderer.v2.profile.json"],
+      ["renderer-glyph-definitions-1", "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"],
+      ["renderer-glyph-definitions-2", "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"],
+      ["renderer-glyph-definition-index", "protocol/current/v2/renderer/humanist-smooth-index.bin"],
+      ["renderer-glyph-license", "protocol/current/v2/renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md"],
+      ["renderer-glyph-notice", "protocol/current/v2/renderer/NOTICE-HUMANIST-SMOOTH.md"],
+    ];
   const manifestArtifacts = await Promise.all([
     ["creative-spec", "protocol/current/v2/THOUGHT.v2.md"],
     ["work-profile", "protocol/current/v2/work/thought.work.v2.profile.json"],
     ["context-profile", "protocol/current/v2/context/thought.context.v2.profile.json"],
     ["metadata-profile", "protocol/current/v2/metadata/thought.metadata.v2.profile.json"],
     ["provenance-schema", "protocol/current/v2/provenance/thought.provenance.v2.schema.json"],
-    ["creation-attestation-profile", "protocol/current/v2/attestation/thought.creation-workflow-attestation.v1.md"],
-    ["renderer-profile", "protocol/current/v2/renderer/thought.renderer.v2.profile.json"],
-    ["renderer-glyph-definitions-1", "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"],
-    ["renderer-glyph-definitions-2", "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"],
-    ["renderer-glyph-definition-index", "protocol/current/v2/renderer/humanist-smooth-index.bin"],
-    ["renderer-glyph-license", "protocol/current/v2/renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md"],
-    ["renderer-glyph-notice", "protocol/current/v2/renderer/NOTICE-HUMANIST-SMOOTH.md"],
+    ["creation-attestation-profile", "protocol/current/v2/attestation/thought.creation-workflow-attestation.v2.md"],
+    ...rendererManifestArtifacts,
   ].map(async ([role, artifactPath]) => ({
     keccak256: await hashFile(artifactPath!),
     path: artifactPath!,
@@ -276,18 +418,33 @@ const main = async (): Promise<void> => {
   const manifest = {
     artifacts: manifestArtifacts,
     chainId: network.chainId.toString(),
-    glyphLibrary: {
-      definitionsKeccak256: glyphDefinitionsHash,
-      definitionsPart1Keccak256: glyphDefinitionsPart1Hash,
-      definitionsPart2Keccak256: glyphDefinitionsPart2Hash,
-      indexKeccak256: glyphDefinitionsIndexHash,
-      family: "Humanist Smooth",
-      libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
-      librarySetId: "inshell.thought.glyph-library.set-03",
-      releaseReady: true,
-      role: "canonical-native-svg-paths",
-      visualBaseline: 5.58,
-    },
+    glyphLibrary: set5Experiment
+      ? {
+        family: set5Experiment.familyName,
+        libraryMemberId: `inshell.thought.glyph-library.set-05.${rendererExperiment}`,
+        librarySetId: "inshell.thought.glyph-library.set-05",
+        librarySetVersion: 8,
+        packageReleaseCommit: "715487e6a2549f980284cdf7a0c0edca575defa6",
+        packageVersion: "1.7.0",
+        packedBytes: set5Packed.length,
+        packedKeccak256: set5PackedHash,
+        packedSha256: `0x${set5Experiment.packedSha256}`,
+        releaseReady: false,
+        role: "noncanonical-solidity-gas-experiment",
+        sourceRepositoryCommit: "a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c",
+      }
+      : {
+        definitionsKeccak256: glyphDefinitionsHash,
+        definitionsPart1Keccak256: glyphDefinitionsPart1Hash,
+        definitionsPart2Keccak256: glyphDefinitionsPart2Hash,
+        indexKeccak256: glyphDefinitionsIndexHash,
+        family: "Humanist Smooth",
+        libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
+        librarySetId: "inshell.thought.glyph-library.set-03",
+        releaseReady: true,
+        role: "canonical-native-svg-paths",
+        visualBaseline: 5.58,
+      },
     identifiers: {
       contextProfile: THOUGHT_V2_CONTEXT_PROFILE_ID,
       contextProfileHash: THOUGHT_V2_CONTEXT_PROFILE_ID_HASH,
@@ -302,13 +459,18 @@ const main = async (): Promise<void> => {
     productionRegistrationAuthorized: false,
     rendererImplementation: {
       id: rendererImplementationId,
-      releaseReady: true,
+      releaseReady: !set5Experiment,
+      ...(svgRendererAddress ? { svgRendererAddress } : {}),
       usesForeignObject: false,
       usesSvgText: false,
     },
-    schema: "inshell.thought.protocol.v2.disposable-anvil-manifest.v1",
+    schema: set5Experiment
+      ? "inshell.thought.protocol.v2.disposable-anvil-set5-benchmark-manifest.v1"
+      : "inshell.thought.protocol.v2.disposable-anvil-manifest.v1",
     selectedSpec: { name: specName, thoughtSpecHash, thoughtSpecId },
-    status: "registered-disposable-anvil",
+    status: set5Experiment
+      ? "registered-disposable-anvil-noncanonical-experiment"
+      : "registered-disposable-anvil",
   };
   const manifestJson = canonicalJsonStringify(manifest as unknown as CanonicalJson);
   const manifestHash = keccak256(toUtf8Bytes(manifestJson)) as `0x${string}`;
@@ -318,7 +480,7 @@ const main = async (): Promise<void> => {
 
   const verifier = await deploy(
     signer,
-    outFile("CreationAttestationVerifier"),
+    outFile("CreationAttestationVerifierV2"),
     [deployerAddress, deployerAddress],
   );
   const verifierAddress = await verifier.getAddress();
@@ -354,19 +516,19 @@ const main = async (): Promise<void> => {
     facts: ThoughtV2ProvenanceAttestationFacts;
   }>();
   let totalMintGas = 0n;
-  for (const fixture of thoughtChatGalleryFixtures) {
+  for (const fixture of galleryFixtures) {
     const pathId = BigInt(fixture.tokenNumber);
     const shouldAttest = fixture.creationAttestationFixture === "mock-attested";
     const process = shouldAttest
       ? {
         agentDeclaration: {
-          label: fixture.declaredAgent,
+          label: fixture.agent,
           source: "runtime_configured" as const,
           status: "declared-unverified" as const,
         },
         kind: "agent-run" as const,
         modelDeclaration: {
-          label: fixture.declaredModel,
+          label: fixture.model,
           source: "runtime_configured" as const,
           status: "declared-unverified" as const,
         },
@@ -382,13 +544,13 @@ const main = async (): Promise<void> => {
       }
       : {
         agentDeclaration: {
-          label: fixture.declaredAgent,
+          label: fixture.agent,
           source: "manual" as const,
           status: "declared-unverified" as const,
         },
         kind: "manual" as const,
         modelDeclaration: {
-          label: fixture.declaredModel,
+          label: fixture.model,
           source: "manual" as const,
           status: "declared-unverified" as const,
         },
@@ -422,8 +584,8 @@ const main = async (): Promise<void> => {
       const claim: ThoughtCreationAttestationClaim = {
         authorityEpoch,
         deadline,
-        declaredAgentHash: keccak256(toUtf8Bytes(fixture.declaredAgent)) as `0x${string}`,
-        declaredModelHash: keccak256(toUtf8Bytes(fixture.declaredModel)) as `0x${string}`,
+        agentHash: keccak256(toUtf8Bytes(fixture.agent)) as `0x${string}`,
+        modelHash: keccak256(toUtf8Bytes(fixture.model)) as `0x${string}`,
         intendedMinter: minter,
         profileId: THOUGHT_V2_CREATION_ATTESTATION_PROFILE_ID as `0x${string}`,
         protocolReleaseId: releaseId,
@@ -436,8 +598,8 @@ const main = async (): Promise<void> => {
       };
       const facts: ThoughtV2ProvenanceAttestationFacts = {
         chainId: network.chainId.toString(),
-        declaredAgentHash: claim.declaredAgentHash,
-        declaredModelHash: claim.declaredModelHash,
+        agentHash: claim.agentHash,
+        modelHash: claim.modelHash,
         intendedMinter: claim.intendedMinter,
         protocolReleaseId: claim.protocolReleaseId,
         provenanceHash: claim.provenanceHash,
@@ -453,8 +615,8 @@ const main = async (): Promise<void> => {
           agentLine: fixture.agentLine,
           attestationClaim: facts,
           chainId: network.chainId.toString(),
-          declaredAgent: fixture.declaredAgent,
-          declaredModel: fixture.declaredModel,
+          agent: fixture.agent,
+          model: fixture.model,
           intendedMinter: minter,
           manifestKeccak256: manifestHash,
           promptLine: fixture.promptLine,
@@ -504,8 +666,8 @@ const main = async (): Promise<void> => {
       agentLine: fixture.agentLine,
       creationAttestation,
       deadline,
-      declaredAgent: fixture.declaredAgent,
-      declaredModel: fixture.declaredModel,
+      agent: fixture.agent,
+      model: fixture.model,
       pathId,
       pathSignature: signature,
       promptLine: fixture.promptLine,
@@ -515,14 +677,26 @@ const main = async (): Promise<void> => {
     });
     const receipt = await transaction.wait();
     totalMintGas += receipt?.gasUsed ?? 0n;
-    if (fixture.tokenNumber % 10 === 0 || fixture.tokenNumber === thoughtChatGalleryFixtures.length) {
-      console.log(`Minted ${fixture.tokenNumber}/${thoughtChatGalleryFixtures.length}`);
+    if (fixture.tokenNumber % 10 === 0 || fixture.tokenNumber === galleryFixtures.length) {
+      console.log(`Minted ${fixture.tokenNumber}/${galleryFixtures.length}`);
     }
   }
 
   const totalSupply = Number(await thoughtNft.totalSupply());
-  if (totalSupply !== thoughtChatGalleryFixtures.length) throw new Error(`minted supply mismatch: ${totalSupply}`);
-  for (const fixture of thoughtChatGalleryFixtures) {
+  if (totalSupply !== galleryFixtures.length) throw new Error(`minted supply mismatch: ${totalSupply}`);
+  const tokenUriGasMeasurements: Array<{
+    agentBytes: number;
+    gas: number;
+    promptBytes: number;
+    tokenNumber: number;
+  }> = [];
+  const tokenUriExamples: Array<{
+    creationAttestation: "Inshell THOUGHT App" | "Unattested";
+    metadata: Record<string, unknown>;
+    tokenId: number;
+    tokenUri: string;
+  }> = [];
+  for (const fixture of galleryFixtures) {
     const tokenId = BigInt(fixture.tokenNumber);
     const [
       promptLine,
@@ -541,6 +715,13 @@ const main = async (): Promise<void> => {
       thoughtNft.creationAttestationDigestOf(tokenId),
       thoughtNft.tokenURI(tokenId),
     ]);
+    const tokenUriGas = Number(await thoughtNft.tokenURI.estimateGas(tokenId));
+    tokenUriGasMeasurements.push({
+      agentBytes: Buffer.byteLength(fixture.agentLine, "utf8"),
+      gas: tokenUriGas,
+      promptBytes: Buffer.byteLength(fixture.promptLine, "utf8"),
+      tokenNumber: fixture.tokenNumber,
+    });
     const expectedAttestation = attestations.get(fixture.tokenNumber);
     const verification = verifyThoughtV2Provenance(
       toUtf8Bytes(storedProvenance),
@@ -548,8 +729,8 @@ const main = async (): Promise<void> => {
         agentLine: fixture.agentLine,
         ...(expectedAttestation ? { attestationClaim: expectedAttestation.facts } : {}),
         chainId: network.chainId.toString(),
-        declaredAgent: fixture.declaredAgent,
-        declaredModel: fixture.declaredModel,
+        agent: fixture.agent,
+        model: fixture.model,
         intendedMinter: minter,
         manifestKeccak256: manifestHash,
         promptLine: fixture.promptLine,
@@ -570,8 +751,8 @@ const main = async (): Promise<void> => {
     const expectedStatus = expectedAttestation ? "Inshell THOUGHT App" : "Unattested";
     const expectedAttributeOrder = thoughtV2MetadataAttributeOrder(expectedStatus);
     const attributeTypes = attributes?.map(({ trait_type }) => trait_type);
-    const attestedAgent = attributes?.find(({ trait_type }) => trait_type === "Attested Agent");
-    const attestedModel = attributes?.find(({ trait_type }) => trait_type === "Attested Model");
+    const agentTrait = attributes?.find(({ trait_type }) => trait_type === "Agent");
+    const modelTrait = attributes?.find(({ trait_type }) => trait_type === "Model");
     if (
       promptLine !== fixture.promptLine
       || agentLine !== fixture.agentLine
@@ -584,12 +765,37 @@ const main = async (): Promise<void> => {
       || thought?.workHash !== workHash
       || attributes?.length !== expectedAttributeOrder.length
       || attributeTypes?.some((traitType, index) => traitType !== expectedAttributeOrder[index])
-      || (expectedAttestation
-        ? attestedAgent?.value !== fixture.declaredAgent || attestedModel?.value !== fixture.declaredModel
-        : attestedAgent !== undefined || attestedModel !== undefined)
+      || agentTrait?.value !== fixture.agent
+      || modelTrait?.value !== fixture.model
     ) {
       throw new Error(`on-chain tokenURI/provenance parity failed for THOUGHT #${fixture.tokenNumber}`);
     }
+    if (!tokenUriExamples.some(({ creationAttestation }) => creationAttestation === expectedStatus)) {
+      tokenUriExamples.push({
+        creationAttestation: expectedStatus,
+        metadata,
+        tokenId: fixture.tokenNumber,
+        tokenUri,
+      });
+    }
+  }
+  if (
+    !tokenUriExamples.some(({ creationAttestation }) => creationAttestation === "Inshell THOUGHT App")
+    || !tokenUriExamples.some(({ creationAttestation }) => creationAttestation === "Unattested")
+  ) {
+    throw new Error("neutral Agent/Model tokenURI fixtures require both attested and Unattested examples");
+  }
+  const hardGasFailures = tokenUriGasMeasurements.filter(({ gas }) => gas >= 10_000_000);
+  const preferredGasMisses = tokenUriGasMeasurements.filter(({ gas }) => gas >= 8_000_000);
+  if (set5Experiment && hardGasFailures.length > 0) {
+    throw new Error(
+      `${set5Experiment.familyName} hard tokenURI gas gate failed: ${hardGasFailures.map(({ gas, tokenNumber }) => `#${tokenNumber}=${gas}`).join(", ")}`,
+    );
+  }
+  if (set5Experiment && preferredGasMisses.length > 0) {
+    throw new Error(
+      `${set5Experiment.familyName} preferred tokenURI gas gate failed: ${preferredGasMisses.map(({ gas, tokenNumber }) => `#${tokenNumber}=${gas}`).join(", ")}`,
+    );
   }
 
   const runtimeConfig = {
@@ -622,41 +828,92 @@ const main = async (): Promise<void> => {
       manifestHash,
       manifestJson,
       manifestUri,
-      status: "registered-disposable-anvil",
+      status: set5Experiment
+        ? "registered-disposable-anvil-noncanonical-experiment"
+        : "registered-disposable-anvil",
     },
     renderer: {
       canonicalRendererId: THOUGHT_V2_RENDERER_ID,
-      glyphDefinitionsHash,
-      glyphDefinitionsPart1Hash,
-      glyphDefinitionsPart2Hash,
-      glyphDefinitionsIndexHash,
+      glyphDefinitionsHash: set5Experiment ? set5PackedHash : glyphDefinitionsHash,
+      ...(set5Experiment
+        ? {
+          glyphPackedBytes: set5Packed.length,
+          glyphPackedHash: set5PackedHash,
+        }
+        : {
+          glyphDefinitionsPart1Hash,
+          glyphDefinitionsPart2Hash,
+          glyphDefinitionsIndexHash,
+        }),
       glyphDefinitionsIndexPointer,
       glyphDefinitionsPointer1,
       glyphDefinitionsPointer2,
-      glyphLibraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
+      glyphLibraryMemberId: set5Experiment
+        ? `inshell.thought.glyph-library.set-05.${rendererExperiment}`
+        : "inshell.thought.glyph-library.set-03.humanist-smooth",
       implementationId: rendererImplementationId,
-      releaseReady: true,
+      releaseReady: !set5Experiment,
+      ...(svgRendererAddress ? { svgRendererAddress } : {}),
     },
     rpcUrl,
-    schema: "inshell.thought.v2.anvil-gallery-runtime.v1",
+    schema: set5Experiment
+      ? "inshell.thought.v2.anvil-set5-benchmark-runtime.v1"
+      : "inshell.thought.v2.anvil-gallery-runtime.v1",
     selectedSpec: {
       hash: thoughtSpecHash,
       id: thoughtSpecId,
       name: specName,
       ref: specRef,
     },
-    status: "ready",
+    status: set5Experiment ? "ready-noncanonical-benchmark" : "ready",
     telemetry: {
       averageMintGas: (totalMintGas / BigInt(totalSupply)).toString(),
+      tokenUriGas: {
+        acceptance: {
+          hardBelow: 10_000_000,
+          hardPass: hardGasFailures.length === 0,
+          preferredBelow: 8_000_000,
+          preferredPass: preferredGasMisses.length === 0,
+        },
+        average: Math.round(
+          tokenUriGasMeasurements.reduce((sum, { gas }) => sum + gas, 0)
+            / tokenUriGasMeasurements.length,
+        ),
+        maximum: Math.max(...tokenUriGasMeasurements.map(({ gas }) => gas)),
+        measurements: tokenUriGasMeasurements,
+        minimum: Math.min(...tokenUriGasMeasurements.map(({ gas }) => gas)),
+        preferredMissTokenNumbers: preferredGasMisses.map(({ tokenNumber }) => tokenNumber),
+      },
       maxProvenanceBytes: Math.max(...provenanceBytes),
       minProvenanceBytes: Math.min(...provenanceBytes),
       totalMintGas: totalMintGas.toString(),
     },
   };
+  await fs.mkdir(path.dirname(runtimeConfigFile), { recursive: true });
+  await fs.mkdir(path.dirname(tokenUriFixtureFile), { recursive: true });
+  await fs.writeFile(tokenUriFixtureFile, `${JSON.stringify({
+    chainId: Number(network.chainId),
+    contracts: {
+      creationAttestationVerifier: verifierAddress,
+      thoughtNft: thoughtAddress,
+      thoughtRenderer: rendererAddress,
+    },
+    examples: tokenUriExamples,
+    generatedAt: new Date().toISOString(),
+    notes: [
+      "Exact tokenURI outputs captured from the disposable Anvil deployment.",
+      "These fixtures are immutable evidence inside an integration-preview artifact, not production deployment data.",
+    ],
+    schema: "inshell.thought.v2.neutral-agent-model-token-uri-examples.anvil.v1",
+  }, null, 2)}\n`, "utf8");
   await fs.writeFile(runtimeConfigFile, `${JSON.stringify(runtimeConfig, null, 2)}\n`, "utf8");
   if (!isAddress(thoughtAddress)) throw new Error("invalid THOUGHT deployment address");
   console.log(`Ready: ${totalSupply} on-chain THOUGHT tokens at ${thoughtAddress}`);
+  console.log(
+    `tokenURI gas: min ${runtimeConfig.telemetry.tokenUriGas.minimum}, average ${runtimeConfig.telemetry.tokenUriGas.average}, max ${runtimeConfig.telemetry.tokenUriGas.maximum}; hard ${runtimeConfig.telemetry.tokenUriGas.acceptance.hardPass ? "PASS" : "FAIL"}, preferred ${runtimeConfig.telemetry.tokenUriGas.acceptance.preferredPass ? "PASS" : "MISS"}`,
+  );
   console.log(`Runtime config: ${runtimeConfigFile}`);
+  console.log(`tokenURI fixtures: ${tokenUriFixtureFile}`);
 };
 
 main().catch((error: unknown) => {

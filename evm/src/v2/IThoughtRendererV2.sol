@@ -6,8 +6,8 @@ interface IThoughtRendererV2 {
         uint256 tokenId;
         string promptLine;
         string agentLine;
-        string declaredAgent;
-        string declaredModel;
+        string agent;
+        string model;
         string provenanceJson;
         bytes32 thoughtSpecId;
         bytes32 thoughtSpecHash;

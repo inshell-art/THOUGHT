@@ -5,7 +5,7 @@ export const THOUGHT_V2_CONTEXT_PROFILE_ID =
 export const THOUGHT_V2_CONTEXT_PROFILE_ID_HASH = id(THOUGHT_V2_CONTEXT_PROFILE_ID);
 export const THOUGHT_V2_MAX_CONTEXT_BYTES = 64;
 
-export type ThoughtV2ContextKind = "declaredAgent" | "declaredModel";
+export type ThoughtV2ContextKind = "agent" | "model";
 
 export type ThoughtV2ContextMeasure = {
   byteLength: number;

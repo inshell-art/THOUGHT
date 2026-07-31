@@ -133,6 +133,87 @@ const thought = JSON.parse(
 if (!thought.abi.some((item) => item.type === "function" && item.name === "mint")) {
   fail("ThoughtNFTV2 mint ABI missing");
 }
+const functionNames = new Set(
+  thought.abi.filter((item) => item.type === "function").map(({ name }) => name),
+);
+for (const name of ["agentOf", "modelOf", "agentHashOf", "modelHashOf"]) {
+  if (!functionNames.has(name)) fail(`ThoughtNFTV2 neutral getter missing: ${name}`);
+}
+for (const name of [
+  "declaredAgentOf",
+  "declaredModelOf",
+  "declaredAgentHashOf",
+  "declaredModelHashOf",
+]) {
+  if (functionNames.has(name)) fail(`ThoughtNFTV2 legacy getter leaked: ${name}`);
+}
+const mint = thought.abi.find((item) => item.type === "function" && item.name === "mint");
+const mintComponents = mint?.inputs?.[0]?.components?.map(({ name }) => name) ?? [];
+if (!mintComponents.includes("agent") || !mintComponents.includes("model")) {
+  fail("ThoughtNFTV2 mint input is missing neutral Agent/Model records");
+}
+if (mintComponents.includes("declaredAgent") || mintComponents.includes("declaredModel")) {
+  fail("ThoughtNFTV2 legacy mint record names leaked");
+}
+
+const verifier = JSON.parse(
+  fs.readFileSync(path.join(releaseDir, "contract/compiled/CreationAttestationVerifierV2.json"), "utf8"),
+);
+const hashClaim = verifier.abi.find((item) => item.type === "function" && item.name === "hashClaim");
+const claimComponents = hashClaim?.inputs?.[0]?.components?.map(({ name }) => name) ?? [];
+if (!claimComponents.includes("agentHash") || !claimComponents.includes("modelHash")) {
+  fail("Creation Attestation V2 claim is missing neutral record hashes");
+}
+if (claimComponents.includes("declaredAgentHash") || claimComponents.includes("declaredModelHash")) {
+  fail("Creation Attestation V2 legacy record hashes leaked");
+}
+
+const examples = JSON.parse(
+  fs.readFileSync(
+    path.join(releaseDir, "fixtures/neutral-agent-model-token-uri-examples.anvil.json"),
+    "utf8",
+  ),
+);
+if (examples.schema !== "inshell.thought.v2.neutral-agent-model-token-uri-examples.anvil.v1") {
+  fail("neutral Agent/Model tokenURI fixture schema drifted");
+}
+const fixtureStatuses = new Set(examples.examples?.map(({ creationAttestation }) => creationAttestation));
+if (!fixtureStatuses.has("Inshell THOUGHT App") || !fixtureStatuses.has("Unattested")) {
+  fail("tokenURI fixtures do not cover both attestation paths");
+}
+for (const example of examples.examples ?? []) {
+  if (!example.tokenUri?.startsWith("data:application/json;base64,")) {
+    fail(`invalid tokenURI fixture for THOUGHT #${example.tokenId}`);
+  }
+  const metadata = example.metadata;
+  const decodedMetadata = JSON.parse(
+    Buffer.from(example.tokenUri.slice("data:application/json;base64,".length), "base64")
+      .toString("utf8"),
+  );
+  if (JSON.stringify(decodedMetadata) !== JSON.stringify(metadata)) {
+    fail(`tokenURI/decoded metadata fixture mismatch for THOUGHT #${example.tokenId}`);
+  }
+  if (
+    metadata.description
+      !== "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork."
+  ) fail(`description fixture drifted for THOUGHT #${example.tokenId}`);
+  const traitTypes = metadata?.attributes?.map(({ trait_type }) => trait_type) ?? [];
+  if (
+    !traitTypes.includes("Agent")
+    || !traitTypes.includes("Model")
+    || !traitTypes.includes("Creation Attestation")
+    || traitTypes.includes("Attested Agent")
+    || traitTypes.includes("Attested Model")
+  ) fail(`neutral trait fixture drifted for THOUGHT #${example.tokenId}`);
+  const contractMetadata = structuredClone(metadata);
+  if (contractMetadata?.thought) delete contractMetadata.thought.provenanceJson;
+  const serialized = JSON.stringify(contractMetadata);
+  for (const forbidden of ["declaredAgent", "declaredModel", "declared-unverified"]) {
+    if (serialized.includes(forbidden)) {
+      fail(`forbidden metadata term ${forbidden} in THOUGHT #${example.tokenId}`);
+    }
+  }
+}
 
 console.log(JSON.stringify({
   artifactId: pointer.artifactId,

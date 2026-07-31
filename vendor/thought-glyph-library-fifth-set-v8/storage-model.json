@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "geometry": "Inshell Mono 76 v0.1.0 Source Code Pro-derived filled outlines",
+    "measuredAnvilPragueCreationGas": 4425630,
+    "packedBytes": 20215
+  },
+  "caveat": "Each measurement deploys one immutable IM76 payload with identical data-contract framing. It excludes renderer, SVG serialization, retrieval, minting, and repeated rendering.",
+  "fonts": [
+    {
+      "familyId": "S501",
+      "measuredAnvilPragueCreationGas": 596948,
+      "packedBytes": 2514,
+      "packedSha256": "d06f7403b4963d8f46e6e8559c7ab0e4a21a65aa3681b210bfe433d74ea56b42",
+      "slug": "classic-line",
+      "sourceCandidate": "C01"
+    },
+    {
+      "familyId": "S502",
+      "measuredAnvilPragueCreationGas": 602572,
+      "packedBytes": 2540,
+      "packedSha256": "3ab51d7dcdce7e358e7c76002b8f78ddaa448a99de2116a238f7e22209f2bd60",
+      "slug": "classic-book",
+      "sourceCandidate": "C02"
+    },
+    {
+      "familyId": "S503",
+      "measuredAnvilPragueCreationGas": 636322,
+      "packedBytes": 2696,
+      "packedSha256": "72ea88523caf278828b833368c4a3a289f7b80866ac464325d04f031c48e3a01",
+      "slug": "classic-round",
+      "sourceCandidate": "C04"
+    },
+    {
+      "familyId": "S504",
+      "measuredAnvilPragueCreationGas": 622265,
+      "packedBytes": 2631,
+      "packedSha256": "204bf9e84103b57175e1dc0be06b3f42e91a4d0f8fb5b8b7457b52ff63c79393",
+      "slug": "classic-compact",
+      "sourceCandidate": "C06"
+    }
+  ],
+  "schema": "inshell.thought.glyph-library.set-05.storage-model.v1",
+  "totals": {
+    "fontCount": 4,
+    "glyphRecords": 304,
+    "measuredIndependentCreationGasSum": 2458107,
+    "measuredIndependentCreationGasSumIsCombinedMeasurement": false,
+    "packedBytes": 10381
+  }
+}

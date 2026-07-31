@@ -4,6 +4,8 @@ pragma solidity ^0.8.28;
 import {ContractCodeStorage} from "../../src/ContractCodeStorage.sol";
 import {IThoughtRendererV2} from "../../src/v2/IThoughtRendererV2.sol";
 import {ThoughtRendererV2} from "../../src/v2/ThoughtRendererV2.sol";
+import {ThoughtRendererV2Split} from "../../src/v2/ThoughtRendererV2Split.sol";
+import {ThoughtSvgRendererV2} from "../../src/v2/ThoughtSvgRendererV2.sol";
 
 interface VmRendererV2 {
     function expectRevert(bytes calldata revertData) external;
@@ -15,17 +17,64 @@ contract ThoughtRendererV2Test {
     VmRendererV2 private constant VM = VmRendererV2(address(uint160(uint256(keccak256("hevm cheat code")))));
 
     ThoughtRendererV2 private renderer;
+    ThoughtRendererV2Split private splitRenderer;
+    ThoughtSvgRendererV2 private svgRenderer;
+    address private pointer1;
+    address private pointer2;
+    address private indexPointer;
+
+    event RendererMeasurement(
+        bytes32 indexed svgHash,
+        uint256 svgBytes,
+        uint256 renderGas,
+        bytes32 indexed tokenUriHash,
+        uint256 tokenUriBytes,
+        uint256 tokenUriGas
+    );
+
+    event SplitRendererMeasurement(
+        bytes32 indexed svgHash,
+        uint256 svgBytes,
+        uint256 renderGas,
+        bytes32 indexed tokenUriHash,
+        uint256 tokenUriBytes,
+        uint256 tokenUriGas
+    );
+
+    event BoundaryRendererMeasurement(
+        bool indexed split,
+        bytes32 indexed svgHash,
+        uint256 svgBytes,
+        uint256 renderGas,
+        bytes32 indexed tokenUriHash,
+        uint256 tokenUriBytes,
+        uint256 tokenUriGas
+    );
+
+    event RendererArchitectureMeasurement(
+        uint256 monolithicRuntimeBytes,
+        uint256 svgRuntimeBytes,
+        uint256 metadataRuntimeBytes,
+        uint256 monolithicDeployGas,
+        uint256 splitDeployGas,
+        uint256 monolithicRenderGas,
+        uint256 splitRenderGas,
+        uint256 monolithicTokenUriGas,
+        uint256 splitTokenUriGas
+    );
 
     function setUp() public {
-        address pointer1 = ContractCodeStorage.write(
+        pointer1 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
         );
-        address pointer2 = ContractCodeStorage.write(
+        pointer2 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
         );
-        address indexPointer =
+        indexPointer =
             ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
         renderer = new ThoughtRendererV2(pointer1, pointer2, indexPointer);
+        svgRenderer = new ThoughtSvgRendererV2(pointer1, pointer2, indexPointer);
+        splitRenderer = new ThoughtRendererV2Split(address(svgRenderer));
     }
 
     function testRendererBindsApprovedHumanistSmoothConfiguration() public view {
@@ -153,27 +202,27 @@ contract ThoughtRendererV2Test {
     }
 
     function testConstructorRejectsMissingOrMismatchedDefinitionParts() public {
-        address pointer1 = ContractCodeStorage.write(
+        address candidatePointer1 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
         );
-        address pointer2 = ContractCodeStorage.write(
+        address candidatePointer2 = ContractCodeStorage.write(
             bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
         );
-        address indexPointer =
+        address candidateIndexPointer =
             ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
 
         VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
-        new ThoughtRendererV2(address(0), pointer2, indexPointer);
+        new ThoughtRendererV2(address(0), candidatePointer2, candidateIndexPointer);
 
         VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 2));
-        new ThoughtRendererV2(pointer1, address(0x1234), indexPointer);
+        new ThoughtRendererV2(candidatePointer1, address(0x1234), candidateIndexPointer);
 
         VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 3));
-        new ThoughtRendererV2(pointer1, pointer2, address(0x1234));
+        new ThoughtRendererV2(candidatePointer1, candidatePointer2, address(0x1234));
 
         address wrongPointer = ContractCodeStorage.write(bytes("wrong definitions"));
         VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
-        new ThoughtRendererV2(wrongPointer, pointer2, indexPointer);
+        new ThoughtRendererV2(wrongPointer, candidatePointer2, candidateIndexPointer);
     }
 
     function testRenderEscapesApprovedTerminalPunctuation() public view {
@@ -206,10 +255,130 @@ contract ThoughtRendererV2Test {
         require(tokenUriGas < 10_000_000, "representative tokenURI gas regression");
     }
 
+    function testEmitRepresentativeRendererMeasurement() public {
+        uint256 gasBefore = gasleft();
+        string memory svg = renderer.render("Are you there?", "I am here.");
+        uint256 renderGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        string memory uri = renderer.tokenURI(_data(bytes32(0)));
+        uint256 tokenUriGas = gasBefore - gasleft();
+
+        emit RendererMeasurement(
+            keccak256(bytes(svg)), bytes(svg).length, renderGas, keccak256(bytes(uri)), bytes(uri).length, tokenUriGas
+        );
+    }
+
+    function testEmitRepresentativeSplitRendererMeasurement() public {
+        uint256 gasBefore = gasleft();
+        string memory svg = splitRenderer.render("Are you there?", "I am here.");
+        uint256 renderGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        string memory uri = splitRenderer.tokenURI(_data(bytes32(0)));
+        uint256 tokenUriGas = gasBefore - gasleft();
+
+        emit SplitRendererMeasurement(
+            keccak256(bytes(svg)), bytes(svg).length, renderGas, keccak256(bytes(uri)), bytes(uri).length, tokenUriGas
+        );
+    }
+
+    function testEmitBoundaryMonolithicRendererMeasurement() public {
+        _emitBoundaryRendererMeasurement(renderer, false);
+    }
+
+    function testEmitBoundarySplitRendererMeasurement() public {
+        _emitBoundaryRendererMeasurement(splitRenderer, true);
+    }
+
+    function testBoundaryLinesWithMinimalProvenanceStayWithinPracticalEthCallBudget() public view {
+        string memory promptLine = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789?!";
+        string memory agentLine = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?";
+
+        uint256 gasBefore = gasleft();
+        renderer.render(promptLine, agentLine);
+        uint256 renderGas = gasBefore - gasleft();
+        require(renderGas < 1_500_000, "boundary render gas regression");
+
+        IThoughtRendererV2.TokenData memory data = _data(bytes32(0));
+        data.promptLine = promptLine;
+        data.agentLine = agentLine;
+        gasBefore = gasleft();
+        renderer.tokenURI(data);
+        uint256 tokenUriGas = gasBefore - gasleft();
+        require(tokenUriGas < 10_000_000, "boundary tokenURI gas regression");
+    }
+
+    function testSplitRendererMatchesOptimizedMonolithicBytes() public view {
+        _requireSameRender("Are you there?", "I am here.");
+        _requireSameRender("Are you \"there\" & okay?", "Yes, I'm here.");
+        _requireSameRender("AZaz09 .,?!:;'\"-()/&", "&/()-\"';:!?., 90zaZA");
+        _requireSameRender(
+            "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD",
+            "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD"
+        );
+
+        IThoughtRendererV2.TokenData memory unattested = _data(bytes32(0));
+        require(
+            keccak256(bytes(renderer.tokenURI(unattested))) == keccak256(bytes(splitRenderer.tokenURI(unattested))),
+            "unattested split tokenURI drift"
+        );
+
+        IThoughtRendererV2.TokenData memory attested = _data(keccak256("attested"));
+        require(
+            keccak256(bytes(renderer.tokenURI(attested))) == keccak256(bytes(splitRenderer.tokenURI(attested))),
+            "attested split tokenURI drift"
+        );
+    }
+
+    function testEmitRendererArchitectureMeasurement() public {
+        uint256 gasBefore = gasleft();
+        new ThoughtRendererV2(pointer1, pointer2, indexPointer);
+        uint256 monolithicDeployGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        ThoughtSvgRendererV2 measuredSvg = new ThoughtSvgRendererV2(pointer1, pointer2, indexPointer);
+        new ThoughtRendererV2Split(address(measuredSvg));
+        uint256 splitDeployGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        string memory monolithicSvg = renderer.render("Are you there?", "I am here.");
+        uint256 monolithicRenderGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        string memory splitSvg = splitRenderer.render("Are you there?", "I am here.");
+        uint256 splitRenderGas = gasBefore - gasleft();
+        require(keccak256(bytes(monolithicSvg)) == keccak256(bytes(splitSvg)), "measured split SVG drift");
+
+        IThoughtRendererV2.TokenData memory data = _data(bytes32(0));
+        gasBefore = gasleft();
+        string memory monolithicUri = renderer.tokenURI(data);
+        uint256 monolithicTokenUriGas = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        string memory splitUri = splitRenderer.tokenURI(data);
+        uint256 splitTokenUriGas = gasBefore - gasleft();
+        require(keccak256(bytes(monolithicUri)) == keccak256(bytes(splitUri)), "measured split tokenURI drift");
+
+        emit RendererArchitectureMeasurement(
+            address(renderer).code.length,
+            address(svgRenderer).code.length,
+            address(splitRenderer).code.length,
+            monolithicDeployGas,
+            splitDeployGas,
+            monolithicRenderGas,
+            splitRenderGas,
+            monolithicTokenUriGas,
+            splitTokenUriGas
+        );
+    }
+
     function testTokenUriUsesAllAndOnlyCanonicalMarketplaceTraits() public view {
         string memory metadata = _metadataJsonFromTokenUri(renderer.tokenURI(_data(bytes32(0))));
         string memory exactAttributes = string.concat(
-            '"attributes":[{"trait_type":"Creation Attestation","value":"Unattested"},',
+            '"attributes":[{"trait_type":"Agent","value":"Not applicable"},',
+            '{"trait_type":"Model","value":"Not applicable"},',
+            '{"trait_type":"Creation Attestation","value":"Unattested"},',
             '{"display_type":"number","max_value":64,"trait_type":"Prompt Bytes","value":14},',
             '{"display_type":"number","max_value":64,"trait_type":"Agent Bytes","value":10},',
             '{"display_type":"number","max_value":128,"trait_type":"Pair Bytes","value":24},',
@@ -217,26 +386,42 @@ contract ThoughtRendererV2Test {
             '{"trait_type":"Agent Length","value":"Compact"}]'
         );
         require(_contains(metadata, exactAttributes), "canonical attribute order or values drifted");
-        require(_count(metadata, '"trait_type":') == 6, "unexpected unattested marketplace trait count");
-        require(!_contains(metadata, '"trait_type":"Attested Agent"'), "unattested Agent became a trait");
-        require(!_contains(metadata, '"trait_type":"Attested Model"'), "unattested model became a trait");
+        require(_count(metadata, '"trait_type":') == 8, "unexpected unattested marketplace trait count");
+        require(
+            _contains(
+                metadata,
+                '"description":"THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork."'
+            ),
+            "canonical description drifted"
+        );
+        require(_contains(metadata, '"agent":"Not applicable"'), "neutral Agent property missing");
+        require(_contains(metadata, '"agentKeccak256":"'), "neutral Agent hash property missing");
+        require(_contains(metadata, '"model":"Not applicable"'), "neutral model property missing");
+        require(_contains(metadata, '"modelKeccak256":"'), "neutral model hash property missing");
         require(!_contains(metadata, '"trait_type":"Declared Agent"'), "legacy declaration trait leaked");
         require(!_contains(metadata, '"trait_type":"Declared Model"'), "legacy declaration trait leaked");
+        require(!_contains(metadata, '"trait_type":"Attested Agent"'), "legacy attested trait leaked");
+        require(!_contains(metadata, '"trait_type":"Attested Model"'), "legacy attested trait leaked");
         require(!_contains(metadata, "Conversation Form"), "fixture conversation form leaked into traits");
         require(!_contains(metadata, "Work Profile"), "work profile leaked into traits");
-        require(_count(metadata, '"status":"declared-unverified"') == 2, "declaration statuses drifted");
+        require(!_contains(metadata, '"declarations"'), "legacy declarations object leaked");
+        require(!_contains(metadata, "declared-unverified"), "legacy declaration status leaked");
+        require(
+            _contains(metadata, '"records":{"agent":{"keccak256":"'),
+            "neutral records object missing"
+        );
 
         string memory attested = _metadataJsonFromTokenUri(renderer.tokenURI(_data(keccak256("attested"))));
         require(
             _contains(
                 attested,
                 string.concat(
-                    '"attributes":[{"trait_type":"Attested Agent","value":"Not applicable"},',
-                    '{"trait_type":"Attested Model","value":"Not applicable"},',
+                    '"attributes":[{"trait_type":"Agent","value":"Not applicable"},',
+                    '{"trait_type":"Model","value":"Not applicable"},',
                     '{"trait_type":"Creation Attestation","value":"Inshell THOUGHT App"},'
                 )
             ),
-            "attested declaration trait gate drifted"
+            "attested neutral traits drifted"
         );
         require(
             _contains(attested, '"trait_type":"Creation Attestation","value":"Inshell THOUGHT App"'),
@@ -249,6 +434,27 @@ contract ThoughtRendererV2Test {
         require(_count(attested, '"trait_type":') == 8, "unexpected attested marketplace trait count");
         require(!_contains(attested, '"trait_type":"Declared Agent"'), "legacy declaration trait leaked");
         require(!_contains(attested, '"trait_type":"Declared Model"'), "legacy declaration trait leaked");
+        require(!_contains(attested, '"trait_type":"Attested Agent"'), "legacy attested trait leaked");
+        require(!_contains(attested, '"trait_type":"Attested Model"'), "legacy attested trait leaked");
+    }
+
+    function testAgentAndModelRecordsDoNotChangeArtworkBytes() public view {
+        IThoughtRendererV2.TokenData memory first = _data(bytes32(0));
+        IThoughtRendererV2.TokenData memory second = _data(bytes32(0));
+        second.agent = "Different neutral Agent record";
+        second.model = "Different neutral model record";
+
+        string memory firstMetadata = _metadataJsonFromTokenUri(renderer.tokenURI(first));
+        string memory secondMetadata = _metadataJsonFromTokenUri(renderer.tokenURI(second));
+        require(
+            keccak256(bytes(firstMetadata)) != keccak256(bytes(secondMetadata)),
+            "record changes must remain visible in metadata"
+        );
+        require(
+            keccak256(bytes(_between(firstMetadata, '"image":"', '","background_color"')))
+                == keccak256(bytes(_between(secondMetadata, '"image":"', '","background_color"'))),
+            "neutral records changed artwork bytes"
+        );
     }
 
     function _data(bytes32 attestationDigest) private pure returns (IThoughtRendererV2.TokenData memory) {
@@ -256,8 +462,8 @@ contract ThoughtRendererV2Test {
             tokenId: 1,
             promptLine: "Are you there?",
             agentLine: "I am here.",
-            declaredAgent: "Not applicable",
-            declaredModel: "Not applicable",
+            agent: "Not applicable",
+            model: "Not applicable",
             provenanceJson: "{\"schema\":\"inshell.thought.provenance.v2\"}",
             thoughtSpecId: keccak256("THOUGHT.v2.md"),
             thoughtSpecHash: keccak256("spec"),
@@ -270,6 +476,40 @@ contract ThoughtRendererV2Test {
             manifestKeccak256: keccak256("manifest"),
             creationAttestationVerifier: address(0xA77357)
         });
+    }
+
+    function _requireSameRender(string memory promptLine, string memory agentLine) private view {
+        require(
+            keccak256(bytes(renderer.render(promptLine, agentLine)))
+                == keccak256(bytes(splitRenderer.render(promptLine, agentLine))),
+            "split SVG drift"
+        );
+    }
+
+    function _emitBoundaryRendererMeasurement(IThoughtRendererV2 target, bool split) private {
+        string memory promptLine = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789?!";
+        string memory agentLine = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!?";
+
+        uint256 gasBefore = gasleft();
+        string memory svg = target.render(promptLine, agentLine);
+        uint256 renderGas = gasBefore - gasleft();
+
+        IThoughtRendererV2.TokenData memory data = _data(bytes32(0));
+        data.promptLine = promptLine;
+        data.agentLine = agentLine;
+        gasBefore = gasleft();
+        string memory uri = target.tokenURI(data);
+        uint256 tokenUriGas = gasBefore - gasleft();
+
+        emit BoundaryRendererMeasurement(
+            split,
+            keccak256(bytes(svg)),
+            bytes(svg).length,
+            renderGas,
+            keccak256(bytes(uri)),
+            bytes(uri).length,
+            tokenUriGas
+        );
     }
 
     function _metadataJsonFromTokenUri(string memory uri) private pure returns (string memory) {
@@ -355,5 +595,45 @@ contract ThoughtRendererV2Test {
             }
             if (matches) count++;
         }
+    }
+
+    function _between(string memory value, string memory startNeedle, string memory endNeedle)
+        private
+        pure
+        returns (string memory)
+    {
+        bytes memory source = bytes(value);
+        bytes memory start = bytes(startNeedle);
+        bytes memory end = bytes(endNeedle);
+        uint256 startIndex = type(uint256).max;
+        for (uint256 i = 0; i + start.length <= source.length; i++) {
+            bool matches = true;
+            for (uint256 j = 0; j < start.length; j++) {
+                if (source[i + j] != start[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                startIndex = i + start.length;
+                break;
+            }
+        }
+        require(startIndex != type(uint256).max, "start delimiter missing");
+        for (uint256 i = startIndex; i + end.length <= source.length; i++) {
+            bool matches = true;
+            for (uint256 j = 0; j < end.length; j++) {
+                if (source[i + j] != end[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                bytes memory output = new bytes(i - startIndex);
+                for (uint256 j = 0; j < output.length; j++) output[j] = source[startIndex + j];
+                return string(output);
+            }
+        }
+        revert("end delimiter missing");
     }
 }

@@ -28,12 +28,12 @@ const withSourceCodePro = (work: StudyDefinition): ThoughtChatStudyWork => ({
 const profileBaselineDefinitions: StudyDefinition[] = [
   {
     id: "profile-letter-case",
-    name: "letter case",
+    name: "uppercase signal",
     corpusId: "english-profile",
     corpusName: "English profile · character repertoire",
     studyKind: "profile-baseline",
-    promptLine: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    agentLine: "abcdefghijklmnopqrstuvwxyz",
+    promptLine: "THOUGHT WILL AWA",
+    agentLine: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
   },
   {
     id: "profile-digits",

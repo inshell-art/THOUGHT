@@ -8,7 +8,7 @@ import { assertThoughtV2Context } from "./thought-v2-context-profile";
 import {
   THOUGHT_CREATION_ATTESTATION_PROFILE as THOUGHT_V2_CREATION_ATTESTATION_PROFILE,
   THOUGHT_CREATION_ATTESTATION_PROFILE_ID as THOUGHT_V2_CREATION_ATTESTATION_PROFILE_ID,
-} from "./thought-v2-creation-attestation";
+} from "./thought-v2-current-creation-attestation";
 import {
   deriveThoughtV2WorkHashes,
   THOUGHT_V2_RENDERER_ID,
@@ -68,7 +68,9 @@ export type ThoughtV2CreationAttestationStatus =
   | "Inshell THOUGHT App"
   | "Unattested";
 
-export const THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER = [
+export const THOUGHT_V2_METADATA_ATTRIBUTE_ORDER = [
+  "Agent",
+  "Model",
   "Creation Attestation",
   "Prompt Bytes",
   "Agent Bytes",
@@ -77,21 +79,13 @@ export const THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER = [
   "Agent Length",
 ] as const;
 
-export const THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER = [
-  "Attested Agent",
-  "Attested Model",
-  ...THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
-] as const;
-
 export const THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER = [
-  ...THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+  ...THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
 ] as const;
 
 export const thoughtV2MetadataAttributeOrder = (
-  status: ThoughtV2CreationAttestationStatus,
-): readonly string[] => status === "Inshell THOUGHT App"
-  ? THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER
-  : THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER;
+  _status: ThoughtV2CreationAttestationStatus,
+): readonly string[] => THOUGHT_V2_METADATA_ATTRIBUTE_ORDER;
 
 export type ThoughtV2MetadataAttribute = {
   trait_type: string;
@@ -135,10 +129,10 @@ export type ThoughtV2StudyProvenance = {
 
 export type ThoughtV2StudyDerivedRecord = ThoughtV2WorkHashes & {
   agentBytes: number;
-  declaredAgent: string;
-  declaredAgentKeccak256: string;
-  declaredModel: string;
-  declaredModelKeccak256: string;
+  agent: string;
+  agentKeccak256: string;
+  model: string;
+  modelKeccak256: string;
   agentLengthClass: ThoughtV2LengthClass;
   attributes: ThoughtV2MetadataAttribute[];
   conversationForm: ThoughtV2ConversationForm;
@@ -165,9 +159,9 @@ export type ThoughtV2StudyTokenMetadata = {
       profileId: string;
       status: "Unattested";
     };
-    declarations: {
-      agent: Omit<ThoughtV2Declaration, "source"> & { keccak256: string };
-      model: Omit<ThoughtV2Declaration, "source"> & { keccak256: string };
+    records: {
+      agent: Pick<ThoughtV2Declaration, "label"> & { keccak256: string };
+      model: Pick<ThoughtV2Declaration, "label"> & { keccak256: string };
       workIdentityInput: false;
     };
     mint: {
@@ -221,8 +215,8 @@ export const buildThoughtV2MetadataAttributes = ({
   agentBytes,
   agentLengthClass,
   creationAttestation,
-  declaredAgent,
-  declaredModel,
+  agent,
+  model,
   pairBytes,
   promptBytes,
   promptLengthClass,
@@ -230,18 +224,14 @@ export const buildThoughtV2MetadataAttributes = ({
   agentBytes: number;
   agentLengthClass: ThoughtV2LengthClass;
   creationAttestation: ThoughtV2CreationAttestationStatus;
-  declaredAgent: string;
-  declaredModel: string;
+  agent: string;
+  model: string;
   pairBytes: number;
   promptBytes: number;
   promptLengthClass: ThoughtV2LengthClass;
 }): ThoughtV2MetadataAttribute[] => [
-  ...(creationAttestation === "Inshell THOUGHT App"
-    ? [
-      { trait_type: "Attested Agent", value: declaredAgent },
-      { trait_type: "Attested Model", value: declaredModel },
-    ]
-    : []),
+  { trait_type: "Agent", value: agent },
+  { trait_type: "Model", value: model },
   { trait_type: "Creation Attestation", value: creationAttestation },
   { display_type: "number", max_value: 64, trait_type: "Prompt Bytes", value: promptBytes },
   { display_type: "number", max_value: 64, trait_type: "Agent Bytes", value: agentBytes },
@@ -264,12 +254,12 @@ export const buildThoughtV2StudyRecord = (
   declarations: ThoughtV2StudyDeclarations = THOUGHT_V2_STUDY_DECLARATIONS,
 ): ThoughtV2StudyDerivedRecord => {
   const hashes = deriveThoughtV2WorkHashes(promptLine, agentLine);
-  assertThoughtV2Context(declarations.agentDeclaration.label, "declaredAgent");
-  assertThoughtV2Context(declarations.modelDeclaration.label, "declaredModel");
-  const declaredAgent = declarations.agentDeclaration.label;
-  const declaredModel = declarations.modelDeclaration.label;
-  const declaredAgentKeccak256 = keccak256(toUtf8Bytes(declaredAgent));
-  const declaredModelKeccak256 = keccak256(toUtf8Bytes(declaredModel));
+  assertThoughtV2Context(declarations.agentDeclaration.label, "agent");
+  assertThoughtV2Context(declarations.modelDeclaration.label, "model");
+  const agent = declarations.agentDeclaration.label;
+  const model = declarations.modelDeclaration.label;
+  const agentKeccak256 = keccak256(toUtf8Bytes(agent));
+  const modelKeccak256 = keccak256(toUtf8Bytes(model));
   const promptBytes = encoder.encode(promptLine).length;
   const agentBytes = encoder.encode(agentLine).length;
   const pairBytes = promptBytes + agentBytes;
@@ -280,8 +270,8 @@ export const buildThoughtV2StudyRecord = (
     agentBytes,
     agentLengthClass,
     creationAttestation: "Unattested",
-    declaredAgent,
-    declaredModel,
+    agent,
+    model,
     pairBytes,
     promptBytes,
     promptLengthClass,
@@ -333,10 +323,10 @@ export const buildThoughtV2StudyRecord = (
     agentLengthClass,
     attributes,
     conversationForm,
-    declaredAgent,
-    declaredAgentKeccak256,
-    declaredModel,
-    declaredModelKeccak256,
+    agent,
+    agentKeccak256,
+    model,
+    modelKeccak256,
     pairBytes,
     promptBytes,
     promptLengthClass,
@@ -352,7 +342,7 @@ export const buildThoughtV2StudyTokenMetadata = (
 ): ThoughtV2StudyTokenMetadata => ({
   attributes: record.attributes.map((attribute) => ({ ...attribute })),
   background_color: "000000",
-  description: "A human prompt and Agent response composed as a THOUGHT V2 study candidate.",
+  description: "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.",
   image,
   name: "THOUGHT",
   thought: {
@@ -364,16 +354,14 @@ export const buildThoughtV2StudyTokenMetadata = (
       profileId: THOUGHT_V2_CREATION_ATTESTATION_PROFILE_ID,
       status: "Unattested",
     },
-    declarations: {
+    records: {
       agent: {
-        keccak256: record.declaredAgentKeccak256,
+        keccak256: record.agentKeccak256,
         label: record.provenance.process.agentDeclaration.label,
-        status: record.provenance.process.agentDeclaration.status,
       },
       model: {
-        keccak256: record.declaredModelKeccak256,
+        keccak256: record.modelKeccak256,
         label: record.provenance.process.modelDeclaration.label,
-        status: record.provenance.process.modelDeclaration.status,
       },
       workIdentityInput: false,
     },

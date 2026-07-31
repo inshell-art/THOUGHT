@@ -104,8 +104,8 @@ export type ThoughtV2ProvenanceExpectedFacts = {
   agentLine?: string;
   attestationClaim?: ThoughtV2ProvenanceAttestationFacts;
   chainId?: string;
-  declaredAgent?: string;
-  declaredModel?: string;
+  agent?: string;
+  model?: string;
   intendedMinter?: `0x${string}`;
   manifestKeccak256?: `0x${string}`;
   promptLine?: string;
@@ -119,8 +119,8 @@ export type ThoughtV2ProvenanceExpectedFacts = {
 
 export type ThoughtV2ProvenanceAttestationFacts = {
   chainId: string;
-  declaredAgentHash: `0x${string}`;
-  declaredModelHash: `0x${string}`;
+  agentHash: `0x${string}`;
+  modelHash: `0x${string}`;
   intendedMinter: `0x${string}`;
   protocolReleaseId: `0x${string}`;
   provenanceHash: `0x${string}`;
@@ -263,7 +263,7 @@ const validateDeclaration = (
   const object = inspectObject(value, path, ["label", "source", "status"], model ? ["identifier"] : [], issues);
   if (!object) return undefined;
   try {
-    assertThoughtV2Context(String(object.label ?? ""), model ? "declaredModel" : "declaredAgent");
+    assertThoughtV2Context(String(object.label ?? ""), model ? "model" : "agent");
   } catch (error) {
     addIssue(issues, "profile.context", `${path}.label`, String(error));
   }
@@ -460,8 +460,8 @@ export const verifyThoughtV2Provenance = (
     ["agentLine", work?.agentLine, "work.agentLine"],
     ["promptLine", work?.promptLine, "work.promptLine"],
     ["workHash", work?.workHash, "work.workHash"],
-    ["declaredAgent", process?.agentDeclaration.label, "process.agentDeclaration.label"],
-    ["declaredModel", process?.modelDeclaration.label, "process.modelDeclaration.label"],
+    ["agent", process?.agentDeclaration.label, "process.agentDeclaration.label"],
+    ["model", process?.modelDeclaration.label, "process.modelDeclaration.label"],
     ["chainId", mintContext?.chainId, "mintContext.chainId"],
     ["intendedMinter", mintContext?.intendedMinter, "mintContext.intendedMinter"],
     ["thoughtNft", mintContext?.thoughtNft, "mintContext.thoughtNft"],
@@ -490,12 +490,12 @@ export const verifyThoughtV2Provenance = (
     const attestationParity: [keyof ThoughtV2ProvenanceAttestationFacts, unknown, string][] = [
       ["chainId", mintContext?.chainId, "mintContext.chainId"],
       [
-        "declaredAgentHash",
+        "agentHash",
         process ? keccak256(toUtf8Bytes(process.agentDeclaration.label)) : undefined,
         "process.agentDeclaration.label",
       ],
       [
-        "declaredModelHash",
+        "modelHash",
         process ? keccak256(toUtf8Bytes(process.modelDeclaration.label)) : undefined,
         "process.modelDeclaration.label",
       ],
@@ -533,8 +533,8 @@ export const buildVerifiedCanonicalThoughtV2Provenance = (
 ): VerifiedCanonicalThoughtV2Provenance => {
   assertThoughtV2Line(input.promptLine, "prompt");
   assertThoughtV2Line(input.agentLine, "agent");
-  assertThoughtV2Context(input.process.agentDeclaration.label, "declaredAgent");
-  assertThoughtV2Context(input.process.modelDeclaration.label, "declaredModel");
+  assertThoughtV2Context(input.process.agentDeclaration.label, "agent");
+  assertThoughtV2Context(input.process.modelDeclaration.label, "model");
 
   const provenance: ThoughtV2Provenance = {
     mintContext: { ...input.mintContext },
@@ -555,8 +555,8 @@ export const buildVerifiedCanonicalThoughtV2Provenance = (
     {
       agentLine: input.agentLine,
       chainId: input.mintContext.chainId,
-      declaredAgent: input.process.agentDeclaration.label,
-      declaredModel: input.process.modelDeclaration.label,
+      agent: input.process.agentDeclaration.label,
+      model: input.process.modelDeclaration.label,
       intendedMinter: input.mintContext.intendedMinter,
       manifestKeccak256: input.protocol.manifestKeccak256,
       promptLine: input.promptLine,

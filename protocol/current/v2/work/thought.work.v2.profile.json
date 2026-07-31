@@ -19,17 +19,12 @@
     "ordered": true,
     "uniquenessKey": true
   },
-  "declarations": {
-    "assurance": "declared-unverified",
+  "records": {
     "attestationCommitment": "keccak256-exact-utf8",
     "contextProfileId": "inshell.thought.context.v2.visible-utf8-64",
-    "declaredAgent": "exact-typed-mint-field",
-    "declaredModel": "exact-typed-mint-field",
-    "metadataTraits": {
-      "attested": ["Attested Agent", "Attested Model"],
-      "gate": "nonzero-creation-attestation-digest",
-      "unattested": []
-    },
+    "agent": "exact-typed-mint-field",
+    "model": "exact-typed-mint-field",
+    "metadataTraits": ["Agent", "Model"],
     "provenanceRequired": true,
     "terminalEnglishApplies": false,
     "typedStateAuthoritative": true,

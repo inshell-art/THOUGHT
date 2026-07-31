@@ -114,14 +114,18 @@ fs.mkdirSync(releaseDir, { recursive: true });
 
 copyTree("protocol/current/v2", "protocol/current/v2");
 copy(
-  "docs/agent/IN_SHELL_ART_V2_NONCANONICAL_INTEGRATION_PREVIEW_HANDOFF.md",
+  "docs/agent/IN_SHELL_ART_V2_NEUTRAL_AGENT_MODEL_INTEGRATION_PREVIEW_HANDOFF_20260731.md",
   "handoff.md",
+);
+copy(
+  "artifacts/thought-v2-integration-preview/runtime-fixtures/neutral-agent-model-token-uri-examples.anvil.json",
+  "fixtures/neutral-agent-model-token-uri-examples.anvil.json",
 );
 
 for (const file of [
   "thought-v2-canonical-json.ts",
   "thought-v2-context-profile.ts",
-  "thought-v2-creation-attestation.ts",
+  "thought-v2-current-creation-attestation.ts",
   "thought-v2-terminal-provenance.ts",
   "thought-v2-terminal-work-profile.ts",
 ]) {
@@ -145,9 +149,14 @@ const compiledContracts = [
     contractName: "ThoughtRendererV2",
   },
   {
-    artifact: "evm/out/CreationAttestationVerifier.sol/CreationAttestationVerifier.json",
-    classification: "shared-current-dependency",
-    contractName: "CreationAttestationVerifier",
+    artifact: "evm/out/ICreationAttestationVerifierV2.sol/ICreationAttestationVerifierV2.json",
+    classification: "current-attestation-interface",
+    contractName: "ICreationAttestationVerifierV2",
+  },
+  {
+    artifact: "evm/out/CreationAttestationVerifierV2.sol/CreationAttestationVerifierV2.json",
+    classification: "current-neutral-record-attestation-verifier",
+    contractName: "CreationAttestationVerifierV2",
   },
   {
     artifact: "evm/out/ThoughtSpecRegistry.sol/ThoughtSpecRegistry.json",

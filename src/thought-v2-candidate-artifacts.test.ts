@@ -12,18 +12,17 @@ import {
   THOUGHT_V2_CONTEXT_PROFILE_ID,
 } from "./thought-v2-context-profile";
 import {
-  THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
   THOUGHT_V2_METADATA_PROFILE_ID,
   THOUGHT_V2_PROVENANCE_PROFILE_ID,
-  THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
 } from "./thought-v2-terminal-study-metadata";
 import {
   THOUGHT_V2_RENDERER_ID,
   THOUGHT_V2_WORK_PROFILE_ID,
 } from "./thought-v2-terminal-work-profile";
 
-describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
-  it("pins declaration, context, metadata, provenance, work, and renderer identities", () => {
+describe("THOUGHT V2 neutral-record candidate artifacts", () => {
+  it("pins record, context, metadata, provenance, work, and renderer identities", () => {
     expect(releaseInput.identifiers).toMatchObject({
       agentDeclaration: "inshell.thought.agent-declaration.v1",
       contextProfile: THOUGHT_V2_CONTEXT_PROFILE_ID,
@@ -130,50 +129,35 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
     });
   });
 
-  it("freezes the attestation-gated trait orders and exact typed/provenance parity", () => {
-    expect(metadataProfile.attributeOrder).toEqual({
-      attested: THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
-      unattested: THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
-    });
+  it("freezes neutral trait order and exact typed/provenance parity", () => {
+    expect(metadataProfile.attributeOrder).toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(metadataProfile.traitExclusions).toEqual({
       conversationForm: "fixture-only",
       workProfileId: "technical-property",
     });
-    expect(metadataProfile.declarations).toMatchObject({
-      assurance: "declared-unverified",
+    expect(metadataProfile.records).toMatchObject({
       attestationBindsExactHashes: true,
-      attestedTraitTypes: ["Attested Agent", "Attested Model"],
       contextProfileId: THOUGHT_V2_CONTEXT_PROFILE_ID,
-      marketplaceTraitGate: "nonzero-creation-attestation-digest",
+      traitTypes: ["Agent", "Model"],
       typedStateAuthoritative: true,
-      unattestedTraitTypes: [],
       workIdentityInput: false,
     });
-    expect(workProfile.declarations).toMatchObject({
-      assurance: "declared-unverified",
+    expect(workProfile.records).toMatchObject({
       contextProfileId: THOUGHT_V2_CONTEXT_PROFILE_ID,
-      metadataTraits: {
-        attested: ["Attested Agent", "Attested Model"],
-        gate: "nonzero-creation-attestation-digest",
-        unattested: [],
-      },
+      metadataTraits: ["Agent", "Model"],
       provenanceRequired: true,
       workIdentityInput: false,
     });
-    expect(releaseInput.declarations).toMatchObject({
-      attestationClaimFields: ["declaredAgentHash", "declaredModelHash"],
+    expect(releaseInput.records).toMatchObject({
+      attestationClaimFields: ["agentHash", "modelHash"],
       contractGetters: [
-        "declaredAgentOf",
-        "declaredAgentHashOf",
-        "declaredModelOf",
-        "declaredModelHashOf",
+        "agentOf",
+        "agentHashOf",
+        "modelOf",
+        "modelHashOf",
       ],
-      metadataTraits: {
-        attested: ["Attested Agent", "Attested Model"],
-        gate: "nonzero-creation-attestation-digest",
-        unattested: [],
-      },
-      typedMintFields: ["declaredAgent", "declaredModel"],
+      metadataTraits: ["Agent", "Model"],
+      typedMintFields: ["agent", "model"],
       workIdentityInput: false,
     });
   });
@@ -204,9 +188,9 @@ describe("THOUGHT V2 declaration-aware candidate artifacts", () => {
     expect(serialized).not.toContain('"fixtureId"');
   });
 
-  it("uses the context profile for mint and Agent declaration labels", () => {
-    expect(mintInputSchema.properties.declaredAgent.$ref).toBe("#/$defs/contextLine");
-    expect(mintInputSchema.properties.declaredModel.$ref).toBe("#/$defs/contextLine");
+  it("uses the context profile for neutral mint records and provenance labels", () => {
+    expect(mintInputSchema.properties.agent.$ref).toBe("#/$defs/contextLine");
+    expect(mintInputSchema.properties.model.$ref).toBe("#/$defs/contextLine");
     expect(mintInputSchema.$defs.contextLine["x-thought-context-profile"])
       .toBe(THOUGHT_V2_CONTEXT_PROFILE_ID);
     expect(agentDeclarationSchema.properties.label["x-thought-context-profile"])

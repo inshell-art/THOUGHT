@@ -5,8 +5,8 @@ import {ThoughtV2Constants} from "./ThoughtV2Constants.sol";
 
 library ThoughtV2ContextProfile {
     enum ContextKind {
-        DeclaredAgent,
-        DeclaredModel
+        Agent,
+        Model
     }
 
     error ContextEmpty(ContextKind kind);

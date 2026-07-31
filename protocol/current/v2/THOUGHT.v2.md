@@ -28,12 +28,10 @@ line may appear again with a different counterpart. Reversing the pair forms
 a different identity. Conversation identity and work hash commit to both exact
 line hashes in order. The work hash also commits to the renderer identity.
 
-`declaredAgent` and `declaredModel` are exact 1-through-64-byte visible UTF-8
-context labels. They remain `declared-unverified`, including when an official
-creation attestation is valid. They are typed contract state, canonical
-provenance declarations, and creation-attestation hash inputs. A nonzero valid
-creation-attestation digest gates their publication as `Attested Agent` and
-`Attested Model` marketplace traits. Unattested tokens omit Agent/Model traits.
+`agent` and `model` are exact 1-through-64-byte visible UTF-8 neutral records.
+They are typed contract state, map to canonical provenance data, and are
+creation-attestation hash inputs. Every token publishes them as `Agent` and
+`Model` marketplace traits; attestation status is represented separately.
 They do not affect conversation identity, work hash, or the artwork.
 
 Every mint selects an exact registered THOUGHT specification ID/hash pair and
@@ -48,11 +46,11 @@ exact bytes. Solidity stores and hashes the bounded bytes opaquely; it does not
 parse or construct provenance JSON.
 
 An empty creation-attestation proof produces `Unattested`. A valid
-`inshell.thought.creation-workflow-attestation.v1` proof shows that an
+`inshell.thought.creation-workflow-attestation.v2` proof shows that an
 authorized signer bound the exact collection, release, selected spec, work,
-provenance hash, declaration hashes, public run reference, minter, deadline,
+provenance hash, Agent/Model record hashes, public run reference, minter, deadline,
 and authority epoch. It does not independently prove the truth of the Agent or
-model declarations.
+model records.
 
 Minting consumes exactly one PATH `THOUGHT` movement unit atomically. A failed
 mint must not consume PATH, reserve the ordered pair, or increment supply.

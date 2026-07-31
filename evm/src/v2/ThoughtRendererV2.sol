@@ -5,7 +5,6 @@ import {Base64} from "../Base64.sol";
 import {ContractCodeStorage} from "../ContractCodeStorage.sol";
 import {IThoughtRendererV2} from "./IThoughtRendererV2.sol";
 import {ThoughtV2Constants} from "./ThoughtV2Constants.sol";
-import {ThoughtV2ContextProfile} from "./ThoughtV2ContextProfile.sol";
 import {ThoughtV2Identity} from "./ThoughtV2Identity.sol";
 import {ThoughtV2WorkProfile} from "./ThoughtV2WorkProfile.sol";
 
@@ -14,6 +13,16 @@ import {ThoughtV2WorkProfile} from "./ThoughtV2WorkProfile.sol";
 contract ThoughtRendererV2 is IThoughtRendererV2 {
     error InvalidGlyphDefinitionsPointer(uint8 part);
     error TooManyRenderedRows();
+
+    struct DerivedMetadata {
+        string promptHash;
+        string agentHash;
+        string agentRecordHash;
+        string modelRecordHash;
+        string provenanceHash;
+        string conversationHash;
+        string workHash;
+    }
 
     string public constant RENDERER_ID = ThoughtV2Constants.RENDERER_ID;
     bytes32 public constant RENDERER_ID_HASH = ThoughtV2Constants.RENDERER_ID_HASH;
@@ -79,31 +88,34 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     }
 
     function tokenURI(TokenData calldata data) external view returns (string memory) {
+        // ThoughtNFTV2 validates Agent/Model records before storing TokenData. Re-inlining the
+        // visible-UTF8 context validator here adds no protection to canonical token metadata.
         ThoughtV2WorkProfile.validate(data.promptLine, ThoughtV2WorkProfile.LineKind.Prompt);
         ThoughtV2WorkProfile.validate(data.agentLine, ThoughtV2WorkProfile.LineKind.Agent);
-        ThoughtV2ContextProfile.validate(data.declaredAgent, ThoughtV2ContextProfile.ContextKind.DeclaredAgent);
-        ThoughtV2ContextProfile.validate(data.declaredModel, ThoughtV2ContextProfile.ContextKind.DeclaredModel);
+        DerivedMetadata memory derived = _deriveMetadata(data);
 
         string memory metadata = string.concat(
             '{"name":"THOUGHT #',
             _toString(data.tokenId),
-            '","description":"THOUGHT V2 records the narrow terminal channel where a human and an Agent meet.","image":"data:image/svg+xml;base64,',
+            '","description":"THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.","image":"data:image/svg+xml;base64,',
             Base64.encode(bytes(_render(data.promptLine, data.agentLine))),
             '","background_color":"000000","attributes":',
             _attributes(data),
             ',"properties":',
-            _properties(data),
+            _properties(data, derived),
             ',"thought":',
-            _thought(data, msg.sender),
+            _thought(data, msg.sender, derived),
             "}"
         );
         return string.concat("data:application/json;base64,", Base64.encode(bytes(metadata)));
     }
 
     function _render(string calldata promptLine, string calldata agentLine) private view returns (string memory) {
-        (bytes[] memory promptRows, uint256 promptRowCount) = _wrap(bytes(promptLine));
-        (bytes[] memory agentRows, uint256 agentRowCount) = _wrap(bytes(agentLine));
-        string memory definitions = _definitions(promptLine, agentLine);
+        bytes memory promptBytes = bytes(promptLine);
+        bytes memory agentBytes = bytes(agentLine);
+        (bytes[] memory promptRows, uint256 promptRowCount) = _wrap(promptBytes);
+        (bytes[] memory agentRows, uint256 agentRowCount) = _wrap(agentBytes);
+        string memory definitions = _definitions(promptBytes, agentBytes);
         return string.concat(
             '<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" data-renderer="',
             IMPLEMENTATION_ID,
@@ -117,14 +129,14 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
             definitions,
             '<g id="prompt-line" fill="#00ff00" data-source="',
-            _xmlEscape(promptLine),
+            _xmlEscape(promptBytes),
             '" data-rows="',
             _toString(promptRowCount),
             '" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="top">',
             _renderRows(promptRows, promptRowCount, true),
             "</g>",
             '<g id="agent-line" fill="#00ff00" data-source="',
-            _xmlEscape(agentLine),
+            _xmlEscape(agentBytes),
             '" data-rows="',
             _toString(agentRowCount),
             '" data-field-x="57.6" data-field-y="576" data-field-width="844.8" data-field-height="256" data-field-bottom="832" data-horizontal-align="left" data-vertical-align="bottom">',
@@ -147,10 +159,10 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         if (keccak256(definitions) != expectedHash) revert InvalidGlyphDefinitionsPointer(part);
     }
 
-    function _definitions(string calldata promptLine, string calldata agentLine) private view returns (string memory) {
+    function _definitions(bytes memory promptLine, bytes memory agentLine) private view returns (string memory) {
         bool[128] memory used;
-        _markUsed(used, bytes(promptLine));
-        _markUsed(used, bytes(agentLine));
+        _markUsed(used, promptLine);
+        _markUsed(used, agentLine);
 
         bytes memory index = ContractCodeStorage.read(glyphDefinitionsIndexPointer);
         bytes memory order = bytes(CANONICAL_ORDER);
@@ -224,11 +236,20 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         }
     }
 
-    function _renderRows(bytes[] memory rows, uint256 rowCount, bool prompt)
-        private
-        pure
-        returns (string memory output)
-    {
+    function _renderRows(bytes[] memory rows, uint256 rowCount, bool prompt) private pure returns (string memory) {
+        uint256 characterCount;
+        for (uint256 rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+            characterCount += rows[rowIndex].length;
+        }
+
+        // Each canonical <use> fragment is at most 82 bytes. Spaces emit nothing, so using
+        // all source characters remains a safe upper bound. The extra word lets
+        // _appendBytes copy the final partial word without touching unallocated memory.
+        bytes memory output = new bytes(characterCount * 82 + 32);
+        bytes memory glyphPrefix = bytes('<use href="#humanist-smooth-g00');
+        bytes memory transformPrefix = bytes('" transform="translate(');
+        bytes memory transformSuffix = bytes(') scale(4.8)"/>');
+        uint256 cursor;
         uint256 yTenths = prompt
             ? PROMPT_FIELD_TOP_TENTHS + GLYPH_CELL_Y_INSET_TENTHS
             : AGENT_FIELD_BOTTOM_TENTHS - (rowCount * LINE_HEIGHT_TENTHS) + GLYPH_CELL_Y_INSET_TENTHS;
@@ -238,44 +259,81 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             for (uint256 column = 0; column < row.length; column++) {
                 bytes1 character = row[column];
                 if (character != bytes1(" ")) {
-                    output = string.concat(
-                        output,
-                        '<use href="#',
-                        _glyphId(character),
-                        '" transform="translate(',
-                        _tenths(xTenths),
-                        " ",
-                        _tenths(yTenths),
-                        ') scale(4.8)"/>'
-                    );
+                    cursor = _appendBytes(output, cursor, glyphPrefix);
+                    uint8 characterValue = uint8(character);
+                    output[cursor++] = HEX_DIGITS[characterValue >> 4];
+                    output[cursor++] = HEX_DIGITS[characterValue & 0x0f];
+                    cursor = _appendBytes(output, cursor, transformPrefix);
+                    cursor = _appendTenths(output, cursor, xTenths);
+                    output[cursor++] = " ";
+                    cursor = _appendTenths(output, cursor, yTenths);
+                    cursor = _appendBytes(output, cursor, transformSuffix);
                 }
                 xTenths += 288;
             }
             yTenths += LINE_HEIGHT_TENTHS;
         }
+        assembly ("memory-safe") {
+            mstore(output, cursor)
+        }
+        return string(output);
     }
 
-    function _glyphId(bytes1 character) private pure returns (string memory) {
-        bytes memory suffix = new bytes(4);
-        suffix[0] = "0";
-        suffix[1] = "0";
-        uint8 value = uint8(character);
-        suffix[2] = HEX_DIGITS[value >> 4];
-        suffix[3] = HEX_DIGITS[value & 0x0f];
-        return string.concat("humanist-smooth-g", string(suffix));
+    function _appendBytes(bytes memory output, uint256 cursor, bytes memory value)
+        private
+        pure
+        returns (uint256 nextCursor)
+    {
+        uint256 length = value.length;
+        assembly ("memory-safe") {
+            let source := add(value, 0x20)
+            let destination := add(add(output, 0x20), cursor)
+            let end := add(source, length)
+            for {} lt(source, end) {
+                source := add(source, 0x20)
+                destination := add(destination, 0x20)
+            } { mstore(destination, mload(source)) }
+        }
+        nextCursor = cursor + length;
     }
 
-    function _tenths(uint256 value) private pure returns (string memory) {
+    function _appendTenths(bytes memory output, uint256 cursor, uint256 value)
+        private
+        pure
+        returns (uint256 nextCursor)
+    {
+        nextCursor = _appendUint(output, cursor, value / 10);
         uint256 remainder = value % 10;
-        if (remainder == 0) return _toString(value / 10);
-        return string.concat(_toString(value / 10), ".", _toString(remainder));
+        if (remainder != 0) {
+            output[nextCursor++] = ".";
+            output[nextCursor++] = bytes1(uint8(48 + remainder));
+        }
+    }
+
+    function _appendUint(bytes memory output, uint256 cursor, uint256 value) private pure returns (uint256 nextCursor) {
+        uint256 digits = 1;
+        uint256 remaining = value;
+        while (remaining >= 10) {
+            digits++;
+            remaining /= 10;
+        }
+        nextCursor = cursor + digits;
+        uint256 writeCursor = nextCursor;
+        do {
+            output[--writeCursor] = bytes1(uint8(48 + value % 10));
+            value /= 10;
+        } while (writeCursor > cursor);
     }
 
     function _attributes(TokenData calldata data) private pure returns (string memory) {
         uint256 promptBytes = bytes(data.promptLine).length;
         uint256 agentBytes = bytes(data.agentLine).length;
-        string memory contractTraits = string.concat(
-            '{"trait_type":"Creation Attestation","value":"',
+        return string.concat(
+            '[{"trait_type":"Agent","value":',
+            _jsonString(data.agent),
+            '},{"trait_type":"Model","value":',
+            _jsonString(data.model),
+            '},{"trait_type":"Creation Attestation","value":"',
             _creationAttestationStatus(data.creationAttestationDigest),
             '"},{"display_type":"number","max_value":64,"trait_type":"Prompt Bytes","value":',
             _toString(promptBytes),
@@ -289,37 +347,24 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             _lengthClass(agentBytes),
             '"}]'
         );
-        if (data.creationAttestationDigest == bytes32(0)) {
-            return string.concat("[", contractTraits);
-        }
-        return string.concat(
-            '[{"trait_type":"Attested Agent","value":',
-            _jsonString(data.declaredAgent),
-            '},{"trait_type":"Attested Model","value":',
-            _jsonString(data.declaredModel),
-            "},",
-            contractTraits
-        );
     }
 
-    function _properties(TokenData calldata data) private view returns (string memory) {
-        bytes32 promptHash = keccak256(bytes(data.promptLine));
-        bytes32 agentHash = keccak256(bytes(data.agentLine));
+    function _properties(TokenData calldata data, DerivedMetadata memory derived) private view returns (string memory) {
         return string.concat(
             '{"agentLine":',
             _jsonString(data.agentLine),
             ',"agentLineKeccak256":"',
-            _bytes32ToHex(agentHash),
+            derived.agentHash,
             '","conversationIdentityHash":"',
-            _bytes32ToHex(ThoughtV2Identity.conversationIdentityHash(promptHash, agentHash)),
-            '","declaredAgent":',
-            _jsonString(data.declaredAgent),
-            ',"declaredAgentKeccak256":"',
-            _bytes32ToHex(keccak256(bytes(data.declaredAgent))),
-            '","declaredModel":',
-            _jsonString(data.declaredModel),
-            ',"declaredModelKeccak256":"',
-            _bytes32ToHex(keccak256(bytes(data.declaredModel))),
+            derived.conversationHash,
+            '","agent":',
+            _jsonString(data.agent),
+            ',"agentKeccak256":"',
+            derived.agentRecordHash,
+            '","model":',
+            _jsonString(data.model),
+            ',"modelKeccak256":"',
+            derived.modelRecordHash,
             '","glyphColor":"#00ff00","glyphDefinitionsKeccak256":"',
             _bytes32ToHex(glyphDefinitionsKeccak256),
             '","glyphLibraryMemberId":"',
@@ -329,31 +374,28 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             '","promptLine":',
             _jsonString(data.promptLine),
             ',"promptLineKeccak256":"',
-            _bytes32ToHex(promptHash),
+            derived.promptHash,
             '","provenanceKeccak256":"',
-            _bytes32ToHex(keccak256(bytes(data.provenanceJson))),
+            derived.provenanceHash,
             '","rendererImplementationId":"',
             IMPLEMENTATION_ID,
             '","workHash":"',
-            _bytes32ToHex(ThoughtV2Identity.workHash(promptHash, agentHash)),
+            derived.workHash,
             '"}'
         );
     }
 
-    function _thought(TokenData calldata data, address thoughtNft) private view returns (string memory) {
-        bytes32 promptHash = keccak256(bytes(data.promptLine));
-        bytes32 agentHash = keccak256(bytes(data.agentLine));
-        bytes32 declarationAgentHash = keccak256(bytes(data.declaredAgent));
-        bytes32 declarationModelHash = keccak256(bytes(data.declaredModel));
-        bytes32 provenanceHash = keccak256(bytes(data.provenanceJson));
-        bytes32 conversationHash = ThoughtV2Identity.conversationIdentityHash(promptHash, agentHash);
-        bytes32 derivedWorkHash = ThoughtV2Identity.workHash(promptHash, agentHash);
+    function _thought(TokenData calldata data, address thoughtNft, DerivedMetadata memory derived)
+        private
+        view
+        returns (string memory)
+    {
         return string.concat(
-            _thoughtWork(data, promptHash, agentHash, conversationHash, derivedWorkHash),
-            _thoughtDeclarations(data, declarationAgentHash, declarationModelHash),
-            _thoughtProtocolAndMint(data, thoughtNft, provenanceHash),
+            _thoughtWork(data, derived.promptHash, derived.agentHash, derived.conversationHash, derived.workHash),
+            _thoughtRecords(data, derived.agentRecordHash, derived.modelRecordHash),
+            _thoughtProtocolAndMint(data, thoughtNft, derived.provenanceHash),
             '"provenanceHash":"',
-            _bytes32ToHex(provenanceHash),
+            derived.provenanceHash,
             '","provenanceJson":',
             _jsonString(data.provenanceJson),
             ',"provenanceProfileId":"inshell.thought.provenance.v2","rendererId":"',
@@ -365,25 +407,37 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             '","rendererReleaseReady":true,"status":"minted","workProfileId":"',
             WORK_PROFILE_ID,
             '","workHash":"',
-            _bytes32ToHex(derivedWorkHash),
+            derived.workHash,
             '"}'
         );
     }
 
+    function _deriveMetadata(TokenData calldata data) private pure returns (DerivedMetadata memory derived) {
+        bytes32 promptHash = keccak256(bytes(data.promptLine));
+        bytes32 agentHash = keccak256(bytes(data.agentLine));
+        derived.promptHash = _bytes32ToHex(promptHash);
+        derived.agentHash = _bytes32ToHex(agentHash);
+        derived.agentRecordHash = _bytes32ToHex(keccak256(bytes(data.agent)));
+        derived.modelRecordHash = _bytes32ToHex(keccak256(bytes(data.model)));
+        derived.provenanceHash = _bytes32ToHex(keccak256(bytes(data.provenanceJson)));
+        derived.conversationHash = _bytes32ToHex(ThoughtV2Identity.conversationIdentityHash(promptHash, agentHash));
+        derived.workHash = _bytes32ToHex(ThoughtV2Identity.workHash(promptHash, agentHash));
+    }
+
     function _thoughtWork(
         TokenData calldata data,
-        bytes32 promptHash,
-        bytes32 agentHash,
-        bytes32 conversationHash,
-        bytes32 derivedWorkHash
+        string memory promptHash,
+        string memory agentHash,
+        string memory conversationHash,
+        string memory derivedWorkHash
     ) private pure returns (string memory) {
         return string.concat(
             '{"agentLine":',
             _jsonString(data.agentLine),
             ',"agentLineKeccak256":"',
-            _bytes32ToHex(agentHash),
+            agentHash,
             '","conversationIdentityHash":"',
-            _bytes32ToHex(conversationHash),
+            conversationHash,
             '","creationAttestation":{"digest":"',
             _bytes32ToHex(data.creationAttestationDigest),
             '","profileId":"',
@@ -399,32 +453,32 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             '","promptLine":',
             _jsonString(data.promptLine),
             ',"promptLineKeccak256":"',
-            _bytes32ToHex(promptHash),
+            promptHash,
             '","workHashPrecheck":"',
-            _bytes32ToHex(derivedWorkHash),
+            derivedWorkHash,
             '",'
         );
     }
 
-    function _thoughtDeclarations(TokenData calldata data, bytes32 declarationAgentHash, bytes32 declarationModelHash)
+    function _thoughtRecords(TokenData calldata data, string memory agentRecordHash, string memory modelRecordHash)
         private
         pure
         returns (string memory)
     {
         return string.concat(
-            '"declarations":{"agent":{"keccak256":"',
-            _bytes32ToHex(declarationAgentHash),
+            '"records":{"agent":{"keccak256":"',
+            agentRecordHash,
             '","label":',
-            _jsonString(data.declaredAgent),
-            ',"status":"declared-unverified"},"model":{"keccak256":"',
-            _bytes32ToHex(declarationModelHash),
+            _jsonString(data.agent),
+            '},"model":{"keccak256":"',
+            modelRecordHash,
             '","label":',
-            _jsonString(data.declaredModel),
-            ',"status":"declared-unverified"},"workIdentityInput":false},'
+            _jsonString(data.model),
+            '},"workIdentityInput":false},'
         );
     }
 
-    function _thoughtProtocolAndMint(TokenData calldata data, address thoughtNft, bytes32 provenanceHash)
+    function _thoughtProtocolAndMint(TokenData calldata data, address thoughtNft, string memory provenanceHash)
         private
         view
         returns (string memory)
@@ -453,7 +507,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             '","thoughtSpecId":"',
             _bytes32ToHex(data.thoughtSpecId),
             '"},"provenanceCommitmentCheck":"',
-            _bytes32ToHex(provenanceHash),
+            provenanceHash,
             '",'
         );
     }
@@ -511,8 +565,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         return string(output);
     }
 
-    function _xmlEscape(string memory value) private pure returns (string memory) {
-        bytes memory input = bytes(value);
+    function _xmlEscape(bytes memory input) private pure returns (string memory) {
         uint256 outputLength;
         for (uint256 i = 0; i < input.length; i++) {
             if (input[i] == "&") outputLength += 5;

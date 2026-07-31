@@ -35,11 +35,16 @@ describe("THOUGHT V2 Anvil gallery decoding", () => {
     )).toThrow();
   });
 
-  it("reads required and attestation-gated traits without inventing missing facets", () => {
+  it("reads neutral records and optional traits without inventing missing facets", () => {
     const token = {
       tokenId: 4,
       traits: new Map([
-        ["Attested Agent", { trait_type: "Attested Agent", value: "Inshell THOUGHT App" }],
+        ["Agent", { trait_type: "Agent", value: "Inshell THOUGHT App" }],
+        ["Model", { trait_type: "Model", value: "Fixture Model" }],
+        ["Creation Attestation", {
+          trait_type: "Creation Attestation",
+          value: "Unattested",
+        }],
         ["Prompt Bytes", {
           display_type: "number" as const,
           max_value: 64,
@@ -49,9 +54,11 @@ describe("THOUGHT V2 Anvil gallery decoding", () => {
       ]),
     } as ThoughtV2OnchainToken;
 
-    expect(traitValue(token, "Attested Agent")).toBe("Inshell THOUGHT App");
+    expect(traitValue(token, "Agent")).toBe("Inshell THOUGHT App");
+    expect(traitValue(token, "Model")).toBe("Fixture Model");
+    expect(traitValue(token, "Creation Attestation")).toBe("Unattested");
     expect(traitValue(token, "Prompt Bytes")).toBe(13);
-    expect(optionalTraitValue(token, "Attested Model")).toBeUndefined();
+    expect(optionalTraitValue(token, "Binary Contrast")).toBeUndefined();
     expect(() => traitValue(token, "Conversation Form")).toThrow(
       "THOUGHT #4 is missing Conversation Form",
     );

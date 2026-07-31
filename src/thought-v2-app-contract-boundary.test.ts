@@ -10,15 +10,14 @@ import {
   CREATION_ATTESTATION_PRIMARY_TYPE,
   CREATION_ATTESTATION_TYPES,
   THOUGHT_CREATION_ATTESTATION_PROFILE,
-} from "./thought-v2-creation-attestation";
+} from "./thought-v2-current-creation-attestation";
 import {
   THOUGHT_V2_CONTEXT_PROFILE_ID,
   THOUGHT_V2_MAX_CONTEXT_BYTES,
 } from "./thought-v2-context-profile";
 import {
-  THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
   THOUGHT_V2_METADATA_PROFILE_ID,
-  THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
   THOUGHT_V2_PROVENANCE_PROFILE_ID,
 } from "./thought-v2-terminal-study-metadata";
 import { THOUGHT_V2_MAX_PROVENANCE_BYTES } from "./thought-v2-terminal-provenance";
@@ -59,7 +58,7 @@ describe("THOUGHT V2 App-contract boundary draft", () => {
     expect(thoughtNftSource).toContain(".isRegistered(protocolReleaseId_)");
   });
 
-  it("pins profiles, byte envelopes, and attestation-gated trait policy", () => {
+  it("pins profiles, byte envelopes, and neutral trait policy", () => {
     expect(current.profiles).toEqual({
       context: THOUGHT_V2_CONTEXT_PROFILE_ID,
       creationAttestation: THOUGHT_CREATION_ATTESTATION_PROFILE,
@@ -70,20 +69,19 @@ describe("THOUGHT V2 App-contract boundary draft", () => {
     });
     expect(current.limits).toEqual({
       agentLineUtf8Bytes: THOUGHT_V2_MAX_LINE_BYTES,
-      declaredAgentUtf8Bytes: THOUGHT_V2_MAX_CONTEXT_BYTES,
-      declaredModelUtf8Bytes: THOUGHT_V2_MAX_CONTEXT_BYTES,
+      agentUtf8Bytes: THOUGHT_V2_MAX_CONTEXT_BYTES,
+      modelUtf8Bytes: THOUGHT_V2_MAX_CONTEXT_BYTES,
       promptLineUtf8Bytes: THOUGHT_V2_MAX_LINE_BYTES,
       provenanceUtf8Bytes: THOUGHT_V2_MAX_PROVENANCE_BYTES,
     });
     expect(current.metadataTraits.attested).toEqual(
-      THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+      THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
     );
     expect(current.metadataTraits.unattested).toEqual(
-      THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
+      THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
     );
     expect(current.metadataTraits).toMatchObject({
-      agentModelGate: "nonzero-creation-attestation-digest",
-      declarationAssurance: "declared-unverified",
+      agentModelGate: "none",
     });
   });
 

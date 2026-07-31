@@ -97,7 +97,6 @@ const renderToken = (
     kind?: string;
     modelDeclaration?: { source?: string };
   } | undefined;
-  const isAttested = thought.creationAttestation.status === "Inshell THOUGHT App";
   const mintedDate = new Date(Number(direct.mintedAt) * 1000).toISOString();
 
   document.title = `THOUGHT ${number} — On-chain V2 Token`;
@@ -159,9 +158,7 @@ const renderToken = (
           <div><dt>${escapeHtml(attribute.trait_type)}</dt><dd>${escapeHtml(String(attribute.value))}</dd></div>
         `).join("")}
       </dl>
-      <p class="chat-work-section__note">${isAttested
-        ? "A valid Creation Attestation gates the Attested Agent and Attested Model marketplace traits. The underlying labels remain declarations, not objective proof of provider execution."
-        : "This token is Unattested, so Agent and Model are intentionally absent from marketplace traits. Its submitted declarations remain available in typed state and provenance below."}</p>
+      <p class="chat-work-section__note">Agent and Model are neutral submitted records and always appear as traits. Creation Attestation independently reports whether the official App attested the bound mint facts; it does not prove a provider executed the named Agent or Model.</p>
     </section>
 
     <section class="chat-work-section">
@@ -173,11 +170,10 @@ const renderToken = (
         ${fact("Minted at", `${direct.mintedAt} / ${mintedDate}`)}
         ${fact("PATH ID", direct.pathId.toString())}
         ${fact("PATH serial", direct.pathSerial.toString())}
-        ${fact("Typed declared Agent", direct.declaredAgent)}
-        ${fact("Declared Agent hash", thought.declarations.agent.keccak256)}
-        ${fact("Typed declared Model", direct.declaredModel)}
-        ${fact("Declared Model hash", thought.declarations.model.keccak256)}
-        ${fact("Declaration status", "declared-unverified")}
+        ${fact("Typed Agent record", direct.agent)}
+        ${fact("Agent hash", thought.records.agent.keccak256)}
+        ${fact("Typed Model record", direct.model)}
+        ${fact("Model hash", thought.records.model.keccak256)}
         ${fact("Work identity input", "false")}
         ${fact("Prompt hash", thought.promptLineKeccak256)}
         ${fact("Agent hash", thought.agentLineKeccak256)}

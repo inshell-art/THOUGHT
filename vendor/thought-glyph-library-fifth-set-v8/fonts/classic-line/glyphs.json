@@ -1,0 +1,508 @@
+{
+  "family": {
+    "classification": "monospaced conventional centerline",
+    "id": "S501",
+    "name": "Classic Line 76",
+    "slug": "classic-line",
+    "sourceCandidate": "C01",
+    "style": "Regular",
+    "weight": 400
+  },
+  "glyphs": [
+    {
+      "character": " ",
+      "codepoint": 32,
+      "d": "",
+      "pathSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "character": "A",
+      "codepoint": 65,
+      "d": "M1 0L4 10L7 0M2 4L6 4",
+      "pathSha256": "f38e1bbfa416ba595a12d89b25d50dd1d7358a635310a5974869aecdb9186076"
+    },
+    {
+      "character": "B",
+      "codepoint": 66,
+      "d": "M1 0L1 10L4 10Q7 10 7 7Q7 5 4 5L1 5M4 5Q7 5 7 2Q7 0 4 0L1 0",
+      "pathSha256": "d883dc1494124de729ed7b135b5422caec282c79d35eccb4e21a61a4bda1450c"
+    },
+    {
+      "character": "C",
+      "codepoint": 67,
+      "d": "M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q6 0 7 2",
+      "pathSha256": "1f3fbcd3dcbec0e09ee1b85bd2fc7424d9a45412de2d71f5be7644e56d534882"
+    },
+    {
+      "character": "D",
+      "codepoint": 68,
+      "d": "M1 0L1 10L4 10Q7 10 7 5Q7 0 4 0Z",
+      "pathSha256": "4031d7c08d24ee478ddd3ed1fb1b6ddee782aee913bbf48bc9a7bfe5332d34e1"
+    },
+    {
+      "character": "E",
+      "codepoint": 69,
+      "d": "M7 10L1 10L1 0L7 0M1 5L6 5",
+      "pathSha256": "83c43342c4f1b90e5a5e3aadb80177f9349f0d0133eb2bde92bee77a53ca58f9"
+    },
+    {
+      "character": "F",
+      "codepoint": 70,
+      "d": "M7 10L1 10L1 0M1 5L6 5",
+      "pathSha256": "ddb04141d5b9a87821493beafaa30570d930ef2cd004b5e36a4e272ce4d6aa93"
+    },
+    {
+      "character": "G",
+      "codepoint": 71,
+      "d": "M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q6 0 7 2L7 5L4 5",
+      "pathSha256": "2725817f9a5e1a7b24322bf065aadf243ae68a444142cfcc6903bcedb3f86d01"
+    },
+    {
+      "character": "H",
+      "codepoint": 72,
+      "d": "M1 0L1 10M7 0L7 10M1 5L7 5",
+      "pathSha256": "9b20390b8e5f1101265d15abc529c9d3a400fac0afcb8ada8b6c3bc8bf215685"
+    },
+    {
+      "character": "I",
+      "codepoint": 73,
+      "d": "M1 10L7 10M4 10L4 0M1 0L7 0",
+      "pathSha256": "a2dcd41d31e42770470a3cf2376ed11b05bbc75167e03ee301791fbe2e8eaa9e"
+    },
+    {
+      "character": "J",
+      "codepoint": 74,
+      "d": "M1 10L7 10M5 10L5 2Q5 0 3 0Q1 0 1 2",
+      "pathSha256": "bd4066168529a31bda9113f44a0d3b7ac321229f6816008dc43c9e9cf9f18a99"
+    },
+    {
+      "character": "K",
+      "codepoint": 75,
+      "d": "M1 0L1 10M7 10L1 4M3 6L7 0",
+      "pathSha256": "641b618a57f6f78cd9876de94ff393597b612014a497cce2bbd0e62047eb87cc"
+    },
+    {
+      "character": "L",
+      "codepoint": 76,
+      "d": "M1 10L1 0L7 0",
+      "pathSha256": "9879dca68948c644dbaff33c0b20889ee05efd66bba6be2720b715f346fb33a8"
+    },
+    {
+      "character": "M",
+      "codepoint": 77,
+      "d": "M1 0L1 10L4 5L7 10L7 0",
+      "pathSha256": "b191fb894a25e90a04a94fef827a0cdb029bf5ec6361b06b0f851a05210ebf0b"
+    },
+    {
+      "character": "N",
+      "codepoint": 78,
+      "d": "M1 0L1 10L7 0L7 10",
+      "pathSha256": "b850978002ae44822af19d6babd11f0a00679453c53c2c0c193cac26c41e8e03"
+    },
+    {
+      "character": "O",
+      "codepoint": 79,
+      "d": "M4 10Q1 10 1 5Q1 0 4 0Q7 0 7 5Q7 10 4 10Z",
+      "pathSha256": "dd4f387dbebf5b1e4b1c722b84e97fec58fd5f6c3052dbcd94c13e5d43b16086"
+    },
+    {
+      "character": "P",
+      "codepoint": 80,
+      "d": "M1 0L1 10L4 10Q7 10 7 7Q7 5 4 5L1 5",
+      "pathSha256": "eb1bfb9ea300317dc439c51847e5e09fea934f0453fe71356605ed89f7ddd904"
+    },
+    {
+      "character": "Q",
+      "codepoint": 81,
+      "d": "M4 10Q1 10 1 5Q1 0 4 0Q7 0 7 5Q7 10 4 10ZM5 2L8 -1",
+      "pathSha256": "7dffcea62050ad74ee7c8be116b9afc108808fdef60c9e411a04cc6e29d5f5b2"
+    },
+    {
+      "character": "R",
+      "codepoint": 82,
+      "d": "M1 0L1 10L4 10Q7 10 7 7Q7 5 4 5L1 5M4 5L7 0",
+      "pathSha256": "dfc00d566fe114800fd4472f9ccd58d377b478713062af6bf4a8b40751643119"
+    },
+    {
+      "character": "S",
+      "codepoint": 83,
+      "d": "M7 8Q6 10 4 10Q1 10 1 7Q1 5 4 5Q7 5 7 2Q7 0 4 0Q2 0 1 2",
+      "pathSha256": "04c74ad4628cf5299f54667e0f2943a562af313f376026e630af42e2549bba54"
+    },
+    {
+      "character": "T",
+      "codepoint": 84,
+      "d": "M1 10L7 10M4 10L4 0",
+      "pathSha256": "05213970a8054a80afa809c177e7f71d1b11e713b1540b2027805c7d4a4e4b9a"
+    },
+    {
+      "character": "U",
+      "codepoint": 85,
+      "d": "M1 10L1 3Q1 0 4 0Q7 0 7 3L7 10",
+      "pathSha256": "e6278bb5dffe5198b6c7b9735572f44c46466925b914120a5b154984fd933cdf"
+    },
+    {
+      "character": "V",
+      "codepoint": 86,
+      "d": "M1 10L4 0L7 10",
+      "pathSha256": "3ba7fd9ff68af712096945e68f022ea563758274bef94a3c07a4424aa283b182"
+    },
+    {
+      "character": "W",
+      "codepoint": 87,
+      "d": "M0 10L2 0L4 6L6 0L8 10",
+      "pathSha256": "9613b8e9eb61644fef0b0a58527d41f9d4bb7059b5e7e62b4adb951850c38917"
+    },
+    {
+      "character": "X",
+      "codepoint": 88,
+      "d": "M1 10L7 0M7 10L1 0",
+      "pathSha256": "f848ed143347f686f76d68c6efbd38b303d15741ff787aeee402cd28379f5c39"
+    },
+    {
+      "character": "Y",
+      "codepoint": 89,
+      "d": "M1 10L4 5L7 10M4 5L4 0",
+      "pathSha256": "ea7f2515ff9a2f55b541337194ed751c42fb69ec4e8204d6b9c4d43136c6a2a6"
+    },
+    {
+      "character": "Z",
+      "codepoint": 90,
+      "d": "M1 10L7 10L1 0L7 0",
+      "pathSha256": "d64577e34dec0dda94287be1c4d6760f1764ca6fd1e738432498e11c99bc5614"
+    },
+    {
+      "character": "a",
+      "codepoint": 97,
+      "d": "M6 0L6 7M6 5Q5 7 3 7Q1 7 1 4Q1 0 3 0Q5 0 6 2",
+      "pathSha256": "bcb33d8778470ed021609f64b4547c25360158111780096e87d8dc6427f9a6b9"
+    },
+    {
+      "character": "b",
+      "codepoint": 98,
+      "d": "M1 0L1 10M1 5Q2 7 4 7Q7 7 7 4Q7 0 4 0Q2 0 1 2",
+      "pathSha256": "a46e026ef3dfa90c59f2f5342d4da37c4f8d1aa6873f7a7a984d08062c8ab827"
+    },
+    {
+      "character": "c",
+      "codepoint": 99,
+      "d": "M7 6Q6 7 4 7Q1 7 1 4Q1 0 4 0Q6 0 7 1",
+      "pathSha256": "f7b6ab871350154aa8da1f5f63a201e7c10836bdff36b639707415d63e076efa"
+    },
+    {
+      "character": "d",
+      "codepoint": 100,
+      "d": "M7 0L7 10M7 5Q6 7 4 7Q1 7 1 4Q1 0 4 0Q6 0 7 2",
+      "pathSha256": "fdd952533f3ea8057803b725cf5cee5fcd244f1e5c8503bf3a511e87906a8791"
+    },
+    {
+      "character": "e",
+      "codepoint": 101,
+      "d": "M1 4L7 4Q7 7 4 7Q1 7 1 4Q1 0 4 0Q6 0 7 1",
+      "pathSha256": "1dabefc61ceb2d8a77ec56d3e4beeb6e2d08e600ca386f839e872941274bb779"
+    },
+    {
+      "character": "f",
+      "codepoint": 102,
+      "d": "M2 0L2 8Q2 10 4 10Q5 10 6 9M0 7L6 7",
+      "pathSha256": "4e05d20927fc38b904262c8e8b7f2e36ebc44cadc97d1adf7a9dbb8484cfce32"
+    },
+    {
+      "character": "g",
+      "codepoint": 103,
+      "d": "M7 7L7 -1Q7 -3 4 -3Q2 -3 1 -2M7 5Q6 7 4 7Q1 7 1 4Q1 0 4 0Q6 0 7 2",
+      "pathSha256": "b8dd4116bbf0447b07d3059cf0378a182ca7c1ba85a14256933c7cc1fb32d51a"
+    },
+    {
+      "character": "h",
+      "codepoint": 104,
+      "d": "M1 0L1 10M1 5Q2 7 4 7Q7 7 7 4L7 0",
+      "pathSha256": "4a8beb504036be7ec24b43f5add3d6f0d990f76f03d6e1b0900506012d39fdd8"
+    },
+    {
+      "character": "i",
+      "codepoint": 105,
+      "d": "M4 7L4 0M4 10L4 9",
+      "pathSha256": "783b24b97ad0e579e6e70e1f0cc516b9f2eec38b39a4cc68dfaf9419245c04c7"
+    },
+    {
+      "character": "j",
+      "codepoint": 106,
+      "d": "M5 7L5 -1Q5 -3 3 -3Q2 -3 1 -2M5 10L5 9",
+      "pathSha256": "c9388fc604dea0c95c9be278dae8ab852ba55dddf1405d1795abd1ff76753c85"
+    },
+    {
+      "character": "k",
+      "codepoint": 107,
+      "d": "M1 0L1 10M7 7L1 2M3 4L7 0",
+      "pathSha256": "98b13326a933f0bbd889a2b446cccd6072d55ea80fcaa1620bd856c2843f4082"
+    },
+    {
+      "character": "l",
+      "codepoint": 108,
+      "d": "M3 10L3 2Q3 0 5 0Q6 0 7 1",
+      "pathSha256": "91fa88d6eca92033c34100c637296d7ebcb9b74b555412b2921de17c6b0ff848"
+    },
+    {
+      "character": "m",
+      "codepoint": 109,
+      "d": "M1 0L1 7M1 5Q2 7 3 7Q4 7 4 5L4 0M4 5Q5 7 6 7Q7 7 7 5L7 0",
+      "pathSha256": "081d3c2d57809311a95457f90e5593da4c864c7c65ebe7ea7f93ed89e66d2e8f"
+    },
+    {
+      "character": "n",
+      "codepoint": 110,
+      "d": "M1 0L1 7M1 5Q2 7 4 7Q7 7 7 4L7 0",
+      "pathSha256": "43eab82640c73a960a53ac15a30054ae17dd49ebcbde8c0c11aacac15d574ec4"
+    },
+    {
+      "character": "o",
+      "codepoint": 111,
+      "d": "M4 7Q1 7 1 4Q1 0 4 0Q7 0 7 4Q7 7 4 7Z",
+      "pathSha256": "99e86e202364b6a731bd95219d6942b88ef5598695a30836e689341c038824a6"
+    },
+    {
+      "character": "p",
+      "codepoint": 112,
+      "d": "M1 -3L1 7M1 5Q2 7 4 7Q7 7 7 4Q7 0 4 0Q2 0 1 2",
+      "pathSha256": "0cd76092f9a52827afa3e6ce72675c5bfd5b60cc1f942aa42171f44d3c27cbdd"
+    },
+    {
+      "character": "q",
+      "codepoint": 113,
+      "d": "M7 -3L7 7M7 5Q6 7 4 7Q1 7 1 4Q1 0 4 0Q6 0 7 2",
+      "pathSha256": "49897e089cb7d2a9ebaa51e98e3db96fe2104d1e1ecad166f3e2e7bd1ad61720"
+    },
+    {
+      "character": "r",
+      "codepoint": 114,
+      "d": "M1 0L1 7M1 5Q3 7 5 7Q6 7 7 6",
+      "pathSha256": "e8d8538d68d00f5f4a35a002d2a23775f8304954b19cccd93347fc4da42119f6"
+    },
+    {
+      "character": "s",
+      "codepoint": 115,
+      "d": "M7 6Q6 7 4 7Q1 7 1 5Q1 4 4 4Q7 4 7 2Q7 0 4 0Q2 0 1 1",
+      "pathSha256": "050f3dbe5bec92ed20dc709b1cf867068f32717b1fb31bd41070abebade27912"
+    },
+    {
+      "character": "t",
+      "codepoint": 116,
+      "d": "M3 10L3 2Q3 0 5 0Q6 0 7 1M1 7L6 7",
+      "pathSha256": "c0c94a5518a1e935449c211ac13d7656bcceb4eee2582404bf9be5f9ef72cb16"
+    },
+    {
+      "character": "u",
+      "codepoint": 117,
+      "d": "M1 7L1 3Q1 0 4 0Q7 0 7 3L7 7M7 0L7 2",
+      "pathSha256": "40dfb9e433684d27658861642591ca75decfd8b9e8dad73465fd1e8975a92b89"
+    },
+    {
+      "character": "v",
+      "codepoint": 118,
+      "d": "M1 7L4 0L7 7",
+      "pathSha256": "ab443245811a2015dd3cdd7d35f3d311431f07f449e9fa51d65c0028fc438fa7"
+    },
+    {
+      "character": "w",
+      "codepoint": 119,
+      "d": "M0 7L2 0L4 5L6 0L8 7",
+      "pathSha256": "b6604104cd359dca79824b5bc089cf530c9a6a7283be115b96ce5f50595ec065"
+    },
+    {
+      "character": "x",
+      "codepoint": 120,
+      "d": "M1 7L7 0M7 7L1 0",
+      "pathSha256": "efb9bc6e1725f10275a6f049be6a69a730fd1d0e6e7de999d73d2fc9d5e4c5eb"
+    },
+    {
+      "character": "y",
+      "codepoint": 121,
+      "d": "M1 7L4 0M7 7L3 -3",
+      "pathSha256": "8cd7f3d0b6357bdba1109449bfd482c016f747839373a3f2be5c2acc5f60e38a"
+    },
+    {
+      "character": "z",
+      "codepoint": 122,
+      "d": "M1 7L7 7L1 0L7 0",
+      "pathSha256": "0677f8ec8aac78cc7653e429c10843f9ab28be6b63146a6d514606d02a744dc0"
+    },
+    {
+      "character": "0",
+      "codepoint": 48,
+      "d": "M4 10Q1 10 1 5Q1 0 4 0Q7 0 7 5Q7 10 4 10ZM2 2L6 8",
+      "pathSha256": "ff5e877afdedbb34c61047c104c91c4d232e23d0c360e0bfbc3324da4fc9f0cd"
+    },
+    {
+      "character": "1",
+      "codepoint": 49,
+      "d": "M2 8L4 10L4 0M2 0L6 0",
+      "pathSha256": "f838c6d055a5fccf4e3685ddd915ea47f83ee4484d19152b39330876cc4a5283"
+    },
+    {
+      "character": "2",
+      "codepoint": 50,
+      "d": "M1 8Q2 10 4 10Q7 10 7 7Q7 5 1 0L7 0",
+      "pathSha256": "337c3d900ec83eddec9d8fcccaac33804cf31321860437e1dc5b40fde4122f0a"
+    },
+    {
+      "character": "3",
+      "codepoint": 51,
+      "d": "M1 9Q2 10 4 10Q7 10 7 7Q7 5 4 5M4 5Q7 5 7 2Q7 0 4 0Q2 0 1 1",
+      "pathSha256": "1309df978ad2e06cb1a6d399d2c0579d8869191c56d5f601aec391a94220bebe"
+    },
+    {
+      "character": "4",
+      "codepoint": 52,
+      "d": "M6 0L6 10L1 3L8 3",
+      "pathSha256": "24d53224ac3230701a00e6e165063ada7d0601476343a022d5df92f647cb3bed"
+    },
+    {
+      "character": "5",
+      "codepoint": 53,
+      "d": "M7 10L1 10L1 5L4 5Q7 5 7 2Q7 0 4 0Q2 0 1 1",
+      "pathSha256": "8d1f9fb28f45ca4a3d2adf818d59cc9a1f7eeeb3e9083dbc329c55929ebf86f8"
+    },
+    {
+      "character": "6",
+      "codepoint": 54,
+      "d": "M7 9Q6 10 4 10Q1 10 1 5L1 3Q1 0 4 0Q7 0 7 3Q7 5 4 5L1 5",
+      "pathSha256": "7056d1168a572cf9454e56f445621a52b787733f66afe4e19c624cfd4c58ce11"
+    },
+    {
+      "character": "7",
+      "codepoint": 55,
+      "d": "M1 10L7 10L3 0",
+      "pathSha256": "98f54d468f3f08b668a69732c798d96619cd372690b31d1055d07fcdda07c4e8"
+    },
+    {
+      "character": "8",
+      "codepoint": 56,
+      "d": "M4 10Q1 10 1 7Q1 5 4 5Q7 5 7 7Q7 10 4 10ZM4 5Q1 5 1 2Q1 0 4 0Q7 0 7 2Q7 5 4 5Z",
+      "pathSha256": "cf6e6820ce18bf7faadc6b09add032a1e05b4d57e9d27e9e15f41bc45a0d125c"
+    },
+    {
+      "character": "9",
+      "codepoint": 57,
+      "d": "M1 1Q2 0 4 0Q7 0 7 5L7 7Q7 10 4 10Q1 10 1 7Q1 5 4 5L7 5",
+      "pathSha256": "eb814dfd62b1740e0e32f7353fbd4e89537ae7fb1fa4d5b52d454528cee1f7c6"
+    },
+    {
+      "character": ".",
+      "codepoint": 46,
+      "d": "M4 0L4 1",
+      "pathSha256": "7154214da62d92f2833985a7363e87eb27be8231a8f6c8edb825a16ff1c75503"
+    },
+    {
+      "character": ",",
+      "codepoint": 44,
+      "d": "M4 1L3 -2",
+      "pathSha256": "de79580c8fdd43d000c2f94b680c7d5cdcc923e7c58760a2b346b5328f39d586"
+    },
+    {
+      "character": "?",
+      "codepoint": 63,
+      "d": "M1 8Q2 10 4 10Q7 10 7 7Q7 5 4 4L4 2M4 0L4 1",
+      "pathSha256": "b8d520379c89e7bbf9386751ee70f931a7d1c6eec03ca59e26ad22002a159230"
+    },
+    {
+      "character": "!",
+      "codepoint": 33,
+      "d": "M4 10L4 3M4 0L4 1",
+      "pathSha256": "be1a39d0cbc4321f62187441e0a9b941823482eb3752ca59dd4343b71f075966"
+    },
+    {
+      "character": ":",
+      "codepoint": 58,
+      "d": "M4 7L4 6M4 1L4 0",
+      "pathSha256": "7a1a6e1f613a8496aa6cb20ebb93139ebfe1c7202cd364f06b5c0d3d40135f2f"
+    },
+    {
+      "character": ";",
+      "codepoint": 59,
+      "d": "M4 7L4 6M4 1L3 -2",
+      "pathSha256": "caa16468d13b5a02b19b29de3afcca39393e2cae3b4afd8212d5168f980f9d8a"
+    },
+    {
+      "character": "'",
+      "codepoint": 39,
+      "d": "M4 10L3 7",
+      "pathSha256": "13be51645b3207fda9fe27a158b23e560bf5d199deba5cf2e0d2ac0bf2af0ad8"
+    },
+    {
+      "character": "\"",
+      "codepoint": 34,
+      "d": "M3 10L2 7M6 10L5 7",
+      "pathSha256": "37b270236cc5bbfb51737ee37bd3a681058c1e0c42086ac7a026d35f47448799"
+    },
+    {
+      "character": "-",
+      "codepoint": 45,
+      "d": "M1 4L7 4",
+      "pathSha256": "d0d2891b970ebffd9e607f86d72e28124517b4dd10883b4a94f80dda4d87f3bb"
+    },
+    {
+      "character": "(",
+      "codepoint": 40,
+      "d": "M6 10Q2 8 2 4Q2 0 6 -2",
+      "pathSha256": "6c8da9254c80ed071c29f03d320c8632fdeaa94083a53d840f66381c3e0c39c6"
+    },
+    {
+      "character": ")",
+      "codepoint": 41,
+      "d": "M2 10Q6 8 6 4Q6 0 2 -2",
+      "pathSha256": "a406be643d7b4b9677b4d79ce998ec7489e55f33ab03b55462965652da611c26"
+    },
+    {
+      "character": "/",
+      "codepoint": 47,
+      "d": "M1 -2L7 10",
+      "pathSha256": "01e73a8c171dfa68ab086c616923741385deaf407765cdca447f5ec1c998556d"
+    },
+    {
+      "character": "&",
+      "codepoint": 38,
+      "d": "M7 0L2 7Q1 9 3 10Q5 10 5 8Q5 6 2 4Q0 2 2 0Q4 -1 6 2L8 5",
+      "pathSha256": "ced8eabab160726879362f8e92308f715f1e3b252389a9e35ee2de191787959d"
+    }
+  ],
+  "librarySet": {
+    "id": "inshell.thought.glyph-library.set-05",
+    "memberId": "inshell.thought.glyph-library.set-05.classic-line",
+    "name": "THOUGHT Glyph Library — Fifth Set",
+    "order": 1,
+    "ordinal": 5,
+    "version": 8
+  },
+  "metrics": {
+    "ascender": 10,
+    "baseline": 0,
+    "capHeight": 10,
+    "coordinateSystem": "logical units, y-up",
+    "descender": -3,
+    "fixedAdvanceWidth": 10,
+    "space": {
+      "advanceWidth": 10,
+      "drawsPath": false
+    },
+    "svgBaselineY": 12,
+    "svgViewBoxHeight": 16,
+    "unitsPerEm": 13,
+    "xHeight": 7
+  },
+  "provenance": {
+    "importedFontOutlines": false,
+    "sourceCandidate": "C01",
+    "sourceExperiment": "classic-mono-gas",
+    "sourceExperimentCommit": "a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c",
+    "tracedFontOutlines": false
+  },
+  "renderStyle": {
+    "fill": "none",
+    "strokeLinecap": "round",
+    "strokeLinejoin": "round",
+    "strokeWidth": 0.72
+  },
+  "repertoire": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "schema": "inshell.thought.glyph-library.set-05.face.v1"
+}

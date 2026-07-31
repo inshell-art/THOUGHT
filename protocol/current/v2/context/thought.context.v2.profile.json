@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "assurance": "declared-unverified",
   "attestationCommitment": "keccak256-exact-utf8",
   "encoding": "rfc3629-shortest-form-unicode-scalars",
   "forbidden": {
@@ -37,7 +36,7 @@
     ]
   },
   "id": "inshell.thought.context.v2.visible-utf8-64",
-  "labels": ["declaredAgent", "declaredModel"],
+  "labels": ["agent", "model"],
   "maxUtf8Bytes": 64,
   "minUtf8Bytes": 1,
   "normalization": "none",

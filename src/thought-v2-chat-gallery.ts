@@ -15,13 +15,13 @@ import {
   type ThoughtV2StudyDerivedRecord,
 } from "./thought-v2-terminal-study-metadata";
 
-export const THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS = [
-  { declaredAgent: "Inshell THOUGHT App", declaredModel: "OpenAI GPT-5" },
-  { declaredAgent: "OpenAI Codex", declaredModel: "OpenAI GPT-5" },
-  { declaredAgent: "ChatGPT", declaredModel: "OpenAI GPT-5" },
-  { declaredAgent: "Claude", declaredModel: "Anthropic Claude Sonnet 4" },
-  { declaredAgent: "Gemini", declaredModel: "Google Gemini 2.5 Pro" },
-  { declaredAgent: "Qwen Code", declaredModel: "Qwen3-Coder" },
+export const THOUGHT_CHAT_GALLERY_RECORD_PAIRS = [
+  { agent: "Inshell THOUGHT App", model: "OpenAI GPT-5" },
+  { agent: "OpenAI Codex", model: "OpenAI GPT-5" },
+  { agent: "ChatGPT", model: "OpenAI GPT-5" },
+  { agent: "Claude", model: "Anthropic Claude Sonnet 4" },
+  { agent: "Gemini", model: "Google Gemini 2.5 Pro" },
+  { agent: "Qwen Code", model: "Qwen3-Coder" },
 ] as const;
 
 export const THOUGHT_CHAT_MOCK_ATTESTED_TOKEN_NUMBERS = [1, 14, 27, 40, 53, 66] as const;
@@ -29,19 +29,19 @@ export const THOUGHT_CHAT_MOCK_ATTESTED_TOKEN_NUMBERS = [1, 14, 27, 40, 53, 66] 
 const mockAttestedTokenNumbers = new Set<number>(THOUGHT_CHAT_MOCK_ATTESTED_TOKEN_NUMBERS);
 
 const declarationsForFixture = (index: number): ThoughtV2StudyDeclarations => {
-  const pair = THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS[
-    index % THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS.length
+  const pair = THOUGHT_CHAT_GALLERY_RECORD_PAIRS[
+    index % THOUGHT_CHAT_GALLERY_RECORD_PAIRS.length
   ];
   if (!pair) throw new Error(`missing declaration pair for fixture ${index + 1}`);
   return {
     agentDeclaration: {
-      label: pair.declaredAgent,
+      label: pair.agent,
       source: "manual",
       status: "declared-unverified",
     },
     kind: "manual",
     modelDeclaration: {
-      label: pair.declaredModel,
+      label: pair.model,
       source: "manual",
       status: "declared-unverified",
     },

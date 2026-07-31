@@ -1,0 +1,305 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import {
+  assertMono76Text,
+  loadMono76Manifest,
+  loadMono76Weight,
+} from "@inshell/mono-76";
+
+import { thoughtChatStudyWorks } from "../src/thought-v2-chat-study-corpus";
+
+const PACKAGE_VERSION = "0.1.0";
+const PACKAGE_RELEASE_TAG = "v0.1.0";
+const PACKAGE_RELEASE_COMMIT = "6fefbfaf762dce0148fe275baafb8e7dd2077beb";
+const PACKAGE_MANIFEST_SHA256 =
+  "14d734495a8bdc99a98fecbc4f9d76d315c9e2b9fc9b032d5a1fda567258ce11";
+const GLYPH_JSON_SHA256 =
+  "2cf76834f82050853bdcc9d25bc4f040bd7cc2a6a310206e166f6d162e4f0c2e";
+const PACKED_SHA256 =
+  "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6";
+const SOURCE_TTF_SHA256 =
+  "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37";
+
+const ARTBOARD_SIZE = 1024;
+const CANVAS_SIZE = 960;
+const FRAME_SIZE = 32;
+const FIELD_X = 57.6;
+const FIELD_WIDTH = 844.8;
+const FIELD_HEIGHT = 256;
+const PROMPT_FIELD_TOP = 128;
+const AGENT_FIELD_TOP = 576;
+const AGENT_FIELD_BOTTOM = AGENT_FIELD_TOP + FIELD_HEIGHT;
+const FONT_SIZE = 48;
+const LINE_HEIGHT = 64;
+const LINE_BOX_TOP = 760;
+const MAX_COLUMNS = 29;
+const MAX_ROWS = 4;
+const FIXED_ADVANCE = 600;
+const GLYPH_SCALE = FONT_SIZE / 1000;
+const ADVANCE = FIXED_ADVANCE * GLYPH_SCALE;
+const CELL_Y_INSET = (LINE_HEIGHT - FONT_SIZE) / 2;
+const BASELINE_IN_CELL = CELL_Y_INSET + LINE_BOX_TOP * GLYPH_SCALE;
+const FRAME_COLOR = "#006100";
+const GLYPH_COLOR = "#00ff00";
+const CANVAS_COLOR = "#000000";
+const WRAP_PROFILE = "greedy-space-then-fixed-cell-overlong-word";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const outputRoot = path.join(
+  root,
+  "public",
+  "generated",
+  "inshell-mono-76",
+  PACKAGE_VERSION,
+);
+const packageRoot = path.join(root, "vendor", "inshell-mono-76-v0.1.0");
+const checkOnly = process.argv.includes("--check");
+
+const sha256 = (value: string | Uint8Array): string =>
+  crypto.createHash("sha256").update(value).digest("hex");
+
+const xmlEscape = (value: string): string => value
+  .replaceAll("&", "&amp;")
+  .replaceAll("<", "&lt;")
+  .replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;")
+  .replaceAll("'", "&apos;");
+
+const number = (value: number): string => {
+  const rounded = Math.round((value + Number.EPSILON) * 1_000_000) / 1_000_000;
+  return String(Object.is(rounded, -0) ? 0 : rounded);
+};
+
+const byteLength = (value: string): number => Buffer.byteLength(value, "utf8");
+
+const wrap = (value: string): string[] => {
+  const rows: string[] = [];
+  let cursor = 0;
+
+  while (cursor < value.length) {
+    if (rows.length === MAX_ROWS) {
+      throw new RangeError(`Too many rendered rows for ${JSON.stringify(value)}`);
+    }
+
+    const remaining = value.length - cursor;
+    let rowLength = Math.min(remaining, MAX_COLUMNS);
+    if (remaining > MAX_COLUMNS) {
+      for (let offset = MAX_COLUMNS; offset > 0; offset -= 1) {
+        if (value[cursor + offset - 1] === " ") {
+          rowLength = offset - 1;
+          break;
+        }
+      }
+    }
+
+    rows.push(value.slice(cursor, cursor + rowLength));
+    cursor += rowLength;
+    if (cursor < value.length && value[cursor] === " ") cursor += 1;
+  }
+
+  return rows;
+};
+
+const glyphId = (character: string): string =>
+  `inshell-mono-76-g${character.codePointAt(0)!.toString(16).padStart(4, "0")}`;
+
+const manifest = await loadMono76Manifest();
+const face = await loadMono76Weight(400);
+const vendoredManifestBytes = fs.readFileSync(path.join(packageRoot, "manifest.json"));
+
+if (
+  manifest.id !== "inshell.mono-76"
+  || manifest.version !== PACKAGE_VERSION
+  || manifest.weights.length !== 1
+  || manifest.weights[0]?.weight !== 400
+  || manifest.weights[0]?.fileSha256 !== GLYPH_JSON_SHA256
+  || manifest.weights[0]?.packedSha256 !== PACKED_SHA256
+  || manifest.weights[0]?.source?.fileSha256 !== SOURCE_TTF_SHA256
+  || sha256(vendoredManifestBytes) !== PACKAGE_MANIFEST_SHA256
+) {
+  throw new Error("Installed Inshell Mono 76 identity does not match the pinned v0.1.0 release");
+}
+
+const glyphs = new Map(
+  face.glyphs.map((glyph: { character: string; d: string }) => [glyph.character, glyph]),
+);
+
+const renderDefinitions = (promptLine: string, agentLine: string): string => {
+  const used = new Set([...promptLine, ...agentLine].filter((character) => character !== " "));
+  const definitions = [...face.canonicalOrder]
+    .filter((character) => used.has(character))
+    .map((character) => {
+      const glyph = glyphs.get(character);
+      if (!glyph?.d) throw new Error(`Missing native path for ${JSON.stringify(character)}`);
+      return `<path id="${glyphId(character)}" d="${glyph.d}"/>`;
+    });
+  return `<defs>${definitions.join("")}</defs>`;
+};
+
+const renderRows = (
+  rows: string[],
+  alignment: "prompt" | "agent",
+): string => {
+  const firstCellTop = alignment === "prompt"
+    ? PROMPT_FIELD_TOP
+    : AGENT_FIELD_BOTTOM - rows.length * LINE_HEIGHT;
+
+  return rows.map((row, rowIndex) => {
+    let x = alignment === "prompt"
+      ? FIELD_X + FIELD_WIDTH - row.length * ADVANCE
+      : FIELD_X;
+    const baseline = firstCellTop + rowIndex * LINE_HEIGHT + BASELINE_IN_CELL;
+    const uses: string[] = [];
+
+    for (const character of row) {
+      if (character !== " ") {
+        uses.push(
+          `<use href="#${glyphId(character)}" transform="translate(${number(x)} ${number(baseline)}) scale(${number(GLYPH_SCALE)} ${number(-GLYPH_SCALE)})"/>`,
+        );
+      }
+      x += ADVANCE;
+    }
+
+    return `<g data-row="${rowIndex + 1}" data-source="${xmlEscape(row)}">${uses.join("")}</g>`;
+  }).join("");
+};
+
+const renderArtwork = (
+  name: string,
+  promptLine: string,
+  agentLine: string,
+): { agentRows: string[]; promptRows: string[]; svg: string } => {
+  assertMono76Text(face, promptLine);
+  assertMono76Text(face, agentLine);
+
+  if (byteLength(promptLine) < 1 || byteLength(promptLine) > 64) {
+    throw new RangeError(`Prompt line outside 1–64 bytes: ${JSON.stringify(promptLine)}`);
+  }
+  if (byteLength(agentLine) < 1 || byteLength(agentLine) > 64) {
+    throw new RangeError(`Agent line outside 1–64 bytes: ${JSON.stringify(agentLine)}`);
+  }
+
+  const promptRows = wrap(promptLine);
+  const agentRows = wrap(agentLine);
+  const label = `${name}. Prompt: ${promptLine}. Agent: ${agentLine}`;
+  const svg = [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${ARTBOARD_SIZE}" height="${ARTBOARD_SIZE}" viewBox="0 0 ${ARTBOARD_SIZE} ${ARTBOARD_SIZE}" role="img" aria-label="${xmlEscape(label)}"`,
+    ` data-renderer="inshell.thought.study.inshell-mono-76-native-paths.v0.1.0" data-font-family="Inshell Mono 76" data-font-weight="400"`,
+    ` data-package-release="${PACKAGE_RELEASE_TAG}" data-package-commit="${PACKAGE_RELEASE_COMMIT}" data-package-manifest-sha256="${PACKAGE_MANIFEST_SHA256}"`,
+    ` data-wrap="${WRAP_PROFILE}" data-prompt-vertical-align="top" data-agent-vertical-align="bottom">`,
+    `<title>${xmlEscape(name)} — Inshell Mono 76 Regular 400</title>`,
+    `<rect id="work-frame" width="${ARTBOARD_SIZE}" height="${ARTBOARD_SIZE}" fill="${FRAME_COLOR}"/>`,
+    `<g id="work-canvas" transform="translate(${FRAME_SIZE} ${FRAME_SIZE})">`,
+    `<rect id="canvas-bg" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="${CANVAS_COLOR}"/>`,
+    renderDefinitions(promptLine, agentLine),
+    `<g id="prompt-line" fill="${GLYPH_COLOR}" fill-rule="${face.metrics.fillRule}" data-source="${xmlEscape(promptLine)}" data-rows="${promptRows.length}" data-field-x="${FIELD_X}" data-field-y="${PROMPT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${PROMPT_FIELD_TOP + FIELD_HEIGHT}" data-horizontal-align="right" data-vertical-align="top">`,
+    renderRows(promptRows, "prompt"),
+    "</g>",
+    `<g id="agent-line" fill="${GLYPH_COLOR}" fill-rule="${face.metrics.fillRule}" data-source="${xmlEscape(agentLine)}" data-rows="${agentRows.length}" data-field-x="${FIELD_X}" data-field-y="${AGENT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${AGENT_FIELD_BOTTOM}" data-horizontal-align="left" data-vertical-align="bottom">`,
+    renderRows(agentRows, "agent"),
+    "</g>",
+    "</g>",
+    "</svg>",
+  ].join("");
+
+  return { agentRows, promptRows, svg };
+};
+
+const generatedWorks = thoughtChatStudyWorks.map((work, index) => {
+  const { agentRows, promptRows, svg } = renderArtwork(
+    work.name,
+    work.promptLine,
+    work.agentLine,
+  );
+  return {
+    id: work.id,
+    number: index + 1,
+    name: work.name,
+    studyKind: work.studyKind,
+    file: `${work.id}.svg`,
+    promptBytes: byteLength(work.promptLine),
+    agentBytes: byteLength(work.agentLine),
+    promptRows: promptRows.length,
+    agentRows: agentRows.length,
+    svg,
+    svgSha256: sha256(svg),
+  };
+});
+
+const generatedManifest = `${JSON.stringify({
+  schema: "inshell.thought.inshell-mono-76-study-assets.v1",
+  package: {
+    id: manifest.id,
+    version: PACKAGE_VERSION,
+    releaseTag: PACKAGE_RELEASE_TAG,
+    releaseCommit: PACKAGE_RELEASE_COMMIT,
+    manifestSha256: PACKAGE_MANIFEST_SHA256,
+    glyphJsonSha256: GLYPH_JSON_SHA256,
+    packedSha256: PACKED_SHA256,
+    sourceTtfSha256: SOURCE_TTF_SHA256,
+    family: face.family.name,
+    face: face.family.faceName,
+    style: face.family.style,
+    weight: face.weight,
+    repertoire: face.canonicalOrder,
+  },
+  renderer: {
+    id: "inshell.thought.study.inshell-mono-76-native-paths.v0.1.0",
+    artboard: ARTBOARD_SIZE,
+    canvas: CANVAS_SIZE,
+    frame: FRAME_SIZE,
+    frameColor: FRAME_COLOR,
+    glyphColor: GLYPH_COLOR,
+    fontSize: FONT_SIZE,
+    lineHeight: LINE_HEIGHT,
+    fixedAdvance: ADVANCE,
+    maxColumns: MAX_COLUMNS,
+    maxRows: MAX_ROWS,
+    wrapProfile: WRAP_PROFILE,
+    promptVerticalAlign: "top",
+    agentVerticalAlign: "bottom",
+  },
+  fixtureCount: generatedWorks.length,
+  works: generatedWorks.map(({ svg, ...work }) => work),
+}, null, 2)}\n`;
+
+const expectedFiles = new Map<string, string>([
+  ["study-manifest.json", generatedManifest],
+  ...generatedWorks.map(({ file, svg }) => [file, svg] as const),
+]);
+
+if (checkOnly) {
+  const mismatches: string[] = [];
+  for (const [file, expected] of expectedFiles) {
+    const absolute = path.join(outputRoot, file);
+    if (!fs.existsSync(absolute) || fs.readFileSync(absolute, "utf8") !== expected) {
+      mismatches.push(file);
+    }
+  }
+
+  const actualFiles = fs.existsSync(outputRoot)
+    ? fs.readdirSync(outputRoot).filter((file) => file.endsWith(".svg") || file.endsWith(".json"))
+    : [];
+  const extras = actualFiles.filter((file) => !expectedFiles.has(file));
+
+  if (mismatches.length > 0 || extras.length > 0) {
+    throw new Error(
+      `Inshell Mono 76 study assets drifted; mismatches: ${mismatches.join(", ") || "none"}; extras: ${extras.join(", ") || "none"}`,
+    );
+  }
+
+  console.log(
+    `Inshell Mono 76 study assets PASS: ${generatedWorks.length} deterministic SVGs · ${PACKAGE_RELEASE_TAG} · Regular 400`,
+  );
+} else {
+  fs.mkdirSync(outputRoot, { recursive: true });
+  for (const [file, contents] of expectedFiles) {
+    fs.writeFileSync(path.join(outputRoot, file), contents);
+  }
+  console.log(
+    `Generated ${generatedWorks.length} Inshell Mono 76 Regular 400 native-path SVGs in ${path.relative(root, outputRoot)}`,
+  );
+}

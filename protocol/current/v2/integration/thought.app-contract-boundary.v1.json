@@ -17,8 +17,8 @@
     "mintInputFields": [
       "promptLine",
       "agentLine",
-      "declaredAgent",
-      "declaredModel",
+      "agent",
+      "model",
       "pathId",
       "thoughtSpecId",
       "thoughtSpecHash",
@@ -33,13 +33,13 @@
       "metadata": "inshell.thought.metadata.v2.terminal-chat",
       "renderer": "inshell.thought.svg.v2.terminal-chat-path-glyphs",
       "provenance": "inshell.thought.provenance.v2",
-      "creationAttestation": "inshell.thought.creation-workflow-attestation.v1"
+      "creationAttestation": "inshell.thought.creation-workflow-attestation.v2"
     },
     "limits": {
       "promptLineUtf8Bytes": 64,
       "agentLineUtf8Bytes": 64,
-      "declaredAgentUtf8Bytes": 64,
-      "declaredModelUtf8Bytes": 64,
+      "agentUtf8Bytes": 64,
+      "modelUtf8Bytes": 64,
       "provenanceUtf8Bytes": 20000
     },
     "registryDependencies": {
@@ -57,7 +57,7 @@
     },
     "creationAttestation": {
       "domainName": "Inshell THOUGHT Creation Attestation",
-      "domainVersion": "1",
+      "domainVersion": "2",
       "primaryType": "CreationAttestation",
       "claimFields": [
         "profileId",
@@ -67,8 +67,8 @@
         "thoughtSpecHash",
         "workHash",
         "provenanceHash",
-        "declaredAgentHash",
-        "declaredModelHash",
+        "agentHash",
+        "modelHash",
         "runIdHash",
         "intendedMinter",
         "deadline",
@@ -85,26 +85,9 @@
       "meaning": "the configured authority signed the exact claim; it does not independently prove provider identity, model identity, or semantic compliance"
     },
     "metadataTraits": {
-      "attested": [
-        "Attested Agent",
-        "Attested Model",
-        "Creation Attestation",
-        "Prompt Bytes",
-        "Agent Bytes",
-        "Pair Bytes",
-        "Prompt Length",
-        "Agent Length"
-      ],
-      "unattested": [
-        "Creation Attestation",
-        "Prompt Bytes",
-        "Agent Bytes",
-        "Pair Bytes",
-        "Prompt Length",
-        "Agent Length"
-      ],
-      "agentModelGate": "nonzero-creation-attestation-digest",
-      "declarationAssurance": "declared-unverified"
+      "attested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
+      "unattested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
+      "agentModelGate": "none"
     },
     "contractOutputs": [
       "typed-token-state",

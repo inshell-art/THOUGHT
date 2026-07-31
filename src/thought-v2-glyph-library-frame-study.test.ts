@@ -19,8 +19,26 @@ import {
   loadFourthSetFont,
   resolveFourthSetTilePaint,
 } from "@inshell/thought-glyph-library-fourth-set";
+import {
+  listFifthSetFonts,
+  loadAllFifthSetFonts,
+  loadFifthSetFont,
+} from "@inshell/thought-glyph-library-fifth-set";
+import {
+  CLASSIC_BOOK_76_REPERTOIRE,
+  loadCurrentCandidateFont,
+  renderCurrentCandidateLine,
+  supportsCurrentCandidateText,
+} from "@inshell/classic-book-76-current-candidate";
 import { beforeAll, describe, expect, it } from "vitest";
 
+import {
+  loadThoughtV2ClassicBookCurrentCandidate,
+  THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_GLYPHS_SHA256,
+  THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKED_KECCAK256,
+  THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKED_SHA256,
+  THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKAGE_VERSION,
+} from "./thought-v2-classic-book-current-candidate";
 import {
   renderThoughtV2GlyphLibraryFrameStudySvg,
   THOUGHT_V2_GLYPH_STUDY_DEFAULT_FOREGROUND,
@@ -405,5 +423,244 @@ describe("THOUGHT V2 glyph-library frame study", () => {
     expect(glyphA).toBeDefined();
     expect(svg).toContain(`<path id="tile-humanist-smooth-g0041" d="${glyphA?.d}" fill-rule="evenodd"/>`);
     expect(svg).toContain(`data-normalization="matrix(${fourthSetFont.tilePresentation.normalization.ordinaryMatrix.join(" ")})"`);
+  });
+
+  it("loads the exact ordered four-family Fifth Set", async () => {
+    const records = await listFifthSetFonts();
+    expect(records).toHaveLength(4);
+    expect(records.map((record) => ({
+      familyId: record.familyId,
+      memberId: record.memberId,
+      name: record.name,
+      order: record.order,
+      slug: record.slug,
+      sourceCandidate: record.sourceCandidate,
+    }))).toEqual([
+      {
+        familyId: "S501",
+        memberId: "inshell.thought.glyph-library.set-05.classic-line",
+        name: "Classic Line 76",
+        order: 1,
+        slug: "classic-line",
+        sourceCandidate: "C01",
+      },
+      {
+        familyId: "S502",
+        memberId: "inshell.thought.glyph-library.set-05.classic-book",
+        name: "Classic Book 76",
+        order: 2,
+        slug: "classic-book",
+        sourceCandidate: "C02",
+      },
+      {
+        familyId: "S503",
+        memberId: "inshell.thought.glyph-library.set-05.classic-round",
+        name: "Classic Round 76",
+        order: 3,
+        slug: "classic-round",
+        sourceCandidate: "C04",
+      },
+      {
+        familyId: "S504",
+        memberId: "inshell.thought.glyph-library.set-05.classic-compact",
+        name: "Classic Compact 76",
+        order: 4,
+        slug: "classic-compact",
+        sourceCandidate: "C06",
+      },
+    ]);
+  });
+
+  it("renders every Fifth Set family as exact no-fill centerlines", async () => {
+    const entries = await loadAllFifthSetFonts();
+    for (const { record, font: candidate } of entries) {
+      const svg = renderThoughtV2GlyphLibraryFrameStudySvg(
+        candidate,
+        "AB 1?",
+        "ba 2!",
+        32,
+        "#006100",
+        "#00ff00",
+      );
+      const glyphA = candidate.glyphs.find(({ character }) => character === "A");
+      expect(glyphA).toBeDefined();
+      expect(svg).toContain('data-library-set-id="inshell.thought.glyph-library.set-05"');
+      expect(svg).toContain('data-library-set-version="8"');
+      expect(svg).toContain(`data-glyph-family="${record.slug}"`);
+      expect(svg).toContain(`data-library-member-id="${record.memberId}"`);
+      expect(svg).toContain(`data-source-candidate="${record.sourceCandidate}"`);
+      expect(svg).toContain('data-qualification-status="declared"');
+      expect(svg).toContain('data-path-model="centerline"');
+      expect(svg).toContain('data-coordinate-system="logical units, y-up"');
+      expect(svg).toContain('data-fixed-advance-width="10"');
+      expect(svg).toContain('data-font-style="Regular"');
+      expect(svg).toContain('data-font-weight="400"');
+      expect(svg).toContain('data-render-fill="none"');
+      expect(svg).toContain(`data-authored-stroke-width="${record.renderStyle.strokeWidth}"`);
+      expect(svg).toContain(`data-stroke-width="${record.renderStyle.strokeWidth}"`);
+      expect(svg).toContain('data-weight-mode="authored-regular"');
+      expect(svg).toContain(`data-stroke-linecap="${record.renderStyle.strokeLinecap}"`);
+      expect(svg).toContain(`data-stroke-linejoin="${record.renderStyle.strokeLinejoin}"`);
+      expect(svg).toContain(
+        `<path id="${record.slug}-g0041" d="${glyphA?.d}"/>`,
+      );
+      expect(svg).toContain(
+        `fill="none" stroke="#00ff00" stroke-width="${record.renderStyle.strokeWidth}" stroke-linecap="${record.renderStyle.strokeLinecap}" stroke-linejoin="${record.renderStyle.strokeLinejoin}" data-paint-policy="canonical-centerline-stroke"`,
+      );
+      expect(svg).toContain('transform="translate(758.4 171.52) scale(2.88 -2.88)"');
+      expect(svg).toContain('transform="translate(57.6 811.52) scale(2.88 -2.88)"');
+      expect(svg).not.toContain("fill-rule=");
+      expect(svg).not.toMatch(/<text[\s>]/);
+      expect(svg).not.toContain("<foreignObject");
+      expect(svg).not.toContain("@font-face");
+    }
+  });
+
+  it("applies a synthetic Set 5 visual weight without changing glyph geometry or metrics", async () => {
+    const fifthSetFont = await loadFifthSetFont("classic-book");
+    const authored = renderThoughtV2GlyphLibraryFrameStudySvg(
+      fifthSetFont,
+      "Question?",
+      "The one that returns.",
+      32,
+      "#006100",
+      "#00ff00",
+    );
+    const synthetic = renderThoughtV2GlyphLibraryFrameStudySvg(
+      fifthSetFont,
+      "Question?",
+      "The one that returns.",
+      32,
+      "#006100",
+      "#00ff00",
+      1.2,
+    );
+
+    expect(synthetic).toContain('data-font-weight="400"');
+    expect(synthetic).toContain('data-authored-stroke-width="0.82"');
+    expect(synthetic).toContain('data-stroke-width="1.2"');
+    expect(synthetic).toContain('data-weight-mode="synthetic-stroke-study"');
+    expect(synthetic).toContain(
+      `fill="none" stroke="#00ff00" stroke-width="1.2" stroke-linecap="${fifthSetFont.renderStyle?.strokeLinecap}" stroke-linejoin="${fifthSetFont.renderStyle?.strokeLinejoin}" data-paint-policy="synthetic-centerline-weight-study"`,
+    );
+    expect(synthetic.match(/transform="[^"]+"/g)).toEqual(authored.match(/transform="[^"]+"/g));
+  });
+
+  it("uses the approved Set 5 v8 Classic Book revision paths", async () => {
+    const fifthSetFont = await loadFifthSetFont("classic-book");
+    const svg = renderThoughtV2GlyphLibraryFrameStudySvg(
+      fifthSetFont,
+      "AG?2",
+      "fk-",
+      32,
+      "#006100",
+      "#00ff00",
+    );
+
+    expect(svg).toContain('<path id="classic-book-g0041" d="M1 0L4 10L7 0M2.3 4L5.7 4"/>');
+    expect(svg).toContain('<path id="classic-book-g0047" d="M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q7 0 7 2L7 5L4 5"/>');
+    expect(svg).toContain('<path id="classic-book-g003f" d="M1 8Q2 10 4 10Q7 10 7 7Q7 5 4 4L4 3M4 0L4 1"/>');
+    expect(svg).toContain('<path id="classic-book-g0032" d="M1 8Q2 10 4 10Q7 10 7 7Q7 6 5 4L1 0L7 0"/>');
+    expect(svg).toContain('<path id="classic-book-g0066" d="M3 0L3 8Q3 11 5 11Q6 11 7 10M1 7L7 7"/>');
+    expect(svg).toContain('<path id="classic-book-g006b" d="M1 0L1 10M7 7L1 2M3.18 3.82L7 0"/>');
+    expect(svg).toContain('<path id="classic-book-g002d" d="M1 5L7 5"/>');
+  });
+
+  it("installs the separate Classic Book V19 candidate without replacing released Set 5 V8", async () => {
+    const released = await loadFifthSetFont("classic-book");
+    const { font: candidate } = await loadThoughtV2ClassicBookCurrentCandidate();
+
+    expect(THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKAGE_VERSION)
+      .toBe("0.19.0-candidate.20260731");
+    expect(THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_GLYPHS_SHA256)
+      .toBe("0069b4bcc764bb1ffd9707b06a1bdd70a17e523c06dc8b50922e67c21016f0a6");
+    expect(THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKED_SHA256)
+      .toBe("7ccb7fc26c0f7d8a25a70b85acea02ef270f7c10f1bb851eb68301dfadb24567");
+    expect(THOUGHT_V2_CLASSIC_BOOK_CANDIDATE_PACKED_KECCAK256)
+      .toBe("0x4ea6450fce37dc4079370ee798f5bb29f7ed677dcd1300c7fd9b3e27bb4b273e");
+    expect(candidate.candidate?.revision).toBe("c02-current-study-v19-20260731");
+    expect(candidate.candidate?.baseSetVersion).toBe(8);
+    expect(candidate.composition).toMatchObject({
+      appliedPerGlyphOffsets: {},
+      defaultOriginShiftX: 1,
+      kerning: false,
+      mechanicalCenterReferenceApplied: false,
+    });
+    expect(candidate.renderStyle).toMatchObject({
+      fill: "none",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      strokeWidth: 1.23,
+    });
+    expect(candidate.glyphs.find(({ character }) => character === "G")?.d)
+      .toBe("M7.1 9Q6.1 10.1 4 10.1Q.75 10.1 .75 5.25Q.75 .4 4 .4Q7.2 .4 7.2 1.35L7.2 4.9L4.2 4.9");
+    expect(released.glyphs.find(({ character }) => character === "G")?.d)
+      .toBe("M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q7 0 7 2L7 5L4 5");
+  });
+
+  it("renders the candidate with its +1 origin, exact paint, and no spacing offsets", async () => {
+    const { font: candidate } = await loadThoughtV2ClassicBookCurrentCandidate();
+    const svg = renderThoughtV2GlyphLibraryFrameStudySvg(
+      candidate,
+      "A",
+      "A",
+      32,
+      "#006100",
+      "#00ff00",
+    );
+
+    expect(svg).toContain('data-candidate-revision="c02-current-study-v19-20260731"');
+    expect(svg).toContain('data-candidate-status="installable-candidate-snapshot"');
+    expect(svg).toContain('data-base-set-version="8"');
+    expect(svg).toContain('data-origin-shift-x="1"');
+    expect(svg).toContain('data-kerning="false"');
+    expect(svg).toContain('data-per-glyph-offsets-applied="false"');
+    expect(svg).toContain(
+      'fill="none" stroke="#00ff00" stroke-width="1.23" stroke-linecap="round" stroke-linejoin="round" data-paint-policy="candidate-centerline-stroke"',
+    );
+    expect(svg).toContain(
+      '<use href="#classic-book-current-candidate-g0041" transform="translate(876.48 171.52) scale(2.88 -2.88)"/>',
+    );
+    expect(svg).toContain(
+      '<use href="#classic-book-current-candidate-g0041" transform="translate(60.48 811.52) scale(2.88 -2.88)"/>',
+    );
+    expect(svg).not.toMatch(/<text[\s>]/);
+    expect(svg).not.toContain("<foreignObject");
+  });
+
+  it("covers the complete candidate repertoire without fallback substitution", async () => {
+    const candidate = await loadCurrentCandidateFont();
+    expect(supportsCurrentCandidateText(candidate, CLASSIC_BOOK_76_REPERTOIRE)).toBe(true);
+    expect(supportsCurrentCandidateText(candidate, "é")).toBe(false);
+
+    const specimen = renderCurrentCandidateLine(
+      candidate,
+      CLASSIC_BOOK_76_REPERTOIRE,
+      {
+        background: "#000000",
+        stroke: "#00ff00",
+      },
+    );
+    expect(specimen).toContain('data-candidate-revision="c02-current-study-v19-20260731"');
+    expect(specimen.match(/<path /g)).toHaveLength(75);
+    expect(() => renderCurrentCandidateLine(candidate, "é")).toThrow(
+      /unsupported Classic Book 76 characters/,
+    );
+  });
+
+  it("preserves the Fifth Set source path data and family-specific stroke contract", async () => {
+    const fifthSetFont = await loadFifthSetFont("classic-compact");
+    const svg = renderThoughtV2GlyphLibraryFrameStudySvg(
+      fifthSetFont,
+      "Question?",
+      "The one that returns.",
+      32,
+      "#006100",
+      "#00ba00",
+    );
+    const glyphQ = fifthSetFont.glyphs.find(({ character }) => character === "Q");
+    expect(glyphQ).toBeDefined();
+    expect(svg).toContain(`<path id="classic-compact-g0051" d="${glyphQ?.d}"/>`);
+    expect(svg).toContain('stroke="#00ba00" stroke-width="0.78" stroke-linecap="butt" stroke-linejoin="miter"');
   });
 });

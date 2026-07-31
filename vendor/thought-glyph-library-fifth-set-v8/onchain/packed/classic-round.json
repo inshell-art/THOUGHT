@@ -1,0 +1,14 @@
+{
+  "familyId": "S503",
+  "glyphCount": 76,
+  "headerBytes": 162,
+  "magic": "IM76",
+  "pathBytes": 2534,
+  "schema": "inshell.thought.glyph-library.set-05.im76-payload.v1",
+  "sha256": "72ea88523caf278828b833368c4a3a289f7b80866ac464325d04f031c48e3a01",
+  "slug": "classic-round",
+  "sourceCandidate": "C04",
+  "totalBytes": 2696,
+  "version": 1,
+  "weight": 400
+}

@@ -1,38 +1,26 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "attributeOrder": {
-    "attested": [
-      "Attested Agent",
-      "Attested Model",
-      "Creation Attestation",
-      "Prompt Bytes",
-      "Agent Bytes",
-      "Pair Bytes",
-      "Prompt Length",
-      "Agent Length"
-    ],
-    "unattested": [
-      "Creation Attestation",
-      "Prompt Bytes",
-      "Agent Bytes",
-      "Pair Bytes",
-      "Prompt Length",
-      "Agent Length"
-    ]
-  },
-  "declarations": {
-    "assurance": "declared-unverified",
-    "attestationBindsExactHashes": true,
-    "attestedTraitTypes": ["Attested Agent", "Attested Model"],
-    "contextProfileId": "inshell.thought.context.v2.visible-utf8-64",
-    "marketplaceTraitGate": "nonzero-creation-attestation-digest",
-    "metadataPaths": ["thought.declarations.agent", "thought.declarations.model"],
-    "typedStateAuthoritative": true,
-    "unattestedTraitTypes": [],
-    "workIdentityInput": false
-  },
+  "attributeOrder": [
+    "Agent",
+    "Model",
+    "Creation Attestation",
+    "Prompt Bytes",
+    "Agent Bytes",
+    "Pair Bytes",
+    "Prompt Length",
+    "Agent Length"
+  ],
+  "description": "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.",
   "id": "inshell.thought.metadata.v2.terminal-chat",
   "marketplaceRequired": ["name", "description", "image", "background_color", "attributes"],
+  "records": {
+    "attestationBindsExactHashes": true,
+    "contextProfileId": "inshell.thought.context.v2.visible-utf8-64",
+    "metadataPaths": ["thought.records.agent", "thought.records.model"],
+    "traitTypes": ["Agent", "Model"],
+    "typedStateAuthoritative": true,
+    "workIdentityInput": false
+  },
   "traitExclusions": {
     "conversationForm": "fixture-only",
     "workProfileId": "technical-property"
@@ -40,13 +28,11 @@
   "technicalRequired": [
     "promptLine",
     "agentLine",
-    "declarations.agent.label",
-    "declarations.agent.status",
-    "declarations.agent.keccak256",
-    "declarations.model.label",
-    "declarations.model.status",
-    "declarations.model.keccak256",
-    "declarations.workIdentityInput",
+    "records.agent.label",
+    "records.agent.keccak256",
+    "records.model.label",
+    "records.model.keccak256",
+    "records.workIdentityInput",
     "promptLineKeccak256",
     "agentLineKeccak256",
     "conversationIdentityHash",

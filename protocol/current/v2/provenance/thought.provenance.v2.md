@@ -5,7 +5,7 @@ Identifier: `inshell.thought.provenance.v2`
 ## Authority and opaque-byte boundary
 
 Typed contract state is authoritative for the exact prompt, Agent response,
-Declared Agent, Declared Model, hashes, selected specification, collection
+neutral Agent record, neutral Model record, hashes, selected specification, collection
 release, PATH result, minter, and minted facts. Provenance is the canonical
 pre-mint creation record checked against those facts. Solidity stores and
 hashes the exact bounded bytes opaquely; it does not parse JSON.
@@ -66,14 +66,16 @@ Manual provenance uses `source: manual` for both declarations and forbids
 `transport.resultEnvelopeKeccak256` plus `transport.runIdHash`.
 
 Declaration labels use `inshell.thought.context.v2.visible-utf8-64`, not the
-Terminal English artwork profile. They are exact typed mint values and must
-equal `ThoughtNFTV2.declaredAgentOf` and `declaredModelOf`. Their exact UTF-8
-hashes are bound into an official creation-attestation claim.
+Terminal English artwork profile. At the contract boundary, their labels map
+to the neutral `agent` and `model` mint records and must equal
+`ThoughtNFTV2.agentOf` and `modelOf`. Their exact UTF-8 hashes are bound into
+an official creation-attestation claim as `agentHash` and `modelHash`.
 
-Declarations always remain declared and unverified. A valid Inshell THOUGHT
-App creation attestation proves that the authorized signer bound those exact
-labels to the other claim facts; it does not prove the labels are objectively
-true. Declarations do not affect conversation identity, work hash, or SVG.
+The provenance wire schema deliberately retains its App-owned declaration
+objects and statuses. Solidity does not parse or reinterpret those fields. A
+valid Inshell THOUGHT App creation attestation proves that the authorized
+signer bound the mapped exact labels to the other claim facts. The neutral
+contract records do not affect conversation identity, work hash, or SVG.
 
 ## Builder and verifier requirements
 

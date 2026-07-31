@@ -113,8 +113,8 @@ const filterFacet = (traitType: string): string => {
   if (values.length === 0) return "";
   const open = [
     "Creation Attestation",
-    "Attested Agent",
-    "Attested Model",
+    "Agent",
+    "Model",
   ].includes(traitType) ? " open" : "";
   return `
     <details class="market-filter"${open}>
@@ -264,8 +264,8 @@ const visibleTokens = (): ThoughtV2OnchainToken[] => {
       token.metadata.name,
       thought.promptLine,
       thought.agentLine,
-      thought.declarations.agent.label,
-      thought.declarations.model.label,
+      thought.records.agent.label,
+      thought.records.model.label,
     ].some((value) => value.toLocaleLowerCase().includes(query));
   }).sort((left, right) => {
     if (sortMode === "number-desc") return right.tokenId - left.tokenId;

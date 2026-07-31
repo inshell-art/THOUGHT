@@ -20,20 +20,19 @@ system-font lookup. Its equal 844.8-by-256 fields have fixed opposite anchors:
 the prompt is top aligned with first glyph-row baseline `140.8`, while the
 Agent response is bottom aligned with final glyph-row baseline `780.8`.
 
-The declaration carry-forward is now explicit. `declaredAgent` and
-`declaredModel` are exact typed mint fields under
+The neutral Agent/Model record boundary is explicit. `agent` and `model` are
+exact typed mint fields under
 `inshell.thought.context.v2.visible-utf8-64`; both are required in canonical
 provenance, and both exact UTF-8 hashes are creation-attestation claim inputs.
-A nonzero valid creation-attestation digest publishes them as `Attested Agent`
-and `Attested Model` marketplace traits. Unattested tokens omit Agent/Model
-traits. The labels remain `declared-unverified`, do
-not affect conversation/work identity, and do not affect SVG artwork.
+Every token publishes them as `Agent` and `Model` marketplace traits. Creation
+Attestation remains a separate status and digest. The records do not affect
+conversation/work identity or SVG artwork.
 
 Candidate artifacts now present:
 
 - `context/thought.context.v2.profile.json`;
 - `agent/thought.agent-declaration.v1.schema.json`;
-- `attestation/thought.creation-workflow-attestation.v1.md`;
+- `attestation/thought.creation-workflow-attestation.v2.md`;
 - `integration/thought.app-contract-boundary.v1.md` and JSON;
 - `metadata/thought.metadata.v2.profile.json`;
 - `provenance/thought.provenance.v2.md` and schema;

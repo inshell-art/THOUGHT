@@ -14,7 +14,7 @@ library ThoughtV2Constants {
     string internal constant METADATA_PROFILE_ID = "inshell.thought.metadata.v2.terminal-chat";
     bytes32 internal constant METADATA_PROFILE_ID_HASH = keccak256(bytes(METADATA_PROFILE_ID));
 
-    string internal constant CREATION_ATTESTATION_PROFILE = "inshell.thought.creation-workflow-attestation.v1";
+    string internal constant CREATION_ATTESTATION_PROFILE = "inshell.thought.creation-workflow-attestation.v2";
     bytes32 internal constant CREATION_ATTESTATION_PROFILE_ID = keccak256(bytes(CREATION_ATTESTATION_PROFILE));
 
     bytes32 internal constant CONVERSATION_IDENTITY_DOMAIN =

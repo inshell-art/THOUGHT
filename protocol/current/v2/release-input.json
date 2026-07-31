@@ -1,30 +1,25 @@
 {
   "createdAt": "2026-07-21T00:00:00Z",
-  "declarations": {
-    "assurance": "declared-unverified",
-    "attestationClaimFields": ["declaredAgentHash", "declaredModelHash"],
+  "records": {
+    "attestationClaimFields": ["agentHash", "modelHash"],
     "contractGetters": [
-      "declaredAgentOf",
-      "declaredAgentHashOf",
-      "declaredModelOf",
-      "declaredModelHashOf"
+      "agentOf",
+      "agentHashOf",
+      "modelOf",
+      "modelHashOf"
     ],
-    "metadataTraits": {
-      "attested": ["Attested Agent", "Attested Model"],
-      "gate": "nonzero-creation-attestation-digest",
-      "unattested": []
-    },
+    "metadataTraits": ["Agent", "Model"],
     "provenancePaths": [
       "process.agentDeclaration",
       "process.modelDeclaration"
     ],
-    "typedMintFields": ["declaredAgent", "declaredModel"],
+    "typedMintFields": ["agent", "model"],
     "workIdentityInput": false
   },
   "identifiers": {
     "agentDeclaration": "inshell.thought.agent-declaration.v1",
     "contextProfile": "inshell.thought.context.v2.visible-utf8-64",
-    "creationAttestation": "inshell.thought.creation-workflow-attestation.v1",
+    "creationAttestation": "inshell.thought.creation-workflow-attestation.v2",
     "metadataProfile": "inshell.thought.metadata.v2.terminal-chat",
     "protocolRelease": "inshell.thought.protocol.v2",
     "provenance": "inshell.thought.provenance.v2",
@@ -63,11 +58,11 @@
   "release": "v2",
   "requiredArtifactRoles": [
     { "path": "agent/thought.agent-declaration.v1.schema.json", "role": "agent-declaration-schema" },
-    { "path": "attestation/thought.creation-workflow-attestation.v1.md", "role": "creation-attestation-profile" },
+    { "path": "attestation/thought.creation-workflow-attestation.v2.md", "role": "creation-attestation-profile" },
     { "path": "attestation/fixtures/creation-attestation-v2-vectors.json", "role": "creation-attestation-vectors" },
     { "path": "conformance/work-hash-vectors.json", "role": "work-hash-vectors" },
     { "path": "context/thought.context.v2.profile.json", "role": "context-profile" },
-    { "path": "contract/abi/CreationAttestationVerifier.json", "role": "creation-attestation-verifier-abi" },
+    { "path": "contract/abi/CreationAttestationVerifierV2.json", "role": "creation-attestation-verifier-abi" },
     { "path": "contract/abi/ThoughtNFTV2.json", "role": "contract-abi" },
     { "path": "contract/thought.mint-input.v2.schema.json", "role": "mint-input-schema" },
     { "path": "metadata/thought.metadata.v2.profile.json", "role": "metadata-profile" },

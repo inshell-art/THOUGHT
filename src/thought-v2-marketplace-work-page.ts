@@ -198,11 +198,11 @@ const renderToken = (
           </div>
           <div>
             <span>DECLARED AGENT</span>
-            <strong>${escapeHtml(direct.declaredAgent)}</strong>
+            <strong>${escapeHtml(direct.agent)}</strong>
           </div>
           <div>
             <span>DECLARED MODEL</span>
-            <strong>${escapeHtml(direct.declaredModel)}</strong>
+            <strong>${escapeHtml(direct.model)}</strong>
           </div>
         </section>
 
@@ -258,9 +258,7 @@ const renderToken = (
           </div>
         `).join("")}
       </div>
-      <p class="market-work-section__note">${isAttested
-        ? "A valid Creation Attestation gates the filterable Agent and Model traits. Their underlying labels remain declared-unverified."
-        : "This token is Unattested, so Agent and Model are absent from marketplace traits. The submitted declarations remain visible above and in provenance."}</p>
+      <p class="market-work-section__note">Agent and Model are neutral submitted records and remain filterable for both attested and Unattested tokens. Creation Attestation independently reports whether the official App signed the bound mint facts.</p>
     </section>
 
     <section class="market-work-section">
@@ -275,8 +273,8 @@ const renderToken = (
         ${fact("Verifier", thought.creationAttestation.verifier)}
         ${fact("Current mock authority", runtime.attestation.authority)}
         ${fact("Authority epoch", String(runtime.attestation.authorityEpoch))}
-        ${fact("Declared Agent status", thought.declarations.agent.status)}
-        ${fact("Declared Model status", thought.declarations.model.status)}
+        ${fact("Bound Agent hash", thought.records.agent.keccak256)}
+        ${fact("Bound Model hash", thought.records.model.keccak256)}
       </dl>
     </section>
 

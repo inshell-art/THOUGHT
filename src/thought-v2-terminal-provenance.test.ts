@@ -126,8 +126,8 @@ describe("THOUGHT V2 canonical production provenance", () => {
     if (built.provenance.process.kind !== "agent-run") throw new Error("expected Agent-run provenance");
     const claim = {
       chainId: input.mintContext.chainId,
-      declaredAgentHash: keccak256(toUtf8Bytes(input.process.agentDeclaration.label)) as `0x${string}`,
-      declaredModelHash: keccak256(toUtf8Bytes(input.process.modelDeclaration.label)) as `0x${string}`,
+      agentHash: keccak256(toUtf8Bytes(input.process.agentDeclaration.label)) as `0x${string}`,
+      modelHash: keccak256(toUtf8Bytes(input.process.modelDeclaration.label)) as `0x${string}`,
       intendedMinter: input.mintContext.intendedMinter,
       protocolReleaseId: input.protocol.protocolReleaseId,
       provenanceHash: built.provenanceHash,
@@ -161,8 +161,8 @@ describe("THOUGHT V2 canonical production provenance", () => {
     const verification = verifyThoughtV2Provenance(built.exactBytes, {
       attestationClaim: {
         chainId: input.mintContext.chainId,
-        declaredAgentHash: keccak256(toUtf8Bytes(input.process.agentDeclaration.label)) as `0x${string}`,
-        declaredModelHash: keccak256(toUtf8Bytes(input.process.modelDeclaration.label)) as `0x${string}`,
+        agentHash: keccak256(toUtf8Bytes(input.process.agentDeclaration.label)) as `0x${string}`,
+        modelHash: keccak256(toUtf8Bytes(input.process.modelDeclaration.label)) as `0x${string}`,
         intendedMinter: input.mintContext.intendedMinter,
         protocolReleaseId: input.protocol.protocolReleaseId,
         provenanceHash: built.provenanceHash,
@@ -186,7 +186,7 @@ describe("THOUGHT V2 canonical production provenance", () => {
       .toContain("json.jcs");
 
     const drift = verifyThoughtV2Provenance(built.exactBytes, {
-      declaredAgent: "A different Agent",
+      agent: "A different Agent",
       provenanceHash: built.provenanceHash,
     });
     expect(drift.issues).toEqual(expect.arrayContaining([

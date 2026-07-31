@@ -1,0 +1,227 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "declaredOn": "2026-07-26",
+  "fontCount": 4,
+  "fonts": [
+    {
+      "byteReport": "byte-reports/classic-line.json",
+      "byteReportSha256": "9b800a46c8c290accf98d30727201a15ec474e71e4b4bafe3b6f864117427098",
+      "familyId": "S501",
+      "file": "fonts/classic-line/glyphs.json",
+      "fileSha256": "5aca96cc7c349d59d7303e5f706442da4f54349233b8d297d722277fae4899bd",
+      "fixtures": {
+        "ambiguity": "fixtures/classic-line/ambiguity.svg",
+        "pathNft": "fixtures/classic-line/path-nft.svg",
+        "repertoire": "fixtures/classic-line/repertoire.svg",
+        "slogan": "fixtures/classic-line/slogan.svg"
+      },
+      "glyphCount": 76,
+      "measuredAnvilPragueCreationGas": 596948,
+      "memberId": "inshell.thought.glyph-library.set-05.classic-line",
+      "name": "Classic Line 76",
+      "order": 1,
+      "packed": {
+        "binary": "onchain/packed/classic-line.bin",
+        "bytes": 2514,
+        "hex": "onchain/packed/classic-line.hex",
+        "metadata": "onchain/packed/classic-line.json",
+        "sha256": "d06f7403b4963d8f46e6e8559c7ab0e4a21a65aa3681b210bfe433d74ea56b42"
+      },
+      "renderStyle": {
+        "fill": "none",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round",
+        "strokeWidth": 0.72
+      },
+      "slug": "classic-line",
+      "sourceCandidate": "C01"
+    },
+    {
+      "byteReport": "byte-reports/classic-book.json",
+      "byteReportSha256": "6bfd89b70496972611d13eeeabca30b2e49bbba0bce1b2c356a9c5f62ad957a1",
+      "familyId": "S502",
+      "file": "fonts/classic-book/glyphs.json",
+      "fileSha256": "2789bd55606ddb20933414a64cc150ca78346714d1e04040b11ed3db6d718a38",
+      "fixtures": {
+        "ambiguity": "fixtures/classic-book/ambiguity.svg",
+        "pathNft": "fixtures/classic-book/path-nft.svg",
+        "repertoire": "fixtures/classic-book/repertoire.svg",
+        "slogan": "fixtures/classic-book/slogan.svg"
+      },
+      "glyphCount": 76,
+      "measuredAnvilPragueCreationGas": 602572,
+      "memberId": "inshell.thought.glyph-library.set-05.classic-book",
+      "name": "Classic Book 76",
+      "order": 2,
+      "packed": {
+        "binary": "onchain/packed/classic-book.bin",
+        "bytes": 2540,
+        "hex": "onchain/packed/classic-book.hex",
+        "metadata": "onchain/packed/classic-book.json",
+        "sha256": "3ab51d7dcdce7e358e7c76002b8f78ddaa448a99de2116a238f7e22209f2bd60"
+      },
+      "renderStyle": {
+        "fill": "none",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round",
+        "strokeWidth": 0.82
+      },
+      "slug": "classic-book",
+      "sourceCandidate": "C02"
+    },
+    {
+      "byteReport": "byte-reports/classic-round.json",
+      "byteReportSha256": "20bc9a8df6a28b20dee773527f79ae64740974e8be6a86ab8fe26c41094ac231",
+      "familyId": "S503",
+      "file": "fonts/classic-round/glyphs.json",
+      "fileSha256": "0df0f883818638295e60004d53be50078e550258ea6536275b581dfa69257913",
+      "fixtures": {
+        "ambiguity": "fixtures/classic-round/ambiguity.svg",
+        "pathNft": "fixtures/classic-round/path-nft.svg",
+        "repertoire": "fixtures/classic-round/repertoire.svg",
+        "slogan": "fixtures/classic-round/slogan.svg"
+      },
+      "glyphCount": 76,
+      "measuredAnvilPragueCreationGas": 636322,
+      "memberId": "inshell.thought.glyph-library.set-05.classic-round",
+      "name": "Classic Round 76",
+      "order": 3,
+      "packed": {
+        "binary": "onchain/packed/classic-round.bin",
+        "bytes": 2696,
+        "hex": "onchain/packed/classic-round.hex",
+        "metadata": "onchain/packed/classic-round.json",
+        "sha256": "72ea88523caf278828b833368c4a3a289f7b80866ac464325d04f031c48e3a01"
+      },
+      "renderStyle": {
+        "fill": "none",
+        "strokeLinecap": "round",
+        "strokeLinejoin": "round",
+        "strokeWidth": 0.86
+      },
+      "slug": "classic-round",
+      "sourceCandidate": "C04"
+    },
+    {
+      "byteReport": "byte-reports/classic-compact.json",
+      "byteReportSha256": "9799d6b333877a29e12de971923c0d8a95359de96dba99c6eefe786c0a6d0f6d",
+      "familyId": "S504",
+      "file": "fonts/classic-compact/glyphs.json",
+      "fileSha256": "8c50014d057a5d7a282e887d3ca67a62f4044ba589c389e2d16c6f4e9a9df7a1",
+      "fixtures": {
+        "ambiguity": "fixtures/classic-compact/ambiguity.svg",
+        "pathNft": "fixtures/classic-compact/path-nft.svg",
+        "repertoire": "fixtures/classic-compact/repertoire.svg",
+        "slogan": "fixtures/classic-compact/slogan.svg"
+      },
+      "glyphCount": 76,
+      "measuredAnvilPragueCreationGas": 622265,
+      "memberId": "inshell.thought.glyph-library.set-05.classic-compact",
+      "name": "Classic Compact 76",
+      "order": 4,
+      "packed": {
+        "binary": "onchain/packed/classic-compact.bin",
+        "bytes": 2631,
+        "hex": "onchain/packed/classic-compact.hex",
+        "metadata": "onchain/packed/classic-compact.json",
+        "sha256": "204bf9e84103b57175e1dc0be06b3f42e91a4d0f8fb5b8b7457b52ff63c79393"
+      },
+      "renderStyle": {
+        "fill": "none",
+        "strokeLinecap": "butt",
+        "strokeLinejoin": "miter",
+        "strokeWidth": 0.78
+      },
+      "slug": "classic-compact",
+      "sourceCandidate": "C06"
+    }
+  ],
+  "format": "native-svg-centerline-path-json-and-im76-v1",
+  "id": "inshell.thought.glyph-library.set-05",
+  "license": "UNLICENSED",
+  "memberCount": 4,
+  "membershipPolicy": {
+    "excluded": "C03 Classic Slab 76, C05 Classic Bracket 76, the Source Code Pro baseline, and every earlier THOUGHT Glyph Library set",
+    "included": "exactly C01, C02, C04, and C06; C01/C04/C06 retain their promoted glyph paths and packed payloads, while C02 includes the approved A, question-mark, smooth-rise and optically spaced lowercase-f, digit-2, lowercase-k junction, vertically centered U+002D, and smooth uppercase-G lower-join revisions recorded in this manifest"
+  },
+  "name": "THOUGHT Glyph Library — Fifth Set",
+  "ordinal": 5,
+  "ordinalLabel": "5th Set",
+  "packageName": "@inshell/thought-glyph-library-fifth-set",
+  "punctuationCount": 13,
+  "revisedOn": "2026-07-29",
+  "revision": {
+    "changes": [
+      {
+        "after": "M1 0L4 10L7 0M2.3 4L5.7 4",
+        "before": "M1 0L4 10L7 0M2 4L6 4",
+        "character": "A",
+        "id": "c02-a-crossbar-r2",
+        "reason": "Shorten the crossbar symmetrically so round caps do not protrude beyond the diagonal legs at heavier render strokes."
+      },
+      {
+        "after": "M1 8Q2 10 4 10Q7 10 7 7Q7 5 4 4L4 3M4 0L4 1",
+        "before": "M1 8Q2 10 4 10Q7 10 7 7Q7 5 4 4L4 2M4 0L4 1",
+        "character": "?",
+        "id": "c02-question-gap-r3",
+        "reason": "Raise the upper-curve terminal one unit so its round-cap gap to the unchanged dot matches the exclamation mark."
+      },
+      {
+        "after": "M2 0L2 8Q2 11 4 11Q5 11 6 10M0 7L6 7",
+        "before": "M2 0L2 8Q2 10 4 10Q5 10 6 9M0 7L6 7",
+        "character": "f",
+        "id": "c02-f-smooth-rise-r3",
+        "reason": "Raise C1, A2, C2, and A3 one unit; retain the horizontal A2 tangent and translate the second curve upward without changing its shape."
+      },
+      {
+        "after": "M1 8Q2 10 4 10Q7 10 7 7Q7 6 5 4L1 0L7 0",
+        "before": "M1 8Q2 10 4 10Q7 10 7 7Q7 5 5 4L1 0L7 0",
+        "character": "2",
+        "id": "c02-two-smooth-curve-r4",
+        "reason": "Move the final quadratic control from (7,5) to (7,6), preserving the vertical tangent into the curve and the 45-degree tangent into the diagonal."
+      },
+      {
+        "after": "M3 0L3 8Q3 11 5 11Q6 11 7 10M1 7L7 7",
+        "before": "M2 0L2 8Q2 11 4 11Q5 11 6 10M0 7L6 7",
+        "character": "f",
+        "id": "c02-f-optical-spacing-r5",
+        "reason": "Translate every x coordinate one logical unit right so the glyph occupies x=1..7 like neighboring lowercase letters, balancing eft and ft spacing without changing the fixed advance, curve shape, vertical geometry, or stroke style."
+      },
+      {
+        "after": "M1 0L1 10M7 7L1 2M3.18 3.82L7 0",
+        "before": "M1 0L1 10M7 7L1 2M3 4L7 0",
+        "character": "k",
+        "id": "c02-k-lower-arm-junction-r6",
+        "reason": "Move the lower arm start to a two-decimal approximation of the intersection between the upper diagonal and the continuing 45-degree lower arm, removing the protruding round-cap crossing without changing the stem, endpoints, advance, metrics, or stroke style."
+      },
+      {
+        "after": "M1 5L7 5",
+        "before": "M1 4L7 4",
+        "character": "-",
+        "id": "c02-hyphen-vertical-center-r7",
+        "reason": "Raise U+002D HYPHEN-MINUS one logical unit to y=5, the vertical midpoint between baseline y=0 and cap height y=10, without changing its x=1..7 extent, length, advance, metrics, or stroke style."
+      },
+      {
+        "after": "M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q7 0 7 2L7 5L4 5",
+        "before": "M7 8Q6 10 4 10Q1 10 1 5Q1 0 4 0Q6 0 7 2L7 5L4 5",
+        "character": "G",
+        "id": "c02-g-lower-join-r8",
+        "reason": "Move the lower-bowl quadratic control from (6,0) to (7,0), making the curve enter the (7,2) join vertically and continue tangent to the right stem while preserving its horizontal departure from (4,0), bounds, advance, metrics, and stroke style."
+      }
+    ],
+    "id": "c02-geometry-r8",
+    "revisedOn": "2026-07-29",
+    "sourceCandidate": "C02"
+  },
+  "schema": "inshell.thought.glyph-library-set.v1",
+  "sourceExperimentCommit": "a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c",
+  "status": "declared",
+  "totals": {
+    "glyphRecords": 304,
+    "measuredIndependentCreationGasSum": 2458107,
+    "measuredIndependentCreationGasSumCaveat": "Arithmetic sum of four independent payload deployments; not a measured combined contract.",
+    "packedBytes": 10381,
+    "visibleGlyphs": 300
+  },
+  "version": 8
+}

@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import {ICreationAttestationVerifier} from "../ICreationAttestationVerifier.sol";
+import {ICreationAttestationVerifierV2} from "./ICreationAttestationVerifierV2.sol";
 import {IThoughtRendererV2} from "./IThoughtRendererV2.sol";
 import {ThoughtV2Constants} from "./ThoughtV2Constants.sol";
 import {ThoughtV2ContextProfile} from "./ThoughtV2ContextProfile.sol";
@@ -56,8 +56,8 @@ contract ThoughtNFTV2 is ERC721 {
     struct MintThoughtInput {
         string promptLine;
         string agentLine;
-        string declaredAgent;
-        string declaredModel;
+        string agent;
+        string model;
         uint256 pathId;
         bytes32 thoughtSpecId;
         bytes32 thoughtSpecHash;
@@ -70,8 +70,8 @@ contract ThoughtNFTV2 is ERC721 {
     struct ThoughtRecord {
         string promptLine;
         string agentLine;
-        string declaredAgent;
-        string declaredModel;
+        string agent;
+        string model;
         string provenanceJson;
         bytes32 creationAttestationDigest;
         bytes32 thoughtSpecId;
@@ -140,8 +140,8 @@ contract ThoughtNFTV2 is ERC721 {
 
     uint256 public constant MAX_PROMPT_LINE_BYTES = ThoughtV2Constants.MAX_LINE_BYTES;
     uint256 public constant MAX_AGENT_LINE_BYTES = ThoughtV2Constants.MAX_LINE_BYTES;
-    uint256 public constant MAX_DECLARED_AGENT_BYTES = ThoughtV2Constants.MAX_CONTEXT_LABEL_BYTES;
-    uint256 public constant MAX_DECLARED_MODEL_BYTES = ThoughtV2Constants.MAX_CONTEXT_LABEL_BYTES;
+    uint256 public constant MAX_AGENT_RECORD_BYTES = ThoughtV2Constants.MAX_CONTEXT_LABEL_BYTES;
+    uint256 public constant MAX_MODEL_RECORD_BYTES = ThoughtV2Constants.MAX_CONTEXT_LABEL_BYTES;
     uint256 public constant MAX_PROVENANCE_BYTES = ThoughtV2Constants.MAX_PROVENANCE_BYTES;
 
     address public immutable pathNft;
@@ -190,7 +190,7 @@ contract ThoughtNFTV2 is ERC721 {
         } catch {
             revert InvalidThoughtRenderer();
         }
-        try ICreationAttestationVerifier(creationAttestationVerifier_).profileId() returns (bytes32 profileId_) {
+        try ICreationAttestationVerifierV2(creationAttestationVerifier_).profileId() returns (bytes32 profileId_) {
             if (profileId_ != CREATION_ATTESTATION_PROFILE_ID) revert InvalidCreationAttestationVerifier();
         } catch {
             revert InvalidCreationAttestationVerifier();
@@ -220,8 +220,8 @@ contract ThoughtNFTV2 is ERC721 {
     function mint(MintThoughtInput calldata input) external nonReentrantMint returns (uint256 tokenId) {
         ThoughtV2WorkProfile.validate(input.promptLine, ThoughtV2WorkProfile.LineKind.Prompt);
         ThoughtV2WorkProfile.validate(input.agentLine, ThoughtV2WorkProfile.LineKind.Agent);
-        ThoughtV2ContextProfile.validate(input.declaredAgent, ThoughtV2ContextProfile.ContextKind.DeclaredAgent);
-        ThoughtV2ContextProfile.validate(input.declaredModel, ThoughtV2ContextProfile.ContextKind.DeclaredModel);
+        ThoughtV2ContextProfile.validate(input.agent, ThoughtV2ContextProfile.ContextKind.Agent);
+        ThoughtV2ContextProfile.validate(input.model, ThoughtV2ContextProfile.ContextKind.Model);
 
         bytes memory provenanceBytes = bytes(input.provenanceJson);
         if (provenanceBytes.length == 0) revert EmptyProvenance();
@@ -253,8 +253,8 @@ contract ThoughtNFTV2 is ERC721 {
             input.thoughtSpecHash,
             mintedWorkHash,
             provenanceHash,
-            keccak256(bytes(input.declaredAgent)),
-            keccak256(bytes(input.declaredModel))
+            keccak256(bytes(input.agent)),
+            keccak256(bytes(input.model))
         );
 
         uint256 pathSerial = IPathNFTV2(pathNft)
@@ -268,8 +268,8 @@ contract ThoughtNFTV2 is ERC721 {
         ThoughtRecord storage record = _records[tokenId];
         record.promptLine = input.promptLine;
         record.agentLine = input.agentLine;
-        record.declaredAgent = input.declaredAgent;
-        record.declaredModel = input.declaredModel;
+        record.agent = input.agent;
+        record.model = input.model;
         record.provenanceJson = input.provenanceJson;
         record.creationAttestationDigest = attestationDigest;
         record.thoughtSpecId = input.thoughtSpecId;
@@ -322,15 +322,13 @@ contract ThoughtNFTV2 is ERC721 {
         return ThoughtV2WorkProfile.isAllowedByte(character);
     }
 
-    function validateDeclarations(string calldata declaredAgent, string calldata declaredModel)
+    function validateRecords(string calldata agent, string calldata model)
         external
         pure
-        returns (uint256 declaredAgentBytes, uint256 declaredModelBytes)
+        returns (uint256 agentBytes, uint256 modelBytes)
     {
-        declaredAgentBytes =
-            ThoughtV2ContextProfile.validate(declaredAgent, ThoughtV2ContextProfile.ContextKind.DeclaredAgent);
-        declaredModelBytes =
-            ThoughtV2ContextProfile.validate(declaredModel, ThoughtV2ContextProfile.ContextKind.DeclaredModel);
+        agentBytes = ThoughtV2ContextProfile.validate(agent, ThoughtV2ContextProfile.ContextKind.Agent);
+        modelBytes = ThoughtV2ContextProfile.validate(model, ThoughtV2ContextProfile.ContextKind.Model);
     }
 
     function conversationIdentityHash(bytes32 promptLineHash, bytes32 agentLineHash)
@@ -375,24 +373,24 @@ contract ThoughtNFTV2 is ERC721 {
         return _records[tokenId].agentLine;
     }
 
-    function declaredAgentOf(uint256 tokenId) external view returns (string memory) {
+    function agentOf(uint256 tokenId) external view returns (string memory) {
         _requireOwned(tokenId);
-        return _records[tokenId].declaredAgent;
+        return _records[tokenId].agent;
     }
 
-    function declaredModelOf(uint256 tokenId) external view returns (string memory) {
+    function modelOf(uint256 tokenId) external view returns (string memory) {
         _requireOwned(tokenId);
-        return _records[tokenId].declaredModel;
+        return _records[tokenId].model;
     }
 
-    function declaredAgentHashOf(uint256 tokenId) external view returns (bytes32) {
+    function agentHashOf(uint256 tokenId) external view returns (bytes32) {
         _requireOwned(tokenId);
-        return keccak256(bytes(_records[tokenId].declaredAgent));
+        return keccak256(bytes(_records[tokenId].agent));
     }
 
-    function declaredModelHashOf(uint256 tokenId) external view returns (bytes32) {
+    function modelHashOf(uint256 tokenId) external view returns (bytes32) {
         _requireOwned(tokenId);
-        return keccak256(bytes(_records[tokenId].declaredModel));
+        return keccak256(bytes(_records[tokenId].model));
     }
 
     function provenanceOf(uint256 tokenId) external view returns (string memory) {
@@ -486,8 +484,8 @@ contract ThoughtNFTV2 is ERC721 {
             tokenId: tokenId,
             promptLine: record.promptLine,
             agentLine: record.agentLine,
-            declaredAgent: record.declaredAgent,
-            declaredModel: record.declaredModel,
+            agent: record.agent,
+            model: record.model,
             provenanceJson: record.provenanceJson,
             thoughtSpecId: record.thoughtSpecId,
             thoughtSpecHash: record.thoughtSpecHash,
@@ -509,8 +507,8 @@ contract ThoughtNFTV2 is ERC721 {
         bytes32 thoughtSpecHash,
         bytes32 mintedWorkHash,
         bytes32 provenanceHash,
-        bytes32 declaredAgentHash,
-        bytes32 declaredModelHash
+        bytes32 agentHash,
+        bytes32 modelHash
     ) private view returns (bytes32 digest, address attestor) {
         if (
             proof.runIdHash == bytes32(0) && proof.deadline == 0 && proof.authorityEpoch == 0
@@ -525,7 +523,7 @@ contract ThoughtNFTV2 is ERC721 {
             revert InvalidCreationAttestationProof();
         }
 
-        ICreationAttestationVerifier.Claim memory claim = ICreationAttestationVerifier.Claim({
+        ICreationAttestationVerifierV2.Claim memory claim = ICreationAttestationVerifierV2.Claim({
             profileId: CREATION_ATTESTATION_PROFILE_ID,
             thoughtNft: address(this),
             protocolReleaseId: protocolReleaseId,
@@ -533,14 +531,15 @@ contract ThoughtNFTV2 is ERC721 {
             thoughtSpecHash: thoughtSpecHash,
             workHash: mintedWorkHash,
             provenanceHash: provenanceHash,
-            declaredAgentHash: declaredAgentHash,
-            declaredModelHash: declaredModelHash,
+            agentHash: agentHash,
+            modelHash: modelHash,
             runIdHash: proof.runIdHash,
             intendedMinter: msg.sender,
             deadline: proof.deadline,
             authorityEpoch: proof.authorityEpoch
         });
-        (digest, attestor) = ICreationAttestationVerifier(creationAttestationVerifier).verify(claim, proof.signature);
+        (digest, attestor) =
+            ICreationAttestationVerifierV2(creationAttestationVerifier).verify(claim, proof.signature);
         if (digest == bytes32(0) || attestor == address(0)) revert InvalidCreationAttestationResult();
     }
 }

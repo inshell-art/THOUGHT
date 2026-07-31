@@ -1,0 +1,17 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "license": "OFL-1.1",
+  "packageVersion": "2.42.0",
+  "releaseCommit": "803b7e23ec97ae58b6232ea76519a76d428ba268",
+  "repository": "https://github.com/adobe-fonts/source-code-pro",
+  "weights": [
+    {
+      "fileName": "SourceCodePro-Regular.ttf",
+      "postScriptName": "SourceCodePro-Regular",
+      "sha256": "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37",
+      "style": "Regular",
+      "url": "https://raw.githubusercontent.com/adobe-fonts/source-code-pro/803b7e23ec97ae58b6232ea76519a76d428ba268/TTF/SourceCodePro-Regular.ttf",
+      "weight": 400
+    }
+  ]
+}

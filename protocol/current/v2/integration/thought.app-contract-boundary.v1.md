@@ -47,14 +47,14 @@ already exist. These registry dependencies remain active.
 The caller supplies:
 
 - exact `promptLine` and `agentLine`;
-- exact `declaredAgent` and `declaredModel`;
+- exact `agent` and `model`;
 - PATH ID, deadline, and owner authorization;
 - exact registered `thoughtSpecId` and `thoughtSpecHash`;
 - nonempty exact `provenanceJson`;
 - either the canonical empty Creation Attestation proof or a complete signed
   proof.
 
-The current contract validates the Terminal English lines, declaration labels,
+The current contract validates the Terminal English lines, neutral Agent and Model records,
 provenance byte envelope, selected registered spec pair, uniqueness, proof,
 and PATH authorization. It stores `provenanceJson` as opaque exact bytes and
 derives `keccak256(bytes(provenanceJson))`. Solidity does not parse or certify
@@ -76,8 +76,8 @@ The current EIP-712 claim binds, in exact order:
 5. `thoughtSpecHash`;
 6. `workHash`;
 7. `provenanceHash`;
-8. `declaredAgentHash`;
-9. `declaredModelHash`;
+8. `agentHash`;
+9. `modelHash`;
 10. `runIdHash`;
 11. `intendedMinter`;
 12. `deadline`;
@@ -93,18 +93,15 @@ A valid proof means:
 
 > The configured Inshell THOUGHT App authority signed this exact claim.
 
-It does not mean that the declared Agent/model was independently verified.
-Their underlying status therefore remains `declared-unverified`.
+It does not independently prove provider identity or model identity. Agent and
+Model are neutral records; the proof only distinguishes the official signed
+workflow from an Unattested mint.
 
 ### Traits
 
-All tokens expose `Creation Attestation`, byte counts, and length classes.
-
-Only a nonzero valid Creation Attestation digest exposes the typed declaration
-labels as `Attested Agent` and `Attested Model` marketplace traits. An
-Unattested token still stores both typed labels and includes them in metadata
-properties and provenance, but it does not publish filterable Agent/Model
-traits.
+All tokens expose `Agent`, `Model`, `Creation Attestation`, byte counts, and
+length classes in that order. Attestation does not gate Agent/Model trait
+publication. It changes only the `Creation Attestation` value and digest.
 
 ### Contract to readers
 
@@ -118,8 +115,7 @@ The contract exposes:
 - protocol-manifest hash and URI through the protocol registry.
 
 A gallery may parse provenance for presentation, but parsed provenance never
-overrides typed contract state or turn an Unattested declaration into an
-attested trait.
+overrides typed contract state or changes the token's attestation status.
 
 ## Proposed ownership for joint approval
 

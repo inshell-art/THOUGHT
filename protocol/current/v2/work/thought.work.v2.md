@@ -61,21 +61,18 @@ Validation order is:
    outside the closed repertoire or the first repeated U+0020;
 5. accept the original bytes unchanged.
 
-`declaredAgent` and `declaredModel` are creation-context labels, not visible
+`agent` and `model` are neutral creation-context records, not visible
 work lines. They remain exact 1-through-64-byte shortest-form UTF-8 strings
 under `inshell.thought.context.v2.visible-utf8-64`. The Terminal English
-repertoire does not apply to those declarations. Repeated internal U+0020 is
-preserved for declarations even though it is rejected in artwork lines.
+repertoire does not apply to those records. Repeated internal U+0020 is
+preserved for records even though it is rejected in artwork lines.
 
-Both labels are exact typed mint fields and required provenance declarations.
+Both labels are exact typed mint fields and map to required provenance data.
 Their exact UTF-8 hashes are bound into an official creation-attestation claim.
-A nonzero valid creation-attestation digest publishes the exact labels as
-`Attested Agent` and `Attested Model` marketplace traits. An unattested token
-omits Agent/Model traits while retaining both typed labels and provenance
-declarations. Their status is always
-`declared-unverified`: attestation proves that an authorized signer bound the
-labels to the claim, not that the labels are objectively true. Declarations do
-not affect conversation identity, work hash, or SVG artwork.
+Every token publishes the exact labels as `Agent` and `Model` marketplace
+traits. Attestation proves that an authorized signer bound the records to the
+claim; it is represented separately as `Creation Attestation`. Records do not
+affect conversation identity, work hash, or SVG artwork.
 
 ## Visual geometry
 

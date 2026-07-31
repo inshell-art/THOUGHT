@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   thoughtChatGalleryFixtures,
-  THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS,
+  THOUGHT_CHAT_GALLERY_RECORD_PAIRS,
   THOUGHT_CHAT_MOCK_ATTESTED_TOKEN_NUMBERS,
 } from "./thought-v2-chat-gallery";
 import { THOUGHT_CHAT_SOURCE_MAX_BYTES } from "./thought-v2-chat-svg";
@@ -16,6 +16,8 @@ describe("THOUGHT English renderer study gallery", () => {
       id: "profile-letter-case",
       studyKind: "profile-baseline",
       fontProfile: "source-code-pro",
+      promptLine: "THOUGHT WILL AWA",
+      agentLine: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
       workProfileId: THOUGHT_ENGLISH_WORK_PROFILE_ID,
     });
     expect(new Set(thoughtChatGalleryFixtures.map(({ id }) => id)).size).toBe(66);
@@ -42,31 +44,31 @@ describe("THOUGHT English renderer study gallery", () => {
 
   it("uses realistic manually declared Agent/model pairs across the gallery", () => {
     const expectedAgents = new Set(
-      THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS.map(({ declaredAgent }) => declaredAgent),
+      THOUGHT_CHAT_GALLERY_RECORD_PAIRS.map(({ agent }) => agent),
     );
     const expectedModels = new Set(
-      THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS.map(({ declaredModel }) => declaredModel),
+      THOUGHT_CHAT_GALLERY_RECORD_PAIRS.map(({ model }) => model),
     );
     const agentCounts = new Map<string, number>();
 
-    expect(new Set(thoughtChatGalleryFixtures.map(({ declaredAgent }) => declaredAgent)))
+    expect(new Set(thoughtChatGalleryFixtures.map(({ agent }) => agent)))
       .toEqual(expectedAgents);
-    expect(new Set(thoughtChatGalleryFixtures.map(({ declaredModel }) => declaredModel)))
+    expect(new Set(thoughtChatGalleryFixtures.map(({ model }) => model)))
       .toEqual(expectedModels);
     expect(thoughtChatGalleryFixtures.every(
-      ({ declaredAgent, declaredModel }) =>
-        declaredAgent !== "Not applicable" && declaredModel !== "Not applicable",
+      ({ agent, model }) =>
+        agent !== "Not applicable" && model !== "Not applicable",
     )).toBe(true);
 
     for (const fixture of thoughtChatGalleryFixtures) {
-      agentCounts.set(fixture.declaredAgent, (agentCounts.get(fixture.declaredAgent) ?? 0) + 1);
+      agentCounts.set(fixture.agent, (agentCounts.get(fixture.agent) ?? 0) + 1);
       expect(fixture.provenance.process.agentDeclaration).toMatchObject({
-        label: fixture.declaredAgent,
+        label: fixture.agent,
         source: "manual",
         status: "declared-unverified",
       });
       expect(fixture.provenance.process.modelDeclaration).toMatchObject({
-        label: fixture.declaredModel,
+        label: fixture.model,
         source: "manual",
         status: "declared-unverified",
       });
@@ -83,8 +85,8 @@ describe("THOUGHT English renderer study gallery", () => {
     expect(attested.map(({ tokenNumber }) => tokenNumber)).toEqual([
       ...THOUGHT_CHAT_MOCK_ATTESTED_TOKEN_NUMBERS,
     ]);
-    expect(new Set(attested.map(({ declaredAgent }) => declaredAgent))).toEqual(
-      new Set(THOUGHT_CHAT_GALLERY_DECLARATION_PAIRS.map(({ declaredAgent }) => declaredAgent)),
+    expect(new Set(attested.map(({ agent }) => agent))).toEqual(
+      new Set(THOUGHT_CHAT_GALLERY_RECORD_PAIRS.map(({ agent }) => agent)),
     );
     expect(thoughtChatGalleryFixtures.filter(
       ({ creationAttestationFixture }) => creationAttestationFixture === "unattested",

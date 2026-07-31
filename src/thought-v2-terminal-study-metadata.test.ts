@@ -9,9 +9,8 @@ import {
   thoughtV2ConversationForm,
   thoughtV2LengthClass,
   thoughtV2StudyProvenanceBytes,
-  THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER,
+  THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
   THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER,
-  THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER,
   THOUGHT_V2_STUDY_PROVENANCE_SCHEMA,
 } from "./thought-v2-terminal-study-metadata";
 
@@ -37,7 +36,7 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     }
   });
 
-  it("gates Agent/model traits on creation attestation", () => {
+  it("publishes neutral Agent/model traits regardless of creation attestation", () => {
     const expectedNumericTraits = new Map<string, number>([
       ["Prompt Bytes", 64],
       ["Agent Bytes", 64],
@@ -46,9 +45,9 @@ describe("THOUGHT V2 study metadata and provenance", () => {
 
     for (const fixture of thoughtChatGalleryFixtures) {
       expect(fixture.attributes.map(({ trait_type }) => trait_type), fixture.id)
-        .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
+        .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
       expect(new Set(fixture.attributes.map(({ trait_type }) => trait_type)).size, fixture.id)
-        .toBe(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER.length);
+        .toBe(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER.length);
 
       for (const attribute of fixture.attributes) {
         const maxValue = expectedNumericTraits.get(attribute.trait_type);
@@ -68,20 +67,20 @@ describe("THOUGHT V2 study metadata and provenance", () => {
       agentBytes: fixture.agentBytes,
       agentLengthClass: fixture.agentLengthClass,
       creationAttestation: "Inshell THOUGHT App",
-      declaredAgent: fixture.declaredAgent,
-      declaredModel: fixture.declaredModel,
+      agent: fixture.agent,
+      model: fixture.model,
       pairBytes: fixture.pairBytes,
       promptBytes: fixture.promptBytes,
       promptLengthClass: fixture.promptLengthClass,
     });
     expect(attestedAttributes.map(({ trait_type }) => trait_type))
-      .toEqual(THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER);
+      .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(attestedAttributes.slice(0, 2)).toEqual([
-      { trait_type: "Attested Agent", value: fixture.declaredAgent },
-      { trait_type: "Attested Model", value: fixture.declaredModel },
+      { trait_type: "Agent", value: fixture.agent },
+      { trait_type: "Model", value: fixture.model },
     ]);
     expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER)
-      .toEqual(THOUGHT_V2_METADATA_ATTESTED_ATTRIBUTE_ORDER);
+      .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER).not.toContain("Conversation Form");
     expect(THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER).not.toContain("Work Profile");
   });
@@ -95,8 +94,8 @@ describe("THOUGHT V2 study metadata and provenance", () => {
         fixture.conversationIdentityHash,
       );
       expect(fixture.provenance.work.workHash).toBe(fixture.workHash);
-      expect(fixture.provenance.process.agentDeclaration.label).toBe(fixture.declaredAgent);
-      expect(fixture.provenance.process.modelDeclaration.label).toBe(fixture.declaredModel);
+      expect(fixture.provenance.process.agentDeclaration.label).toBe(fixture.agent);
+      expect(fixture.provenance.process.modelDeclaration.label).toBe(fixture.model);
       expect(keccak256(toUtf8Bytes(fixture.provenanceJson))).toBe(fixture.provenanceHash);
       expect(thoughtV2StudyProvenanceBytes(fixture.provenanceJson)).toBeLessThan(20_000);
       expect(keys).not.toContain("fixtureId");
@@ -112,23 +111,21 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     const serialized = JSON.stringify(metadata);
 
     expect(metadata.thought.provenanceHash).toBe(fixture.provenanceHash);
-    expect(metadata.attributes).toHaveLength(6);
+    expect(metadata.attributes).toHaveLength(8);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
-      .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
+      .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .not.toContain("Conversation Form");
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .not.toContain("Work Profile");
-    expect(metadata.thought.declarations).toMatchObject({
+    expect(metadata.thought.records).toMatchObject({
       agent: {
-        label: fixture.declaredAgent,
-        keccak256: fixture.declaredAgentKeccak256,
-        status: "declared-unverified",
+        label: fixture.agent,
+        keccak256: fixture.agentKeccak256,
       },
       model: {
-        label: fixture.declaredModel,
-        keccak256: fixture.declaredModelKeccak256,
-        status: "declared-unverified",
+        label: fixture.model,
+        keccak256: fixture.modelKeccak256,
       },
       workIdentityInput: false,
     });
@@ -166,13 +163,11 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     expect(first.provenance.process.agentDeclaration.label).toBe("Inshell THOUGHT App");
     expect(first.provenance.process.modelDeclaration.label).toBe("Example Model");
     expect(first.attributes.map(({ trait_type }) => trait_type))
-      .toEqual(THOUGHT_V2_METADATA_UNATTESTED_ATTRIBUTE_ORDER);
-    expect(first.attributes.some(({ trait_type }) =>
-      trait_type === "Attested Agent" || trait_type === "Declared Agent"
-    )).toBe(false);
-    expect(first.attributes.some(({ trait_type }) =>
-      trait_type === "Attested Model" || trait_type === "Declared Model"
-    )).toBe(false);
+      .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
+    expect(first.attributes.slice(0, 2)).toEqual([
+      { trait_type: "Agent", value: "Inshell THOUGHT App" },
+      { trait_type: "Model", value: "Example Model" },
+    ]);
   });
 });
 

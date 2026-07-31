@@ -90,9 +90,9 @@ export type ThoughtV2TokenMetadata = {
       status: "Inshell THOUGHT App" | "Unattested";
       verifier: string;
     };
-    declarations: {
-      agent: { keccak256: string; label: string; status: "declared-unverified" };
-      model: { keccak256: string; label: string; status: "declared-unverified" };
+    records: {
+      agent: { keccak256: string; label: string };
+      model: { keccak256: string; label: string };
       workIdentityInput: false;
     };
     metadataProfileId: string;
@@ -142,8 +142,8 @@ export type ThoughtV2OnchainTokenDetail = ThoughtV2OnchainToken & {
     agentLine: string;
     author: string;
     creationAttestationDigest: string;
-    declaredAgent: string;
-    declaredModel: string;
+    agent: string;
+    model: string;
     mintedAt: bigint;
     owner: string;
     pathId: bigint;
@@ -178,14 +178,14 @@ export const THOUGHT_V2_TOKEN_READ_ABI = [
   "function CREATION_ATTESTATION_PROFILE_ID() view returns (bytes32)",
   "function MAX_PROMPT_LINE_BYTES() view returns (uint256)",
   "function MAX_AGENT_LINE_BYTES() view returns (uint256)",
-  "function MAX_DECLARED_AGENT_BYTES() view returns (uint256)",
-  "function MAX_DECLARED_MODEL_BYTES() view returns (uint256)",
+  "function MAX_AGENT_RECORD_BYTES() view returns (uint256)",
+  "function MAX_MODEL_RECORD_BYTES() view returns (uint256)",
   "function MAX_PROVENANCE_BYTES() view returns (uint256)",
   "function ownerOf(uint256 tokenId) view returns (address)",
   "function promptLineOf(uint256 tokenId) view returns (string)",
   "function agentLineOf(uint256 tokenId) view returns (string)",
-  "function declaredAgentOf(uint256 tokenId) view returns (string)",
-  "function declaredModelOf(uint256 tokenId) view returns (string)",
+  "function agentOf(uint256 tokenId) view returns (string)",
+  "function modelOf(uint256 tokenId) view returns (string)",
   "function provenanceOf(uint256 tokenId) view returns (string)",
   "function provenanceHashOf(uint256 tokenId) view returns (bytes32)",
   "function workHashOf(uint256 tokenId) view returns (bytes32)",
@@ -303,8 +303,8 @@ export const validateThoughtV2TokenMetadata = (
   const provenance = verifyThoughtV2Provenance(toUtf8Bytes(thought.provenanceJson), {
     agentLine: thought.agentLine,
     chainId: thought.mint.chainId,
-    declaredAgent: thought.declarations.agent.label,
-    declaredModel: thought.declarations.model.label,
+    agent: thought.records.agent.label,
+    model: thought.records.model.label,
     intendedMinter: thought.mint.minter.toLowerCase() as `0x${string}`,
     manifestKeccak256: thought.protocol.manifestKeccak256 as `0x${string}`,
     promptLine: thought.promptLine,
@@ -321,11 +321,11 @@ export const validateThoughtV2TokenMetadata = (
   const attestationTrait = metadata.attributes.find(
     ({ trait_type }) => trait_type === "Creation Attestation",
   );
-  const attestedAgentTrait = metadata.attributes.find(
-    ({ trait_type }) => trait_type === "Attested Agent",
+  const agentTrait = metadata.attributes.find(
+    ({ trait_type }) => trait_type === "Agent",
   );
-  const attestedModelTrait = metadata.attributes.find(
-    ({ trait_type }) => trait_type === "Attested Model",
+  const modelTrait = metadata.attributes.find(
+    ({ trait_type }) => trait_type === "Model",
   );
   if (
     thought.creationAttestation.status !== expectedAttestationStatus
@@ -333,21 +333,21 @@ export const validateThoughtV2TokenMetadata = (
   ) {
     throw new Error(`THOUGHT #${tokenId} creation-attestation metadata parity failed`);
   }
+  if (
+    agentTrait?.value !== thought.records.agent.label
+    || modelTrait?.value !== thought.records.model.label
+  ) {
+    throw new Error(`THOUGHT #${tokenId} neutral Agent/model traits drifted`);
+  }
   if (expectedAttestationStatus === "Inshell THOUGHT App") {
-    if (
-      attestedAgentTrait?.value !== thought.declarations.agent.label
-      || attestedModelTrait?.value !== thought.declarations.model.label
-    ) {
-      throw new Error(`THOUGHT #${tokenId} attested declaration traits drifted`);
-    }
     if (provenance.parsed?.process.kind !== "agent-run") {
       throw new Error(`THOUGHT #${tokenId} attested provenance is not an Agent run`);
     }
     const attestationVerification = verifyThoughtV2Provenance(toUtf8Bytes(thought.provenanceJson), {
       attestationClaim: {
         chainId: thought.mint.chainId,
-        declaredAgentHash: thought.declarations.agent.keccak256 as `0x${string}`,
-        declaredModelHash: thought.declarations.model.keccak256 as `0x${string}`,
+        agentHash: thought.records.agent.keccak256 as `0x${string}`,
+        modelHash: thought.records.model.keccak256 as `0x${string}`,
         intendedMinter: thought.mint.minter.toLowerCase() as `0x${string}`,
         protocolReleaseId: thought.protocol.protocolReleaseId as `0x${string}`,
         provenanceHash: thought.provenanceHash as `0x${string}`,
@@ -361,8 +361,6 @@ export const validateThoughtV2TokenMetadata = (
     if (!attestationVerification.conforming) {
       throw new Error(`THOUGHT #${tokenId} creation-attestation binding drifted`);
     }
-  } else if (attestedAgentTrait || attestedModelTrait) {
-    throw new Error(`THOUGHT #${tokenId} unattested metadata exposed Agent/model traits`);
   }
   return metadata;
 };
@@ -446,8 +444,8 @@ export const loadThoughtV2AnvilTokenDetailFromClient = async (
     owner,
     promptLine,
     agentLine,
-    declaredAgent,
-    declaredModel,
+    agent,
+    model,
     provenanceJson,
     provenanceHash,
     workHash,
@@ -464,8 +462,8 @@ export const loadThoughtV2AnvilTokenDetailFromClient = async (
     contract.ownerOf(tokenId),
     contract.promptLineOf(tokenId),
     contract.agentLineOf(tokenId),
-    contract.declaredAgentOf(tokenId),
-    contract.declaredModelOf(tokenId),
+    contract.agentOf(tokenId),
+    contract.modelOf(tokenId),
     contract.provenanceOf(tokenId),
     contract.provenanceHashOf(tokenId),
     contract.workHashOf(tokenId),
@@ -483,8 +481,8 @@ export const loadThoughtV2AnvilTokenDetailFromClient = async (
   if (
     promptLine !== thought.promptLine
     || agentLine !== thought.agentLine
-    || declaredAgent !== thought.declarations.agent.label
-    || declaredModel !== thought.declarations.model.label
+    || agent !== thought.records.agent.label
+    || model !== thought.records.model.label
     || provenanceJson !== thought.provenanceJson
     || provenanceHash !== thought.provenanceHash
     || workHash !== thought.workHash
@@ -506,8 +504,8 @@ export const loadThoughtV2AnvilTokenDetailFromClient = async (
       agentLine,
       author,
       creationAttestationDigest,
-      declaredAgent,
-      declaredModel,
+      agent,
+      model,
       mintedAt,
       owner,
       pathId,

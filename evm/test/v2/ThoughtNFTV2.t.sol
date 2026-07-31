@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {ICreationAttestationVerifier} from "../../src/ICreationAttestationVerifier.sol";
+import {ICreationAttestationVerifierV2} from "../../src/v2/ICreationAttestationVerifierV2.sol";
 import {ThoughtSpecRegistry} from "../../src/ThoughtSpecRegistry.sol";
 import {ThoughtSpecRegistryV2} from "../../src/ThoughtSpecRegistryV2.sol";
 import {IThoughtRendererV2} from "../../src/v2/IThoughtRendererV2.sol";
@@ -50,7 +50,7 @@ contract MockThoughtRendererV2 is IThoughtRendererV2 {
     }
 
     function tokenURI(TokenData calldata data) external pure returns (string memory) {
-        return string.concat(data.declaredAgent, "|", data.declaredModel);
+        return string.concat(data.agent, "|", data.model);
     }
 }
 
@@ -68,9 +68,9 @@ contract WrongMetadataProfileRendererV2 {
     }
 }
 
-contract MockCreationAttestationVerifierV2 is ICreationAttestationVerifier {
+contract MockCreationAttestationVerifierV2 is ICreationAttestationVerifierV2 {
     address public constant ATTESTOR = address(0xA77357);
-    bytes32 private constant _PROFILE_ID = keccak256(bytes("inshell.thought.creation-workflow-attestation.v1"));
+    bytes32 private constant _PROFILE_ID = keccak256(bytes("inshell.thought.creation-workflow-attestation.v2"));
 
     function profileId() external pure returns (bytes32) {
         return _PROFILE_ID;
@@ -85,7 +85,7 @@ contract MockCreationAttestationVerifierV2 is ICreationAttestationVerifier {
     }
 }
 
-contract WrongCreationAttestationVerifierV2 is ICreationAttestationVerifier {
+contract WrongCreationAttestationVerifierV2 is ICreationAttestationVerifierV2 {
     function profileId() external pure returns (bytes32) {
         return keccak256("wrong.creation-attestation.profile");
     }
@@ -99,7 +99,7 @@ contract WrongCreationAttestationVerifierV2 is ICreationAttestationVerifier {
     }
 }
 
-contract InvalidResultCreationAttestationVerifierV2 is ICreationAttestationVerifier {
+contract InvalidResultCreationAttestationVerifierV2 is ICreationAttestationVerifierV2 {
     bool private immutable _zeroDigest;
 
     constructor(bool zeroDigest_) {
@@ -107,7 +107,7 @@ contract InvalidResultCreationAttestationVerifierV2 is ICreationAttestationVerif
     }
 
     function profileId() external pure returns (bytes32) {
-        return keccak256(bytes("inshell.thought.creation-workflow-attestation.v1"));
+        return keccak256(bytes("inshell.thought.creation-workflow-attestation.v2"));
     }
 
     function hashClaim(Claim calldata claim) external pure returns (bytes32) {
@@ -296,8 +296,10 @@ contract ThoughtNFTV2Test {
         require(token.ownerOf(tokenId) == USER, "owner mismatch");
         require(_equal(token.promptLineOf(tokenId), input.promptLine), "prompt mismatch");
         require(_equal(token.agentLineOf(tokenId), input.agentLine), "agent mismatch");
-        require(_equal(token.declaredAgentOf(tokenId), input.declaredAgent), "declared agent mismatch");
-        require(_equal(token.declaredModelOf(tokenId), input.declaredModel), "declared model mismatch");
+        require(_equal(token.agentOf(tokenId), input.agent), "Agent record mismatch");
+        require(_equal(token.modelOf(tokenId), input.model), "model record mismatch");
+        require(token.agentHashOf(tokenId) == keccak256(bytes(input.agent)), "Agent record hash mismatch");
+        require(token.modelHashOf(tokenId) == keccak256(bytes(input.model)), "model record hash mismatch");
         require(_equal(token.provenanceOf(tokenId), input.provenanceJson), "provenance mismatch");
         require(token.promptLineHashOf(tokenId) == promptHash, "prompt hash mismatch");
         require(token.agentLineHashOf(tokenId) == agentHash, "agent hash mismatch");
@@ -313,7 +315,7 @@ contract ThoughtNFTV2Test {
         require(_equal(token.svgOf(tokenId), "<svg id='thought-v2'/>"), "renderer delegation mismatch");
         require(
             _equal(token.tokenURI(tokenId), "Inshell THOUGHT App|Example Model 1"),
-            "declaration metadata delegation mismatch"
+            "record metadata delegation mismatch"
         );
         require(token.protocolManifestHash() == MANIFEST_HASH, "manifest hash mismatch");
         require(_equal(token.protocolManifestURI(), "ipfs://thought-v2-test-manifest"), "manifest URI mismatch");
@@ -450,9 +452,9 @@ contract ThoughtNFTV2Test {
         VM.expectRevert(nonexistent);
         token.agentLineOf(missing);
         VM.expectRevert(nonexistent);
-        token.declaredAgentOf(missing);
+        token.agentOf(missing);
         VM.expectRevert(nonexistent);
-        token.declaredModelOf(missing);
+        token.modelOf(missing);
         VM.expectRevert(nonexistent);
         token.provenanceOf(missing);
         VM.expectRevert(nonexistent);
@@ -493,9 +495,12 @@ contract ThoughtNFTV2Test {
         uint256 tokenId = _mint(prompt, agent, 1);
         bytes32 identity = token.conversationIdentityHashForLines(prompt, agent);
 
+        ThoughtNFTV2.MintThoughtInput memory duplicate = _input(prompt, agent, 2);
+        duplicate.agent = "Different Agent record";
+        duplicate.model = "Different Model record";
         VM.expectRevert(abi.encodeWithSelector(ThoughtNFTV2.ConversationAlreadyMinted.selector, identity, tokenId));
         VM.prank(USER);
-        token.mint(_input(prompt, agent, 2));
+        token.mint(duplicate);
 
         require(path.consumeCallCount() == 1, "duplicate consumed PATH");
         require(token.totalSupply() == 1, "duplicate changed supply");
@@ -548,23 +553,23 @@ contract ThoughtNFTV2Test {
         require(path.consumeCallCount() == 1, "empty provenance consumed PATH");
     }
 
-    function testInvalidDeclarationsProvenanceAndSpecFailBeforePath() public {
+    function testInvalidRecordsProvenanceAndSpecFailBeforePath() public {
         ThoughtNFTV2.MintThoughtInput memory input = _input("Who are you?", "Declared context.", 1);
-        input.declaredAgent = "";
+        input.agent = "";
         _expectMintRevert(
             input,
             abi.encodeWithSelector(
-                ThoughtV2ContextProfile.ContextEmpty.selector, ThoughtV2ContextProfile.ContextKind.DeclaredAgent
+                ThoughtV2ContextProfile.ContextEmpty.selector, ThoughtV2ContextProfile.ContextKind.Agent
             )
         );
 
         input = _input("Which model?", "The declared one.", 1);
-        input.declaredModel = _repeat("M", 65);
+        input.model = _repeat("M", 65);
         _expectMintRevert(
             input,
             abi.encodeWithSelector(
                 ThoughtV2ContextProfile.ContextTooLarge.selector,
-                ThoughtV2ContextProfile.ContextKind.DeclaredModel,
+                ThoughtV2ContextProfile.ContextKind.Model,
                 uint256(65),
                 uint256(64)
             )
@@ -706,22 +711,22 @@ contract ThoughtNFTV2Test {
 
     function testTerminalEnglishAppliesOnlyToVisibleWorkLines() public {
         ThoughtNFTV2.MintThoughtInput memory input = _input("Who declared this?", "The context remains exact.", 1);
-        input.declaredAgent = unicode"Inshell 思考 App";
-        input.declaredModel = unicode"模型 ألف";
+        input.agent = unicode"Inshell 思考 App";
+        input.model = unicode"模型 ألف";
         uint256 tokenId = _mintInput(input);
 
-        require(_equal(token.declaredAgentOf(tokenId), input.declaredAgent), "Unicode Agent declaration drift");
-        require(_equal(token.declaredModelOf(tokenId), input.declaredModel), "Unicode model declaration drift");
+        require(_equal(token.agentOf(tokenId), input.agent), "Unicode Agent declaration drift");
+        require(_equal(token.modelOf(tokenId), input.model), "Unicode model declaration drift");
         require(
-            token.declaredAgentHashOf(tokenId) == keccak256(bytes(input.declaredAgent)), "Agent declaration hash drift"
+            token.agentHashOf(tokenId) == keccak256(bytes(input.agent)), "Agent declaration hash drift"
         );
         require(
-            token.declaredModelHashOf(tokenId) == keccak256(bytes(input.declaredModel)), "model declaration hash drift"
+            token.modelHashOf(tokenId) == keccak256(bytes(input.model)), "model declaration hash drift"
         );
 
-        (uint256 agentBytes, uint256 modelBytes) = token.validateDeclarations(input.declaredAgent, input.declaredModel);
-        require(agentBytes == bytes(input.declaredAgent).length, "Agent declaration byte length drift");
-        require(modelBytes == bytes(input.declaredModel).length, "model declaration byte length drift");
+        (uint256 agentBytes, uint256 modelBytes) = token.validateRecords(input.agent, input.model);
+        require(agentBytes == bytes(input.agent).length, "Agent declaration byte length drift");
+        require(modelBytes == bytes(input.model).length, "model declaration byte length drift");
     }
 
     function testOptionalCreationAttestationRemainsBoundToV2WorkHash() public {
@@ -736,7 +741,7 @@ contract ThoughtNFTV2Test {
 
         bytes32 expectedDigest = keccak256(
             abi.encode(
-                ICreationAttestationVerifier.Claim({
+                ICreationAttestationVerifierV2.Claim({
                     profileId: token.CREATION_ATTESTATION_PROFILE_ID(),
                     thoughtNft: address(token),
                     protocolReleaseId: releaseId,
@@ -744,8 +749,8 @@ contract ThoughtNFTV2Test {
                     thoughtSpecHash: specHash,
                     workHash: token.workHash(keccak256(bytes(input.promptLine)), keccak256(bytes(input.agentLine))),
                     provenanceHash: keccak256(bytes(input.provenanceJson)),
-                    declaredAgentHash: keccak256(bytes(input.declaredAgent)),
-                    declaredModelHash: keccak256(bytes(input.declaredModel)),
+                    agentHash: keccak256(bytes(input.agent)),
+                    modelHash: keccak256(bytes(input.model)),
                     runIdHash: input.creationAttestation.runIdHash,
                     intendedMinter: USER,
                     deadline: input.creationAttestation.deadline,
@@ -803,8 +808,8 @@ contract ThoughtNFTV2Test {
         return ThoughtNFTV2.MintThoughtInput({
             promptLine: prompt,
             agentLine: agent,
-            declaredAgent: "Inshell THOUGHT App",
-            declaredModel: "Example Model 1",
+            agent: "Inshell THOUGHT App",
+            model: "Example Model 1",
             pathId: pathId,
             thoughtSpecId: specId,
             thoughtSpecHash: specHash,

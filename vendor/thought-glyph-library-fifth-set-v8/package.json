@@ -1,0 +1,51 @@
+{
+  "description": "THOUGHT Glyph Library — Fifth Set: four low-gas native SVG centerline fonts",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./fonts/*": "./fonts/*/glyphs.json",
+    "./handoff": "./HANDOFF.md",
+    "./manifest": "./manifest.json",
+    "./onchain/decoder": "./onchain/decoder.mjs",
+    "./onchain/packed/*": "./onchain/packed/*",
+    "./package.json": "./package.json",
+    "./storage-model": "./storage-model.json"
+  },
+  "files": [
+    "byte-reports",
+    "fixtures",
+    "fonts",
+    "onchain",
+    "export.mjs",
+    "gallery.html",
+    "HANDOFF.md",
+    "index.mjs",
+    "manifest.json",
+    "NOTICE.md",
+    "PROVENANCE.md",
+    "README.md",
+    "REVIEW.md",
+    "SHA256SUMS",
+    "storage-model.json",
+    "UNLICENSED.md",
+    "verify.mjs"
+  ],
+  "license": "UNLICENSED",
+  "name": "@inshell/thought-glyph-library-fifth-set",
+  "private": true,
+  "repository": {
+    "directory": "sets/fifth-set",
+    "type": "git",
+    "url": "git+ssh://git@github.com/inshell-art/inshell-mono-76.git"
+  },
+  "scripts": {
+    "export": "node ./export.mjs",
+    "prepack": "npm run verify",
+    "verify": "node ./verify.mjs"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "1.7.0"
+}

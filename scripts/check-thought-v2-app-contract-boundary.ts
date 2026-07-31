@@ -12,7 +12,7 @@ import {
 } from "../src/thought-v2-anvil-gallery";
 import {
   THOUGHT_CREATION_ATTESTATION_PROFILE_ID,
-} from "../src/thought-v2-creation-attestation";
+} from "../src/thought-v2-current-creation-attestation";
 import {
   THOUGHT_V2_CONTEXT_PROFILE_ID,
 } from "../src/thought-v2-context-profile";
@@ -76,8 +76,8 @@ try {
     creationAttestationProfileId,
     maxPromptLineBytes,
     maxAgentLineBytes,
-    maxDeclaredAgentBytes,
-    maxDeclaredModelBytes,
+    maxAgentRecordBytes,
+    maxModelRecordBytes,
     maxProvenanceBytes,
     supplyValue,
     manifestHash,
@@ -96,8 +96,8 @@ try {
     contract.CREATION_ATTESTATION_PROFILE_ID(),
     contract.MAX_PROMPT_LINE_BYTES(),
     contract.MAX_AGENT_LINE_BYTES(),
-    contract.MAX_DECLARED_AGENT_BYTES(),
-    contract.MAX_DECLARED_MODEL_BYTES(),
+    contract.MAX_AGENT_RECORD_BYTES(),
+    contract.MAX_MODEL_RECORD_BYTES(),
     contract.MAX_PROVENANCE_BYTES(),
     contract.totalSupply(),
     contract.protocolManifestHash(),
@@ -129,14 +129,14 @@ try {
   equal(Number(maxPromptLineBytes), boundary.currentExecutableBoundary.limits.promptLineUtf8Bytes, "prompt byte limit");
   equal(Number(maxAgentLineBytes), boundary.currentExecutableBoundary.limits.agentLineUtf8Bytes, "Agent byte limit");
   equal(
-    Number(maxDeclaredAgentBytes),
-    boundary.currentExecutableBoundary.limits.declaredAgentUtf8Bytes,
-    "declared Agent byte limit",
+    Number(maxAgentRecordBytes),
+    boundary.currentExecutableBoundary.limits.agentUtf8Bytes,
+    "Agent record byte limit",
   );
   equal(
-    Number(maxDeclaredModelBytes),
-    boundary.currentExecutableBoundary.limits.declaredModelUtf8Bytes,
-    "declared model byte limit",
+    Number(maxModelRecordBytes),
+    boundary.currentExecutableBoundary.limits.modelUtf8Bytes,
+    "model record byte limit",
   );
   equal(
     Number(maxProvenanceBytes),
@@ -242,23 +242,19 @@ try {
   equal(attestedTokens.length, runtime.gallery.attested, "attested gallery count");
   equal(unattestedTokens.length, runtime.gallery.unattested, "Unattested gallery count");
 
-  const attestedAgentValues = new Set<string>();
-  const attestedModelValues = new Set<string>();
+  const agentValues = new Set<string>();
+  const modelValues = new Set<string>();
   for (const token of tokens) {
     const thought = token.metadata.thought;
-    const agentTrait = token.traits.get("Attested Agent");
-    const modelTrait = token.traits.get("Attested Model");
-    if (thought.creationAttestation.digest === zeroBytes32) {
-      if (agentTrait || modelTrait) fail(`THOUGHT #${token.tokenId} exposes unattested Agent/model traits`);
-      continue;
-    }
-    equal(agentTrait?.value, thought.declarations.agent.label, `THOUGHT #${token.tokenId} Agent trait`);
-    equal(modelTrait?.value, thought.declarations.model.label, `THOUGHT #${token.tokenId} model trait`);
-    attestedAgentValues.add(thought.declarations.agent.label);
-    attestedModelValues.add(thought.declarations.model.label);
+    const agentTrait = token.traits.get("Agent");
+    const modelTrait = token.traits.get("Model");
+    equal(agentTrait?.value, thought.records.agent.label, `THOUGHT #${token.tokenId} Agent trait`);
+    equal(modelTrait?.value, thought.records.model.label, `THOUGHT #${token.tokenId} model trait`);
+    agentValues.add(thought.records.agent.label);
+    modelValues.add(thought.records.model.label);
   }
-  if (attestedAgentValues.size < 2 || attestedModelValues.size < 2) {
-    fail("mock-attested corpus does not exercise multiple real Agent/model labels");
+  if (agentValues.size < 2 || modelValues.size < 2) {
+    fail("gallery corpus does not exercise multiple real Agent/model records");
   }
 
   const directParityIds = new Set([
