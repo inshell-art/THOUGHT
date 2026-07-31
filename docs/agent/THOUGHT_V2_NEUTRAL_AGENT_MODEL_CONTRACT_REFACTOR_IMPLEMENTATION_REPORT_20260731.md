@@ -82,8 +82,9 @@ the artwork or resolve that separate renderer-cost topic.
 - Artifact ID:
   `thought-v2-noncanonical-integration-preview-20260731-r8`
 - Classification: noncanonical integration preview
-- Manifest SHA-256: recorded by the immutable `experimental.json` pointer
-- Base commit: recorded by the package manifest
+- Manifest SHA-256:
+  `243b2057ac58b62c4a78ced96e5db2e23d7d05e332f60a9f008dbb8dcd84d3df`
+- Base commit: `7000bfd8816011c079eb2494d535e0b443879370`
 - Branch: `codex/thought-v2-chat-svg-experiment`
 - Publication tag:
   `thought-v2-noncanonical-integration-preview-20260731-r8`

@@ -10,16 +10,14 @@ Production/registration authorization: none
 
 Pin the immutable artifact ID
 `thought-v2-noncanonical-integration-preview-20260731-r8` and verify its
-`manifest.json` SHA-256 as
-`243b2057ac58b62c4a78ced96e5db2e23d7d05e332f60a9f008dbb8dcd84d3df`
-against `artifacts/thought-v2-integration-preview/experimental.json`, then
-verify every entry in `SHA256SUMS.txt`. Do not consume
+`manifest.json` SHA-256 against
+`artifacts/thought-v2-integration-preview/experimental.json`, then verify every
+entry in `SHA256SUMS.txt`. Do not consume
 `latest`, infer stability, register this preview, or deploy it to a persistent
 network.
 
-The package was built from clean implementation commit
-`7000bfd8816011c079eb2494d535e0b443879370` on branch
-`codex/thought-v2-chat-svg-experiment`. The publication tag is
+The package manifest records its exact implementation base commit and source
+branch. The publication tag is
 `thought-v2-noncanonical-integration-preview-20260731-r8`.
 
 ## Breaking ABI delta
