@@ -74,9 +74,6 @@ export const THOUGHT_V2_METADATA_ATTRIBUTE_ORDER = [
   "Creation Attestation",
   "Prompt Bytes",
   "Agent Bytes",
-  "Pair Bytes",
-  "Prompt Length",
-  "Agent Length",
 ] as const;
 
 export const THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER = [
@@ -213,31 +210,22 @@ const isPunctuationOnly = (value: string): boolean =>
 
 export const buildThoughtV2MetadataAttributes = ({
   agentBytes,
-  agentLengthClass,
   creationAttestation,
   agent,
   model,
-  pairBytes,
   promptBytes,
-  promptLengthClass,
 }: {
   agentBytes: number;
-  agentLengthClass: ThoughtV2LengthClass;
   creationAttestation: ThoughtV2CreationAttestationStatus;
   agent: string;
   model: string;
-  pairBytes: number;
   promptBytes: number;
-  promptLengthClass: ThoughtV2LengthClass;
 }): ThoughtV2MetadataAttribute[] => [
   { trait_type: "Agent", value: agent },
   { trait_type: "Model", value: model },
   { trait_type: "Creation Attestation", value: creationAttestation },
   { display_type: "number", max_value: 64, trait_type: "Prompt Bytes", value: promptBytes },
   { display_type: "number", max_value: 64, trait_type: "Agent Bytes", value: agentBytes },
-  { display_type: "number", max_value: 128, trait_type: "Pair Bytes", value: pairBytes },
-  { trait_type: "Prompt Length", value: promptLengthClass },
-  { trait_type: "Agent Length", value: agentLengthClass },
 ];
 
 export const thoughtV2ConversationForm = (
@@ -268,13 +256,10 @@ export const buildThoughtV2StudyRecord = (
   const conversationForm = thoughtV2ConversationForm(promptLine, agentLine);
   const attributes = buildThoughtV2MetadataAttributes({
     agentBytes,
-    agentLengthClass,
     creationAttestation: "Unattested",
     agent,
     model,
-    pairBytes,
     promptBytes,
-    promptLengthClass,
   });
 
   const provenance: ThoughtV2StudyProvenance = {

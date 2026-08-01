@@ -40,7 +40,6 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     const expectedNumericTraits = new Map<string, number>([
       ["Prompt Bytes", 64],
       ["Agent Bytes", 64],
-      ["Pair Bytes", 128],
     ]);
 
     for (const fixture of thoughtChatGalleryFixtures) {
@@ -65,13 +64,10 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     const fixture = thoughtChatGalleryFixtures[0]!;
     const attestedAttributes = buildThoughtV2MetadataAttributes({
       agentBytes: fixture.agentBytes,
-      agentLengthClass: fixture.agentLengthClass,
       creationAttestation: "Inshell THOUGHT App",
       agent: fixture.agent,
       model: fixture.model,
-      pairBytes: fixture.pairBytes,
       promptBytes: fixture.promptBytes,
-      promptLengthClass: fixture.promptLengthClass,
     });
     expect(attestedAttributes.map(({ trait_type }) => trait_type))
       .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
@@ -111,13 +107,19 @@ describe("THOUGHT V2 study metadata and provenance", () => {
     const serialized = JSON.stringify(metadata);
 
     expect(metadata.thought.provenanceHash).toBe(fixture.provenanceHash);
-    expect(metadata.attributes).toHaveLength(8);
+    expect(metadata.attributes).toHaveLength(5);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .not.toContain("Conversation Form");
     expect(metadata.attributes.map(({ trait_type }) => trait_type))
       .not.toContain("Work Profile");
+    expect(metadata.attributes.map(({ trait_type }) => trait_type))
+      .not.toContain("Pair Bytes");
+    expect(metadata.attributes.map(({ trait_type }) => trait_type))
+      .not.toContain("Prompt Length");
+    expect(metadata.attributes.map(({ trait_type }) => trait_type))
+      .not.toContain("Agent Length");
     expect(metadata.thought.records).toMatchObject({
       agent: {
         label: fixture.agent,

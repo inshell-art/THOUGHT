@@ -7,9 +7,9 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-integration-preview");
-const baselineArtifactId = "thought-v2-noncanonical-integration-preview-20260731-r8";
+const baselineArtifactId = "thought-v2-noncanonical-integration-preview-20260801-r10";
 const baselineManifestSha256Expected =
-  "243b2057ac58b62c4a78ced96e5db2e23d7d05e332f60a9f008dbb8dcd84d3df";
+  "eefce7c7ea8c1422c9ab3e631ebe15bed7935fbaf79588158ed8fb28eb746e94";
 const baselineReleaseDir = path.join(artifactRoot, "releases", baselineArtifactId);
 const pointer = JSON.parse(fs.readFileSync(path.join(artifactRoot, "experimental.json"), "utf8"));
 const releaseDir = path.join(artifactRoot, "releases", pointer.artifactId);
@@ -47,8 +47,8 @@ if (
 if (!pointer.artifactId.startsWith("thought-v2-noncanonical-integration-preview-")) {
   fail("unexpected artifact ID");
 }
-if (pointer.artifactId !== "thought-v2-noncanonical-integration-preview-20260801-r10") {
-  fail("checker is sealed for the r10 cumulative migration");
+if (pointer.artifactId !== "thought-v2-noncanonical-integration-preview-20260801-r11") {
+  fail("checker is sealed for the r11 portable-traits migration");
 }
 
 const manifestPath = path.join(releaseDir, "manifest.json");
@@ -187,10 +187,24 @@ const metadataProfile = JSON.parse(
     "utf8",
   ),
 );
+const expectedTraitTypes = [
+  "Agent",
+  "Model",
+  "Creation Attestation",
+  "Prompt Bytes",
+  "Agent Bytes",
+];
 if (
   JSON.stringify(metadataProfile.marketplaceRequired)
     !== JSON.stringify(["name", "description", "image", "external_url", "background_color", "attributes"])
 ) fail("metadata profile does not require canonical top-level external_url");
+if (
+  JSON.stringify(metadataProfile.attributeOrder) !== JSON.stringify(expectedTraitTypes)
+  || manifest.compatibility?.metadataProfile?.profileSha256
+    !== hashFile(path.join(releaseDir, "protocol/current/v2/metadata/thought.metadata.v2.profile.json"))
+  || JSON.stringify(manifest.compatibility?.metadataProfile?.attributeOrder)
+    !== JSON.stringify(expectedTraitTypes)
+) fail("portable metadata profile identity or trait order drifted");
 
 const renderer = JSON.parse(
   fs.readFileSync(path.join(releaseDir, "contract/compiled/ThoughtRendererV2.json"), "utf8"),
@@ -215,64 +229,53 @@ if (
 
 const migration = JSON.parse(
   fs.readFileSync(
-    path.join(releaseDir, "validation/r8-to-r10-cumulative-migration.json"),
+    path.join(releaseDir, "validation/r10-to-r11-portable-marketplace-traits.json"),
     "utf8",
   ),
 );
 const baselineManifestPath = path.join(baselineReleaseDir, "manifest.json");
 if (hashFile(baselineManifestPath) !== baselineManifestSha256Expected) {
-  fail("immutable r8 cumulative-migration baseline drifted");
+  fail("immutable r10 portable-traits baseline drifted");
 }
 const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
 if (
-  migration.schema !== "inshell.thought.r8-to-current-cumulative-migration.integration-preview.v1"
+  migration.schema !== "inshell.thought.r10-to-r11-portable-marketplace-traits.integration-preview.v1"
   || migration.baseline?.artifactId !== baselineArtifactId
   || migration.baseline?.manifestSha256 !== baselineManifestSha256Expected
-  || migration.baseline?.publicationCommit !== "1f281a60f398704560f373085b84671f49ecedc3"
+  || migration.baseline?.publicationCommit !== "0cea80f10d6b5477d029560466628b315f48bf39"
   || migration.baseline?.sourceBaseCommit !== baselineManifest.source.baseCommit
   || migration.current?.artifactId !== pointer.artifactId
   || JSON.stringify(migration.baseline?.selectedSpec)
     !== JSON.stringify(baselineManifest.compatibility.selectedSpec)
   || JSON.stringify(migration.current?.selectedSpec)
     !== JSON.stringify(manifest.compatibility.selectedSpec)
-) fail("r8-to-current cumulative migration identity or selected-spec evidence drifted");
+) fail("r10-to-r11 migration identity or selected-spec evidence drifted");
 if (
-  migration.baseline?.renderer?.implementationId
-    !== baselineManifest.compatibility.renderer.packagedImplementation
-  || migration.current?.renderer?.implementationId
-    !== manifest.compatibility.renderer.packagedImplementation
-  || migration.baseline?.renderer?.storageTopology?.kind
-    !== "two-svg-path-fragments-plus-index"
-  || migration.current?.renderer?.storageTopology?.kind !== "single-packed-im76-pointer"
-  || migration.current?.renderer?.storageTopology?.packedKeccak256
-    !== "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081"
-  || migration.current?.renderer?.storageTopology?.packedSha256
-    !== "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926"
-) fail("cumulative renderer migration evidence drifted");
-if (
-  JSON.stringify(migration.baseline?.renderer?.constructorInputs)
-    !== JSON.stringify([
-      { name: "glyphDefinitionsPointer1_", type: "address" },
-      { name: "glyphDefinitionsPointer2_", type: "address" },
-      { name: "glyphDefinitionsIndexPointer_", type: "address" },
-    ])
-  || JSON.stringify(migration.current?.renderer?.constructorInputs)
-    !== JSON.stringify([{ name: "glyphDataPointer", type: "address" }])
-) fail("renderer constructor migration evidence drifted");
-for (const change of [
-  "artworkBytes",
+  migration.baseline?.metadataProfile?.sha256
+    !== hashFile(path.join(baselineReleaseDir, "protocol/current/v2/metadata/thought.metadata.v2.profile.json"))
+  || migration.current?.metadataProfile?.sha256
+    !== hashFile(path.join(releaseDir, "protocol/current/v2/metadata/thought.metadata.v2.profile.json"))
+  || JSON.stringify(migration.current?.metadataProfile?.attributeOrder)
+    !== JSON.stringify(expectedTraitTypes)
+) fail("portable metadata-profile evidence drifted");
+for (const change of ["marketplaceAttributes", "metadataProfileBytesAndHash", "rendererMetadataBytecode", "tokenUriBytes"]) {
+  if (migration.declaredChanges?.[change] !== true) fail(`portable trait change not declared: ${change}`);
+}
+for (const unchanged of [
   "canonicalExternalUrl",
-  "rendererDeploymentTopology",
-  "rendererImplementation",
+  "creationAttestation",
+  "provenanceBoundary",
+  "publicNftAbiAndBytecode",
+  "rendererIdentity",
   "selectedSpecBytesAndHash",
+  "svgAndArtworkBytes",
 ]) {
-  if (migration.declaredChanges?.[change] !== true) fail(`cumulative change not declared: ${change}`);
+  if (migration.declaredUnchanged?.[unchanged] !== true) fail(`unchanged boundary not declared: ${unchanged}`);
 }
 if (
-  migration.rejectedIntermediate?.artifactId
-    !== "thought-v2-noncanonical-integration-preview-20260801-r9"
-  || migration.rejectedIntermediate?.tagMustNotMove !== true
-) fail("r9 rejection/immutability evidence drifted");
+  JSON.stringify(migration.removedTraits)
+    !== JSON.stringify(["Pair Bytes", "Prompt Length", "Agent Length"])
+) fail("removed portable trait list drifted");
 
 const evidenceFor = new Map(
   (migration.unchangedContractArtifacts ?? []).map((entry) => [entry.contractName, entry]),
@@ -281,9 +284,11 @@ for (const contractName of [
   "ThoughtNFTV2",
   "CreationAttestationVerifierV2",
   "IThoughtRendererV2",
+  "IThoughtSvgRendererV2",
   "ICreationAttestationVerifierV2",
   "ThoughtSpecRegistry",
   "ThoughtSpecRegistryV2",
+  "ThoughtSvgRendererV2",
 ]) {
   const evidence = evidenceFor.get(contractName);
   const relativePath = `contract/compiled/${contractName}.json`;
@@ -302,7 +307,29 @@ for (const contractName of [
     || evidence.current?.creationBytecodeSha256 !== hashHexBytes(current.bytecode)
     || evidence.baseline?.runtimeBytecodeSha256 !== hashHexBytes(baseline.deployedBytecode)
     || evidence.current?.runtimeBytecodeSha256 !== hashHexBytes(current.deployedBytecode)
-  ) fail(`declared unchanged r8 contract drifted: ${contractName}`);
+  ) fail(`declared unchanged r10 contract drifted: ${contractName}`);
+}
+
+const changedEvidenceFor = new Map(
+  (migration.changedRendererArtifacts ?? []).map((entry) => [entry.contractName, entry]),
+);
+for (const contractName of ["ThoughtRendererV2", "ThoughtRendererV2Split"]) {
+  const evidence = changedEvidenceFor.get(contractName);
+  const relativePath = `contract/compiled/${contractName}.json`;
+  const baseline = JSON.parse(fs.readFileSync(path.join(baselineReleaseDir, relativePath), "utf8"));
+  const current = JSON.parse(fs.readFileSync(path.join(releaseDir, relativePath), "utf8"));
+  if (
+    evidence?.abiEqual !== true
+    || evidence?.creationBytecodeEqual !== false
+    || evidence?.runtimeBytecodeEqual !== false
+    || JSON.stringify(baseline.abi) !== JSON.stringify(current.abi)
+    || baseline.bytecode === current.bytecode
+    || baseline.deployedBytecode === current.deployedBytecode
+    || evidence.baseline?.creationBytecodeSha256 !== hashHexBytes(baseline.bytecode)
+    || evidence.current?.creationBytecodeSha256 !== hashHexBytes(current.bytecode)
+    || evidence.baseline?.runtimeBytecodeSha256 !== hashHexBytes(baseline.deployedBytecode)
+    || evidence.current?.runtimeBytecodeSha256 !== hashHexBytes(current.deployedBytecode)
+  ) fail(`portable trait renderer delta drifted: ${contractName}`);
 }
 
 const baselineExamples = JSON.parse(
@@ -324,7 +351,7 @@ const currentExampleByWork = new Map(
   ]),
 );
 const comparisonByWork = new Map(
-  (migration.fixtureImageComparisons ?? []).map((comparison) => [
+  (migration.fixtureComparisons ?? []).map((comparison) => [
     `${comparison.promptLine}\u0000${comparison.agentLine}`,
     comparison,
   ]),
@@ -338,11 +365,16 @@ for (const baseline of baselineExamples) {
   if (
     !current
     || !comparison
-    || comparison.imageBytesEqual !== false
+    || comparison.imageBytesEqual !== true
+    || comparison.externalUrlEqual !== true
+    || comparison.typedStateParity !== true
+    || comparison.duplicateTraitNames !== 0
+    || JSON.stringify(comparison.currentAttributeOrder) !== JSON.stringify(expectedTraitTypes)
     || comparison.baselineImageSha256 !== baselineImageSha256
     || comparison.currentImageSha256 !== currentImageSha256
-    || baselineImageSha256 === currentImageSha256
-  ) fail(`r8-to-current fixture image migration evidence drifted: ${key}`);
+    || baselineImageSha256 !== currentImageSha256
+    || baseline.metadata.external_url !== current.metadata.external_url
+  ) fail(`r10-to-r11 fixture parity evidence drifted: ${key}`);
 }
 
 const verifier = JSON.parse(
@@ -396,12 +428,24 @@ for (const example of examples.examples ?? []) {
   ) fail(`description fixture drifted for THOUGHT #${example.tokenId}`);
   const traitTypes = metadata?.attributes?.map(({ trait_type }) => trait_type) ?? [];
   if (
-    !traitTypes.includes("Agent")
-    || !traitTypes.includes("Model")
-    || !traitTypes.includes("Creation Attestation")
-    || traitTypes.includes("Attested Agent")
-    || traitTypes.includes("Attested Model")
-  ) fail(`neutral trait fixture drifted for THOUGHT #${example.tokenId}`);
+    JSON.stringify(traitTypes) !== JSON.stringify(expectedTraitTypes)
+    || new Set(traitTypes).size !== traitTypes.length
+  ) fail(`portable trait fixture drifted for THOUGHT #${example.tokenId}`);
+  for (const traitType of ["Prompt Bytes", "Agent Bytes"]) {
+    const trait = metadata.attributes.find(({ trait_type }) => trait_type === traitType);
+    const source = traitType === "Prompt Bytes" ? metadata.thought.promptLine : metadata.thought.agentLine;
+    if (
+      trait?.display_type !== "number"
+      || trait?.max_value !== 64
+      || trait?.value !== Buffer.byteLength(source, "utf8")
+    ) fail(`${traitType} fixture drifted for THOUGHT #${example.tokenId}`);
+  }
+  const traitMap = new Map(metadata.attributes.map((trait) => [trait.trait_type, trait.value]));
+  if (
+    traitMap.get("Agent") !== metadata.thought.records?.agent?.label
+    || traitMap.get("Model") !== metadata.thought.records?.model?.label
+    || traitMap.get("Creation Attestation") !== metadata.thought.creationAttestation?.status
+  ) fail(`typed-state trait parity drifted for THOUGHT #${example.tokenId}`);
   const contractMetadata = structuredClone(metadata);
   if (contractMetadata?.thought) delete contractMetadata.thought.provenanceJson;
   const serialized = JSON.stringify(contractMetadata);

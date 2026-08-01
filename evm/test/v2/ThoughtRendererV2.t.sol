@@ -396,13 +396,10 @@ contract ThoughtRendererV2Test {
             '{"trait_type":"Model","value":"Not applicable"},',
             '{"trait_type":"Creation Attestation","value":"Unattested"},',
             '{"display_type":"number","max_value":64,"trait_type":"Prompt Bytes","value":14},',
-            '{"display_type":"number","max_value":64,"trait_type":"Agent Bytes","value":10},',
-            '{"display_type":"number","max_value":128,"trait_type":"Pair Bytes","value":24},',
-            '{"trait_type":"Prompt Length","value":"Compact"},',
-            '{"trait_type":"Agent Length","value":"Compact"}]'
+            '{"display_type":"number","max_value":64,"trait_type":"Agent Bytes","value":10}]'
         );
         require(_contains(metadata, exactAttributes), "canonical attribute order or values drifted");
-        require(_count(metadata, '"trait_type":') == 8, "unexpected unattested marketplace trait count");
+        require(_count(metadata, '"trait_type":') == 5, "unexpected unattested marketplace trait count");
         require(
             _contains(
                 metadata,
@@ -420,6 +417,9 @@ contract ThoughtRendererV2Test {
         require(!_contains(metadata, '"trait_type":"Attested Model"'), "legacy attested trait leaked");
         require(!_contains(metadata, "Conversation Form"), "fixture conversation form leaked into traits");
         require(!_contains(metadata, "Work Profile"), "work profile leaked into traits");
+        require(!_contains(metadata, '"trait_type":"Pair Bytes"'), "redundant pair trait leaked");
+        require(!_contains(metadata, '"trait_type":"Prompt Length"'), "redundant prompt length leaked");
+        require(!_contains(metadata, '"trait_type":"Agent Length"'), "redundant agent length leaked");
         require(!_contains(metadata, '"declarations"'), "legacy declarations object leaked");
         require(!_contains(metadata, "declared-unverified"), "legacy declaration status leaked");
         require(
@@ -447,7 +447,7 @@ contract ThoughtRendererV2Test {
             _contains(attested, '"verifier":"0x0000000000000000000000000000000000a77357"'),
             "attestation verifier missing from metadata"
         );
-        require(_count(attested, '"trait_type":') == 8, "unexpected attested marketplace trait count");
+        require(_count(attested, '"trait_type":') == 5, "unexpected attested marketplace trait count");
         require(!_contains(attested, '"trait_type":"Declared Agent"'), "legacy declaration trait leaked");
         require(!_contains(attested, '"trait_type":"Declared Model"'), "legacy declaration trait leaked");
         require(!_contains(attested, '"trait_type":"Attested Agent"'), "legacy attested trait leaked");

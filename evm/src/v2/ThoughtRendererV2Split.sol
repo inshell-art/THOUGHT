@@ -111,13 +111,7 @@ contract ThoughtRendererV2Split is IThoughtRendererV2 {
             _toString(promptBytes),
             '},{"display_type":"number","max_value":64,"trait_type":"Agent Bytes","value":',
             _toString(agentBytes),
-            '},{"display_type":"number","max_value":128,"trait_type":"Pair Bytes","value":',
-            _toString(promptBytes + agentBytes),
-            '},{"trait_type":"Prompt Length","value":"',
-            _lengthClass(promptBytes),
-            '"},{"trait_type":"Agent Length","value":"',
-            _lengthClass(agentBytes),
-            '"}]'
+            "}]"
         );
     }
 
@@ -284,14 +278,6 @@ contract ThoughtRendererV2Split is IThoughtRendererV2 {
 
     function _creationAttestationStatus(bytes32 digest) private pure returns (string memory) {
         return digest == bytes32(0) ? "Unattested" : "Inshell THOUGHT App";
-    }
-
-    function _lengthClass(uint256 byteLength) private pure returns (string memory) {
-        if (byteLength == 1) return "Minimum";
-        if (byteLength <= 16) return "Compact";
-        if (byteLength <= 32) return "Standard";
-        if (byteLength < 64) return "Extended";
-        return "Maximum";
     }
 
     function _jsonString(string memory value) private pure returns (string memory) {

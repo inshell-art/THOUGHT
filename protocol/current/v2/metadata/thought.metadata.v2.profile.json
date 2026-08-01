@@ -5,10 +5,7 @@
     "Model",
     "Creation Attestation",
     "Prompt Bytes",
-    "Agent Bytes",
-    "Pair Bytes",
-    "Prompt Length",
-    "Agent Length"
+    "Agent Bytes"
   ],
   "description": "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.",
   "id": "inshell.thought.metadata.v2.terminal-chat",
@@ -22,7 +19,10 @@
     "workIdentityInput": false
   },
   "traitExclusions": {
+    "agentLength": "redundant-with-agent-bytes",
     "conversationForm": "fixture-only",
+    "pairBytes": "derived-sum-of-prompt-and-agent-bytes",
+    "promptLength": "redundant-with-prompt-bytes",
     "workProfileId": "technical-property"
   },
   "technicalRequired": [

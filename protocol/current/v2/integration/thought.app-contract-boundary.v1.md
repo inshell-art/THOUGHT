@@ -99,8 +99,10 @@ workflow from an Unattested mint.
 
 ### Traits
 
-All tokens expose `Agent`, `Model`, `Creation Attestation`, byte counts, and
-length classes in that order. Attestation does not gate Agent/Model trait
+All tokens expose exactly `Agent`, `Model`, `Creation Attestation`, `Prompt
+Bytes`, and `Agent Bytes` in that order. The two byte traits are numeric with
+`max_value: 64`. `Pair Bytes`, `Prompt Length`, and `Agent Length` are excluded
+as redundant derived traits. Attestation does not gate Agent/Model trait
 publication. It changes only the `Creation Attestation` value and digest.
 
 ### Contract to readers

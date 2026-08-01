@@ -24,8 +24,7 @@ type SortMode =
   | "number-asc"
   | "number-desc"
   | "prompt-desc"
-  | "agent-desc"
-  | "pair-desc";
+  | "agent-desc";
 type ThemeMode = "light" | "dark";
 
 const THEME_STORAGE_KEY = "thought-v2-chat-theme";
@@ -209,7 +208,6 @@ const renderShell = (): void => {
           <option value="number-desc">TOKEN ID: HIGH TO LOW</option>
           <option value="prompt-desc">PROMPT BYTES: HIGH TO LOW</option>
           <option value="agent-desc">AGENT BYTES: HIGH TO LOW</option>
-          <option value="pair-desc">PAIR BYTES: HIGH TO LOW</option>
         </select>
       </label>
       <div class="market-density" role="group" aria-label="Item card size">
@@ -277,11 +275,6 @@ const visibleTokens = (): ThoughtV2OnchainToken[] => {
     if (sortMode === "agent-desc") {
       return Number(traitValue(right, "Agent Bytes"))
         - Number(traitValue(left, "Agent Bytes"))
-        || left.tokenId - right.tokenId;
-    }
-    if (sortMode === "pair-desc") {
-      return Number(traitValue(right, "Pair Bytes"))
-        - Number(traitValue(left, "Pair Bytes"))
         || left.tokenId - right.tokenId;
     }
     return left.tokenId - right.tokenId;

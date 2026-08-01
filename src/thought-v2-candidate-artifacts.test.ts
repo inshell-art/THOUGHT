@@ -156,7 +156,10 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
   it("freezes neutral trait order and exact typed/provenance parity", () => {
     expect(metadataProfile.attributeOrder).toEqual(THOUGHT_V2_METADATA_ATTRIBUTE_ORDER);
     expect(metadataProfile.traitExclusions).toEqual({
+      agentLength: "redundant-with-agent-bytes",
       conversationForm: "fixture-only",
+      pairBytes: "derived-sum-of-prompt-and-agent-bytes",
+      promptLength: "redundant-with-prompt-bytes",
       workProfileId: "technical-property",
     });
     expect(metadataProfile.records).toMatchObject({

@@ -16,7 +16,7 @@ import { THOUGHT_V2_METADATA_FILTER_TRAIT_ORDER } from "./thought-v2-terminal-st
 
 type ThemeMode = "light" | "dark";
 type ViewMode = "grid" | "list";
-type SortMode = "number-asc" | "prompt-desc" | "agent-desc" | "pair-desc";
+type SortMode = "number-asc" | "prompt-desc" | "agent-desc";
 
 const THEME_STORAGE_KEY = "thought-v2-chat-theme";
 const app = document.getElementById("thought-chat-lab");
@@ -115,7 +115,6 @@ const renderShell = (): void => {
           <option value="number-asc">THOUGHT NUMBER</option>
           <option value="prompt-desc">PROMPT BYTES / HIGH TO LOW</option>
           <option value="agent-desc">AGENT BYTES / HIGH TO LOW</option>
-          <option value="pair-desc">PAIR BYTES / HIGH TO LOW</option>
         </select>
       </label>
       <div class="chat-gallery__view" role="group" aria-label="Gallery view">
@@ -213,7 +212,6 @@ const visibleTokens = (): ThoughtV2OnchainToken[] => {
   }).sort((left, right) => {
     if (sortMode === "prompt-desc") return Number(traitValue(right, "Prompt Bytes")) - Number(traitValue(left, "Prompt Bytes")) || left.tokenId - right.tokenId;
     if (sortMode === "agent-desc") return Number(traitValue(right, "Agent Bytes")) - Number(traitValue(left, "Agent Bytes")) || left.tokenId - right.tokenId;
-    if (sortMode === "pair-desc") return Number(traitValue(right, "Pair Bytes")) - Number(traitValue(left, "Pair Bytes")) || left.tokenId - right.tokenId;
     return left.tokenId - right.tokenId;
   });
 };

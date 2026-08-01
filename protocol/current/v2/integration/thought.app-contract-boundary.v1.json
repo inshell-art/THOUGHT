@@ -94,8 +94,8 @@
       }
     },
     "metadataTraits": {
-      "attested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
-      "unattested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
+      "attested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes"],
+      "unattested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes"],
       "agentModelGate": "none"
     },
     "contractOutputs": [
