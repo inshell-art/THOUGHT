@@ -84,15 +84,18 @@ canvas.
 Each role has a fixed 844.8-by-256 text field. The prompt field starts at
 `(57.6,128)` and ends at `384`; the Agent field starts at `(57.6,576)` and ends
 at `832`. The prompt field packs wrapped rows downward from its fixed top, so
-its first glyph-row baseline is always `140.8`. The Agent field packs rows
+its first glyph-row baseline is always `171.52`. The Agent field packs rows
 upward from its fixed bottom, so its final glyph-row baseline is always
-`780.8`.
+`811.52`.
 
 The frame is artifact-owned and must be present in the renderer output.
 Marketplaces and other consumers must display the token image as supplied and
-must not add a second frame. The renderer uses Humanist Smooth native SVG path
-glyphs, fixed 6-unit advance at 4.8 scale, a 5.58 visual baseline, and
-greedy-space wrapping with fixed-cell fallback for overlong words. SVG
+must not add a second frame. The renderer uses the sealed Inshell Mono 76
+v1.0.0 centerline SVG paths: no fill, 1.23-unit strokes, round caps and joins,
+fixed 10-unit advance at 2.88 scale, a 12-unit SVG baseline, and a global +1
+glyph-origin shift. Its 40 reviewed optical translations are baked into the
+path data and must not be applied again at runtime. It uses greedy-space
+wrapping with fixed-cell fallback for overlong words. SVG
 `<text>`, `foreignObject`, embedded font files, system-font lookup and fallback
 fonts are forbidden.
 

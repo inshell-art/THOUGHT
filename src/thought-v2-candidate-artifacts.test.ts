@@ -93,25 +93,41 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
         },
       },
       glyphSource: {
-        familyId: "S301",
-        libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
-        librarySetId: "inshell.thought.glyph-library.set-03",
-        pathDefinitionIndex: {
-          byteLength: 375,
-          entryCount: 75,
-          entryEncoding: "uint8-part,uint16be-offset,uint16be-length",
-          keccak256: "0x113d43ed0e3a6ce486779bca9734801493dd9c5c629e4816b8be3d445f1b9825",
-        },
+        faceSha256: "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+        familyId: "inshell.mono-76",
+        libraryMemberId: "inshell.mono-76",
+        manualEditPayloadSha256:
+          "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
+        packageName: "@inshell/mono-76",
+        packageVersion: "1.0.0",
+        releaseTag: "v1.0.0",
+      },
+      format: {
+        headerBytes: 162,
+        id: "IM76",
+        packedKeccak256: "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081",
+        packedSha256: "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
+        pathBytes: 4_438,
+        totalBytes: 4_600,
+        version: 1,
       },
       id: THOUGHT_V2_RENDERER_ID,
       implementationId:
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+        "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
       metrics: {
-        fixedAdvance: 6,
-        glyphScale: 4.8,
+        fixedAdvance: 10,
+        glyphScale: 2.88,
         maxColumns: 29,
         maxRows: 4,
-        visualBaseline: 5.58,
+        originShiftX: 1,
+        svgBaselineY: 12,
+      },
+      paint: {
+        fill: "none",
+        stroke: "#00ff00",
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        strokeWidth: 1.23,
       },
       restrictions: {
         embeddedFont: false,
@@ -121,9 +137,9 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
         systemFontLookup: false,
       },
     });
-    expect(rendererProfile.glyphSource.pathDefinitions).toHaveLength(2);
     expect(rendererProfile.qualification).toMatchObject({
       adoptedByThoughtV2: true,
+      packageStatus: "sealed",
       rendererReleaseReady: true,
       visualReview: "pass",
     });
@@ -208,11 +224,7 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
       expect.objectContaining({ role: "mint-input-schema" }),
       expect.objectContaining({ role: "provenance-schema" }),
       expect.objectContaining({ role: "renderer-profile" }),
-      expect.objectContaining({ role: "renderer-glyph-definitions-1" }),
-      expect.objectContaining({ role: "renderer-glyph-definitions-2" }),
-      expect.objectContaining({ role: "renderer-glyph-definition-index" }),
-      expect.objectContaining({ role: "renderer-glyph-license" }),
-      expect.objectContaining({ role: "renderer-glyph-notice" }),
+      expect.objectContaining({ role: "renderer-glyph-packed-im76" }),
       expect.objectContaining({ role: "contract-abi" }),
       expect.objectContaining({ role: "creation-attestation-verifier-abi" }),
       expect.objectContaining({ role: "work-hash-vectors" }),

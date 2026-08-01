@@ -27,14 +27,13 @@ The human supplies the prompt, reviews the result, chooses a PATH, authorizes th
 
 The exact ordered pair `(promptLine, agentLine)` identifies a work. Repeating either line with a different counterpart remains a distinct conversation; repeating the exact pair is rejected. Both lines accept `1..64` bytes from the frozen 76-character Terminal English repertoire, with no outer or repeated internal spaces. Punctuation-only lines remain valid.
 
-Every mint also carries exact `declaredAgent` and `declaredModel` context
-labels as typed state and canonical provenance declarations. Official
-creation attestation binds their exact UTF-8 hashes. Only a token with a valid
-nonzero attestation digest publishes them as `Attested Agent` and `Attested
-Model` marketplace traits; an unattested token omits Agent/Model traits. The
-labels remain `declared-unverified` because attestation proves the authorized
-App signed the claim, not that the labels are objectively true. Declarations
-do not affect conversation identity, work hash, or artwork.
+Every mint also carries exact `agent` and `model` context records as typed
+state and canonical provenance declarations. Official Creation Attestation
+binds their exact UTF-8 hashes. Every token publishes them as `Agent` and
+`Model` marketplace traits; `Creation Attestation` separately reports whether
+an authorized App signer bound the claim. Attestation does not independently
+prove the records are objectively true. The records do not affect conversation
+identity, work hash, or artwork.
 
 ## Current V2 Candidate Source
 
@@ -43,7 +42,7 @@ do not affect conversation identity, work hash, or artwork.
 - [evm/src/v2/ThoughtV2ContextProfile.sol](evm/src/v2/ThoughtV2ContextProfile.sol): declaration-label validator.
 - [evm/src/v2/ThoughtV2Identity.sol](evm/src/v2/ThoughtV2Identity.sol): ordered conversation and renderer-bound work hashes.
 - [evm/src/v2/IThoughtRendererV2.sol](evm/src/v2/IThoughtRendererV2.sol): renderer boundary.
-- [evm/src/v2/ThoughtRendererV2.sol](evm/src/v2/ThoughtRendererV2.sol): current Humanist Smooth native-path implementation candidate.
+- [evm/src/v2/ThoughtRendererV2.sol](evm/src/v2/ThoughtRendererV2.sol): current sealed Inshell Mono 76 v1.0.0 native-path implementation candidate.
 - [evm/src/ThoughtSpecRegistry.sol](evm/src/ThoughtSpecRegistry.sol): append-only exact-spec registry.
 - [evm/src/ThoughtSpecRegistryV2.sol](evm/src/ThoughtSpecRegistryV2.sol): append-only compact protocol-release registry.
 - [protocol/current/v2/README.md](protocol/current/v2/README.md): current unregistered V2 protocol candidate, including declaration, metadata, provenance, and mint-input artifacts.
@@ -55,7 +54,7 @@ The historical binary-weave attempt remains in the old unversioned contract, `pr
 
 The V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
 
-The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. Humanist Smooth native path glyphs use `#00ff00`, with the prompt at the upper right and Agent response at the lower left. Both fields are fixed at 844.8 by 256 units: prompt rows grow downward from a fixed top and Agent rows grow upward from a fixed bottom. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the renderer.
+The canonical SVG geometry is a 1024x1024 artboard: an unchanged 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. The sealed Inshell Mono 76 v1.0.0 centerline paths use `#00ff00` strokes with no fill, 1.23-unit width, round caps and joins, fixed 10-unit advance at 2.88 scale, and a global +1 glyph-origin shift. Prompt is at the upper right and Agent response at the lower left. Both fields are fixed at 844.8 by 256 units: prompt rows grow downward from baseline `171.52` and Agent rows grow upward from baseline `811.52`. Browser text, fallback fonts, `foreignObject`, and the study Source Code Pro font are not part of the renderer.
 
 ## Development
 

@@ -190,9 +190,10 @@ The V2 renderer ID is
 
 - 1024 by 1024 SVG artboard with a 32-unit `#006100` frame;
 - unscaled 960 by 960 pure black `#000000` canvas at `(32,32)`;
-- pure green `#00ff00` glyph fill;
+- pure green `#00ff00` glyph stroke with no fill;
 - prompt at the top right and Agent line at the bottom left;
-- Humanist Smooth fixed 6-unit advance at 4.8 scale and 64-unit line height;
+- sealed Inshell Mono 76 v1.0.0 fixed 10-unit advance at 2.88 scale and
+  64-unit line height;
 - 57.6-unit horizontal inset on both sides, equal to two Source Code Pro study
   character advances;
 - 844.8-unit text-field width and 256-unit field height;
@@ -200,18 +201,21 @@ The V2 renderer ID is
   packed;
 - fixed Agent field at `(57.6,576)` with bottom `832`, left aligned and bottom
   packed;
-- the first prompt glyph-row baseline is always `140.8` and the final Agent
-  glyph-row baseline is always `780.8`, independent of whether a field uses
+- the first prompt glyph-row baseline is always `171.52` and the final Agent
+  glyph-row baseline is always `811.52`, independent of whether a field uses
   one, two, three, or four rows; prompt rows grow downward and Agent rows grow
   upward;
 - greedy word wrapping, hard character breaks only when one word exceeds the
   row capacity, no inserted hyphens, and exact deterministic baselines;
-- Humanist Smooth is the approved reviewed SVG path family; Source Code Pro
-  remains a historical study reference only.
+- Inshell Mono 76 v1.0.0 is the approved sealed SVG centerline family, rendered
+  with no fill, 1.23-unit strokes, round caps/joins, a 12-unit SVG baseline,
+  and a global +1 glyph-origin shift; Source Code Pro remains a historical
+  study reference only.
 
-The reviewed renderer freezes a 29-column, 4-row capacity and adopts Humanist
-Smooth’s native 5.58 visual baseline explicitly. The artwork-green slider is
-a lab instrument only; `#00ff00` is the immutable V2 artwork color.
+The reviewed renderer freezes a 29-column, 4-row capacity. Mono 76's 40
+reviewed optical translations are baked into the sealed path data, so runtime
+kerning and a second optical-offset table are forbidden. The artwork-green
+slider is a lab instrument only; `#00ff00` is the immutable V2 artwork color.
 
 The raw prompt and Agent strings must remain available in contract getters,
 metadata, and canonical provenance. The path-based SVG is the visual encoding,

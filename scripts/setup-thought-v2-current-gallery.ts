@@ -115,22 +115,16 @@ if (rendererExperiment !== "" && !set5Experiment) {
 const specName = "THOUGHT.v2.md";
 const specFile = path.join(rootDir, "protocol/current/v2/THOUGHT.v2.md");
 const specRef = "dev://thought/v2/current/THOUGHT.v2.md";
-const glyphDefinitionsPart1File = path.join(
+const mono76PackedFile = path.join(
   rootDir,
-  "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag",
+  "protocol/current/v2/renderer/mono-76.im76.bin",
 );
-const glyphDefinitionsPart2File = path.join(
-  rootDir,
-  "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag",
-);
-const glyphDefinitionsIndexFile = path.join(
-  rootDir,
-  "protocol/current/v2/renderer/humanist-smooth-index.bin",
-);
-const humanistRendererImplementationId =
-  "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
+const mono76RendererImplementationId =
+  "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
+const mono76PackedKeccak256 =
+  "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081";
 const rendererImplementationId =
-  set5Experiment?.implementationId ?? humanistRendererImplementationId;
+  set5Experiment?.implementationId ?? mono76RendererImplementationId;
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(
@@ -267,16 +261,12 @@ const main = async (): Promise<void> => {
   const [
     pathArtifact,
     specBytes,
-    glyphDefinitionsPart1,
-    glyphDefinitionsPart2,
-    glyphDefinitionsIndex,
+    mono76Packed,
     set5Packed,
   ] = await Promise.all([
     readArtifact(pathArtifactFile),
     fs.readFile(specFile),
-    fs.readFile(glyphDefinitionsPart1File),
-    fs.readFile(glyphDefinitionsPart2File),
-    fs.readFile(glyphDefinitionsIndexFile),
+    fs.readFile(mono76PackedFile),
     set5Experiment
       ? fs.readFile(path.join(
         rootDir,
@@ -293,12 +283,10 @@ const main = async (): Promise<void> => {
   }
   const thoughtSpecId = id(specName) as `0x${string}`;
   const thoughtSpecHash = keccak256(specBytes) as `0x${string}`;
-  const glyphDefinitionsPart1Hash = keccak256(glyphDefinitionsPart1) as `0x${string}`;
-  const glyphDefinitionsPart2Hash = keccak256(glyphDefinitionsPart2) as `0x${string}`;
-  const glyphDefinitionsIndexHash = keccak256(glyphDefinitionsIndex) as `0x${string}`;
-  const glyphDefinitionsHash = keccak256(
-    concat([glyphDefinitionsPart1, glyphDefinitionsPart2]),
-  ) as `0x${string}`;
+  const mono76PackedHash = keccak256(mono76Packed) as `0x${string}`;
+  if (mono76Packed.length !== 4_600 || mono76PackedHash !== mono76PackedKeccak256) {
+    throw new Error("sealed Mono 76 v1.0.0 IM76 payload drifted");
+  }
   const set5PackedHash = keccak256(set5Packed) as `0x${string}`;
   if (
     set5Experiment
@@ -365,23 +353,19 @@ const main = async (): Promise<void> => {
       throw new Error(`${set5Experiment.familyName} renderer descriptor readback failed`);
     }
   } else {
-    glyphDefinitionsPointer1 = await deployDataPointer(signer, glyphDefinitionsPart1);
-    glyphDefinitionsPointer2 = await deployDataPointer(signer, glyphDefinitionsPart2);
-    glyphDefinitionsIndexPointer = await deployDataPointer(signer, glyphDefinitionsIndex);
+    glyphDefinitionsPointer1 = await deployDataPointer(signer, mono76Packed);
+    glyphDefinitionsPointer2 = zeroBytes32.slice(0, 42);
+    glyphDefinitionsIndexPointer = zeroBytes32.slice(0, 42);
     if (
       keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer1)).slice(4)}`)
-        !== glyphDefinitionsPart1Hash
-      || keccak256(`0x${(await provider.getCode(glyphDefinitionsPointer2)).slice(4)}`)
-        !== glyphDefinitionsPart2Hash
-      || keccak256(`0x${(await provider.getCode(glyphDefinitionsIndexPointer)).slice(4)}`)
-        !== glyphDefinitionsIndexHash
+        !== mono76PackedHash
     ) {
-      throw new Error("Humanist Smooth definition/index pointer readback failed");
+      throw new Error("Mono 76 packed pointer readback failed");
     }
     renderer = await deploy(
       signer,
       outFile("ThoughtRendererV2"),
-      [glyphDefinitionsPointer1, glyphDefinitionsPointer2, glyphDefinitionsIndexPointer],
+      [glyphDefinitionsPointer1],
     );
   }
   const rendererAddress = await renderer.getAddress();
@@ -396,11 +380,11 @@ const main = async (): Promise<void> => {
     ]
     : [
       ["renderer-profile", "protocol/current/v2/renderer/thought.renderer.v2.profile.json"],
-      ["renderer-glyph-definitions-1", "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"],
-      ["renderer-glyph-definitions-2", "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"],
-      ["renderer-glyph-definition-index", "protocol/current/v2/renderer/humanist-smooth-index.bin"],
-      ["renderer-glyph-license", "protocol/current/v2/renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md"],
-      ["renderer-glyph-notice", "protocol/current/v2/renderer/NOTICE-HUMANIST-SMOOTH.md"],
+      ["renderer-glyph-packed-im76", "protocol/current/v2/renderer/mono-76.im76.bin"],
+      ["renderer-glyph-package-manifest", "vendor/mono-76/manifest.json"],
+      ["renderer-glyph-provenance", "vendor/mono-76/PROVENANCE.md"],
+      ["renderer-glyph-license", "vendor/mono-76/UNLICENSED.md"],
+      ["renderer-glyph-notice", "vendor/mono-76/NOTICE.md"],
     ];
   const manifestArtifacts = await Promise.all([
     ["creative-spec", "protocol/current/v2/THOUGHT.v2.md"],
@@ -434,16 +418,17 @@ const main = async (): Promise<void> => {
         sourceRepositoryCommit: "a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c",
       }
       : {
-        definitionsKeccak256: glyphDefinitionsHash,
-        definitionsPart1Keccak256: glyphDefinitionsPart1Hash,
-        definitionsPart2Keccak256: glyphDefinitionsPart2Hash,
-        indexKeccak256: glyphDefinitionsIndexHash,
-        family: "Humanist Smooth",
-        libraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth",
-        librarySetId: "inshell.thought.glyph-library.set-03",
+        family: "Inshell Mono 76",
+        faceSha256: "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+        libraryMemberId: "inshell.mono-76",
+        librarySetId: "inshell.mono-76",
+        manualEditPayloadSha256: "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
+        packedBytes: mono76Packed.length,
+        packedKeccak256: mono76PackedHash,
+        packedSha256: "0x3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
+        releaseTag: "v1.0.0",
         releaseReady: true,
         role: "canonical-native-svg-paths",
-        visualBaseline: 5.58,
       },
     identifiers: {
       contextProfile: THOUGHT_V2_CONTEXT_PROFILE_ID,
@@ -834,23 +819,22 @@ const main = async (): Promise<void> => {
     },
     renderer: {
       canonicalRendererId: THOUGHT_V2_RENDERER_ID,
-      glyphDefinitionsHash: set5Experiment ? set5PackedHash : glyphDefinitionsHash,
+      glyphDefinitionsHash: set5Experiment ? set5PackedHash : mono76PackedHash,
       ...(set5Experiment
         ? {
           glyphPackedBytes: set5Packed.length,
           glyphPackedHash: set5PackedHash,
         }
         : {
-          glyphDefinitionsPart1Hash,
-          glyphDefinitionsPart2Hash,
-          glyphDefinitionsIndexHash,
+          glyphPackedBytes: mono76Packed.length,
+          glyphPackedHash: mono76PackedHash,
         }),
       glyphDefinitionsIndexPointer,
       glyphDefinitionsPointer1,
       glyphDefinitionsPointer2,
       glyphLibraryMemberId: set5Experiment
         ? `inshell.thought.glyph-library.set-05.${rendererExperiment}`
-        : "inshell.thought.glyph-library.set-03.humanist-smooth",
+        : "inshell.mono-76",
       implementationId: rendererImplementationId,
       releaseReady: !set5Experiment,
       ...(svgRendererAddress ? { svgRendererAddress } : {}),

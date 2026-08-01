@@ -154,7 +154,7 @@ const svgDataUri = (svg: string): string => {
   return `data:image/svg+xml;base64,${btoa(binary)}`;
 };
 
-const MONO_76_STUDY_ASSET_ROOT = "/generated/inshell-mono-76/0.1.0";
+const MONO_76_STUDY_ASSET_ROOT = "/generated/inshell-mono-76/1.0.0";
 
 const mono76StudyImage = (token: ThoughtV2OnchainToken): string => {
   const fixture = thoughtChatStudyWorks[token.tokenId - 1];

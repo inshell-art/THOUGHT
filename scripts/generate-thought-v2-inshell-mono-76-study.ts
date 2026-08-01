@@ -5,23 +5,25 @@ import { fileURLToPath } from "node:url";
 
 import {
   assertMono76Text,
+  loadMono76Font,
   loadMono76Manifest,
-  loadMono76Weight,
 } from "@inshell/mono-76";
 
 import { thoughtChatStudyWorks } from "../src/thought-v2-chat-study-corpus";
 
-const PACKAGE_VERSION = "0.1.0";
-const PACKAGE_RELEASE_TAG = "v0.1.0";
-const PACKAGE_RELEASE_COMMIT = "6fefbfaf762dce0148fe275baafb8e7dd2077beb";
+const PACKAGE_VERSION = "1.0.0";
+const PACKAGE_RELEASE_TAG = "v1.0.0";
+const PACKAGE_RELEASE_REVISION = "mono-76-centerline-v1-20260731";
 const PACKAGE_MANIFEST_SHA256 =
-  "14d734495a8bdc99a98fecbc4f9d76d315c9e2b9fc9b032d5a1fda567258ce11";
+  "3506060e6262da142b5d6cc858d03ebe875f3b9a5c52edc30d078b2f4a944c8c";
 const GLYPH_JSON_SHA256 =
-  "2cf76834f82050853bdcc9d25bc4f040bd7cc2a6a310206e166f6d162e4f0c2e";
+  "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f";
 const PACKED_SHA256 =
-  "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6";
-const SOURCE_TTF_SHA256 =
-  "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37";
+  "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926";
+const PACKED_KECCAK256 =
+  "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081";
+const MANUAL_EDIT_PAYLOAD_SHA256 =
+  "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56";
 
 const ARTBOARD_SIZE = 1024;
 const CANVAS_SIZE = 960;
@@ -32,16 +34,17 @@ const FIELD_HEIGHT = 256;
 const PROMPT_FIELD_TOP = 128;
 const AGENT_FIELD_TOP = 576;
 const AGENT_FIELD_BOTTOM = AGENT_FIELD_TOP + FIELD_HEIGHT;
-const FONT_SIZE = 48;
 const LINE_HEIGHT = 64;
-const LINE_BOX_TOP = 760;
 const MAX_COLUMNS = 29;
 const MAX_ROWS = 4;
-const FIXED_ADVANCE = 600;
-const GLYPH_SCALE = FONT_SIZE / 1000;
+const FIXED_ADVANCE = 10;
+const GLYPH_SCALE = 2.88;
 const ADVANCE = FIXED_ADVANCE * GLYPH_SCALE;
-const CELL_Y_INSET = (LINE_HEIGHT - FONT_SIZE) / 2;
-const BASELINE_IN_CELL = CELL_Y_INSET + LINE_BOX_TOP * GLYPH_SCALE;
+const SVG_VIEWBOX_HEIGHT = 16;
+const SVG_BASELINE = 12;
+const ORIGIN_SHIFT_X = 1;
+const CELL_Y_INSET = (LINE_HEIGHT - SVG_VIEWBOX_HEIGHT * GLYPH_SCALE) / 2;
+const BASELINE_IN_CELL = CELL_Y_INSET + SVG_BASELINE * GLYPH_SCALE;
 const FRAME_COLOR = "#006100";
 const GLYPH_COLOR = "#00ff00";
 const CANVAS_COLOR = "#000000";
@@ -55,7 +58,7 @@ const outputRoot = path.join(
   "inshell-mono-76",
   PACKAGE_VERSION,
 );
-const packageRoot = path.join(root, "vendor", "inshell-mono-76-v0.1.0");
+const packageRoot = path.join(root, "vendor", "mono-76");
 const checkOnly = process.argv.includes("--check");
 
 const sha256 = (value: string | Uint8Array): string =>
@@ -107,20 +110,32 @@ const glyphId = (character: string): string =>
   `inshell-mono-76-g${character.codePointAt(0)!.toString(16).padStart(4, "0")}`;
 
 const manifest = await loadMono76Manifest();
-const face = await loadMono76Weight(400);
+const face = await loadMono76Font();
 const vendoredManifestBytes = fs.readFileSync(path.join(packageRoot, "manifest.json"));
 
 if (
   manifest.id !== "inshell.mono-76"
-  || manifest.version !== PACKAGE_VERSION
-  || manifest.weights.length !== 1
-  || manifest.weights[0]?.weight !== 400
-  || manifest.weights[0]?.fileSha256 !== GLYPH_JSON_SHA256
-  || manifest.weights[0]?.packedSha256 !== PACKED_SHA256
-  || manifest.weights[0]?.source?.fileSha256 !== SOURCE_TTF_SHA256
+  || manifest.release?.version !== PACKAGE_VERSION
+  || manifest.release?.tag !== PACKAGE_RELEASE_TAG
+  || manifest.release?.revision !== PACKAGE_RELEASE_REVISION
+  || manifest.face?.weight !== 400
+  || manifest.integrity?.faceSha256 !== GLYPH_JSON_SHA256
+  || manifest.integrity?.packedSha256 !== PACKED_SHA256
+  || manifest.integrity?.packedKeccak256 !== PACKED_KECCAK256
+  || manifest.integrity?.manualEditPayloadSha256 !== MANUAL_EDIT_PAYLOAD_SHA256
+  || face.release?.version !== PACKAGE_VERSION
+  || face.metrics?.fixedAdvanceWidth !== FIXED_ADVANCE
+  || face.metrics?.svgBaselineY !== SVG_BASELINE
+  || face.metrics?.svgViewBoxHeight !== SVG_VIEWBOX_HEIGHT
+  || face.composition?.defaultOriginShiftX !== ORIGIN_SHIFT_X
+  || face.composition?.kerning !== false
+  || face.renderStyle?.fill !== "none"
+  || face.renderStyle?.strokeWidth !== 1.23
+  || face.renderStyle?.strokeLinecap !== "round"
+  || face.renderStyle?.strokeLinejoin !== "round"
   || sha256(vendoredManifestBytes) !== PACKAGE_MANIFEST_SHA256
 ) {
-  throw new Error("Installed Inshell Mono 76 identity does not match the pinned v0.1.0 release");
+  throw new Error("Installed Inshell Mono 76 identity does not match the pinned v1.0.0 release");
 }
 
 const glyphs = new Map(
@@ -129,7 +144,7 @@ const glyphs = new Map(
 
 const renderDefinitions = (promptLine: string, agentLine: string): string => {
   const used = new Set([...promptLine, ...agentLine].filter((character) => character !== " "));
-  const definitions = [...face.canonicalOrder]
+  const definitions = [...face.repertoire]
     .filter((character) => used.has(character))
     .map((character) => {
       const glyph = glyphs.get(character);
@@ -149,8 +164,8 @@ const renderRows = (
 
   return rows.map((row, rowIndex) => {
     let x = alignment === "prompt"
-      ? FIELD_X + FIELD_WIDTH - row.length * ADVANCE
-      : FIELD_X;
+      ? FIELD_X + FIELD_WIDTH - row.length * ADVANCE + ORIGIN_SHIFT_X * GLYPH_SCALE
+      : FIELD_X + ORIGIN_SHIFT_X * GLYPH_SCALE;
     const baseline = firstCellTop + rowIndex * LINE_HEIGHT + BASELINE_IN_CELL;
     const uses: string[] = [];
 
@@ -187,18 +202,18 @@ const renderArtwork = (
   const label = `${name}. Prompt: ${promptLine}. Agent: ${agentLine}`;
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${ARTBOARD_SIZE}" height="${ARTBOARD_SIZE}" viewBox="0 0 ${ARTBOARD_SIZE} ${ARTBOARD_SIZE}" role="img" aria-label="${xmlEscape(label)}"`,
-    ` data-renderer="inshell.thought.study.inshell-mono-76-native-paths.v0.1.0" data-font-family="Inshell Mono 76" data-font-weight="400"`,
-    ` data-package-release="${PACKAGE_RELEASE_TAG}" data-package-commit="${PACKAGE_RELEASE_COMMIT}" data-package-manifest-sha256="${PACKAGE_MANIFEST_SHA256}"`,
+    ` data-renderer="inshell.thought.study.inshell-mono-76-native-paths.v1.0.0" data-font-family="Inshell Mono 76" data-font-weight="400"`,
+    ` data-package-release="${PACKAGE_RELEASE_TAG}" data-package-revision="${PACKAGE_RELEASE_REVISION}" data-package-manifest-sha256="${PACKAGE_MANIFEST_SHA256}"`,
     ` data-wrap="${WRAP_PROFILE}" data-prompt-vertical-align="top" data-agent-vertical-align="bottom">`,
     `<title>${xmlEscape(name)} — Inshell Mono 76 Regular 400</title>`,
     `<rect id="work-frame" width="${ARTBOARD_SIZE}" height="${ARTBOARD_SIZE}" fill="${FRAME_COLOR}"/>`,
     `<g id="work-canvas" transform="translate(${FRAME_SIZE} ${FRAME_SIZE})">`,
     `<rect id="canvas-bg" width="${CANVAS_SIZE}" height="${CANVAS_SIZE}" fill="${CANVAS_COLOR}"/>`,
     renderDefinitions(promptLine, agentLine),
-    `<g id="prompt-line" fill="${GLYPH_COLOR}" fill-rule="${face.metrics.fillRule}" data-source="${xmlEscape(promptLine)}" data-rows="${promptRows.length}" data-field-x="${FIELD_X}" data-field-y="${PROMPT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${PROMPT_FIELD_TOP + FIELD_HEIGHT}" data-horizontal-align="right" data-vertical-align="top">`,
+    `<g id="prompt-line" fill="none" stroke="${GLYPH_COLOR}" stroke-width="${face.renderStyle.strokeWidth}" stroke-linecap="${face.renderStyle.strokeLinecap}" stroke-linejoin="${face.renderStyle.strokeLinejoin}" data-source="${xmlEscape(promptLine)}" data-rows="${promptRows.length}" data-field-x="${FIELD_X}" data-field-y="${PROMPT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${PROMPT_FIELD_TOP + FIELD_HEIGHT}" data-horizontal-align="right" data-vertical-align="top">`,
     renderRows(promptRows, "prompt"),
     "</g>",
-    `<g id="agent-line" fill="${GLYPH_COLOR}" fill-rule="${face.metrics.fillRule}" data-source="${xmlEscape(agentLine)}" data-rows="${agentRows.length}" data-field-x="${FIELD_X}" data-field-y="${AGENT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${AGENT_FIELD_BOTTOM}" data-horizontal-align="left" data-vertical-align="bottom">`,
+    `<g id="agent-line" fill="none" stroke="${GLYPH_COLOR}" stroke-width="${face.renderStyle.strokeWidth}" stroke-linecap="${face.renderStyle.strokeLinecap}" stroke-linejoin="${face.renderStyle.strokeLinejoin}" data-source="${xmlEscape(agentLine)}" data-rows="${agentRows.length}" data-field-x="${FIELD_X}" data-field-y="${AGENT_FIELD_TOP}" data-field-width="${FIELD_WIDTH}" data-field-height="${FIELD_HEIGHT}" data-field-bottom="${AGENT_FIELD_BOTTOM}" data-horizontal-align="left" data-vertical-align="bottom">`,
     renderRows(agentRows, "agent"),
     "</g>",
     "</g>",
@@ -235,27 +250,33 @@ const generatedManifest = `${JSON.stringify({
     id: manifest.id,
     version: PACKAGE_VERSION,
     releaseTag: PACKAGE_RELEASE_TAG,
-    releaseCommit: PACKAGE_RELEASE_COMMIT,
+    releaseRevision: PACKAGE_RELEASE_REVISION,
     manifestSha256: PACKAGE_MANIFEST_SHA256,
     glyphJsonSha256: GLYPH_JSON_SHA256,
     packedSha256: PACKED_SHA256,
-    sourceTtfSha256: SOURCE_TTF_SHA256,
+    packedKeccak256: PACKED_KECCAK256,
+    manualEditPayloadSha256: MANUAL_EDIT_PAYLOAD_SHA256,
     family: face.family.name,
     face: face.family.faceName,
     style: face.family.style,
     weight: face.weight,
-    repertoire: face.canonicalOrder,
+    repertoire: face.repertoire,
   },
   renderer: {
-    id: "inshell.thought.study.inshell-mono-76-native-paths.v0.1.0",
+    id: "inshell.thought.study.inshell-mono-76-native-paths.v1.0.0",
     artboard: ARTBOARD_SIZE,
     canvas: CANVAS_SIZE,
     frame: FRAME_SIZE,
     frameColor: FRAME_COLOR,
     glyphColor: GLYPH_COLOR,
-    fontSize: FONT_SIZE,
+    glyphScale: GLYPH_SCALE,
     lineHeight: LINE_HEIGHT,
     fixedAdvance: ADVANCE,
+    sourceFixedAdvance: FIXED_ADVANCE,
+    originShiftX: ORIGIN_SHIFT_X,
+    svgBaseline: SVG_BASELINE,
+    svgViewBoxHeight: SVG_VIEWBOX_HEIGHT,
+    strokeWidth: face.renderStyle.strokeWidth,
     maxColumns: MAX_COLUMNS,
     maxRows: MAX_ROWS,
     wrapProfile: WRAP_PROFILE,

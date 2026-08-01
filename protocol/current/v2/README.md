@@ -6,7 +6,7 @@ registered release. No THOUGHT V3 release exists.
 
 The Terminal English work profile and contract-side identity rules are frozen
 and under implementation. The native path-glyph renderer is now implemented
-with the selected Humanist Smooth family. Production deployment tooling,
+with the sealed Inshell Mono 76 v1.0.0 family. Production deployment tooling,
 release manifest approval, registration, and an immutable production consumer
 lock remain release gates.
 
@@ -14,11 +14,12 @@ The renderer geometry is fixed for implementation: a 1024x1024 SVG artboard
 contains the unchanged 960x960 black work canvas at `(32,32)`, surrounded by
 a 32-unit `#006100` artifact-owned frame. The canvas is not scaled. The
 canonical glyph color is `#00ff00`. `ThoughtRendererV2` uses the reviewed
-Humanist Smooth native path definitions with the family’s adopted `5.58`
-visual baseline. It emits no SVG `<text>`, `foreignObject`, embedded font, or
-system-font lookup. Its equal 844.8-by-256 fields have fixed opposite anchors:
-the prompt is top aligned with first glyph-row baseline `140.8`, while the
-Agent response is bottom aligned with final glyph-row baseline `780.8`.
+Inshell Mono 76 centerline paths with no fill, 1.23-unit strokes, round caps
+and joins, fixed 10-unit advance, and a global +1 glyph-origin shift. It emits
+no SVG `<text>`, `foreignObject`, embedded font, or system-font lookup. Its
+equal 844.8-by-256 fields have fixed opposite anchors: the prompt is top
+aligned with first glyph-row baseline `171.52`, while the Agent response is
+bottom aligned with final glyph-row baseline `811.52`.
 
 The neutral Agent/Model record boundary is explicit. `agent` and `model` are
 exact typed mint fields under
@@ -37,8 +38,8 @@ Candidate artifacts now present:
 - `metadata/thought.metadata.v2.profile.json`;
 - `provenance/thought.provenance.v2.md` and schema;
 - `contract/thought.mint-input.v2.schema.json`;
-- `renderer/thought.renderer.v2.profile.json` and its exact native-path
-  definition fragments;
+- `renderer/thought.renderer.v2.profile.json` and the exact sealed
+  `renderer/mono-76.im76.bin` payload;
 - `release-input.json`, which lists required final-manifest roles.
 
 The App/Contract boundary files describe and machine-pin the current

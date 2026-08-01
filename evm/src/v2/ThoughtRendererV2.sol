@@ -8,10 +8,10 @@ import {ThoughtV2Constants} from "./ThoughtV2Constants.sol";
 import {ThoughtV2Identity} from "./ThoughtV2Identity.sol";
 import {ThoughtV2WorkProfile} from "./ThoughtV2WorkProfile.sol";
 
-/// @notice Canonical current-V2 renderer using reviewed Humanist Smooth native SVG paths.
-/// @dev Glyph definitions are immutable code-storage dependencies bound by exact hashes.
+/// @notice Canonical current-V2 renderer using the sealed Inshell Mono 76 v1.0.0 native SVG paths.
+/// @dev The exact IM76 payload is an immutable code-storage dependency bound by its release hash.
 contract ThoughtRendererV2 is IThoughtRendererV2 {
-    error InvalidGlyphDefinitionsPointer(uint8 part);
+    error InvalidGlyphDataPointer();
     error TooManyRenderedRows();
 
     struct DerivedMetadata {
@@ -33,52 +33,71 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
 
     string public constant IMPLEMENTATION_ID =
-        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
-    string public constant GLYPH_LIBRARY_SET_ID = "inshell.thought.glyph-library.set-03";
-    string public constant GLYPH_LIBRARY_MEMBER_ID = "inshell.thought.glyph-library.set-03.humanist-smooth";
-    string public constant GLYPH_FAMILY_NAME = "Humanist Smooth";
-    string public constant GLYPH_LICENSE = "OFL-1.1";
+        "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
+    string public constant GLYPH_LIBRARY_SET_ID = "inshell.mono-76";
+    string public constant GLYPH_LIBRARY_MEMBER_ID = "inshell.mono-76";
+    string public constant GLYPH_FAMILY_NAME = "Inshell Mono 76";
+    string public constant GLYPH_RELEASE_TAG = "v1.0.0";
+    string public constant GLYPH_LICENSE = "UNLICENSED";
     string public constant GLYPH_COLOR = "#00ff00";
     string public constant FRAME_COLOR = "#006100";
-    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8;
-    bytes32 public constant GLYPH_SOURCE_KECCAK256 = 0xdb76b1d4ed56646a65d138f47690a98c52593446a6c79841c1804637d0c4dc70;
-    bytes32 public constant GLYPH_DEFINITIONS_PART_1_KECCAK256 =
-        0x3397ceb983a0e0fcbeee7154eebe059501315c7f34b1730ce9d37f2982425f5e;
-    bytes32 public constant GLYPH_DEFINITIONS_PART_2_KECCAK256 =
-        0x9bc9bd78a6ed099748994515be64879548413a98187dcc45faaba65af72c7f32;
-    bytes32 public constant GLYPH_DEFINITIONS_INDEX_KECCAK256 =
-        0x113d43ed0e3a6ce486779bca9734801493dd9c5c629e4816b8be3d445f1b9825;
-    uint256 public constant GLYPH_VISUAL_BASELINE_HUNDREDTHS = 558;
-    uint256 public constant GLYPH_FIXED_ADVANCE = 6;
-    uint256 public constant GLYPH_SCALE_TENTHS = 48;
+    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f;
+    bytes32 public constant GLYPH_PACKED_SHA256 = 0x3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926;
+    bytes32 public constant GLYPH_PACKED_KECCAK256 =
+        0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081;
+    bytes32 public constant GLYPH_MANUAL_EDIT_PAYLOAD_SHA256 =
+        0x755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56;
+    bytes32 public constant glyphDefinitionsKeccak256 = GLYPH_PACKED_KECCAK256;
+    uint256 public constant GLYPH_FIXED_ADVANCE = 10;
+    uint256 public constant GLYPH_SCALE_HUNDREDTHS = 288;
+    uint256 public constant GLYPH_CELL_WIDTH_HUNDREDTHS = 2_880;
+    uint256 public constant GLYPH_ORIGIN_SHIFT_HUNDREDTHS = 288;
+    uint256 public constant GLYPH_STROKE_WIDTH_HUNDREDTHS = 123;
     uint256 public constant MAX_COLUMNS = 29;
     uint256 public constant MAX_ROWS = 4;
     string public constant WRAP_PROFILE = "greedy-space-then-fixed-cell-overlong-word";
-    uint256 private constant PROMPT_FIELD_TOP_TENTHS = 1_280;
-    uint256 private constant AGENT_FIELD_BOTTOM_TENTHS = 8_320;
-    uint256 private constant LINE_HEIGHT_TENTHS = 640;
-    uint256 private constant GLYPH_CELL_Y_INSET_TENTHS = 128;
+    uint256 private constant PACKED_BYTES = 4_600;
+    uint256 private constant PACKED_HEADER_BYTES = 162;
+    uint256 private constant PACKED_PATH_BYTES = 4_438;
+    uint256 private constant PROMPT_FIELD_TOP_HUNDREDTHS = 12_800;
+    uint256 private constant AGENT_FIELD_BOTTOM_HUNDREDTHS = 83_200;
+    uint256 private constant LINE_HEIGHT_HUNDREDTHS = 6_400;
+    uint256 private constant GLYPH_BASELINE_INSET_HUNDREDTHS = 4_352;
     string private constant CANONICAL_ORDER =
         " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&";
     bytes16 private constant HEX_DIGITS = "0123456789abcdef";
 
     address public immutable glyphDefinitionsPointer1;
-    address public immutable glyphDefinitionsPointer2;
-    address public immutable glyphDefinitionsIndexPointer;
-    bytes32 public immutable glyphDefinitionsKeccak256;
 
-    constructor(
-        address glyphDefinitionsPointer1_,
-        address glyphDefinitionsPointer2_,
-        address glyphDefinitionsIndexPointer_
-    ) {
-        bytes memory part1 = _validatedDefinitionsPart(glyphDefinitionsPointer1_, GLYPH_DEFINITIONS_PART_1_KECCAK256, 1);
-        bytes memory part2 = _validatedDefinitionsPart(glyphDefinitionsPointer2_, GLYPH_DEFINITIONS_PART_2_KECCAK256, 2);
-        _validatedDefinitionsPart(glyphDefinitionsIndexPointer_, GLYPH_DEFINITIONS_INDEX_KECCAK256, 3);
-        glyphDefinitionsPointer1 = glyphDefinitionsPointer1_;
-        glyphDefinitionsPointer2 = glyphDefinitionsPointer2_;
-        glyphDefinitionsIndexPointer = glyphDefinitionsIndexPointer_;
-        glyphDefinitionsKeccak256 = keccak256(bytes.concat(part1, part2));
+    constructor(address glyphDataPointer) {
+        if (glyphDataPointer == address(0) || glyphDataPointer.code.length != PACKED_BYTES + 1) {
+            revert InvalidGlyphDataPointer();
+        }
+        bytes memory payload = ContractCodeStorage.read(glyphDataPointer);
+        if (
+            keccak256(payload) != GLYPH_PACKED_KECCAK256 || payload[0] != "I" || payload[1] != "M"
+                || payload[2] != "7" || payload[3] != "6" || uint8(payload[4]) != 1
+                || uint8(payload[5]) != 0x01 || uint8(payload[6]) != 0x90 || uint8(payload[7]) != 76
+                || _uint16(payload, 8) != 0
+        ) {
+            revert InvalidGlyphDataPointer();
+        }
+        uint256 previous;
+        for (uint256 index = 1; index <= 76; index++) {
+            uint256 offset = _uint16(payload, 8 + index * 2);
+            if (offset < previous || offset > PACKED_PATH_BYTES) revert InvalidGlyphDataPointer();
+            previous = offset;
+        }
+        if (previous != PACKED_PATH_BYTES) revert InvalidGlyphDataPointer();
+        glyphDefinitionsPointer1 = glyphDataPointer;
+    }
+
+    function glyphDefinitionsPointer2() external pure returns (address) {
+        return address(0);
+    }
+
+    function glyphDefinitionsIndexPointer() external pure returns (address) {
+        return address(0);
     }
 
     function render(string calldata promptLine, string calldata agentLine) external view returns (string memory) {
@@ -121,21 +140,21 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             IMPLEMENTATION_ID,
             '" data-glyph-library-member="',
             GLYPH_LIBRARY_MEMBER_ID,
-            '" data-glyph-visual-baseline="5.58" data-wrap="',
+            '" data-glyph-format="IM76-v1" data-glyph-release="v1.0.0" data-glyph-svg-baseline="12" data-glyph-scale="2.88" data-glyph-origin-shift-x="1" data-wrap="',
             WRAP_PROFILE,
             '" data-prompt-vertical-align="top" data-agent-vertical-align="bottom" aria-label="Prompt and Agent response in a terminal chat layout">',
             '<rect id="work-frame" width="1024" height="1024" fill="#006100"/>',
             '<g id="work-canvas" transform="translate(32 32)">',
             '<rect id="canvas-bg" width="960" height="960" fill="#000000"/>',
             definitions,
-            '<g id="prompt-line" fill="#00ff00" data-source="',
+            '<g id="prompt-line" fill="none" stroke="#00ff00" stroke-width="1.23" stroke-linecap="round" stroke-linejoin="round" data-source="',
             _xmlEscape(promptBytes),
             '" data-rows="',
             _toString(promptRowCount),
             '" data-field-x="57.6" data-field-y="128" data-field-width="844.8" data-field-height="256" data-field-bottom="384" data-horizontal-align="right" data-vertical-align="top">',
             _renderRows(promptRows, promptRowCount, true),
             "</g>",
-            '<g id="agent-line" fill="#00ff00" data-source="',
+            '<g id="agent-line" fill="none" stroke="#00ff00" stroke-width="1.23" stroke-linecap="round" stroke-linejoin="round" data-source="',
             _xmlEscape(agentBytes),
             '" data-rows="',
             _toString(agentRowCount),
@@ -147,45 +166,45 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         );
     }
 
-    function _validatedDefinitionsPart(address pointer, bytes32 expectedHash, uint8 part)
-        private
-        view
-        returns (bytes memory definitions)
-    {
-        if (pointer == address(0) || pointer.code.length <= 1) {
-            revert InvalidGlyphDefinitionsPointer(part);
-        }
-        definitions = ContractCodeStorage.read(pointer);
-        if (keccak256(definitions) != expectedHash) revert InvalidGlyphDefinitionsPointer(part);
-    }
-
     function _definitions(bytes memory promptLine, bytes memory agentLine) private view returns (string memory) {
         bool[128] memory used;
         _markUsed(used, promptLine);
         _markUsed(used, agentLine);
 
-        bytes memory index = ContractCodeStorage.read(glyphDefinitionsIndexPointer);
+        bytes memory offsets = ContractCodeStorage.readSlice(glyphDefinitionsPointer1, 8, 154);
         bytes memory order = bytes(CANONICAL_ORDER);
+        bytes memory prefix = bytes('<path id="g');
+        bytes memory infix = bytes('" d="');
+        bytes memory suffix = bytes('"/>');
         uint256 definitionsLength;
         for (uint256 orderIndex = 1; orderIndex < order.length; orderIndex++) {
             if (!used[uint8(order[orderIndex])]) continue;
-            (,, uint256 length) = _glyphLocation(index, orderIndex - 1);
-            definitionsLength += length;
+            (uint256 start, uint256 end) = _pathOffsets(offsets, orderIndex);
+            definitionsLength += prefix.length + 2 + infix.length + (end - start) + suffix.length;
         }
 
-        bytes memory definitions = new bytes(definitionsLength);
-        uint256 destinationOffset;
+        bytes memory definitions = new bytes(definitionsLength + 32);
+        uint256 cursor;
         for (uint256 orderIndex = 1; orderIndex < order.length; orderIndex++) {
-            if (!used[uint8(order[orderIndex])]) continue;
-            (uint8 part, uint256 sourceOffset, uint256 length) = _glyphLocation(index, orderIndex - 1);
+            uint8 character = uint8(order[orderIndex]);
+            if (!used[character]) continue;
+            (uint256 start, uint256 end) = _pathOffsets(offsets, orderIndex);
+            cursor = _appendBytes(definitions, cursor, prefix);
+            definitions[cursor++] = HEX_DIGITS[character >> 4];
+            definitions[cursor++] = HEX_DIGITS[character & 0x0f];
+            cursor = _appendBytes(definitions, cursor, infix);
             ContractCodeStorage.copySlice(
-                part == 1 ? glyphDefinitionsPointer1 : glyphDefinitionsPointer2,
+                glyphDefinitionsPointer1,
                 definitions,
-                destinationOffset,
-                sourceOffset,
-                length
+                cursor,
+                PACKED_HEADER_BYTES + start,
+                end - start
             );
-            destinationOffset += length;
+            cursor += end - start;
+            cursor = _appendBytes(definitions, cursor, suffix);
+        }
+        assembly ("memory-safe") {
+            mstore(definitions, cursor)
         }
         return string.concat("<defs>", string(definitions), "</defs>");
     }
@@ -197,15 +216,18 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         }
     }
 
-    function _glyphLocation(bytes memory index, uint256 glyphIndex)
+    function _pathOffsets(bytes memory offsets, uint256 orderIndex)
         private
         pure
-        returns (uint8 part, uint256 offset, uint256 length)
+        returns (uint256 start, uint256 end)
     {
-        uint256 cursor = glyphIndex * 5;
-        part = uint8(index[cursor]);
-        offset = (uint256(uint8(index[cursor + 1])) << 8) | uint256(uint8(index[cursor + 2]));
-        length = (uint256(uint8(index[cursor + 3])) << 8) | uint256(uint8(index[cursor + 4]));
+        uint256 cursor = orderIndex * 2;
+        start = _uint16(offsets, cursor);
+        end = _uint16(offsets, cursor + 2);
+    }
+
+    function _uint16(bytes memory value, uint256 cursor) private pure returns (uint256) {
+        return (uint256(uint8(value[cursor])) << 8) | uint256(uint8(value[cursor + 1]));
     }
 
     function _wrap(bytes memory input) private pure returns (bytes[] memory rows, uint256 rowCount) {
@@ -242,20 +264,28 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             characterCount += rows[rowIndex].length;
         }
 
-        // Each canonical <use> fragment is at most 82 bytes. Spaces emit nothing, so using
-        // all source characters remains a safe upper bound. The extra word lets
-        // _appendBytes copy the final partial word without touching unallocated memory.
-        bytes memory output = new bytes(characterCount * 82 + 32);
-        bytes memory glyphPrefix = bytes('<use href="#humanist-smooth-g00');
-        bytes memory transformPrefix = bytes('" transform="translate(');
-        bytes memory transformSuffix = bytes(') scale(4.8)"/>');
+        bytes memory output = new bytes(characterCount * 32 + rowCount * 96 + 32);
+        bytes memory rowPrefix = bytes('<g transform="translate(');
+        bytes memory rowSuffix = bytes(') scale(2.88 -2.88)">');
+        bytes memory glyphPrefix = bytes('<use href="#g');
+        bytes memory glyphWithoutX = bytes('"/>');
+        bytes memory glyphWithX = bytes('" x="');
+        bytes memory glyphWithXSuffix = bytes('"/>');
         uint256 cursor;
-        uint256 yTenths = prompt
-            ? PROMPT_FIELD_TOP_TENTHS + GLYPH_CELL_Y_INSET_TENTHS
-            : AGENT_FIELD_BOTTOM_TENTHS - (rowCount * LINE_HEIGHT_TENTHS) + GLYPH_CELL_Y_INSET_TENTHS;
+        uint256 yHundredths = prompt
+            ? PROMPT_FIELD_TOP_HUNDREDTHS + GLYPH_BASELINE_INSET_HUNDREDTHS
+            : AGENT_FIELD_BOTTOM_HUNDREDTHS - (rowCount * LINE_HEIGHT_HUNDREDTHS)
+                + GLYPH_BASELINE_INSET_HUNDREDTHS;
         for (uint256 rowIndex = 0; rowIndex < rowCount; rowIndex++) {
             bytes memory row = rows[rowIndex];
-            uint256 xTenths = prompt ? 9_024 - (row.length * 288) : 576;
+            uint256 xHundredths = prompt
+                ? 90_240 - (row.length * GLYPH_CELL_WIDTH_HUNDREDTHS) + GLYPH_ORIGIN_SHIFT_HUNDREDTHS
+                : 5_760 + GLYPH_ORIGIN_SHIFT_HUNDREDTHS;
+            cursor = _appendBytes(output, cursor, rowPrefix);
+            cursor = _appendHundredths(output, cursor, xHundredths);
+            output[cursor++] = " ";
+            cursor = _appendHundredths(output, cursor, yHundredths);
+            cursor = _appendBytes(output, cursor, rowSuffix);
             for (uint256 column = 0; column < row.length; column++) {
                 bytes1 character = row[column];
                 if (character != bytes1(" ")) {
@@ -263,15 +293,17 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
                     uint8 characterValue = uint8(character);
                     output[cursor++] = HEX_DIGITS[characterValue >> 4];
                     output[cursor++] = HEX_DIGITS[characterValue & 0x0f];
-                    cursor = _appendBytes(output, cursor, transformPrefix);
-                    cursor = _appendTenths(output, cursor, xTenths);
-                    output[cursor++] = " ";
-                    cursor = _appendTenths(output, cursor, yTenths);
-                    cursor = _appendBytes(output, cursor, transformSuffix);
+                    if (column == 0) {
+                        cursor = _appendBytes(output, cursor, glyphWithoutX);
+                    } else {
+                        cursor = _appendBytes(output, cursor, glyphWithX);
+                        cursor = _appendUint(output, cursor, column * GLYPH_FIXED_ADVANCE);
+                        cursor = _appendBytes(output, cursor, glyphWithXSuffix);
+                    }
                 }
-                xTenths += 288;
             }
-            yTenths += LINE_HEIGHT_TENTHS;
+            cursor = _appendBytes(output, cursor, bytes("</g>"));
+            yHundredths += LINE_HEIGHT_HUNDREDTHS;
         }
         assembly ("memory-safe") {
             mstore(output, cursor)
@@ -297,16 +329,17 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
         nextCursor = cursor + length;
     }
 
-    function _appendTenths(bytes memory output, uint256 cursor, uint256 value)
+    function _appendHundredths(bytes memory output, uint256 cursor, uint256 value)
         private
         pure
         returns (uint256 nextCursor)
     {
-        nextCursor = _appendUint(output, cursor, value / 10);
-        uint256 remainder = value % 10;
+        nextCursor = _appendUint(output, cursor, value / 100);
+        uint256 remainder = value % 100;
         if (remainder != 0) {
             output[nextCursor++] = ".";
-            output[nextCursor++] = bytes1(uint8(48 + remainder));
+            output[nextCursor++] = bytes1(uint8(48 + remainder / 10));
+            if (remainder % 10 != 0) output[nextCursor++] = bytes1(uint8(48 + remainder % 10));
         }
     }
 

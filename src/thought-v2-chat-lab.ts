@@ -104,7 +104,7 @@ const renderShell = (): void => {
       <div><span>CONTRACT</span><strong title="${runtime.contracts.thoughtNft}">${shortHash(runtime.contracts.thoughtNft)}</strong></div>
       <div><span>REGISTERED RELEASE</span><strong title="${runtime.protocolRelease.id}">${shortHash(runtime.protocolRelease.id)}</strong></div>
       <div><span>RENDERER</span><strong>${escapeHtml(runtime.renderer.implementationId)}</strong></div>
-      <p>Every card is decoded from ThoughtNFTV2.tokenURI(). The current renderer uses the approved Humanist Smooth native SVG paths and carries no browser-font dependency.</p>
+      <p>Every card is decoded from ThoughtNFTV2.tokenURI(). The current renderer uses the sealed Inshell Mono 76 v1.0.0 native centerline paths and carries no browser-font dependency.</p>
     </section>
 
     <section class="chat-gallery__toolbar" aria-label="Gallery controls">

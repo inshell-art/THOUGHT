@@ -20,8 +20,6 @@ contract ThoughtRendererV2Test {
     ThoughtRendererV2Split private splitRenderer;
     ThoughtSvgRendererV2 private svgRenderer;
     address private pointer1;
-    address private pointer2;
-    address private indexPointer;
 
     event RendererMeasurement(
         bytes32 indexed svgHash,
@@ -64,20 +62,13 @@ contract ThoughtRendererV2Test {
     );
 
     function setUp() public {
-        pointer1 = ContractCodeStorage.write(
-            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
-        );
-        pointer2 = ContractCodeStorage.write(
-            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
-        );
-        indexPointer =
-            ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
-        renderer = new ThoughtRendererV2(pointer1, pointer2, indexPointer);
-        svgRenderer = new ThoughtSvgRendererV2(pointer1, pointer2, indexPointer);
+        pointer1 = ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/mono-76.im76.bin"));
+        renderer = new ThoughtRendererV2(pointer1);
+        svgRenderer = new ThoughtSvgRendererV2(pointer1);
         splitRenderer = new ThoughtRendererV2Split(address(svgRenderer));
     }
 
-    function testRendererBindsApprovedHumanistSmoothConfiguration() public view {
+    function testRendererBindsSealedMono76Configuration() public view {
         require(
             renderer.RENDERER_ID_HASH() == keccak256(bytes("inshell.thought.svg.v2.terminal-chat-path-glyphs")),
             "renderer compatibility ID drift"
@@ -90,17 +81,25 @@ contract ThoughtRendererV2Test {
             keccak256(bytes(renderer.IMPLEMENTATION_ID()))
                 == keccak256(
                     bytes(
-                        "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
+                        "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
                     )
                 ),
             "implementation ID drift"
         );
         require(
             keccak256(bytes(renderer.GLYPH_LIBRARY_MEMBER_ID()))
-                == keccak256(bytes("inshell.thought.glyph-library.set-03.humanist-smooth")),
+                == keccak256(bytes("inshell.mono-76")),
             "glyph member drift"
         );
-        require(renderer.GLYPH_VISUAL_BASELINE_HUNDREDTHS() == 558, "visual baseline drift");
+        require(renderer.GLYPH_FIXED_ADVANCE() == 10, "fixed advance drift");
+        require(renderer.GLYPH_SCALE_HUNDREDTHS() == 288, "glyph scale drift");
+        require(renderer.GLYPH_ORIGIN_SHIFT_HUNDREDTHS() == 288, "origin shift drift");
+        require(renderer.GLYPH_STROKE_WIDTH_HUNDREDTHS() == 123, "stroke width drift");
+        require(
+            renderer.glyphDefinitionsKeccak256()
+                == 0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081,
+            "packed payload drift"
+        );
         require(renderer.MAX_COLUMNS() == 29 && renderer.MAX_ROWS() == 4, "wrapping bounds drift");
     }
 
@@ -116,11 +115,25 @@ contract ThoughtRendererV2Test {
             "missing black inner canvas"
         );
         require(_contains(svg, "<defs><path"), "missing canonical path definitions");
-        require(_contains(svg, 'id="humanist-smooth-g0041"'), "used prompt glyph definition missing");
-        require(_contains(svg, 'id="humanist-smooth-g0049"'), "used Agent glyph definition missing");
-        require(!_contains(svg, 'id="humanist-smooth-g005a"'), "unused glyph definition returned");
-        require(_contains(svg, '<g id="prompt-line" fill="#00ff00"'), "missing canonical prompt green");
-        require(_contains(svg, '<g id="agent-line" fill="#00ff00"'), "missing canonical Agent green");
+        require(_contains(svg, 'id="g41"'), "used prompt glyph definition missing");
+        require(_contains(svg, 'id="g49"'), "used Agent glyph definition missing");
+        require(!_contains(svg, 'id="g5a"'), "unused glyph definition returned");
+        require(
+            _contains(
+                svg,
+                '<g id="prompt-line" fill="none" stroke="#00ff00" stroke-width="1.23" stroke-linecap="round" stroke-linejoin="round"'
+            ),
+            "missing canonical prompt paint"
+        );
+        require(
+            _contains(
+                svg,
+                '<g id="agent-line" fill="none" stroke="#00ff00" stroke-width="1.23" stroke-linecap="round" stroke-linejoin="round"'
+            ),
+            "missing canonical Agent paint"
+        );
+        require(_contains(svg, 'data-glyph-release="v1.0.0"'), "Mono 76 release pin missing");
+        require(_contains(svg, 'data-glyph-origin-shift-x="1"'), "Mono 76 origin shift missing");
         require(_contains(svg, 'data-prompt-vertical-align="top"'), "fixed prompt alignment missing");
         require(_contains(svg, 'data-agent-vertical-align="bottom"'), "fixed Agent alignment missing");
         require(
@@ -137,18 +150,23 @@ contract ThoughtRendererV2Test {
             "Agent field geometry drift"
         );
         require(
-            _contains(svg, '<use href="#humanist-smooth-g0041" transform="translate(499.2 140.8) scale(4.8)"/>'),
+            _contains(
+                svg,
+                '<g transform="translate(502.08 171.52) scale(2.88 -2.88)"><use href="#g41"/>'
+            ),
             "prompt placement drift"
         );
         require(
-            _contains(svg, '<use href="#humanist-smooth-g0049" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            _contains(
+                svg,
+                '<g transform="translate(60.48 811.52) scale(2.88 -2.88)"><use href="#g49"/>'
+            ),
             "Agent placement drift"
         );
         require(!_contains(svg, "<foreignObject"), "foreignObject returned");
         require(!_contains(svg, "<text"), "SVG text returned");
         require(!_contains(svg, "@font-face"), "embedded font returned");
         require(!_contains(svg, "<style"), "browser style dependency returned");
-        require(!_contains(svg, "stroke="), "chat message frame returned");
         require(_contains(svg, 'data-source="Are you there?"'), "missing exact prompt source");
         require(_contains(svg, 'data-source="I am here."'), "missing exact Agent source");
     }
@@ -156,21 +174,21 @@ contract ThoughtRendererV2Test {
     function testPromptKeepsFixedTopAndAgentKeepsFixedBottomAcrossOneThroughFourRows() public view {
         string memory oneRow = renderer.render("A", "A");
         require(
-            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(873.6 140.8) scale(4.8)"/>'),
+            _contains(oneRow, '<g transform="translate(876.48 171.52) scale(2.88 -2.88)"><use href="#g41"/>'),
             "one-row prompt top drift"
         );
         require(
-            _contains(oneRow, '<use href="#humanist-smooth-g0041" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            _contains(oneRow, '<g transform="translate(60.48 811.52) scale(2.88 -2.88)"><use href="#g41"/>'),
             "one-row Agent bottom drift"
         );
 
         string memory twoRows = renderer.render("AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB", "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB");
         require(
-            _contains(twoRows, '<use href="#humanist-smooth-g0041" transform="translate(470.4 140.8) scale(4.8)"/>'),
+            _contains(twoRows, '<g transform="translate(473.28 171.52) scale(2.88 -2.88)"><use href="#g41"/>'),
             "two-row prompt top drift"
         );
         require(
-            _contains(twoRows, '<use href="#humanist-smooth-g0042" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            _contains(twoRows, '<g transform="translate(60.48 811.52) scale(2.88 -2.88)"><use href="#g42"/>'),
             "two-row Agent bottom drift"
         );
 
@@ -179,11 +197,11 @@ contract ThoughtRendererV2Test {
             "AAAAAAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBBB CCCCCCCCCCCCCCCCCCCC"
         );
         require(
-            _contains(threeRows, '<use href="#humanist-smooth-g0041" transform="translate(326.4 140.8) scale(4.8)"/>'),
+            _contains(threeRows, '<g transform="translate(329.28 171.52) scale(2.88 -2.88)"><use href="#g41"/>'),
             "three-row prompt top drift"
         );
         require(
-            _contains(threeRows, '<use href="#humanist-smooth-g0043" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            _contains(threeRows, '<g transform="translate(60.48 811.52) scale(2.88 -2.88)"><use href="#g43"/>'),
             "three-row Agent bottom drift"
         );
 
@@ -192,37 +210,22 @@ contract ThoughtRendererV2Test {
             "AAAAAAAAAAAAAAA BBBBBBBBBBBBBBB CCCCCCCCCCCCCCC DDDDDDDDDDDDDDD"
         );
         require(
-            _contains(fourRows, '<use href="#humanist-smooth-g0041" transform="translate(470.4 140.8) scale(4.8)"/>'),
+            _contains(fourRows, '<g transform="translate(473.28 171.52) scale(2.88 -2.88)"><use href="#g41"/>'),
             "four-row prompt top drift"
         );
         require(
-            _contains(fourRows, '<use href="#humanist-smooth-g0044" transform="translate(57.6 780.8) scale(4.8)"/>'),
+            _contains(fourRows, '<g transform="translate(60.48 811.52) scale(2.88 -2.88)"><use href="#g44"/>'),
             "four-row Agent bottom drift"
         );
     }
 
-    function testConstructorRejectsMissingOrMismatchedDefinitionParts() public {
-        address candidatePointer1 = ContractCodeStorage.write(
-            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag"))
-        );
-        address candidatePointer2 = ContractCodeStorage.write(
-            bytes(VM.readFile("../protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag"))
-        );
-        address candidateIndexPointer =
-            ContractCodeStorage.write(VM.readFileBinary("../protocol/current/v2/renderer/humanist-smooth-index.bin"));
+    function testConstructorRejectsMissingOrMismatchedPackedPayload() public {
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDataPointer.selector));
+        new ThoughtRendererV2(address(0));
 
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
-        new ThoughtRendererV2(address(0), candidatePointer2, candidateIndexPointer);
-
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 2));
-        new ThoughtRendererV2(candidatePointer1, address(0x1234), candidateIndexPointer);
-
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 3));
-        new ThoughtRendererV2(candidatePointer1, candidatePointer2, address(0x1234));
-
-        address wrongPointer = ContractCodeStorage.write(bytes("wrong definitions"));
-        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDefinitionsPointer.selector, 1));
-        new ThoughtRendererV2(wrongPointer, candidatePointer2, candidateIndexPointer);
+        address wrongPointer = ContractCodeStorage.write(bytes("wrong packed payload"));
+        VM.expectRevert(abi.encodeWithSelector(ThoughtRendererV2.InvalidGlyphDataPointer.selector));
+        new ThoughtRendererV2(wrongPointer);
     }
 
     function testRenderEscapesApprovedTerminalPunctuation() public view {
@@ -333,11 +336,11 @@ contract ThoughtRendererV2Test {
 
     function testEmitRendererArchitectureMeasurement() public {
         uint256 gasBefore = gasleft();
-        new ThoughtRendererV2(pointer1, pointer2, indexPointer);
+        new ThoughtRendererV2(pointer1);
         uint256 monolithicDeployGas = gasBefore - gasleft();
 
         gasBefore = gasleft();
-        ThoughtSvgRendererV2 measuredSvg = new ThoughtSvgRendererV2(pointer1, pointer2, indexPointer);
+        ThoughtSvgRendererV2 measuredSvg = new ThoughtSvgRendererV2(pointer1);
         new ThoughtRendererV2Split(address(measuredSvg));
         uint256 splitDeployGas = gasBefore - gasleft();
 

@@ -18,7 +18,7 @@ type GeneratedStudyManifest = {
     face: string;
     family: string;
     manifestSha256: string;
-    releaseCommit: string;
+    releaseRevision: string;
     releaseTag: string;
     version: string;
     weight: number;
@@ -36,11 +36,11 @@ type GeneratedStudyManifest = {
   }>;
 };
 
-const PACKAGE_VERSION = "0.1.0";
-const PACKAGE_RELEASE_TAG = "v0.1.0";
-const PACKAGE_RELEASE_COMMIT = "6fefbfaf762dce0148fe275baafb8e7dd2077beb";
+const PACKAGE_VERSION = "1.0.0";
+const PACKAGE_RELEASE_TAG = "v1.0.0";
+const PACKAGE_RELEASE_REVISION = "mono-76-centerline-v1-20260731";
 const PACKAGE_MANIFEST_SHA256 =
-  "14d734495a8bdc99a98fecbc4f9d76d315c9e2b9fc9b032d5a1fda567258ce11";
+  "3506060e6262da142b5d6cc858d03ebe875f3b9a5c52edc30d078b2f4a944c8c";
 const GENERATED_ASSET_ROOT = `/generated/inshell-mono-76/${PACKAGE_VERSION}`;
 const GENERATED_MANIFEST_URL = `${GENERATED_ASSET_ROOT}/study-manifest.json`;
 const THEME_STORAGE_KEY = "thought-inshell-mono-76-study-theme";
@@ -187,7 +187,7 @@ const render = (): void => {
       <div>
         <p class="source-study__eyebrow">THOUGHT / DETERMINISTIC GLYPH STUDY</p>
         <h1>Inshell Mono 76</h1>
-        <p class="source-study__intro">The artwork now uses the pinned Inshell Mono 76 Regular 400 release as native SVG paths. It preserves the exact Source Code Pro Regular geometry for THOUGHT’s closed 76-character table without a browser font, fallback, <code>&lt;text&gt;</code>, or <code>foreignObject</code>.</p>
+        <p class="source-study__intro">The artwork uses the sealed Inshell Mono 76 Regular 400 centerline release as native SVG paths for THOUGHT’s closed 76-character table, without a browser font, fallback, <code>&lt;text&gt;</code>, or <code>foreignObject</code>.</p>
       </div>
       <div class="source-study__header-tools">
         <div class="source-study__themes" role="group" aria-label="Page color theme">
@@ -204,8 +204,8 @@ const render = (): void => {
 
     <dl class="source-study__source">
       <div><dt>FACE</dt><dd>Inshell Mono 76 Regular 400</dd></div>
-      <div><dt>RELEASE</dt><dd>${PACKAGE_RELEASE_TAG} / ${PACKAGE_RELEASE_COMMIT.slice(0, 12)}</dd></div>
-      <div><dt>ART GEOMETRY</dt><dd>48 / 64 / 1024 native-path SVG</dd></div>
+      <div><dt>RELEASE</dt><dd>${PACKAGE_RELEASE_TAG} / SEALED</dd></div>
+      <div><dt>ART GEOMETRY</dt><dd>2.88 scale / 64 line / 1024 SVG</dd></div>
       <div><dt>FIXTURES</dt><dd>${samples.length} deterministic works</dd></div>
     </dl>
 
@@ -357,11 +357,11 @@ const render = (): void => {
     <section class="source-study__section source-study__release" aria-labelledby="release-title">
       <div class="source-study__section-heading">
         <h2 id="release-title">What is fixed</h2>
-        <p class="source-study__section-copy">The browser only scales complete SVG files. The release identity, repertoire, outlines, 600-unit advance, Regular 400 weight, line wrapping, frame, and colors are already encoded before the page loads.</p>
+        <p class="source-study__section-copy">The browser only scales complete SVG files. The release identity, repertoire, centerlines, 10-unit advance, 1.23-unit stroke, Regular 400 face, line wrapping, frame, and colors are already encoded before the page loads.</p>
       </div>
       <dl class="source-study__release-grid">
         <div><dt>FAMILY</dt><dd>Inshell Mono 76</dd></div>
-        <div><dt>UPSTREAM GEOMETRY</dt><dd>Source Code Pro Regular v2.042</dd></div>
+        <div><dt>AUTHORSHIP</dt><dd>Inshell-owned centerline paths</dd></div>
         <div><dt>REPERTOIRE</dt><dd>76 exact Terminal English characters</dd></div>
         <div><dt>BROWSER FONT LOOKUP</dt><dd>None inside artwork</dd></div>
         <div><dt>SVG TEXT ELEMENTS</dt><dd>None</dd></div>
@@ -453,7 +453,7 @@ const verifyGeneratedAssets = async (): Promise<void> => {
       manifest.schema === "inshell.thought.inshell-mono-76-study-assets.v1"
       && manifest.package.version === PACKAGE_VERSION
       && manifest.package.releaseTag === PACKAGE_RELEASE_TAG
-      && manifest.package.releaseCommit === PACKAGE_RELEASE_COMMIT
+      && manifest.package.releaseRevision === PACKAGE_RELEASE_REVISION
       && manifest.package.manifestSha256 === PACKAGE_MANIFEST_SHA256
       && manifest.package.family === "Inshell Mono 76"
       && manifest.package.face === "Inshell Mono 76 Regular"

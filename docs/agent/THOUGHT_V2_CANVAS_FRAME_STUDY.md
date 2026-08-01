@@ -2,7 +2,7 @@
 
 > Resolved 2026-07-24. Current V2 adopts a 1024×1024 SVG artboard, 32-unit
 > `#006100` outer frame, unscaled 960×960 black canvas at `(32,32)`, and
-> `#00ff00` Humanist Smooth native-path glyphs. Any Source Code Pro /
+> `#00ff00` sealed Inshell Mono 76 v1.0.0 centerline glyphs. Any Source Code Pro /
 > `foreignObject` language below is historical study context only.
 
 Date: 2026-07-23
@@ -55,10 +55,11 @@ Visual review selected an artifact-owned outer frame with this exact geometry:
   canvas: prompt `(57.6,128,844.8,256)`, Agent
   `(57.6,576,844.8,256)`;
 - the prompt field is top aligned, fixing its first glyph-row baseline at
-  `140.8`; the Agent field is bottom aligned, fixing its final glyph-row
-  baseline at `780.8`;
+  `171.52`; the Agent field is bottom aligned, fixing its final glyph-row
+  baseline at `811.52`;
 - prompt and Agent fields remain frameless;
-- Humanist Smooth native paths are the selected glyph implementation;
+- sealed Inshell Mono 76 v1.0.0 centerline paths are the selected glyph
+  implementation;
 - canonical glyph green is `#00ff00`;
 - SVG `<text>`, `foreignObject`, browser font lookup, and embedded font files
   are excluded from the canonical renderer.
@@ -69,8 +70,8 @@ frame with CSS.
 
 ## Decision boundary
 
-The width, colors, artboard, canvas size, no-scaling rule, and Humanist Smooth
-native-path renderer are approved for the current V2 implementation
+The width, colors, artboard, canvas size, no-scaling rule, and sealed Inshell
+Mono 76 v1.0.0 native-path renderer are approved for the current V2 implementation
 candidate. This decision does not authorize a stable artifact, registry
 entry, Sepolia or mainnet deployment, or production rollout; those still
 require parity review and a clean release.

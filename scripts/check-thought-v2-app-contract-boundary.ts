@@ -171,7 +171,6 @@ try {
     "function glyphDefinitionsPointer2() view returns (address)",
     "function glyphDefinitionsIndexPointer() view returns (address)",
     "function glyphDefinitionsKeccak256() view returns (bytes32)",
-    "function GLYPH_DEFINITIONS_INDEX_KECCAK256() view returns (bytes32)",
   ], provider);
   const [
     rendererProfileId,
@@ -182,7 +181,6 @@ try {
     glyphDefinitionsPointer2,
     glyphDefinitionsIndexPointer,
     glyphDefinitionsHash,
-    glyphDefinitionsIndexHash,
   ] = await Promise.all([
     renderer.RENDERER_ID(),
     renderer.METADATA_PROFILE_ID(),
@@ -192,7 +190,6 @@ try {
     renderer.glyphDefinitionsPointer2(),
     renderer.glyphDefinitionsIndexPointer(),
     renderer.glyphDefinitionsKeccak256(),
-    renderer.GLYPH_DEFINITIONS_INDEX_KECCAK256(),
   ]);
   equal(rendererProfileId, runtime.renderer.canonicalRendererId, "renderer canonical ID");
   equal(rendererMetadataProfileId, THOUGHT_V2_METADATA_PROFILE_ID, "renderer metadata profile");
@@ -214,8 +211,7 @@ try {
     "glyph definitions index pointer",
   );
   equal(glyphDefinitionsHash, runtime.renderer.glyphDefinitionsHash, "glyph definitions hash");
-  equal(glyphDefinitionsIndexHash, runtime.renderer.glyphDefinitionsIndexHash, "glyph definitions index hash");
-  if (!runtime.renderer.releaseReady) fail("canonical Humanist Smooth renderer must be release-ready");
+  if (!runtime.renderer.releaseReady) fail("canonical sealed Mono 76 renderer must be release-ready");
 
   const supply = Number(supplyValue);
   equal(supply, runtime.gallery.mintedSupply, "gallery supply");

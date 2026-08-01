@@ -69,11 +69,7 @@
     { "path": "provenance/thought.provenance.v2.md", "role": "provenance-spec" },
     { "path": "provenance/thought.provenance.v2.schema.json", "role": "provenance-schema" },
     { "path": "renderer/thought.renderer.v2.profile.json", "role": "renderer-profile" },
-    { "path": "renderer/humanist-smooth-defs-1.svgfrag", "role": "renderer-glyph-definitions-1" },
-    { "path": "renderer/humanist-smooth-defs-2.svgfrag", "role": "renderer-glyph-definitions-2" },
-    { "path": "renderer/humanist-smooth-index.bin", "role": "renderer-glyph-definition-index" },
-    { "path": "renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md", "role": "renderer-glyph-license" },
-    { "path": "renderer/NOTICE-HUMANIST-SMOOTH.md", "role": "renderer-glyph-notice" },
+    { "path": "renderer/mono-76.im76.bin", "role": "renderer-glyph-packed-im76" },
     { "path": "work/thought.work.v2.profile.json", "role": "work-profile" },
     { "path": "work/thought.work.v2.schema.json", "role": "work-schema" }
   ],

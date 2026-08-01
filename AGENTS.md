@@ -38,7 +38,7 @@
 
 ## SVG rendering
 - The current V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
-- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. It uses Humanist Smooth native SVG paths with `#00ff00` glyph fill, prompt at the upper right, and Agent response at the lower left. Both text fields are fixed at 844.8 by 256 units: the prompt field `(57.6,128)` is top-aligned and its first glyph-row baseline remains `140.8`; the Agent field `(57.6,576)` is bottom-aligned and its final glyph-row baseline remains `780.8`. Additional prompt rows grow downward; additional Agent rows grow upward.
+- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. It uses the sealed Inshell Mono 76 v1.0.0 centerline SVG paths with `#00ff00` stroke, no fill, `1.23` stroke width, round caps/joins, fixed 10-unit advance, and a global +1 glyph-origin shift. Prompt is at the upper right and Agent response is at the lower left. Both text fields are fixed at 844.8 by 256 units: the prompt field `(57.6,128)` is top-aligned and its first glyph-row baseline remains `171.52`; the Agent field `(57.6,576)` is bottom-aligned and its final glyph-row baseline remains `811.52`. Additional prompt rows grow downward; additional Agent rows grow upward.
 - Canonical glyphs must be reviewed native SVG paths with deterministic metrics and wrapping. Do not use SVG `<text>`, `foreignObject`, browser font lookup, fallback fonts, or an embedded WOFF/TTF in the final onchain renderer. Source Code Pro remains a study reference only.
 
 ## Security

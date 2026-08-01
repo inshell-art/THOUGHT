@@ -46,13 +46,12 @@ export type ThoughtV2AnvilRuntime = {
   renderer: {
     canonicalRendererId: string;
     glyphDefinitionsHash: string;
-    glyphDefinitionsPart1Hash: string;
-    glyphDefinitionsPart2Hash: string;
-    glyphDefinitionsIndexHash: string;
+    glyphPackedBytes: number;
+    glyphPackedHash: string;
     glyphDefinitionsIndexPointer: string;
     glyphDefinitionsPointer1: string;
     glyphDefinitionsPointer2: string;
-    glyphLibraryMemberId: "inshell.thought.glyph-library.set-03.humanist-smooth";
+    glyphLibraryMemberId: "inshell.mono-76";
     implementationId: string;
     releaseReady: true;
   };
@@ -220,9 +219,11 @@ export const assertThoughtV2AnvilRuntime = (value: unknown): ThoughtV2AnvilRunti
     || typeof runtime.contracts?.thoughtNft !== "string"
     || runtime.renderer?.releaseReady !== true
     || runtime.renderer?.glyphLibraryMemberId
-      !== "inshell.thought.glyph-library.set-03.humanist-smooth"
+      !== "inshell.mono-76"
     || !bytes32Pattern.test(runtime.renderer?.glyphDefinitionsHash ?? "")
-    || !bytes32Pattern.test(runtime.renderer?.glyphDefinitionsIndexHash ?? "")
+    || !bytes32Pattern.test(runtime.renderer?.glyphPackedHash ?? "")
+    || runtime.renderer.glyphDefinitionsHash !== runtime.renderer.glyphPackedHash
+    || runtime.renderer.glyphPackedBytes !== 4_600
     || typeof runtime.renderer?.glyphDefinitionsPointer1 !== "string"
     || typeof runtime.renderer?.glyphDefinitionsPointer2 !== "string"
     || typeof runtime.renderer?.glyphDefinitionsIndexPointer !== "string"

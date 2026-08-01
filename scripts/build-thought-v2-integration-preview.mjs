@@ -99,20 +99,22 @@ if (releaseInput.registrationAuthorized !== false || releaseInput.status !== "im
 
 const rendererSource = read("evm/src/v2/ThoughtRendererV2.sol").toString("utf8");
 if (
-  !rendererSource.includes("inshell.thought.glyph-library.set-03.humanist-smooth")
-  || !rendererSource.includes("GLYPH_DEFINITIONS_PART_1_KECCAK256")
-  || !rendererSource.includes("GLYPH_DEFINITIONS_INDEX_KECCAK256")
-  || !rendererSource.includes("glyphDefinitionsIndexPointer")
+  !rendererSource.includes("inshell.mono-76")
+  || !rendererSource.includes("GLYPH_PACKED_KECCAK256")
+  || !rendererSource.includes("PACKED_BYTES = 4_600")
+  || !rendererSource.includes('stroke-width="1.23"')
+  || !rendererSource.includes('data-glyph-origin-shift-x="1"')
   || rendererSource.includes("<foreignObject")
   || rendererSource.includes("<text")
 ) {
-  throw new Error("canonical Humanist Smooth native-path renderer boundary drifted");
+  throw new Error("canonical sealed Mono 76 native-path renderer boundary drifted");
 }
 
 fs.rmSync(releaseDir, { recursive: true, force: true });
 fs.mkdirSync(releaseDir, { recursive: true });
 
 copyTree("protocol/current/v2", "protocol/current/v2");
+copyTree("vendor/mono-76", "dependencies/mono-76");
 copy(
   "docs/agent/IN_SHELL_ART_V2_NEUTRAL_AGENT_MODEL_INTEGRATION_PREVIEW_HANDOFF_20260731.md",
   "handoff.md",
@@ -226,7 +228,7 @@ const compatibility = {
     finalImplementationIncluded: true,
     geometry: releaseInput.rendererGeometry,
     packagedImplementation:
-      "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+      "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
   },
   selectedSpec: {
     byteLength: specBytes.length,
@@ -261,7 +263,7 @@ writeJson(path.join(releaseDir, "limitations.json"), {
   canonicalRendererIncluded: true,
   deploymentAuthorized: false,
   limitations: [
-    "canonical Humanist Smooth renderer is included but this package remains an integration preview",
+    "canonical sealed Inshell Mono 76 v1.0.0 renderer is included but this package remains an integration preview",
     "final release manifest and registry records are absent",
     "no Sepolia or mainnet deployment metadata is included",
     "no production attestation authority or private-key workflow is included",

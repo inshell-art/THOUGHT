@@ -62,11 +62,15 @@ an unchanged 960-by-960 black canvas translated to `(32,32)` with no scaling.
 Prompt and Agent coordinates remain in that 960-unit canvas coordinate system.
 The prompt occupies a fixed 844.8-by-256 field at `(57.6,128)` and the Agent
 response occupies an equal field at `(57.6,576)`. The prompt field is top
-aligned and its first glyph-row baseline is always `140.8`; the Agent field is
-bottom aligned and its final glyph-row baseline is always `780.8`, regardless
+aligned and its first glyph-row baseline is always `171.52`; the Agent field is
+bottom aligned and its final glyph-row baseline is always `811.52`, regardless
 of wrapped row count. Additional prompt rows grow downward; additional Agent
 rows grow upward.
-The implementation uses reviewed native SVG paths with deterministic glyph
-metrics and wrapping.
+The implementation uses the sealed Inshell Mono 76 v1.0.0 centerline SVG
+paths with deterministic metrics and wrapping: no fill, 1.23-unit strokes,
+round caps and joins, fixed 10-unit advance at 2.88 scale, a 12-unit SVG
+baseline, and a global +1 glyph-origin shift. Reviewed optical translations
+are baked into the path bytes; no runtime kerning or second offset table is
+permitted.
 Source Code Pro, SVG text, `foreignObject`, browser font lookup, and font files
 are study tools only and are not release-ready renderer dependencies.
