@@ -145,7 +145,7 @@ if (
   throw new Error("canonical sealed Mono 76 native-path renderer boundary drifted");
 }
 
-run("forge", ["test", "--root", "evm", "--match-contract", "ThoughtRendererV2Test"]);
+run("forge", ["test", "--offline", "--root", "evm", "--match-contract", "ThoughtRendererV2Test"]);
 
 fs.rmSync(releaseDir, { recursive: true, force: true });
 fs.mkdirSync(releaseDir, { recursive: true });
