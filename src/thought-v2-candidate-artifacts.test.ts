@@ -21,7 +21,7 @@ import {
   THOUGHT_V2_WORK_PROFILE_ID,
 } from "./thought-v2-terminal-work-profile";
 
-describe("THOUGHT V2 neutral-record candidate artifacts", () => {
+describe("THOUGHT V2 neutral-record release artifacts", () => {
   it("pins record, context, metadata, provenance, work, and renderer identities", () => {
     expect(releaseInput.identifiers).toMatchObject({
       agentDeclaration: "inshell.thought.agent-declaration.v1",
@@ -42,7 +42,15 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
       "attributes",
     ]);
     expect(workProfile.id).toBe(THOUGHT_V2_WORK_PROFILE_ID);
+    expect(releaseInput.status).toBe("canonical-portable-release");
+    expect(releaseInput.productionConsumable).toBe(true);
+    expect(releaseInput.registrationApplicable).toBe(false);
     expect(releaseInput.registrationAuthorized).toBe(false);
+    expect(releaseInput.deploymentAuthorization).toEqual({
+      anvil: false,
+      ethereumMainnet: false,
+      sepolia: false,
+    });
     expect(workProfile.renderGeometry).toEqual({
       artboard: { height: 1024, width: 1024 },
       canvas: {
@@ -183,7 +191,7 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
         "modelOf",
         "modelHashOf",
       ],
-      metadataTraits: ["Agent", "Model"],
+      metadataTraits: THOUGHT_V2_METADATA_ATTRIBUTE_ORDER,
       typedMintFields: ["agent", "model"],
       workIdentityInput: false,
     });

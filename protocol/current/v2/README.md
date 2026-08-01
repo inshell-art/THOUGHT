@@ -1,14 +1,17 @@
-# THOUGHT Protocol V2 — implementation candidate
+# THOUGHT Protocol V2 — canonical portable release source
 
 V2 replaces the unpublished binary-weave attempt as the current protocol and
-contract direction. It is an implementation candidate, not a published or
-registered release. No THOUGHT V3 release exists.
+contract direction. This directory is the release-qualified source for the
+canonical portable Contract package. Publication status, exact source commit,
+channel, manifest hash, deployment authorization, and registration
+applicability are carried by each immutable release envelope. No THOUGHT V3
+release exists.
 
-The Terminal English work profile and contract-side identity rules are frozen
-and under implementation. The native path-glyph renderer is now implemented
+The Terminal English work profile and contract-side identity rules are frozen.
+The native path-glyph renderer is implemented
 with the sealed Inshell Mono 76 v1.0.0 family. Production deployment tooling,
-release manifest approval, registration, and an immutable production consumer
-lock remain release gates.
+operator deployment approval, reviewed per-network addresses, and an immutable
+production consumer lock remain separate rollout gates.
 
 The renderer geometry is fixed for implementation: a 1024x1024 SVG artboard
 contains the unchanged 960x960 black work canvas at `(32,32)`, surrounded by
@@ -62,10 +65,11 @@ The ownership proposal conflicts with the current
 spec and provenance schemas. Joint App/Contract owner approval is required
 before either authority or the Contract ABI changes.
 
-`release-input.json` is not a release manifest and is not registrable. Final
-artifact hashes, contract/verifier ABIs, current attestation vectors, approved
-manifest, and registration record remain pending.
+`release-input.json` is not a release manifest and is not a registration
+record. Exact artifact hashes, compiled Contract artifacts, target-chain
+policy, and release status are published only in immutable release envelopes.
 
-No file in this directory is authorized for production registration until the
-complete V2 release is reviewed, generated from a clean tree, and represented
-by an approved exact-byte manifest.
+Protocol registration is not applicable to the portable Contract package.
+That classification does not remove or replace the existing selected-spec
+registry dependency in `ThoughtNFTV2`. Persistent Sepolia or mainnet deployment
+still requires explicit operator approval and reviewed network configuration.

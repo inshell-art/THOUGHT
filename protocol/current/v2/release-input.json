@@ -8,7 +8,13 @@
       "modelOf",
       "modelHashOf"
     ],
-    "metadataTraits": ["Agent", "Model"],
+    "metadataTraits": [
+      "Agent",
+      "Model",
+      "Creation Attestation",
+      "Prompt Bytes",
+      "Agent Bytes"
+    ],
     "provenancePaths": [
       "process.agentDeclaration",
       "process.modelDeclaration"
@@ -26,6 +32,13 @@
     "renderer": "inshell.thought.svg.v2.terminal-chat-path-glyphs",
     "workProfile": "inshell.thought.work.v2.terminal-english-64"
   },
+  "deploymentAuthorization": {
+    "anvil": false,
+    "ethereumMainnet": false,
+    "sepolia": false
+  },
+  "productionConsumable": true,
+  "registrationApplicable": false,
   "registrationAuthorized": false,
   "rendererGeometry": {
     "artboard": "1024x1024",
@@ -73,5 +86,5 @@
     { "path": "work/thought.work.v2.profile.json", "role": "work-profile" },
     { "path": "work/thought.work.v2.schema.json", "role": "work-schema" }
   ],
-  "status": "implementation-candidate"
+  "status": "canonical-portable-release"
 }

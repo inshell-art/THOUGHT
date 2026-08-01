@@ -4,7 +4,7 @@
 - THOUGHT contains the frontend and EVM contracts for minting one THOUGHT from one PATH movement unit.
 - Contract code lives in `evm/`.
 - Do not change PATH or Pulse contracts from this repo. Coordinate those changes in `path/` and `pulse/`.
-- The current protocol is THOUGHT V2: Terminal English, ordered prompt-plus-Agent identity, and a deterministic terminal-chat path-glyph renderer. It is an implementation candidate, not yet published or deployed.
+- The current protocol is THOUGHT V2: Terminal English, ordered prompt-plus-Agent identity, and a deterministic terminal-chat path-glyph renderer. Its portable contract package is release-qualified for immutable canonical publication, but no persistent-chain deployment or protocol registration is authorized by that qualification alone.
 - The binary-weave/visible-Unicode implementation was never published. Treat the old unversioned contract, `protocol/releases/v2`, and `artifacts/thought-v2` trees as a historical attempt only. It does not consume a public version and must not be released as current V2. No THOUGHT V3 exists.
 
 ## Commands
