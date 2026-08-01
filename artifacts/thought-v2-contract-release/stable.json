@@ -1,0 +1,33 @@
+{
+  "artifactId": "thought-v2-canonical-portable-release-20260801-r1",
+  "channel": "stable",
+  "classification": "canonical-portable-contract-release",
+  "deploymentAuthorized": false,
+  "manifestPath": "artifacts/thought-v2-contract-release/releases/thought-v2-canonical-portable-release-20260801-r1/manifest.json",
+  "manifestSha256": "4d60feba36165c19a3cf3680078cc6baa7ba066c147ca607e5c82d0306f65b1a",
+  "productionConsumable": true,
+  "publicationCommit": "9617892bda9d7f7e880b614f84f1b6360ad8a652",
+  "registrationApplicable": false,
+  "registrationAuthorized": false,
+  "schema": "inshell.thought.canonical-release-publication-receipt.v1",
+  "sourceBaseCommit": "a48191f5c0d5b51fab0de26707eaed86f2f1da5b",
+  "sourceTag": "thought-v2-canonical-portable-release-20260801-r1",
+  "tagTarget": "9617892bda9d7f7e880b614f84f1b6360ad8a652",
+  "targetChains": [
+    {
+      "chainId": 31337,
+      "deploymentAuthorized": false,
+      "name": "Disposable Anvil"
+    },
+    {
+      "chainId": 11155111,
+      "deploymentAuthorized": false,
+      "name": "Sepolia"
+    },
+    {
+      "chainId": 1,
+      "deploymentAuthorized": false,
+      "name": "Ethereum mainnet"
+    }
+  ]
+}
