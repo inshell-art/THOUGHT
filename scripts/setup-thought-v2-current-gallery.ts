@@ -745,6 +745,7 @@ const main = async (): Promise<void> => {
       || creationAttestationDigest !== expectedDigest
       || metadataAttestation?.digest !== expectedDigest
       || metadataAttestation?.status !== expectedStatus
+      || metadata.external_url !== `https://inshell.art/thought/${fixture.tokenNumber}`
       || thought?.provenanceJson !== storedProvenance
       || thought?.provenanceHash !== storedHash
       || thought?.workHash !== workHash
@@ -755,7 +756,11 @@ const main = async (): Promise<void> => {
     ) {
       throw new Error(`on-chain tokenURI/provenance parity failed for THOUGHT #${fixture.tokenNumber}`);
     }
-    if (!tokenUriExamples.some(({ creationAttestation }) => creationAttestation === expectedStatus)) {
+    if (
+      fixture.tokenNumber === 1
+      || fixture.tokenNumber === 42
+      || !tokenUriExamples.some(({ creationAttestation }) => creationAttestation === expectedStatus)
+    ) {
       tokenUriExamples.push({
         creationAttestation: expectedStatus,
         metadata,

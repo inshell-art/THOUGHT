@@ -33,6 +33,14 @@ describe("THOUGHT V2 neutral-record candidate artifacts", () => {
     });
     expect(contextProfile.id).toBe(THOUGHT_V2_CONTEXT_PROFILE_ID);
     expect(metadataProfile.id).toBe(THOUGHT_V2_METADATA_PROFILE_ID);
+    expect(metadataProfile.marketplaceRequired).toEqual([
+      "name",
+      "description",
+      "image",
+      "external_url",
+      "background_color",
+      "attributes",
+    ]);
     expect(workProfile.id).toBe(THOUGHT_V2_WORK_PROFILE_ID);
     expect(releaseInput.registrationAuthorized).toBe(false);
     expect(workProfile.renderGeometry).toEqual({

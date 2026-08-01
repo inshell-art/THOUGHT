@@ -98,17 +98,23 @@ if (releaseInput.registrationAuthorized !== false || releaseInput.status !== "im
 }
 
 const rendererSource = read("evm/src/v2/ThoughtRendererV2.sol").toString("utf8");
+const constantsSource = read("evm/src/v2/ThoughtV2Constants.sol").toString("utf8");
 if (
   !rendererSource.includes("inshell.mono-76")
   || !rendererSource.includes("GLYPH_PACKED_KECCAK256")
   || !rendererSource.includes("PACKED_BYTES = 4_600")
   || !rendererSource.includes('stroke-width="1.23"')
   || !rendererSource.includes('data-glyph-origin-shift-x="1"')
+  || !rendererSource.includes('EXTERNAL_URL_BASE')
+  || !rendererSource.includes('"external_url":"')
+  || !constantsSource.includes('EXTERNAL_URL_BASE = "https://inshell.art/thought/"')
   || rendererSource.includes("<foreignObject")
   || rendererSource.includes("<text")
 ) {
   throw new Error("canonical sealed Mono 76 native-path renderer boundary drifted");
 }
+
+run("forge", ["test", "--root", "evm", "--match-contract", "ThoughtRendererV2Test"]);
 
 fs.rmSync(releaseDir, { recursive: true, force: true });
 fs.mkdirSync(releaseDir, { recursive: true });
@@ -116,7 +122,7 @@ fs.mkdirSync(releaseDir, { recursive: true });
 copyTree("protocol/current/v2", "protocol/current/v2");
 copyTree("vendor/mono-76", "dependencies/mono-76");
 copy(
-  "docs/agent/IN_SHELL_ART_V2_NEUTRAL_AGENT_MODEL_INTEGRATION_PREVIEW_HANDOFF_20260731.md",
+  "docs/agent/IN_SHELL_ART_V2_EXTERNAL_URL_INTEGRATION_PREVIEW_HANDOFF_20260801.md",
   "handoff.md",
 );
 copy(
@@ -146,9 +152,24 @@ const compiledContracts = [
     contractName: "IThoughtRendererV2",
   },
   {
+    artifact: "evm/out/IThoughtSvgRendererV2.sol/IThoughtSvgRendererV2.json",
+    classification: "current-svg-renderer-interface",
+    contractName: "IThoughtSvgRendererV2",
+  },
+  {
     artifact: "evm/out/ThoughtRendererV2.sol/ThoughtRendererV2.json",
     classification: "current-native-path-renderer-candidate",
     contractName: "ThoughtRendererV2",
+  },
+  {
+    artifact: "evm/out/ThoughtSvgRendererV2.sol/ThoughtSvgRendererV2.json",
+    classification: "current-standalone-svg-renderer-candidate",
+    contractName: "ThoughtSvgRendererV2",
+  },
+  {
+    artifact: "evm/out/ThoughtRendererV2Split.sol/ThoughtRendererV2Split.json",
+    classification: "current-split-metadata-renderer-candidate",
+    contractName: "ThoughtRendererV2Split",
   },
   {
     artifact: "evm/out/ICreationAttestationVerifierV2.sol/ICreationAttestationVerifierV2.json",
@@ -213,6 +234,12 @@ const compatibility = {
     idKeccak256: id(identifiers.contextProfile),
   },
   metadataProfile: {
+    externalUrl: {
+      base: "https://inshell.art/thought/",
+      identityInput: false,
+      location: "top-level",
+      tokenIdFormat: "unsigned-base-10-no-leading-zeroes",
+    },
     id: identifiers.metadataProfile,
     idKeccak256: id(identifiers.metadataProfile),
   },
@@ -256,6 +283,26 @@ writeJson(path.join(releaseDir, "contract/index.json"), {
   },
   persistentNetworkDeployments: [],
   schema: "inshell.thought.contract-index.integration-preview.v1",
+});
+
+writeJson(path.join(releaseDir, "validation/renderer-parity.json"), {
+  exactTokenUriByteParity: true,
+  externalUrl: {
+    base: "https://inshell.art/thought/",
+    testedTokenIds: [
+      "1",
+      "42",
+      "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+    ],
+  },
+  implementations: [
+    "ThoughtRendererV2",
+    "ThoughtRendererV2Split+ThoughtSvgRendererV2",
+  ],
+  schema: "inshell.thought.renderer-parity.integration-preview.v1",
+  testContract: "ThoughtRendererV2Test",
+  testSource: "evm/test/v2/ThoughtRendererV2.t.sol",
+  verifiedAt: createdAt,
 });
 
 writeJson(path.join(releaseDir, "limitations.json"), {

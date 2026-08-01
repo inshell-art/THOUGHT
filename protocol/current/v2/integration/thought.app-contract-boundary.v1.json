@@ -84,6 +84,15 @@
       "validNonemptyProofResult": "Inshell THOUGHT App",
       "meaning": "the configured authority signed the exact claim; it does not independently prove provider identity, model identity, or semantic compliance"
     },
+    "metadata": {
+      "externalUrl": {
+        "base": "https://inshell.art/thought/",
+        "identityInput": false,
+        "location": "top-level",
+        "owner": "contract-renderer",
+        "tokenIdFormat": "unsigned-base-10-no-leading-zeroes"
+      }
+    },
     "metadataTraits": {
       "attested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
       "unattested": ["Agent", "Model", "Creation Attestation", "Prompt Bytes", "Agent Bytes", "Pair Bytes", "Prompt Length", "Agent Length"],
@@ -94,6 +103,7 @@
       "provenance-exact-bytes-and-hash",
       "creation-attestation-digest",
       "embedded-erc721-metadata",
+      "canonical-external-url",
       "embedded-svg",
       "selected-spec-readback",
       "protocol-manifest-readback"

@@ -242,8 +242,21 @@ contract ThoughtRendererV2Test {
         string memory metadata = _metadataJsonFromTokenUri(uri);
         require(_contains(metadata, '"name":"THOUGHT #1"'), "metadata name missing");
         require(_contains(metadata, '"image":"data:image/svg+xml;base64,'), "embedded image missing");
+        require(
+            _contains(metadata, '"external_url":"https://inshell.art/thought/1"'),
+            "canonical external URL missing"
+        );
         require(_contains(metadata, '"properties":{'), "properties missing");
         require(_contains(metadata, '"thought":{'), "THOUGHT extension missing");
+    }
+
+    function testCanonicalExternalUrlCoversBoundaryTokenIdsAndSplitParity() public view {
+        _requireCanonicalExternalUrl(1, "https://inshell.art/thought/1");
+        _requireCanonicalExternalUrl(42, "https://inshell.art/thought/42");
+        _requireCanonicalExternalUrl(
+            type(uint256).max,
+            "https://inshell.art/thought/115792089237316195423570985008687907853269984665640564039457584007913129639935"
+        );
     }
 
     function testRepresentativeRenderingStaysWithinPracticalEthCallBudget() public view {
@@ -454,10 +467,38 @@ contract ThoughtRendererV2Test {
             "record changes must remain visible in metadata"
         );
         require(
-            keccak256(bytes(_between(firstMetadata, '"image":"', '","background_color"')))
-                == keccak256(bytes(_between(secondMetadata, '"image":"', '","background_color"'))),
+            keccak256(bytes(_between(firstMetadata, '"image":"', '","external_url"')))
+                == keccak256(bytes(_between(secondMetadata, '"image":"', '","external_url"'))),
             "neutral records changed artwork bytes"
         );
+    }
+
+    function _requireCanonicalExternalUrl(uint256 tokenId, string memory expectedUrl) private view {
+        IThoughtRendererV2.TokenData memory data = _data(bytes32(0));
+        data.tokenId = tokenId;
+        string memory monolithicUri = renderer.tokenURI(data);
+        string memory splitUri = splitRenderer.tokenURI(data);
+        require(
+            keccak256(bytes(monolithicUri)) == keccak256(bytes(splitUri)),
+            "external URL split tokenURI drift"
+        );
+
+        string memory metadata = _metadataJsonFromTokenUri(monolithicUri);
+        string memory externalUrl = _between(metadata, '"external_url":"', '"');
+        require(keccak256(bytes(externalUrl)) == keccak256(bytes(expectedUrl)), "external URL value drift");
+        require(_count(metadata, '"external_url":') == 1, "external URL must be top-level exactly once");
+        require(
+            _indexOf(metadata, '"image":') < _indexOf(metadata, '"external_url":')
+                && _indexOf(metadata, '"external_url":') < _indexOf(metadata, '"background_color":'),
+            "external URL metadata order drift"
+        );
+        require(!_contains(externalUrl, "localhost"), "localhost external URL leaked");
+        require(!_contains(externalUrl, "127.0.0.1"), "LAN external URL leaked");
+        require(!_contains(externalUrl, "thought.inshell.art"), "deprecated subdomain leaked");
+        require(!_contains(externalUrl, "gallery.inshell.art"), "alternate subdomain leaked");
+        require(!_contains(externalUrl, "github.io"), "Pages external URL leaked");
+        require(!_contains(externalUrl, "?"), "external URL query leaked");
+        require(!_contains(externalUrl, "#"), "external URL fragment leaked");
     }
 
     function _data(bytes32 attestationDigest) private pure returns (IThoughtRendererV2.TokenData memory) {
@@ -598,6 +639,23 @@ contract ThoughtRendererV2Test {
             }
             if (matches) count++;
         }
+    }
+
+    function _indexOf(string memory value, string memory needle) private pure returns (uint256) {
+        bytes memory haystack = bytes(value);
+        bytes memory expected = bytes(needle);
+        if (expected.length == 0 || expected.length > haystack.length) return type(uint256).max;
+        for (uint256 i = 0; i <= haystack.length - expected.length; i++) {
+            bool matches = true;
+            for (uint256 j = 0; j < expected.length; j++) {
+                if (haystack[i + j] != expected[j]) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) return i;
+        }
+        return type(uint256).max;
     }
 
     function _between(string memory value, string memory startNeedle, string memory endNeedle)

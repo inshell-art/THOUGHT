@@ -165,6 +165,7 @@ try {
   const renderer = new Contract(runtime.contracts.thoughtRenderer, [
     "function RENDERER_ID() view returns (string)",
     "function METADATA_PROFILE_ID() view returns (string)",
+    "function EXTERNAL_URL_BASE() view returns (string)",
     "function IMPLEMENTATION_ID() view returns (string)",
     "function GLYPH_LIBRARY_MEMBER_ID() view returns (string)",
     "function glyphDefinitionsPointer1() view returns (address)",
@@ -175,6 +176,7 @@ try {
   const [
     rendererProfileId,
     rendererMetadataProfileId,
+    rendererExternalUrlBase,
     rendererImplementationId,
     glyphLibraryMemberId,
     glyphDefinitionsPointer1,
@@ -184,6 +186,7 @@ try {
   ] = await Promise.all([
     renderer.RENDERER_ID(),
     renderer.METADATA_PROFILE_ID(),
+    renderer.EXTERNAL_URL_BASE(),
     renderer.IMPLEMENTATION_ID(),
     renderer.GLYPH_LIBRARY_MEMBER_ID(),
     renderer.glyphDefinitionsPointer1(),
@@ -193,6 +196,11 @@ try {
   ]);
   equal(rendererProfileId, runtime.renderer.canonicalRendererId, "renderer canonical ID");
   equal(rendererMetadataProfileId, THOUGHT_V2_METADATA_PROFILE_ID, "renderer metadata profile");
+  equal(
+    rendererExternalUrlBase,
+    boundary.currentExecutableBoundary.metadata.externalUrl.base,
+    "renderer external URL base",
+  );
   equal(rendererImplementationId, runtime.renderer.implementationId, "renderer implementation ID");
   equal(glyphLibraryMemberId, runtime.renderer.glyphLibraryMemberId, "renderer glyph-library member");
   equalAddress(
@@ -246,6 +254,11 @@ try {
     const modelTrait = token.traits.get("Model");
     equal(agentTrait?.value, thought.records.agent.label, `THOUGHT #${token.tokenId} Agent trait`);
     equal(modelTrait?.value, thought.records.model.label, `THOUGHT #${token.tokenId} model trait`);
+    equal(
+      token.metadata.external_url,
+      `https://inshell.art/thought/${token.tokenId}`,
+      `THOUGHT #${token.tokenId} external URL`,
+    );
     agentValues.add(thought.records.agent.label);
     modelValues.add(thought.records.model.label);
   }

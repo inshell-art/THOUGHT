@@ -31,7 +31,7 @@
 - Multiple registered THOUGHT spec versions may coexist and remain mintable in one collection.
 - Deploy scripts must read `THOUGHT.vN.md` as raw bytes, reject BOM/CRLF/name/header mismatches, hash the exact bytes, register with `registerThoughtSpec`, verify registry metadata/readback, and write `recommendedThoughtSpec*` release fields.
 - Color Font v1 is an archived V1 dependency only. Do not add it to the current V2 constructor or mint flow.
-- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, PATH id/serial, exact visible lines and line hashes, conversation identity hash, work hash, provenance hash/payload, exact spec pair, renderer id, and creation-attestation state. Current V2 has no binary field.
+- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, canonical top-level `external_url` equal to `https://inshell.art/thought/<tokenId>`, PATH id/serial, exact visible lines and line hashes, conversation identity hash, work hash, provenance hash/payload, exact spec pair, renderer id, and creation-attestation state. Current V2 has no binary field.
 - `ThoughtNFTV2` and its renderer must agree on `inshell.thought.metadata.v2.terminal-chat`; constructor compatibility must fail closed on metadata-profile drift.
 - `tokenURI` must not embed full spec text. Use compact spec ID/hash metadata and `thoughtSpecOf(tokenId)` / registry readback for name/ref/full bytes.
 - PATH movement setup must be frozen by deployment scripts after configuring `THOUGHT` movement quota.

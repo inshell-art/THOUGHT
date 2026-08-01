@@ -28,6 +28,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     bytes32 public constant RENDERER_ID_HASH = ThoughtV2Constants.RENDERER_ID_HASH;
     string public constant METADATA_PROFILE_ID = ThoughtV2Constants.METADATA_PROFILE_ID;
     bytes32 public constant METADATA_PROFILE_ID_HASH = ThoughtV2Constants.METADATA_PROFILE_ID_HASH;
+    string public constant EXTERNAL_URL_BASE = ThoughtV2Constants.EXTERNAL_URL_BASE;
     string public constant WORK_PROFILE_ID = ThoughtV2Constants.WORK_PROFILE_ID;
     string public constant CONTEXT_PROFILE_ID = ThoughtV2Constants.CONTEXT_PROFILE_ID;
     bytes32 public constant CREATION_ATTESTATION_PROFILE_ID = ThoughtV2Constants.CREATION_ATTESTATION_PROFILE_ID;
@@ -118,6 +119,9 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
             _toString(data.tokenId),
             '","description":"THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.","image":"data:image/svg+xml;base64,',
             Base64.encode(bytes(_render(data.promptLine, data.agentLine))),
+            '","external_url":"',
+            EXTERNAL_URL_BASE,
+            _toString(data.tokenId),
             '","background_color":"000000","attributes":',
             _attributes(data),
             ',"properties":',

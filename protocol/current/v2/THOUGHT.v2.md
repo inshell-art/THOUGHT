@@ -39,6 +39,13 @@ an exact registered protocol release. Multiple registered specification
 versions may coexist and remain mintable. There is no contract-level latest or
 active specification gate.
 
+Every minted token's canonical ERC-721 metadata includes the top-level
+`external_url` value `https://inshell.art/thought/<tokenId>`, where `tokenId`
+is unsigned base-10 without leading zeroes. The Contract renderer owns these
+exact bytes. The URL is presentation metadata only and is not an input to
+conversation identity, work hash, uniqueness, provenance, Creation
+Attestation, or PATH consumption.
+
 Before minting, a producer builds one closed `inshell.thought.provenance.v2`
 creation record, serializes it as RFC 8785 JCS, verifies its schema,
 commitments, typed-state parity, and selected-spec parity, and supplies those

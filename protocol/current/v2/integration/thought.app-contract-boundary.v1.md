@@ -111,11 +111,17 @@ The contract exposes:
 - exact provenance bytes and their hash;
 - Creation Attestation digest;
 - embedded ERC-721 metadata and SVG;
+- exactly one top-level `external_url` as
+  `https://inshell.art/thought/<tokenId>`, rendered from the unsigned
+  base-10 token ID without leading zeroes;
 - selected-spec readback through the spec registry;
 - protocol-manifest hash and URI through the protocol registry.
 
 A gallery may parse provenance for presentation, but parsed provenance never
 overrides typed contract state or changes the token's attestation status.
+The App may link to `external_url`, but it must not synthesize or overwrite the
+field as if it were returned by the Contract. The URL is presentation metadata
+and is not a work-identity or attestation input.
 
 ## Proposed ownership for joint approval
 

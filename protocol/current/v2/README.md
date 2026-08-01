@@ -29,6 +29,11 @@ Every token publishes them as `Agent` and `Model` marketplace traits. Creation
 Attestation remains a separate status and digest. The records do not affect
 conversation/work identity or SVG artwork.
 
+Canonical minted metadata also publishes exactly one conventional top-level
+`external_url` as `https://inshell.art/thought/<tokenId>`. The fixed production
+base is Contract-owned and is not configurable by mint calldata. It does not
+affect work identity or any mint commitment.
+
 Candidate artifacts now present:
 
 - `context/thought.context.v2.profile.json`;

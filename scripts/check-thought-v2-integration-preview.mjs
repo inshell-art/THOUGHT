@@ -60,7 +60,7 @@ if (manifest.compatibility?.renderer?.finalImplementationIncluded !== true) {
 }
 if (
   manifest.compatibility?.renderer?.packagedImplementation
-    !== "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
+    !== "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom"
   || manifest.compatibility?.renderer?.geometry?.artboard !== "1024x1024"
   || manifest.compatibility?.renderer?.geometry?.canvas !== "960x960@32,32"
   || manifest.compatibility?.renderer?.geometry?.canvasScale !== 1
@@ -72,6 +72,14 @@ if (
   || manifest.compatibility?.renderer?.geometry?.frameUnitsPerSide !== 32
   || manifest.compatibility?.renderer?.geometry?.glyphColor !== "#00ff00"
 ) fail("preview renderer geometry drifted");
+if (
+  manifest.compatibility?.metadataProfile?.externalUrl?.base
+    !== "https://inshell.art/thought/"
+  || manifest.compatibility?.metadataProfile?.externalUrl?.location !== "top-level"
+  || manifest.compatibility?.metadataProfile?.externalUrl?.identityInput !== false
+  || manifest.compatibility?.metadataProfile?.externalUrl?.tokenIdFormat
+    !== "unsigned-base-10-no-leading-zeroes"
+) fail("preview canonical external URL boundary drifted");
 
 const declared = new Set();
 for (const file of manifest.files ?? []) {
@@ -127,6 +135,15 @@ for (const contract of contractIndex.contracts ?? []) {
     fail(`invalid compiled artifact ${contract.contractName}`);
   }
 }
+for (const requiredContract of [
+  "ThoughtRendererV2",
+  "ThoughtRendererV2Split",
+  "ThoughtSvgRendererV2",
+]) {
+  if (!(contractIndex.contracts ?? []).some(({ contractName }) => contractName === requiredContract)) {
+    fail(`renderer architecture artifact missing: ${requiredContract}`);
+  }
+}
 const thought = JSON.parse(
   fs.readFileSync(path.join(releaseDir, "contract/compiled/ThoughtNFTV2.json"), "utf8"),
 );
@@ -156,6 +173,38 @@ if (mintComponents.includes("declaredAgent") || mintComponents.includes("declare
   fail("ThoughtNFTV2 legacy mint record names leaked");
 }
 
+const metadataProfile = JSON.parse(
+  fs.readFileSync(
+    path.join(releaseDir, "protocol/current/v2/metadata/thought.metadata.v2.profile.json"),
+    "utf8",
+  ),
+);
+if (
+  JSON.stringify(metadataProfile.marketplaceRequired)
+    !== JSON.stringify(["name", "description", "image", "external_url", "background_color", "attributes"])
+) fail("metadata profile does not require canonical top-level external_url");
+
+const renderer = JSON.parse(
+  fs.readFileSync(path.join(releaseDir, "contract/compiled/ThoughtRendererV2.json"), "utf8"),
+);
+if (!renderer.abi.some((item) => item.type === "function" && item.name === "EXTERNAL_URL_BASE")) {
+  fail("ThoughtRendererV2 external URL base getter missing");
+}
+
+const parity = JSON.parse(
+  fs.readFileSync(path.join(releaseDir, "validation/renderer-parity.json"), "utf8"),
+);
+if (
+  parity.exactTokenUriByteParity !== true
+  || parity.externalUrl?.base !== "https://inshell.art/thought/"
+  || JSON.stringify(parity.externalUrl?.testedTokenIds)
+    !== JSON.stringify([
+      "1",
+      "42",
+      "115792089237316195423570985008687907853269984665640564039457584007913129639935",
+    ])
+) fail("renderer external URL parity evidence drifted");
+
 const verifier = JSON.parse(
   fs.readFileSync(path.join(releaseDir, "contract/compiled/CreationAttestationVerifierV2.json"), "utf8"),
 );
@@ -181,6 +230,10 @@ const fixtureStatuses = new Set(examples.examples?.map(({ creationAttestation })
 if (!fixtureStatuses.has("Inshell THOUGHT App") || !fixtureStatuses.has("Unattested")) {
   fail("tokenURI fixtures do not cover both attestation paths");
 }
+const fixtureTokenIds = new Set(examples.examples?.map(({ tokenId }) => tokenId));
+if (!fixtureTokenIds.has(1) || !fixtureTokenIds.has(42)) {
+  fail("tokenURI fixtures do not cover external URL tokens 1 and 42");
+}
 for (const example of examples.examples ?? []) {
   if (!example.tokenUri?.startsWith("data:application/json;base64,")) {
     fail(`invalid tokenURI fixture for THOUGHT #${example.tokenId}`);
@@ -193,6 +246,10 @@ for (const example of examples.examples ?? []) {
   if (JSON.stringify(decodedMetadata) !== JSON.stringify(metadata)) {
     fail(`tokenURI/decoded metadata fixture mismatch for THOUGHT #${example.tokenId}`);
   }
+  if (
+    metadata.external_url !== `https://inshell.art/thought/${example.tokenId}`
+    || (JSON.stringify(metadata).match(/"external_url":/g) ?? []).length !== 1
+  ) fail(`canonical external URL fixture drifted for THOUGHT #${example.tokenId}`);
   if (
     metadata.description
       !== "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork."

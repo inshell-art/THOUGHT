@@ -76,6 +76,7 @@ export type ThoughtV2TokenMetadata = {
   attributes: ThoughtV2MetadataAttribute[];
   background_color: "000000";
   description: string;
+  external_url: string;
   image: string;
   name: string;
   properties: Record<string, unknown>;
@@ -268,6 +269,7 @@ export const validateThoughtV2TokenMetadata = (
   const expectedAttributeOrder = thoughtV2MetadataAttributeOrder(expectedAttestationStatus);
   if (
     metadata.name !== `THOUGHT #${tokenId}`
+    || metadata.external_url !== `https://inshell.art/thought/${tokenId}`
     || metadata.background_color !== "000000"
     || !metadata.image?.startsWith("data:image/svg+xml;base64,")
     || !Array.isArray(metadata.attributes)

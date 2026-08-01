@@ -12,7 +12,7 @@
   ],
   "description": "THOUGHT V2 preserves a narrow terminal channel between human intention and Agent response, transforming their dialogue into an on-chain artwork.",
   "id": "inshell.thought.metadata.v2.terminal-chat",
-  "marketplaceRequired": ["name", "description", "image", "background_color", "attributes"],
+  "marketplaceRequired": ["name", "description", "image", "external_url", "background_color", "attributes"],
   "records": {
     "attestationBindsExactHashes": true,
     "contextProfileId": "inshell.thought.context.v2.visible-utf8-64",
