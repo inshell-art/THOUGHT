@@ -7,10 +7,15 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-integration-preview");
+const baselineArtifactId = "thought-v2-noncanonical-integration-preview-20260731-r8";
+const baselineManifestSha256Expected =
+  "243b2057ac58b62c4a78ced96e5db2e23d7d05e332f60a9f008dbb8dcd84d3df";
+const baselineReleaseDir = path.join(artifactRoot, "releases", baselineArtifactId);
 const pointer = JSON.parse(fs.readFileSync(path.join(artifactRoot, "experimental.json"), "utf8"));
 const releaseDir = path.join(artifactRoot, "releases", pointer.artifactId);
 const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const hashFile = (file) => sha256(fs.readFileSync(file));
+const hashHexBytes = (value) => sha256(Buffer.from(value.slice(2), "hex"));
 
 const fail = (message) => {
   throw new Error(`integration preview verification failed: ${message}`);
@@ -41,6 +46,9 @@ if (
 ) fail("pointer safety flags changed");
 if (!pointer.artifactId.startsWith("thought-v2-noncanonical-integration-preview-")) {
   fail("unexpected artifact ID");
+}
+if (pointer.artifactId !== "thought-v2-noncanonical-integration-preview-20260801-r10") {
+  fail("checker is sealed for the r10 cumulative migration");
 }
 
 const manifestPath = path.join(releaseDir, "manifest.json");
@@ -204,6 +212,138 @@ if (
       "115792089237316195423570985008687907853269984665640564039457584007913129639935",
     ])
 ) fail("renderer external URL parity evidence drifted");
+
+const migration = JSON.parse(
+  fs.readFileSync(
+    path.join(releaseDir, "validation/r8-to-r10-cumulative-migration.json"),
+    "utf8",
+  ),
+);
+const baselineManifestPath = path.join(baselineReleaseDir, "manifest.json");
+if (hashFile(baselineManifestPath) !== baselineManifestSha256Expected) {
+  fail("immutable r8 cumulative-migration baseline drifted");
+}
+const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
+if (
+  migration.schema !== "inshell.thought.r8-to-current-cumulative-migration.integration-preview.v1"
+  || migration.baseline?.artifactId !== baselineArtifactId
+  || migration.baseline?.manifestSha256 !== baselineManifestSha256Expected
+  || migration.baseline?.publicationCommit !== "1f281a60f398704560f373085b84671f49ecedc3"
+  || migration.baseline?.sourceBaseCommit !== baselineManifest.source.baseCommit
+  || migration.current?.artifactId !== pointer.artifactId
+  || JSON.stringify(migration.baseline?.selectedSpec)
+    !== JSON.stringify(baselineManifest.compatibility.selectedSpec)
+  || JSON.stringify(migration.current?.selectedSpec)
+    !== JSON.stringify(manifest.compatibility.selectedSpec)
+) fail("r8-to-current cumulative migration identity or selected-spec evidence drifted");
+if (
+  migration.baseline?.renderer?.implementationId
+    !== baselineManifest.compatibility.renderer.packagedImplementation
+  || migration.current?.renderer?.implementationId
+    !== manifest.compatibility.renderer.packagedImplementation
+  || migration.baseline?.renderer?.storageTopology?.kind
+    !== "two-svg-path-fragments-plus-index"
+  || migration.current?.renderer?.storageTopology?.kind !== "single-packed-im76-pointer"
+  || migration.current?.renderer?.storageTopology?.packedKeccak256
+    !== "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081"
+  || migration.current?.renderer?.storageTopology?.packedSha256
+    !== "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926"
+) fail("cumulative renderer migration evidence drifted");
+if (
+  JSON.stringify(migration.baseline?.renderer?.constructorInputs)
+    !== JSON.stringify([
+      { name: "glyphDefinitionsPointer1_", type: "address" },
+      { name: "glyphDefinitionsPointer2_", type: "address" },
+      { name: "glyphDefinitionsIndexPointer_", type: "address" },
+    ])
+  || JSON.stringify(migration.current?.renderer?.constructorInputs)
+    !== JSON.stringify([{ name: "glyphDataPointer", type: "address" }])
+) fail("renderer constructor migration evidence drifted");
+for (const change of [
+  "artworkBytes",
+  "canonicalExternalUrl",
+  "rendererDeploymentTopology",
+  "rendererImplementation",
+  "selectedSpecBytesAndHash",
+]) {
+  if (migration.declaredChanges?.[change] !== true) fail(`cumulative change not declared: ${change}`);
+}
+if (
+  migration.rejectedIntermediate?.artifactId
+    !== "thought-v2-noncanonical-integration-preview-20260801-r9"
+  || migration.rejectedIntermediate?.tagMustNotMove !== true
+) fail("r9 rejection/immutability evidence drifted");
+
+const evidenceFor = new Map(
+  (migration.unchangedContractArtifacts ?? []).map((entry) => [entry.contractName, entry]),
+);
+for (const contractName of [
+  "ThoughtNFTV2",
+  "CreationAttestationVerifierV2",
+  "IThoughtRendererV2",
+  "ICreationAttestationVerifierV2",
+  "ThoughtSpecRegistry",
+  "ThoughtSpecRegistryV2",
+]) {
+  const evidence = evidenceFor.get(contractName);
+  const relativePath = `contract/compiled/${contractName}.json`;
+  const baseline = JSON.parse(fs.readFileSync(path.join(baselineReleaseDir, relativePath), "utf8"));
+  const current = JSON.parse(fs.readFileSync(path.join(releaseDir, relativePath), "utf8"));
+  if (
+    evidence?.abiEqual !== true
+    || evidence?.creationBytecodeEqual !== true
+    || evidence?.runtimeBytecodeEqual !== true
+    || JSON.stringify(baseline.abi) !== JSON.stringify(current.abi)
+    || baseline.bytecode !== current.bytecode
+    || baseline.deployedBytecode !== current.deployedBytecode
+    || evidence.baseline?.abiSha256 !== sha256(JSON.stringify(baseline.abi))
+    || evidence.current?.abiSha256 !== sha256(JSON.stringify(current.abi))
+    || evidence.baseline?.creationBytecodeSha256 !== hashHexBytes(baseline.bytecode)
+    || evidence.current?.creationBytecodeSha256 !== hashHexBytes(current.bytecode)
+    || evidence.baseline?.runtimeBytecodeSha256 !== hashHexBytes(baseline.deployedBytecode)
+    || evidence.current?.runtimeBytecodeSha256 !== hashHexBytes(current.deployedBytecode)
+  ) fail(`declared unchanged r8 contract drifted: ${contractName}`);
+}
+
+const baselineExamples = JSON.parse(
+  fs.readFileSync(
+    path.join(baselineReleaseDir, "fixtures/neutral-agent-model-token-uri-examples.anvil.json"),
+    "utf8",
+  ),
+).examples;
+const currentMigrationExamples = JSON.parse(
+  fs.readFileSync(
+    path.join(releaseDir, "fixtures/neutral-agent-model-token-uri-examples.anvil.json"),
+    "utf8",
+  ),
+).examples;
+const currentExampleByWork = new Map(
+  (currentMigrationExamples ?? []).map((example) => [
+    `${example.metadata.properties.promptLine}\u0000${example.metadata.properties.agentLine}`,
+    example,
+  ]),
+);
+const comparisonByWork = new Map(
+  (migration.fixtureImageComparisons ?? []).map((comparison) => [
+    `${comparison.promptLine}\u0000${comparison.agentLine}`,
+    comparison,
+  ]),
+);
+for (const baseline of baselineExamples) {
+  const key = `${baseline.metadata.properties.promptLine}\u0000${baseline.metadata.properties.agentLine}`;
+  const current = currentExampleByWork.get(key);
+  const comparison = comparisonByWork.get(key);
+  const baselineImageSha256 = sha256(baseline.metadata.image);
+  const currentImageSha256 = current ? sha256(current.metadata.image) : null;
+  if (
+    !current
+    || !comparison
+    || comparison.imageBytesEqual !== false
+    || comparison.baselineImageSha256 !== baselineImageSha256
+    || comparison.currentImageSha256 !== currentImageSha256
+    || baselineImageSha256 === currentImageSha256
+  ) fail(`r8-to-current fixture image migration evidence drifted: ${key}`);
+}
 
 const verifier = JSON.parse(
   fs.readFileSync(path.join(releaseDir, "contract/compiled/CreationAttestationVerifierV2.json"), "utf8"),

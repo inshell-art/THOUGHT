@@ -10,6 +10,11 @@ import { id, keccak256 } from "ethers";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-integration-preview");
+const baselineArtifactId = "thought-v2-noncanonical-integration-preview-20260731-r8";
+const baselinePublicationCommit = "1f281a60f398704560f373085b84671f49ecedc3";
+const baselineManifestSha256Expected =
+  "243b2057ac58b62c4a78ced96e5db2e23d7d05e332f60a9f008dbb8dcd84d3df";
+const baselineReleaseDir = path.join(artifactRoot, "releases", baselineArtifactId);
 
 const argValue = (name) => {
   const index = process.argv.indexOf(name);
@@ -29,8 +34,13 @@ const artifactId = requiredArg("--artifact-id");
 const createdAt = requiredArg("--created-at");
 const sourceTag = requiredArg("--tag");
 const expectedPrefix = "thought-v2-noncanonical-integration-preview-";
+const cumulativeMigrationArtifactId =
+  "thought-v2-noncanonical-integration-preview-20260801-r10";
 if (!artifactId.startsWith(expectedPrefix) || sourceTag !== artifactId) {
   throw new Error(`artifact ID and tag must match and start with ${expectedPrefix}`);
+}
+if (artifactId !== cumulativeMigrationArtifactId) {
+  throw new Error(`this cumulative-migration builder is sealed for ${cumulativeMigrationArtifactId}`);
 }
 if (!Number.isFinite(Date.parse(createdAt))) throw new Error("--created-at must be ISO-8601");
 
@@ -48,6 +58,22 @@ const write = (file, value) => {
 const writeJson = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
 const sha256 = (value) => crypto.createHash("sha256").update(value).digest("hex");
 const sha256File = (file) => sha256(fs.readFileSync(file));
+const sha256HexBytes = (value) => sha256(Buffer.from(value.slice(2), "hex"));
+
+const baselineManifestPath = path.join(baselineReleaseDir, "manifest.json");
+if (
+  !fs.existsSync(baselineManifestPath)
+  || sha256File(baselineManifestPath) !== baselineManifestSha256Expected
+) {
+  throw new Error("immutable r8 cumulative-migration baseline is missing or drifted");
+}
+const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
+if (
+  baselineManifest.artifactId !== baselineArtifactId
+  || run("git", ["rev-parse", `${baselineArtifactId}^{}`]) !== baselinePublicationCommit
+) {
+  throw new Error("immutable r8 artifact identity or publication tag drifted");
+}
 
 const mediaType = (file) => {
   if (file.endsWith(".json")) return "application/json";
@@ -122,7 +148,7 @@ fs.mkdirSync(releaseDir, { recursive: true });
 copyTree("protocol/current/v2", "protocol/current/v2");
 copyTree("vendor/mono-76", "dependencies/mono-76");
 copy(
-  "docs/agent/IN_SHELL_ART_V2_EXTERNAL_URL_INTEGRATION_PREVIEW_HANDOFF_20260801.md",
+  "docs/agent/IN_SHELL_ART_V2_R10_MONO76_EXTERNAL_URL_CUMULATIVE_MIGRATION_HANDOFF_20260801.md",
   "handoff.md",
 );
 copy(
@@ -283,6 +309,154 @@ writeJson(path.join(releaseDir, "contract/index.json"), {
   },
   persistentNetworkDeployments: [],
   schema: "inshell.thought.contract-index.integration-preview.v1",
+});
+
+const readReleaseJson = (directory, relativePath) =>
+  JSON.parse(fs.readFileSync(path.join(directory, relativePath), "utf8"));
+const constructorInputs = (compiled) =>
+  (compiled.abi.find(({ type }) => type === "constructor")?.inputs ?? [])
+    .map(({ name, type }) => ({ name, type }));
+const compiledEvidence = (contractName) => {
+  const relativePath = `contract/compiled/${contractName}.json`;
+  const baseline = readReleaseJson(baselineReleaseDir, relativePath);
+  const current = readReleaseJson(releaseDir, relativePath);
+  return {
+    abiEqual: JSON.stringify(baseline.abi) === JSON.stringify(current.abi),
+    baseline: {
+      abiSha256: sha256(JSON.stringify(baseline.abi)),
+      creationBytecodeSha256: sha256HexBytes(baseline.bytecode),
+      runtimeBytecodeSha256: sha256HexBytes(baseline.deployedBytecode),
+    },
+    contractName,
+    creationBytecodeEqual: baseline.bytecode === current.bytecode,
+    current: {
+      abiSha256: sha256(JSON.stringify(current.abi)),
+      creationBytecodeSha256: sha256HexBytes(current.bytecode),
+      runtimeBytecodeSha256: sha256HexBytes(current.deployedBytecode),
+    },
+    runtimeBytecodeEqual: baseline.deployedBytecode === current.deployedBytecode,
+  };
+};
+
+const unchangedContractArtifacts = [
+  "ThoughtNFTV2",
+  "CreationAttestationVerifierV2",
+  "IThoughtRendererV2",
+  "ICreationAttestationVerifierV2",
+  "ThoughtSpecRegistry",
+  "ThoughtSpecRegistryV2",
+].map(compiledEvidence);
+if (
+  unchangedContractArtifacts.some(
+    ({ abiEqual, creationBytecodeEqual, runtimeBytecodeEqual }) =>
+      !abiEqual || !creationBytecodeEqual || !runtimeBytecodeEqual,
+  )
+) {
+  throw new Error("contract declared unchanged from r8 has drifted");
+}
+
+const baselineRenderer = readReleaseJson(
+  baselineReleaseDir,
+  "contract/compiled/ThoughtRendererV2.json",
+);
+const currentRenderer = readReleaseJson(releaseDir, "contract/compiled/ThoughtRendererV2.json");
+const baselineRendererProfilePath = path.join(
+  baselineReleaseDir,
+  "protocol/current/v2/renderer/thought.renderer.v2.profile.json",
+);
+const currentRendererProfilePath = path.join(
+  releaseDir,
+  "protocol/current/v2/renderer/thought.renderer.v2.profile.json",
+);
+const baselineRendererProfile = JSON.parse(fs.readFileSync(baselineRendererProfilePath, "utf8"));
+const currentRendererProfile = JSON.parse(fs.readFileSync(currentRendererProfilePath, "utf8"));
+const baselineFixtures = readReleaseJson(
+  baselineReleaseDir,
+  "fixtures/neutral-agent-model-token-uri-examples.anvil.json",
+).examples;
+const currentFixtures = readReleaseJson(
+  releaseDir,
+  "fixtures/neutral-agent-model-token-uri-examples.anvil.json",
+).examples;
+const fixtureKey = ({ metadata }) =>
+  `${metadata.properties.promptLine}\u0000${metadata.properties.agentLine}`;
+const currentFixturesByWork = new Map(currentFixtures.map((fixture) => [fixtureKey(fixture), fixture]));
+const fixtureImageComparisons = baselineFixtures.map((baseline) => {
+  const current = currentFixturesByWork.get(fixtureKey(baseline));
+  if (!current) throw new Error(`r8 fixture work missing from current fixtures: ${fixtureKey(baseline)}`);
+  const baselineImageSha256 = sha256(baseline.metadata.image);
+  const currentImageSha256 = sha256(current.metadata.image);
+  if (baselineImageSha256 === currentImageSha256) {
+    throw new Error(`cumulative renderer migration did not change expected artwork: ${fixtureKey(baseline)}`);
+  }
+  return {
+    agentLine: baseline.metadata.properties.agentLine,
+    baselineImageSha256,
+    baselineTokenId: baseline.tokenId,
+    currentImageSha256,
+    currentTokenId: current.tokenId,
+    imageBytesEqual: false,
+    promptLine: baseline.metadata.properties.promptLine,
+  };
+});
+
+writeJson(path.join(releaseDir, "validation/r8-to-r10-cumulative-migration.json"), {
+  baseline: {
+    artifactId: baselineArtifactId,
+    manifestSha256: baselineManifestSha256Expected,
+    publicationCommit: baselinePublicationCommit,
+    renderer: {
+      constructorInputs: constructorInputs(baselineRenderer),
+      implementationId: baselineManifest.compatibility.renderer.packagedImplementation,
+      profileSha256: sha256File(baselineRendererProfilePath),
+      runtimeBytecodeSha256: sha256HexBytes(baselineRenderer.deployedBytecode),
+      storageTopology: {
+        indexBytes: baselineRendererProfile.glyphSource.pathDefinitionIndex.byteLength,
+        kind: "two-svg-path-fragments-plus-index",
+        pathDefinitionBytes: baselineRendererProfile.glyphSource.pathDefinitions
+          .map(({ byteLength }) => byteLength),
+      },
+    },
+    selectedSpec: baselineManifest.compatibility.selectedSpec,
+    sourceBaseCommit: baselineManifest.source.baseCommit,
+  },
+  current: {
+    artifactId,
+    externalUrl: {
+      base: "https://inshell.art/thought/",
+      location: "top-level",
+    },
+    renderer: {
+      constructorInputs: constructorInputs(currentRenderer),
+      implementationId: compatibility.renderer.packagedImplementation,
+      profileSha256: sha256File(currentRendererProfilePath),
+      runtimeBytecodeSha256: sha256HexBytes(currentRenderer.deployedBytecode),
+      storageTopology: {
+        headerBytes: currentRendererProfile.format.headerBytes,
+        kind: "single-packed-im76-pointer",
+        packedKeccak256: currentRendererProfile.format.packedKeccak256,
+        packedSha256: currentRendererProfile.format.packedSha256,
+        pathBytes: currentRendererProfile.format.pathBytes,
+        totalBytes: currentRendererProfile.format.totalBytes,
+      },
+    },
+    selectedSpec: compatibility.selectedSpec,
+  },
+  declaredChanges: {
+    artworkBytes: true,
+    canonicalExternalUrl: true,
+    rendererDeploymentTopology: true,
+    rendererImplementation: true,
+    selectedSpecBytesAndHash: true,
+  },
+  fixtureImageComparisons,
+  rejectedIntermediate: {
+    artifactId: "thought-v2-noncanonical-integration-preview-20260801-r9",
+    disposition: "immutable-integrity-valid-downstream-rejected-for-inaccurate-external-url-only-scope",
+    tagMustNotMove: true,
+  },
+  schema: "inshell.thought.r8-to-current-cumulative-migration.integration-preview.v1",
+  unchangedContractArtifacts,
 });
 
 writeJson(path.join(releaseDir, "validation/renderer-parity.json"), {

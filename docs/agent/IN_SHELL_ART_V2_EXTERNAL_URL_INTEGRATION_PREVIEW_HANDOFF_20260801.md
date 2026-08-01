@@ -1,5 +1,12 @@
 # THOUGHT V2 external URL integration-preview handoff
 
+> **Release-scope erratum (2026-08-01):** The published r9 artifact is
+> integrity-valid, but this handoff incorrectly described it as an
+> `external_url`-only delta from r8. r9 also contains the sealed Mono 76
+> renderer, changed renderer deployment topology, changed selected-spec bytes,
+> and changed artwork bytes. Downstream correctly rejected r9. Do not move or
+> rewrite its tag. Use the explicit cumulative-migration r10 handoff instead.
+
 Date: 2026-08-01
 
 From: THOUGHT Contract owner
