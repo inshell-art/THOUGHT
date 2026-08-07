@@ -1,11 +1,17 @@
 # THOUGHT cross-repository ownership and wallet boundary handoff
 
-Date: 2026-08-03
+Date: 2026-08-04
 
-Audience: THOUGHT owner and all agents working in `inshell.art/`, including the
-shared wallet, PATH, routing, gallery, and deployment owners
+Audience: the THOUGHT feature owner and all other agents working in
+`inshell.art/`, including the shared-wallet, PATH, site-shell, routing, and
+deployment owners
 
 Status: owner-approved coordination boundary
+
+Correction: this revision supersedes the 2026-08-03 wording. The earlier
+wording correctly located the production App source in `inshell.art/`, but was
+ambiguous about agent ownership. The THOUGHT feature owner—not another general
+`inshell.art/` agent—owns and implements the THOUGHT App.
 
 Production authorization: none. This handoff does not authorize a persistent
 deployment, registry transaction, production signer, staging promotion, or
@@ -13,11 +19,11 @@ mainnet transaction.
 
 ## Boundary in one sentence
 
-The THOUGHT owner owns the entire THOUGHT product flow across two repositories:
-`THOUGHT/` owns the Contract system and immutable Contract releases, while the
-THOUGHT App remains in `inshell.art/` and consumes one pinned Contract release;
-the user wallet authorizes transactions, PATH owns PATH state, and the THOUGHT
-contracts independently enforce THOUGHT minting.
+One THOUGHT feature owner owns the entire THOUGHT product flow across two
+repositories: Contract code and immutable Contract releases live in
+`THOUGHT/`, while production THOUGHT App source lives in `inshell.art/` under
+the same feature owner's responsibility. Other `inshell.art/` agents own shared
+infrastructure and adjacent products, not the THOUGHT feature itself.
 
 ## Repository ownership
 
@@ -39,21 +45,41 @@ contracts independently enforce THOUGHT minting.
 `THOUGHT/` may contain lab and reference pages for Contract development and
 parity testing. Those pages are not the production THOUGHT App.
 
-### `inshell.art/`
+### THOUGHT-owned code inside `inshell.art/`
 
-`inshell.art/` owns the production website and application runtime:
+The same THOUGHT feature owner that owns the Contracts also owns and implements:
 
 - the `inshell.art/thought` create, gallery, and work-detail experiences;
-- shared wallet connection, network selection, transaction review, submission,
-  replacement, receipt, and error UX;
 - THOUGHT work-input UX and client-side preflight validation;
 - canonical provenance construction and local verification for the official
   App path;
 - integration with the Creation Attestation signing service;
 - exact `ThoughtNFTV2.mint()` calldata assembly;
-- immutable Contract artifact pins and chain-address configuration;
+- the THOUGHT Contract artifact lock and THOUGHT-specific chain configuration;
 - chain-first post-mint verification;
-- deployment routing for the `inshell.art/thought/<tokenId>` public endpoint.
+- THOUGHT-specific tests, fixtures, documentation, and error handling.
+
+This is feature ownership across repositories. The fact that these files live
+in `inshell.art/` does not transfer their implementation ownership to another
+agent working elsewhere in that repository.
+
+### Other agents inside `inshell.art/`
+
+Other `inshell.art/` agents own or maintain:
+
+- shared wallet connection, account, chain, transaction, receipt, and error
+  infrastructure;
+- the PATH frontend and PATH-specific transaction orchestration;
+- the site shell and unrelated products;
+- shared navigation and route registration;
+- common design-system components;
+- build, hosting, and deployment infrastructure.
+
+Those agents provide stable shared interfaces to the THOUGHT App. They must not
+independently implement, replace, or rewrite THOUGHT-owned App code, provenance,
+attestation integration, mint assembly, gallery semantics, or Contract pins.
+If another agent has already started modifying THOUGHT-owned files, it must
+pause, preserve its diff, and coordinate ownership before continuing.
 
 The production frontend must remain in `inshell.art/`. It must not be hosted
 from `THOUGHT/` and then embedded, proxied, or dynamically loaded into
@@ -72,8 +98,8 @@ must remain byte-for-byte ABI compatible with canonical PATH, including the
 
 ## Product ownership versus repository ownership
 
-One owner may implement the complete THOUGHT flow while preserving both
-repositories:
+One THOUGHT feature owner implements the complete THOUGHT flow while preserving
+both repositories:
 
 - Contract changes are made, reviewed, tested, released, and tagged in
   `THOUGHT/`;
@@ -83,14 +109,18 @@ repositories:
 - cross-repository changes use an explicit handoff, immutable pin, compatibility
   checks, and separate commits in each repository.
 
-Other `inshell.art/` agents may own shared infrastructure or adjacent products,
-but they must not silently redefine THOUGHT Contract semantics, metadata,
-provenance commitments, attestation claims, or mint arguments.
+Other `inshell.art/` agents own shared infrastructure or adjacent products.
+They do not own the THOUGHT App and must not silently redefine THOUGHT Contract
+semantics, metadata, provenance commitments, attestation claims, mint
+arguments, or presentation semantics.
 
 ## Wallet boundary
 
 Do not say that the repository or App "owns the wallet." The human owns and
-controls the user wallet. `inshell.art/` owns only the wallet integration.
+controls the user wallet. The shared-infrastructure agent in `inshell.art/`
+owns the protocol-neutral wallet integration; the THOUGHT feature owner owns
+the THOUGHT-specific intent, validation, calldata, and resulting UX that use
+that integration.
 
 Keep these authorities separate:
 
@@ -120,9 +150,10 @@ Keep these authorities separate:
    - must not automatically become the persistent-network registry owner or
      attestation authority.
 
-The shared wallet layer in `inshell.art/` may serve PATH and THOUGHT, but each
-product module owns its own transaction intent and validation. Sharing wallet
-connectors does not merge protocol ownership.
+The shared wallet layer in `inshell.art/` may serve PATH and THOUGHT. Its owner
+maintains the common connector and transaction interface. The THOUGHT feature
+owner consumes that interface and owns the complete THOUGHT transaction intent
+and validation. Sharing wallet connectors does not merge feature ownership.
 
 ## PATH mint versus THOUGHT mint
 
@@ -205,7 +236,8 @@ App workflows must not invent alternate partial-proof encodings.
 
 The THOUGHT App or a manual caller supplies `provenanceJson` in mint calldata.
 
-For the official App path, `inshell.art/` must:
+For the official App path, the THOUGHT feature owner working inside
+`inshell.art/` must:
 
 - construct the canonical provenance object;
 - serialize it deterministically;
@@ -249,23 +281,56 @@ The canonical top-level `external_url` is
 
 ## Shared wallet implementation inside `inshell.art/`
 
-A suitable conceptual module split is:
+A suitable conceptual ownership and module split is:
 
 ```text
 inshell.art/
-  wallet/             shared connectors, accounts, chains, transaction UX
-  path/               PATH-specific mint and authorization orchestration
+  wallet/             other agent: shared protocol-neutral wallet interface
+  path/               other agent: PATH-specific product and transactions
   thought/
-    create/           prompt, Agent result, context, provenance construction
-    attestation/      official claim preparation and signing-service client
-    mint/             THOUGHT calldata and direct-wallet transaction flow
-    read/             chain-first token, registry, and provenance readback
-    gallery/          THOUGHT collection and detail presentation
+    create/           THOUGHT owner: work and provenance construction
+    attestation/      THOUGHT owner: claim and signing-service integration
+    mint/             THOUGHT owner: calldata and direct-wallet mint flow
+    read/             THOUGHT owner: chain-first Contract readback
+    gallery/          THOUGHT owner: collection and detail presentation
 ```
 
 These paths are conceptual and do not require an immediate directory rename.
 The important rule is that shared wallet infrastructure remains protocol
 neutral while PATH and THOUGHT transaction builders remain protocol specific.
+
+## Agent and Git boundary inside `inshell.art/`
+
+Repository state is shared, but ownership is path- and branch-scoped.
+
+The THOUGHT feature owner must:
+
+- work on a dedicated `codex/thought-*` branch and preferably a separate
+  worktree;
+- stage only explicit THOUGHT-owned paths;
+- never use a whole-worktree stage operation in a dirty multi-agent checkout;
+- never commit, discard, format, move, or rewrite another agent's changes;
+- keep THOUGHT-only implementation commits separate from shared-integration
+  commits;
+- push only the THOUGHT branch, never another agent's branch;
+- never force-push or merge to `main` without explicit approval.
+
+Other `inshell.art/` agents must:
+
+- avoid modifying THOUGHT-owned App paths on their branches;
+- avoid copying or independently rebuilding THOUGHT Contract artifacts;
+- expose shared wallet, routing, site-shell, and deployment interfaces without
+  taking ownership of THOUGHT feature behavior;
+- coordinate before changing a shared interface consumed by THOUGHT.
+
+Files such as route registries, shared navigation, wallet interfaces, chain
+configuration, package manifests, lockfiles, site shells, and deployment
+configuration are shared boundaries. A required change to one of these must be
+minimal, explicitly reviewed, and isolated in a separate integration commit.
+
+The production THOUGHT App must not have two agents implementing the same files
+concurrently. If ownership is unclear, both agents stop before editing and
+resolve the path boundary first.
 
 ## Immutable Contract artifact boundary
 
@@ -288,7 +353,7 @@ fragments as its production Contract dependency.
 
 ## Change coordination
 
-### When `THOUGHT/` changes
+### When the THOUGHT Contract side changes
 
 The THOUGHT owner must provide:
 
@@ -300,12 +365,13 @@ The THOUGHT owner must provide:
 - tests and chain-first fixture evidence;
 - an explicit statement of deployment authorization status.
 
-The `inshell.art/` owner must not consume the change until the package passes
-its integrity and compatibility checks.
+The same THOUGHT feature owner updates the THOUGHT App's immutable Contract lock
+only after the package passes integrity and compatibility checks. Other
+`inshell.art/` agents must not update that lock independently.
 
-### When `inshell.art/` needs a Contract change
+### When the THOUGHT App side needs a Contract change
 
-The App agent must provide a Contract handoff containing:
+The THOUGHT feature owner must record the cross-repository Contract request with:
 
 - the exact user-flow problem;
 - the required on-chain invariant;
@@ -313,13 +379,15 @@ The App agent must provide a Contract handoff containing:
 - wallet, signer, PATH, metadata, and migration consequences;
 - testable acceptance criteria.
 
-The App agent must not patch a local ABI or emulate the desired Contract
-behavior in production UI while waiting for a Contract release.
+The THOUGHT App must not patch a local ABI or emulate the desired Contract
+behavior in production UI while waiting for a Contract release. Even though
+one owner controls both sides, Contract changes still require a new reviewed
+immutable package before App consumption.
 
 ### When shared wallet code changes
 
-The wallet agent must verify both PATH and THOUGHT flows independently. A
-wallet refactor must not change:
+The shared-wallet owner must notify the THOUGHT feature owner and verify both
+PATH and THOUGHT flows independently. A wallet refactor must not change:
 
 - THOUGHT `msg.sender`;
 - intended minter;
@@ -331,7 +399,13 @@ wallet refactor must not change:
 
 ## Acceptance checklist for `inshell.art/` agents
 
+- [ ] The THOUGHT feature owner is recognized as owner of both `THOUGHT/`
+      Contracts and the THOUGHT App code inside `inshell.art/`.
+- [ ] Other `inshell.art/` agents do not implement or modify THOUGHT-owned App
+      paths without an explicit ownership handoff.
 - [ ] Production THOUGHT frontend remains in `inshell.art/`.
+- [ ] THOUGHT development uses its own branch/worktree and explicit staging.
+- [ ] Shared-file changes are isolated and coordinated with their owner.
 - [ ] One immutable THOUGHT Contract release is pinned and hash-verified.
 - [ ] Shared wallet code is protocol neutral.
 - [ ] PATH and THOUGHT transaction builders remain separate.
@@ -364,6 +438,8 @@ change would alter any of these:
 - persistent deployment addresses or registry ownership.
 
 Those are Contract-release concerns and require a reviewed `THOUGHT/` change,
-new immutable artifact, and downstream migration. Conversely, wallet UX,
-product routing, provenance presentation, and App workflow implementation stay
-in `inshell.art/` unless they expose a missing Contract requirement.
+new immutable artifact, and THOUGHT App migration. THOUGHT-specific provenance
+presentation and App workflow remain owned by the THOUGHT feature owner inside
+`inshell.art/`. Shared wallet UX, site routing, and deployment infrastructure
+remain owned by the corresponding `inshell.art/` infrastructure agents and are
+integrated through coordinated interfaces.

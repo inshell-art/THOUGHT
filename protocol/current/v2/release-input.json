@@ -37,6 +37,14 @@
     "ethereumMainnet": false,
     "sepolia": false
   },
+  "externalDependencies": {
+    "pathNft": {
+      "lock": "integration/path-nft.v0.5.0.json",
+      "releaseTag": "v0.5.0",
+      "consumeAuthorizationSchema": "permission-epoch-v1",
+      "redeploymentRequired": true
+    }
+  },
   "productionConsumable": true,
   "registrationApplicable": false,
   "registrationAuthorized": false,
@@ -78,6 +86,7 @@
     { "path": "contract/abi/CreationAttestationVerifierV2.json", "role": "creation-attestation-verifier-abi" },
     { "path": "contract/abi/ThoughtNFTV2.json", "role": "contract-abi" },
     { "path": "contract/thought.mint-input.v2.schema.json", "role": "mint-input-schema" },
+    { "path": "integration/path-nft.v0.5.0.json", "role": "path-dependency-lock" },
     { "path": "metadata/thought.metadata.v2.profile.json", "role": "metadata-profile" },
     { "path": "provenance/thought.provenance.v2.md", "role": "provenance-spec" },
     { "path": "provenance/thought.provenance.v2.schema.json", "role": "provenance-schema" },

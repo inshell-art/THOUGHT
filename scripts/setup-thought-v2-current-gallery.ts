@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,8 +60,16 @@ import {
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const rpcUrl = process.env.RPC_URL ?? "http://127.0.0.1:8545";
+const pathDependencyLockFile = path.join(
+  rootDir,
+  "protocol/current/v2/integration/path-nft.v0.5.0.json",
+);
+const defaultPathReleaseDir = path.resolve(rootDir, "../path/releases/v0.5.0");
+const pathReleaseDir = path.resolve(
+  process.env.PATH_RELEASE_DIR ?? defaultPathReleaseDir,
+);
 const pathArtifactFile = process.env.PATH_ARTIFACT
-  ?? "/Users/bigu/Projects/path/evm/artifacts/src/PathNFT.sol/PathNFT.json";
+  ?? path.join(pathReleaseDir, "hardhat/PathNFT.json");
 const runtimeConfigFile = path.resolve(
   rootDir,
   process.env.THOUGHT_V2_RUNTIME_CONFIG ?? "public/thought-v2-gallery.anvil.json",
@@ -128,11 +137,23 @@ const rendererImplementationId =
 const thoughtMovement = encodeBytes32String("THOUGHT");
 const zeroBytes32 = `0x${"00".repeat(32)}`;
 const consumeAuthorizationTypehash = id(
-  "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 nonce,uint256 deadline)",
+  "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 permissionEpoch,uint256 nonce,uint256 deadline)",
 );
 const abiCoder = AbiCoder.defaultAbiCoder();
 
 type Artifact = { abi: unknown[]; bytecode: string };
+
+type PathDependencyLock = {
+  contractSourceCommit: string;
+  manifestSha256: string;
+  pathNft: { hardhatArtifactSha256: string; redeploymentRequired: boolean };
+  releaseTag: string;
+  schema: string;
+  consumeAuthorization: {
+    schema: string;
+    type: string;
+  };
+};
 
 type GalleryMintFixture = {
   agentLine: string;
@@ -177,6 +198,45 @@ const readArtifact = async (filename: string): Promise<Artifact> => {
   return { abi: parsed.abi, bytecode };
 };
 
+const sha256 = (bytes: Uint8Array): string =>
+  createHash("sha256").update(bytes).digest("hex");
+
+const verifyPathRelease = async (): Promise<PathDependencyLock> => {
+  const [lockBytes, manifestBytes, artifactBytes] = await Promise.all([
+    fs.readFile(pathDependencyLockFile),
+    fs.readFile(path.join(pathReleaseDir, "manifest.json")),
+    fs.readFile(pathArtifactFile),
+  ]);
+  const lock = JSON.parse(lockBytes.toString("utf8")) as PathDependencyLock;
+  const manifest = JSON.parse(manifestBytes.toString("utf8")) as {
+    compatibility?: { consumeAuthorizationSchema?: string; pathNftRedeploymentRequired?: boolean };
+    contractSourceCommit?: string;
+    contracts?: { PathNFT?: { hardhatArtifactSha256?: string } };
+    releaseTag?: string;
+    schema?: string;
+  };
+  if (
+    lock.schema !== "inshell.thought.path-dependency-lock.v1"
+    || lock.releaseTag !== "v0.5.0"
+    || lock.consumeAuthorization.schema !== "permission-epoch-v1"
+    || lock.consumeAuthorization.type
+      !== "ConsumeAuthorization(address pathNft,uint256 chainId,uint256 pathId,bytes32 movement,address claimer,address executor,uint256 permissionEpoch,uint256 nonce,uint256 deadline)"
+    || lock.pathNft.redeploymentRequired !== true
+    || sha256(manifestBytes) !== lock.manifestSha256
+    || manifest.schema !== "path.downstream-artifacts.v1"
+    || manifest.releaseTag !== lock.releaseTag
+    || manifest.contractSourceCommit !== lock.contractSourceCommit
+    || manifest.compatibility?.consumeAuthorizationSchema !== lock.consumeAuthorization.schema
+    || manifest.compatibility?.pathNftRedeploymentRequired !== true
+    || manifest.contracts?.PathNFT?.hardhatArtifactSha256
+      !== lock.pathNft.hardhatArtifactSha256
+    || sha256(artifactBytes) !== lock.pathNft.hardhatArtifactSha256
+  ) {
+    throw new Error(`PATH ${lock.releaseTag ?? "release"} dependency lock mismatch`);
+  }
+  return lock;
+};
+
 const deploy = async (
   signer: NonceManager,
   artifactFile: string,
@@ -212,12 +272,13 @@ const pathSignature = async (
   pathAddress: string,
   thoughtAddress: string,
   pathId: bigint,
+  permissionEpoch: bigint,
   nonce: bigint,
   deadline: bigint,
 ): Promise<string> => {
   const claimer = await signer.getAddress();
   const structHash = keccak256(abiCoder.encode(
-    ["bytes32", "address", "uint256", "uint256", "bytes32", "address", "address", "uint256", "uint256"],
+    ["bytes32", "address", "uint256", "uint256", "bytes32", "address", "address", "uint256", "uint256", "uint256"],
     [
       consumeAuthorizationTypehash,
       pathAddress,
@@ -226,6 +287,7 @@ const pathSignature = async (
       thoughtMovement,
       claimer,
       thoughtAddress,
+      permissionEpoch,
       nonce,
       deadline,
     ],
@@ -259,12 +321,12 @@ const main = async (): Promise<void> => {
     : thoughtChatGalleryFixtures;
 
   const [
-    pathArtifact,
+    pathDependency,
     specBytes,
     mono76Packed,
     set5Packed,
   ] = await Promise.all([
-    readArtifact(pathArtifactFile),
+    verifyPathRelease(),
     fs.readFile(specFile),
     fs.readFile(mono76PackedFile),
     set5Experiment
@@ -274,6 +336,9 @@ const main = async (): Promise<void> => {
       ))
       : Promise.resolve(Buffer.alloc(0)),
   ]);
+  console.log(
+    `Verified PATH ${pathDependency.releaseTag} (${pathDependency.consumeAuthorization.schema})`,
+  );
   if (specBytes.includes(0x0d) || specBytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) {
     throw new Error("current THOUGHT spec must use exact UTF-8 without BOM or CRLF");
   }
@@ -637,13 +702,17 @@ const main = async (): Promise<void> => {
       }
       attestations.set(fixture.tokenNumber, { digest, facts });
     }
-    const nonce = await pathNft.getConsumeNonce(deployerAddress);
+    const [permissionEpoch, nonce] = await Promise.all([
+      pathNft.getPermissionEpoch(pathId),
+      pathNft.getConsumeNonce(deployerAddress),
+    ]);
     const signature = await pathSignature(
       account,
       network.chainId,
       pathAddress,
       thoughtAddress,
       pathId,
+      permissionEpoch,
       nonce,
       deadline,
     );

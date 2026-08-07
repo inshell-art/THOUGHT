@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import boundary from "../protocol/current/v2/integration/thought.app-contract-boundary.v1.json";
 import mintInputSchema from "../protocol/current/v2/contract/thought.mint-input.v2.schema.json";
+import pathDependency from "../protocol/current/v2/integration/path-nft.v0.5.0.json";
 import {
   CREATION_ATTESTATION_DOMAIN_NAME,
   CREATION_ATTESTATION_DOMAIN_VERSION,
@@ -83,6 +84,34 @@ describe("THOUGHT V2 App-contract boundary draft", () => {
     expect(current.metadataTraits).toMatchObject({
       agentModelGate: "none",
     });
+  });
+
+  it("pins PATH v0.5.0 permission-epoch authorization without changing mint calldata", () => {
+    expect(current.pathDependency).toEqual({
+      lock: "path-nft.v0.5.0.json",
+      releaseTag: "v0.5.0",
+      consumeAuthorizationSchema: "permission-epoch-v1",
+      signerReads: [
+        "getPermissionEpoch(pathId)",
+        "getConsumeNonce(claimer)",
+      ],
+      signedFieldOrder: [
+        "pathNft",
+        "chainId",
+        "pathId",
+        "movement",
+        "claimer",
+        "executor",
+        "permissionEpoch",
+        "nonce",
+        "deadline",
+      ],
+      pathNftRedeploymentRequired: true,
+    });
+    expect(pathDependency.consumeAuthorization.schema).toBe(
+      current.pathDependency.consumeAuthorizationSchema,
+    );
+    expect(current.mintInputFields).not.toContain("permissionEpoch");
   });
 
   it("pins the exact current EIP-712 interface and canonical empty proof", () => {

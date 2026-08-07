@@ -48,6 +48,27 @@
       "protocolReleaseId": "required-registered-immutable-constructor-pin",
       "selectedSpecPair": "required-registered-mint-input-and-stored-state"
     },
+    "pathDependency": {
+      "lock": "path-nft.v0.5.0.json",
+      "releaseTag": "v0.5.0",
+      "consumeAuthorizationSchema": "permission-epoch-v1",
+      "signerReads": [
+        "getPermissionEpoch(pathId)",
+        "getConsumeNonce(claimer)"
+      ],
+      "signedFieldOrder": [
+        "pathNft",
+        "chainId",
+        "pathId",
+        "movement",
+        "claimer",
+        "executor",
+        "permissionEpoch",
+        "nonce",
+        "deadline"
+      ],
+      "pathNftRedeploymentRequired": true
+    },
     "provenance": {
       "submittedBy": "mint-caller",
       "contractHandling": "store-opaque-exact-bytes-and-derive-keccak256",

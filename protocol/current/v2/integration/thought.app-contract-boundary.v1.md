@@ -54,6 +54,16 @@ The caller supplies:
 - either the canonical empty Creation Attestation proof or a complete signed
   proof.
 
+PATH authorization is pinned separately by
+`path-nft.v0.5.0.json`. Before signing, the caller reads both
+`getPermissionEpoch(pathId)` and `getConsumeNonce(claimer)` from the deployed
+PATH v0.5.0 contract. The EIP-191 struct binds `permissionEpoch` between
+`executor` and `nonce`. A transfer advances that epoch and invalidates every
+older authorization for the PATH, including one signed by an owner who later
+receives the same token back. Because v0.5.0 changed PATH bytecode and this
+signed schema, it requires a new PATH deployment; its ABI or signing logic must
+never be paired with a pre-v0.5.0 address.
+
 The current contract validates the Terminal English lines, neutral Agent and Model records,
 provenance byte envelope, selected registered spec pair, uniqueness, proof,
 and PATH authorization. It stores `provenanceJson` as opaque exact bytes and
