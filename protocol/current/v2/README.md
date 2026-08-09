@@ -1,5 +1,12 @@
 # THOUGHT Protocol V2 — canonical portable release source
 
+The relationship between the Work Specification, Agent Creative Brief, Agent
+Run Protocol, renderer profile, and Mono 76 package is defined in
+[`SPECIFICATION_ARCHITECTURE.md`](SPECIFICATION_ARCHITECTURE.md). In short,
+`THOUGHT.v2.md` is the canonical THOUGHT Work Specification. The App consumes
+its pinned bytes, while the Contract registry anchors its identity and exact
+bytes onchain.
+
 V2 replaces the unpublished binary-weave attempt as the current protocol and
 contract direction. This directory is the release-qualified source for the
 canonical portable Contract package. Publication status, exact source commit,
