@@ -17,3 +17,11 @@ the pointer at runtime.
 downstream production byte pin. It does not authorize a Contract deployment,
 frontend rollout, signer operation, or protocol registration. Those decisions
 are expressed separately and require explicit operator approval.
+
+The prepared r2 lane updates canonical r1 only for the reviewed PATH v0.5.0
+dependency lock and App/Contract boundary. Its release checker proves exact r1
+ABI, bytecode, creative-spec, renderer, metadata-profile, and fixture parity.
+Use `npm run production-readiness:v2:check` before packaging. After an immutable
+r2 package, annotated tag, and publication receipt exist, use
+`npm run canonical-release:v2:check -- --require-published` to verify the
+published stable binding. Neither command authorizes deployment or activation.

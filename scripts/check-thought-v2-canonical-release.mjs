@@ -8,19 +8,20 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-contract-release");
-const artifactId = "thought-v2-canonical-portable-release-20260801-r1";
+const artifactId = "thought-v2-canonical-portable-release-20260807-r2";
 const releaseDir = path.join(artifactRoot, "releases", artifactId);
-const r11ArtifactId = "thought-v2-noncanonical-integration-preview-20260801-r11";
-const r11ManifestSha256Expected =
-  "64acf59f8305f362d720fd418f0401ad16fcfcb0cfdc290fdc298dc83054e3dd";
-const r11PublicationCommit = "2188ea085313a2c24b8f832dd2ff5227fc96256c";
-const r11ReleaseDir = path.join(
+const baselineArtifactId = "thought-v2-canonical-portable-release-20260801-r1";
+const baselineManifestSha256Expected =
+  "4d60feba36165c19a3cf3680078cc6baa7ba066c147ca607e5c82d0306f65b1a";
+const baselinePublicationCommit = "9617892bda9d7f7e880b614f84f1b6360ad8a652";
+const baselineReleaseDir = path.join(
   root,
   "artifacts",
-  "thought-v2-integration-preview",
+  "thought-v2-contract-release",
   "releases",
-  r11ArtifactId,
+  baselineArtifactId,
 );
+const requirePublished = process.argv.includes("--require-published");
 
 const fail = (message) => {
   throw new Error(`canonical V2 release verification failed: ${message}`);
@@ -156,20 +157,57 @@ if (
   || Object.values(releaseInput.deploymentAuthorization ?? {}).some((value) => value !== false)
 ) fail("packaged release-input policy drifted");
 
-const r11ManifestPath = path.join(r11ReleaseDir, "manifest.json");
-if (hashFile(r11ManifestPath) !== r11ManifestSha256Expected) fail("accepted r11 manifest drifted");
-const r11Manifest = JSON.parse(fs.readFileSync(r11ManifestPath, "utf8"));
-if (r11Manifest.artifactId !== r11ArtifactId) fail("accepted r11 identity drifted");
-
-const migration = readJson(releaseDir, "validation/r11-to-canonical-portable-release.json");
+const pathDependency = readJson(
+  releaseDir,
+  "protocol/current/v2/integration/path-nft.v0.5.0.json",
+);
 if (
-  migration.schema !== "inshell.thought.r11-to-canonical-portable-release.v1"
-  || migration.baseline?.artifactId !== r11ArtifactId
-  || migration.baseline?.manifestSha256 !== r11ManifestSha256Expected
-  || migration.baseline?.publicationCommit !== r11PublicationCommit
+  pathDependency.schema !== "inshell.thought.path-dependency-lock.v1"
+  || pathDependency.ownerRepository !== "PATH"
+  || pathDependency.releaseTag !== "v0.5.0"
+  || pathDependency.releasePublicationCommit !== "085cfc084b0e568740e0da639e968eb535f7e5c8"
+  || pathDependency.contractSourceCommit !== "5a1ab1f137e76c80dc69045dc520454f6e07cbb1"
+  || pathDependency.manifestSha256
+    !== "a81355b459b40faea894cf1dfb7f484765a7ec62672039dd62d58a3a52849921"
+  || pathDependency.pathNft?.abiSha256
+    !== "c66d840e88064753923668e6107ab9de8ce62130fa798de6f159540a14e899fe"
+  || pathDependency.pathNft?.redeploymentRequired !== true
+  || pathDependency.consumeAuthorization?.schema !== "permission-epoch-v1"
+  || pathDependency.consumeAuthorization?.requiredReturnType !== "uint32"
+  || pathDependency.deployment?.addressesIncluded !== false
+) fail("PATH v0.5.0 dependency lock drifted");
+
+const appBoundary = readJson(
+  releaseDir,
+  "protocol/current/v2/integration/thought.app-contract-boundary.v1.json",
+);
+if (
+  appBoundary.currentExecutableBoundary?.pathDependency?.lock !== "path-nft.v0.5.0.json"
+  || appBoundary.currentExecutableBoundary?.pathDependency?.releaseTag !== "v0.5.0"
+  || appBoundary.currentExecutableBoundary?.pathDependency?.consumeAuthorizationSchema
+    !== "permission-epoch-v1"
+  || appBoundary.currentExecutableBoundary?.pathDependency?.pathNftRedeploymentRequired !== true
+  || appBoundary.productionAuthorization !== false
+) fail("App/Contract boundary PATH dependency drifted");
+
+const baselineManifestPath = path.join(baselineReleaseDir, "manifest.json");
+if (hashFile(baselineManifestPath) !== baselineManifestSha256Expected) {
+  fail("accepted canonical r1 manifest drifted");
+}
+const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
+if (baselineManifest.artifactId !== baselineArtifactId) {
+  fail("accepted canonical r1 identity drifted");
+}
+
+const migration = readJson(releaseDir, "validation/r1-to-r2-path-v0.5.json");
+if (
+  migration.schema !== "inshell.thought.r1-to-r2-path-v0.5.canonical-portable-release.v1"
+  || migration.baseline?.artifactId !== baselineArtifactId
+  || migration.baseline?.manifestSha256 !== baselineManifestSha256Expected
+  || migration.baseline?.publicationCommit !== baselinePublicationCommit
   || migration.current?.artifactId !== artifactId
   || migration.current?.sourceBaseCommit !== manifest.source.baseCommit
-) fail("r11-to-release migration identity drifted");
+) fail("r1-to-r2 migration identity drifted");
 for (const key of [
   "allCompiledAbisAndBytecode",
   "canonicalExternalUrl",
@@ -197,7 +235,7 @@ if (
 
 for (const contract of contractIndex.contracts ?? []) {
   const current = readJson(releaseDir, contract.artifact);
-  const baseline = readJson(r11ReleaseDir, contract.artifact);
+  const baseline = readJson(baselineReleaseDir, contract.artifact);
   const evidence = evidenceByContract.get(contract.contractName);
   if (
     JSON.stringify(current) !== JSON.stringify(baseline)
@@ -207,18 +245,18 @@ for (const contract of contractIndex.contracts ?? []) {
     || evidence?.hashes?.abiSha256 !== sha256(JSON.stringify(current.abi))
     || evidence?.hashes?.creationBytecodeSha256 !== hashHexBytes(current.bytecode)
     || evidence?.hashes?.runtimeBytecodeSha256 !== hashHexBytes(current.deployedBytecode)
-  ) fail(`compiled r11 parity drifted: ${contract.contractName}`);
+  ) fail(`compiled r1 parity drifted: ${contract.contractName}`);
 }
 
 for (const evidence of migration.exactFileEvidence ?? []) {
   const current = path.join(releaseDir, evidence.path);
-  const baseline = path.join(r11ReleaseDir, evidence.path);
+  const baseline = path.join(baselineReleaseDir, evidence.path);
   if (
     evidence.exact !== true
     || evidence.baselineSha256 !== hashFile(baseline)
     || evidence.currentSha256 !== hashFile(current)
     || evidence.baselineSha256 !== evidence.currentSha256
-  ) fail(`exact r11 file parity drifted: ${evidence.path}`);
+  ) fail(`exact r1 file parity drifted: ${evidence.path}`);
 }
 
 const selectedSpec = manifest.compatibility?.selectedSpec;
@@ -332,7 +370,7 @@ if (expectedTargets.size > 0 || manifest.deploymentPolicy?.authorizedNow !== fal
 
 const tests = readJson(releaseDir, "validation/producer-tests.json");
 if (
-  tests.typescriptTestsPassed !== 180
+  tests.typescriptTestsPassed !== 184
   || tests.evmTestsPassed !== 198
   || tests.focusedRendererEvmTestsPassed !== 17
 ) fail("producer test evidence drifted");
@@ -340,16 +378,20 @@ if (
 const stablePointerPath = path.join(artifactRoot, "stable.json");
 if (fs.existsSync(stablePointerPath)) {
   const pointer = JSON.parse(fs.readFileSync(stablePointerPath, "utf8"));
-  if (
-    pointer.artifactId !== artifactId
-    || pointer.manifestSha256 !== manifestSha256
+  if (pointer.artifactId === artifactId && (
+    pointer.manifestSha256 !== manifestSha256
     || pointer.productionConsumable !== true
     || pointer.deploymentAuthorized !== false
     || pointer.registrationApplicable !== false
     || pointer.sourceTag !== artifactId
     || !/^[0-9a-f]{40}$/.test(pointer.publicationCommit ?? "")
     || pointer.tagTarget !== pointer.publicationCommit
-  ) fail("stable publication receipt drifted");
+  )) fail("stable publication receipt drifted");
+  if (requirePublished && pointer.artifactId !== artifactId) {
+    fail("stable publication receipt does not publish this artifact");
+  }
+} else if (requirePublished) {
+  fail("stable publication receipt is missing");
 }
 
 console.log(JSON.stringify({

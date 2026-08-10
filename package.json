@@ -37,6 +37,7 @@
     "integration-preview:v2:check": "node scripts/check-thought-v2-integration-preview.mjs",
     "canonical-release:v2:build": "npm run renderer:v2:check && npm run build && npm run build:evm && npm test && npm run test:evm && node scripts/build-thought-v2-canonical-release.mjs",
     "canonical-release:v2:check": "node scripts/check-thought-v2-canonical-release.mjs",
+    "production-readiness:v2:check": "npm run build:evm && node scripts/check-thought-v2-production-readiness.mjs",
     "attempt:deploy:evm-local": "./scripts/deploy-evm-local.sh",
     "attempt:ops:bundle:sepolia": "node scripts/write-sepolia-ops-bundle.mjs",
     "attempt:ops:pack:sepolia": "node scripts/write-thought-signing-os-pack.mjs",

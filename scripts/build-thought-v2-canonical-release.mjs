@@ -10,17 +10,17 @@ import { id, keccak256 } from "ethers";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-contract-release");
-const artifactIdExpected = "thought-v2-canonical-portable-release-20260801-r1";
-const r11ArtifactId = "thought-v2-noncanonical-integration-preview-20260801-r11";
-const r11ManifestSha256Expected =
-  "64acf59f8305f362d720fd418f0401ad16fcfcb0cfdc290fdc298dc83054e3dd";
-const r11PublicationCommit = "2188ea085313a2c24b8f832dd2ff5227fc96256c";
-const r11ReleaseDir = path.join(
+const artifactIdExpected = "thought-v2-canonical-portable-release-20260807-r2";
+const baselineArtifactId = "thought-v2-canonical-portable-release-20260801-r1";
+const baselineManifestSha256Expected =
+  "4d60feba36165c19a3cf3680078cc6baa7ba066c147ca607e5c82d0306f65b1a";
+const baselinePublicationCommit = "9617892bda9d7f7e880b614f84f1b6360ad8a652";
+const baselineReleaseDir = path.join(
   root,
   "artifacts",
-  "thought-v2-integration-preview",
+  "thought-v2-contract-release",
   "releases",
-  r11ArtifactId,
+  baselineArtifactId,
 );
 
 const argValue = (name) => {
@@ -101,15 +101,15 @@ if (sourceStatus.length > 0) {
 }
 const sourceBaseCommit = run("git", ["rev-parse", "HEAD"]);
 
-const r11ManifestPath = path.join(r11ReleaseDir, "manifest.json");
+const baselineManifestPath = path.join(baselineReleaseDir, "manifest.json");
 if (
-  !fs.existsSync(r11ManifestPath)
-  || sha256File(r11ManifestPath) !== r11ManifestSha256Expected
-  || run("git", ["rev-parse", `${r11ArtifactId}^{}`]) !== r11PublicationCommit
+  !fs.existsSync(baselineManifestPath)
+  || sha256File(baselineManifestPath) !== baselineManifestSha256Expected
+  || run("git", ["rev-parse", `${baselineArtifactId}^{}`]) !== baselinePublicationCommit
 ) {
-  throw new Error("accepted immutable r11 baseline is missing or drifted");
+  throw new Error("accepted immutable canonical r1 baseline is missing or drifted");
 }
-const r11Manifest = JSON.parse(fs.readFileSync(r11ManifestPath, "utf8"));
+const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
 
 const releaseInput = readJson("protocol/current/v2/release-input.json");
 const expectedTraits = [
@@ -164,7 +164,7 @@ fs.mkdirSync(releaseDir, { recursive: true });
 copyTree("protocol/current/v2", "protocol/current/v2");
 copyTree("vendor/mono-76", "dependencies/mono-76");
 copy(
-  "docs/agent/IN_SHELL_ART_V2_CANONICAL_PORTABLE_RELEASE_HANDOFF_20260801.md",
+  "docs/agent/IN_SHELL_ART_V2_CANONICAL_PORTABLE_RELEASE_R2_HANDOFF_20260807.md",
   "handoff.md",
 );
 copy(
@@ -206,7 +206,7 @@ for (const [contractName, foundryPath] of compiledContracts) {
   const compilationTarget = foundry.metadata?.settings?.compilationTarget ?? {};
   const sourceName = Object.keys(compilationTarget)[0];
   const baselinePath = `contract/compiled/${contractName}.json`;
-  const baseline = readReleaseJson(r11ReleaseDir, baselinePath);
+  const baseline = readReleaseJson(baselineReleaseDir, baselinePath);
   const current = {
     abi: foundry.abi,
     bytecode: foundry.bytecode?.object ?? null,
@@ -219,7 +219,7 @@ for (const [contractName, foundryPath] of compiledContracts) {
     sourceName,
   };
   if (JSON.stringify(current) !== JSON.stringify(baseline)) {
-    throw new Error(`current compiled artifact drifted from accepted r11: ${contractName}`);
+    throw new Error(`current compiled artifact drifted from accepted canonical r1: ${contractName}`);
   }
   writeJson(path.join(releaseDir, baselinePath), current);
   contractIndex.push({
@@ -258,7 +258,7 @@ for (const [contractName, foundryPath] of compiledContracts) {
 }
 if (contractEvidence.some((entry) =>
   !entry.abiEqual || !entry.creationBytecodeEqual || !entry.runtimeBytecodeEqual)) {
-  throw new Error("r11-to-canonical compiled parity failed");
+  throw new Error("r1-to-r2 compiled parity failed");
 }
 
 const targetChains = [
@@ -313,7 +313,7 @@ writeJson(path.join(releaseDir, "contract/index.json"), {
 });
 
 const specBytes = read("protocol/current/v2/THOUGHT.v2.md");
-const compatibility = structuredClone(r11Manifest.compatibility);
+const compatibility = structuredClone(baselineManifest.compatibility);
 compatibility.protocol.status = "canonical-portable-release";
 const selectedSpec = {
   byteLength: specBytes.length,
@@ -322,8 +322,8 @@ const selectedSpec = {
   thoughtSpecHash: keccak256(specBytes),
   thoughtSpecId: id("THOUGHT.v2.md"),
 };
-if (JSON.stringify(selectedSpec) !== JSON.stringify(r11Manifest.compatibility.selectedSpec)) {
-  throw new Error("selected creative spec drifted from accepted r11");
+if (JSON.stringify(selectedSpec) !== JSON.stringify(baselineManifest.compatibility.selectedSpec)) {
+  throw new Error("selected creative spec drifted from accepted canonical r1");
 }
 compatibility.selectedSpec = selectedSpec;
 
@@ -336,12 +336,12 @@ const exactPackageFiles = [
   "dependencies/mono-76/onchain/packed.bin",
 ];
 const exactFileEvidence = exactPackageFiles.map((relativePath) => {
-  const baselinePath = path.join(r11ReleaseDir, relativePath);
+  const baselinePath = path.join(baselineReleaseDir, relativePath);
   const currentPath = path.join(releaseDir, relativePath);
   const baselineSha256 = sha256File(baselinePath);
   const currentSha256 = sha256File(currentPath);
   if (baselineSha256 !== currentSha256) {
-    throw new Error(`release payload drifted from accepted r11: ${relativePath}`);
+    throw new Error(`release payload drifted from accepted canonical r1: ${relativePath}`);
   }
   return { baselineSha256, currentSha256, exact: true, path: relativePath };
 });
@@ -355,20 +355,19 @@ if (!attestationStatuses.has("Inshell THOUGHT App") || !attestationStatuses.has(
   throw new Error("canonical release fixtures do not cover both attestation paths");
 }
 
-writeJson(path.join(releaseDir, "validation/r11-to-canonical-portable-release.json"), {
+writeJson(path.join(releaseDir, "validation/r1-to-r2-path-v0.5.json"), {
   baseline: {
-    artifactId: r11ArtifactId,
-    manifestSha256: r11ManifestSha256Expected,
-    publicationCommit: r11PublicationCommit,
-    sourceBaseCommit: r11Manifest.source.baseCommit,
+    artifactId: baselineArtifactId,
+    manifestSha256: baselineManifestSha256Expected,
+    publicationCommit: baselinePublicationCommit,
+    sourceBaseCommit: baselineManifest.source.baseCommit,
   },
   current: { artifactId, sourceBaseCommit },
   declaredChanges: {
-    classificationAndChannel: true,
-    contractIndexAndTargetPolicy: true,
-    protocolReadmeReleaseStatus: true,
+    appContractBoundaryPathDependency: true,
+    pathV050DependencyLock: true,
     releaseEnvelope: true,
-    releaseInputPolicyAndCompleteTraitList: true,
+    releaseInputPathDependency: true,
   },
   declaredUnchanged: {
     allCompiledAbisAndBytecode: true,
@@ -382,7 +381,7 @@ writeJson(path.join(releaseDir, "validation/r11-to-canonical-portable-release.js
   },
   exactFileEvidence,
   compiledArtifacts: contractEvidence,
-  schema: "inshell.thought.r11-to-canonical-portable-release.v1",
+  schema: "inshell.thought.r1-to-r2-path-v0.5.canonical-portable-release.v1",
 });
 
 writeJson(path.join(releaseDir, "validation/runtime-size-and-target-chains.json"), {
@@ -404,7 +403,7 @@ writeJson(path.join(releaseDir, "validation/producer-tests.json"), {
   evmTestsPassed: 198,
   focusedRendererEvmTestsPassed: 17,
   schema: "inshell.thought.producer-test-evidence.v1",
-  typescriptTestsPassed: 180,
+  typescriptTestsPassed: 184,
 });
 
 writeJson(path.join(releaseDir, "limitations.json"), {
