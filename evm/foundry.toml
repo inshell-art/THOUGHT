@@ -10,4 +10,7 @@ optimizer_runs = 200
 via_ir = true
 bytecode_hash = "none"
 cbor_metadata = false
-fs_permissions = [{ access = "read", path = "../protocol/current/v2/renderer" }]
+fs_permissions = [
+  { access = "read", path = "../protocol/current/v2" },
+  { access = "read", path = "../artifacts/thought-v2-contract-release/releases/thought-v2-canonical-portable-release-20260807-r2/manifest.json" },
+]

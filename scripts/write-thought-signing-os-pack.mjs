@@ -5,6 +5,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ethers } from "ethers";
 
+throw new Error(
+  "Archived binary-weave standalone Sepolia pack is permanently disabled. Use npm run deployment:thought-phase:pack for current V2.",
+);
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const defaultPathFeRelease = path.resolve(root, "../path/artifacts/sepolia/current/fe-release");

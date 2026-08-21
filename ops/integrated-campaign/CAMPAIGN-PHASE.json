@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "bundle_id": "example-internal-sepolia-20260821-thought",
+  "phase_id": "thought",
+  "environment": "internal-sepolia",
+  "chain_id": 11155111,
+  "entrypoints": {
+    "preflight": "bin/preflight",
+    "execute": "bin/execute",
+    "postconditions": "bin/postconditions"
+  },
+  "input_receipt_type": "inshell.path.phase-a.receipt.v1",
+  "output_receipt_type": "inshell.thought.deployment.receipt.v1",
+  "allowed_environment_variables": [
+    "THOUGHT_RPC_URL",
+    "THOUGHT_DEPLOY_KEYSTORE",
+    "THOUGHT_DEPLOY_PASSWORD_FILE",
+    "THOUGHT_ADMIN_LEDGER_DERIVATION_PATH"
+  ],
+  "resume_checkpoints": [
+    { "checkpoint_id": "thought-spec-registry-deployed", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "thought-spec-registered", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "protocol-registry-deployed", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "registries-registered", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "glyph-data-pointer-deployed", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "renderer-ready", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "attestation-verifier-deployed", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" },
+    { "checkpoint_id": "thought-deployed", "verifier": "bin/verify-checkpoint", "entrypoint": "bin/resume" }
+  ]
+}

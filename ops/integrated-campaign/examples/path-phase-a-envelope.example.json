@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "receipt_type": "inshell.path.phase-a.receipt.v1",
+  "campaign_id": "example-internal-sepolia-20260821",
+  "phase_id": "path-a",
+  "environment": "internal-sepolia",
+  "chain_id": 11155111,
+  "input_receipt_sha256": "",
+  "protocol_payload": {
+    "owner": "path",
+    "schema_id": "inshell.path.deployment.phase-a.receipt.v1",
+    "canonicalization": "rfc8785-jcs",
+    "sha256": "a5e2fcd12cafba95798f5cdf43c9c2405d53b412d5919f23a5f688e763faa295",
+    "payload": {
+      "receiptVersion": "1",
+      "kind": "path_campaign_phase_a_receipt",
+      "status": "phase_a_complete",
+      "campaignId": "example-internal-sepolia-20260821",
+      "environment": "internal-sepolia",
+      "chainId": "11155111",
+      "pathRelease": {
+        "repository": "https://github.com/inshell-art/path.git",
+        "releaseTag": "v0.5.0",
+        "gitCommit": "085cfc084b0e568740e0da639e968eb535f7e5c8",
+        "artifactManifestSha256": "a81355b459b40faea894cf1dfb7f484765a7ec62672039dd62d58a3a52849921"
+      },
+      "sourceBundleDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "deployer": "0x2000000000000000000000000000000000000002",
+      "pathNft": {
+        "address": "0x1000000000000000000000000000000000000001",
+        "deploymentTx": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "blockNumber": "101",
+        "runtimeBytecodeHash": "0x1212121212121212121212121212121212121212121212121212121212121212"
+      },
+      "retainedAuthority": {
+        "holder": "0x2000000000000000000000000000000000000002",
+        "signerRef": "SYNTHETIC_PATH_ADMIN",
+        "role": "DEFAULT_ADMIN_ROLE",
+        "permittedRemainingActions": [
+          "SET_THOUGHT_MOVEMENT",
+          "FREEZE_THOUGHT_MOVEMENT",
+          "SET_WILL_MOVEMENT",
+          "FREEZE_WILL_MOVEMENT",
+          "SET_AWA_MOVEMENT",
+          "FREEZE_AWA_MOVEMENT",
+          "DEPLOY_AND_WIRE_PUBLIC_SALE",
+          "FREEZE_PUBLIC_MINTER",
+          "GRANT_FINAL_ROLES",
+          "RENOUNCE_DEPLOYER_ADMIN"
+        ],
+        "handoffComplete": false
+      },
+      "movementStates": {
+        "THOUGHT": { "minter": "0x0000000000000000000000000000000000000000", "quota": "0", "frozen": false },
+        "WILL": { "minter": "0x0000000000000000000000000000000000000000", "quota": "0", "frozen": false },
+        "AWA": { "minter": "0x0000000000000000000000000000000000000000", "quota": "0", "frozen": false }
+      },
+      "publicExposure": {
+        "pathPulseAdapter": null,
+        "pulseAuction": null,
+        "openTime": null,
+        "publicMinter": "0x0000000000000000000000000000000000000000",
+        "publicMinterFrozen": false,
+        "publicMintEnabled": false
+      },
+      "observedAtBlock": "101"
+    }
+  }
+}

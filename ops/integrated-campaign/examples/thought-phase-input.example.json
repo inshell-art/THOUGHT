@@ -1,0 +1,60 @@
+{
+  "schema": "inshell.thought.deployment.phase.input.v1",
+  "campaignId": "example-internal-sepolia-20260821",
+  "bundleId": "example-internal-sepolia-20260821-thought",
+  "phase": "thought",
+  "environment": "internal-sepolia",
+  "chainId": 11155111,
+  "priorReceipt": {
+    "receiptType": "inshell.path.phase-a.receipt.v1",
+    "schemaId": "inshell.path.deployment.phase-a.receipt.v1",
+    "envelopeSha256": "cc3409d7894aaafeeed8da90a40c3f039658104bf16945b083ff33603b3ae9c3",
+    "payloadSha256": "a5e2fcd12cafba95798f5cdf43c9c2405d53b412d5919f23a5f688e763faa295",
+    "pathNft": "0x1000000000000000000000000000000000000001",
+    "pathBundleDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "release": {
+    "artifactId": "thought-v2-canonical-portable-release-20260807-r2",
+    "manifestSha256": "7cf7965edb3de6421c79d9c08f0781cabb78ea675bad354847b56ec8f19306cc",
+    "publicationCommit": "d29ddbfe76ff94c726b0786e43e61519c4087aab",
+    "sourceTag": "thought-v2-canonical-portable-release-20260807-r2"
+  },
+  "authorities": {
+    "deployer": { "address": "0x3333333333333333333333333333333333333333", "signerRef": "EXAMPLE_DEPLOYER" },
+    "registryOwner": { "address": "0x4444444444444444444444444444444444444444", "signerRef": "EXAMPLE_ADMIN" },
+    "attestationAuthority": "0x5555555555555555555555555555555555555555",
+    "pathRetainedAuthority": "0x2000000000000000000000000000000000000002"
+  },
+  "execution": {
+    "rpcEnvironmentVariable": "THOUGHT_RPC_URL",
+    "deploySigner": {
+      "signerRef": "EXAMPLE_DEPLOYER",
+      "kind": "encrypted-keystore",
+      "keystoreEnvironmentVariable": "THOUGHT_DEPLOY_KEYSTORE",
+      "passwordFileEnvironmentVariable": "THOUGHT_DEPLOY_PASSWORD_FILE"
+    },
+    "registryOwnerSigner": {
+      "signerRef": "EXAMPLE_ADMIN",
+      "kind": "ledger",
+      "derivationPathEnvironmentVariable": "THOUGHT_ADMIN_LEDGER_DERIVATION_PATH"
+    },
+    "confirmations": 2,
+    "retrySigningTransactionSilently": false
+  },
+  "protocolRegistration": {
+    "manifestHash": "0xfc098b5107fcd21c55e7bc675982d496513068ee242cd70676d7f5301db05452",
+    "manifestUri": "example://immutable/thought-v2-canonical-portable-release-20260807-r2/manifest.json",
+    "protocolReleaseId": "0xb2aaf8e3134e7c13d9c24b80f562ad2b3928281d5cf64d436f98398950832b40"
+  },
+  "selectedSpec": {
+    "name": "THOUGHT.v2.md",
+    "byteLength": 4627,
+    "sha256": "90df786a3ffb5ec38bffd09ff356ec560d0b7dddcdf57170891149a92a399e9b",
+    "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+    "thoughtSpecHash": "0xb2b0a167678816a7ae9dc9098b0d6a6852c0dc95feb59f9581de75bd2cc2231f",
+    "ref": "thought-v2-canonical-portable-release-20260807-r2/protocol/current/v2/THOUGHT.v2.md"
+  },
+  "pathMutationOwner": "PATH_PHASE_B",
+  "pathMutationPerformed": false,
+  "deploymentAuthorizationIncluded": false
+}
