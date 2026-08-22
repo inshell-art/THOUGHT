@@ -1,0 +1,79 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "face": {
+    "file": "glyphs.json",
+    "sha256": "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
+    "style": "Regular",
+    "weight": 400
+  },
+  "family": "Inshell Mono 76",
+  "id": "inshell.mono-76",
+  "integrity": {
+    "faceSha256": "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
+    "geometrySha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df",
+    "manualEditPayloadSha256": "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
+    "packedKeccak256": "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081",
+    "packedSha256": "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
+    "shapeApprovalSha256": "559fc02ed1a6a828649aa57075b99bdd5f747a75ada7b05156c18830dfa56a15"
+  },
+  "metrics": {
+    "defaultOriginShiftX": 1,
+    "fixedAdvanceWidth": 10,
+    "kerning": false,
+    "strokeLinecap": "round",
+    "strokeLinejoin": "round",
+    "strokeWidth": 1.23
+  },
+  "packageName": "@inshell/mono-76",
+  "packed": {
+    "bytes": 4600,
+    "file": "onchain/packed.bin",
+    "pathBytes": 4438,
+    "sha256": "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926"
+  },
+  "provenance": {
+    "importedFontOutlines": false,
+    "owner": "Inshell",
+    "tracedFontOutlines": false,
+    "visualReference": "Source Code Pro"
+  },
+  "recordCount": 76,
+  "release": {
+    "date": "2026-08-22",
+    "previousTag": "v1.0.0",
+    "revision": "mono-76-centerline-v1-shape-approved-20260822",
+    "status": "sealed",
+    "tag": "v1.1.0",
+    "version": "1.1.0"
+  },
+  "schema": "inshell.mono-76.release-manifest.v2",
+  "shapeApproval": {
+    "approvedAt": "2026-08-22",
+    "approvedBy": "font owner",
+    "decision": "approved",
+    "file": "proof/shape-approval.json",
+    "geometrySha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df",
+    "glyphPathChangesFromPreviousRelease": [],
+    "proof": {
+      "allGlyphsOverview": {
+        "file": "proof/all-glyphs-overview.svg",
+        "sha256": "92a0df99a77320a37586197d82c6d3139c71d5656942dc045b1b9985ba5dd02f"
+      },
+      "geometryContract": {
+        "file": "proof/geometry-contract.json",
+        "sha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df"
+      },
+      "perGlyphReview": {
+        "file": "proof/per-glyph-review.svg",
+        "sha256": "145e0099c3ad8ed10487df2ad3b6275305a6c0499fcd30a5308b0206834bc199"
+      },
+      "shapeAudit": {
+        "file": "proof/shape-audit.json",
+        "sha256": "057883c7a475feec273d49419a01ff6f6e0988a1ba322d7abeef7c6c316a8bbc"
+      }
+    },
+    "sha256": "559fc02ed1a6a828649aa57075b99bdd5f747a75ada7b05156c18830dfa56a15"
+  },
+  "shortName": "Mono 76",
+  "visibleGlyphCount": 75
+}

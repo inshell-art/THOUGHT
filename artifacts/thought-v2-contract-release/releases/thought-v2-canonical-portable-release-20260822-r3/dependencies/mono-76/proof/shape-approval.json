@@ -1,0 +1,50 @@
+{
+  "approvedAt": "2026-08-22",
+  "approvedBy": "font owner",
+  "conformanceVectors": [
+    {
+      "file": "proof/conformance/uppercase.svg",
+      "sha256": "fab818886f99b10833cd8ccedf0b0f47ca464cc0961de96122d1ac07441ae952"
+    },
+    {
+      "file": "proof/conformance/lowercase.svg",
+      "sha256": "81bb541a894dbd652ef4ec805613ef0b3db63b3668fdea06896bb695f5a93040"
+    },
+    {
+      "file": "proof/conformance/digits-punctuation.svg",
+      "sha256": "f3c5c4d6067b348198f525fdebdce19bf920da42ee3985ec271b69b8b13f364a"
+    },
+    {
+      "file": "proof/conformance/ambiguity.svg",
+      "sha256": "4a738a3ef72f34edb9e665abcd02836eecd3e5ce649bc59aeac02ccbcfd73984"
+    }
+  ],
+  "decision": "approved",
+  "geometrySha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df",
+  "glyphPathChangesFromPreviousRelease": [],
+  "previousRelease": {
+    "faceSha256": "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+    "packedSha256": "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
+    "tag": "v1.0.0"
+  },
+  "proof": {
+    "allGlyphsOverview": {
+      "file": "proof/all-glyphs-overview.svg",
+      "sha256": "92a0df99a77320a37586197d82c6d3139c71d5656942dc045b1b9985ba5dd02f"
+    },
+    "geometryContract": {
+      "file": "proof/geometry-contract.json",
+      "sha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df"
+    },
+    "perGlyphReview": {
+      "file": "proof/per-glyph-review.svg",
+      "sha256": "145e0099c3ad8ed10487df2ad3b6275305a6c0499fcd30a5308b0206834bc199"
+    },
+    "shapeAudit": {
+      "file": "proof/shape-audit.json",
+      "sha256": "057883c7a475feec273d49419a01ff6f6e0988a1ba322d7abeef7c6c316a8bbc"
+    }
+  },
+  "schema": "inshell.mono-76.shape-approval.v1",
+  "scope": "All 76 records exactly as shown: 75 visible glyph paths plus metrics-only SPACE."
+}
