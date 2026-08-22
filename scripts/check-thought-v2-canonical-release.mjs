@@ -8,12 +8,12 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-contract-release");
-const artifactId = "thought-v2-canonical-portable-release-20260807-r2";
+const artifactId = "thought-v2-canonical-portable-release-20260822-r3";
 const releaseDir = path.join(artifactRoot, "releases", artifactId);
-const baselineArtifactId = "thought-v2-canonical-portable-release-20260801-r1";
+const baselineArtifactId = "thought-v2-canonical-portable-release-20260807-r2";
 const baselineManifestSha256Expected =
-  "4d60feba36165c19a3cf3680078cc6baa7ba066c147ca607e5c82d0306f65b1a";
-const baselinePublicationCommit = "9617892bda9d7f7e880b614f84f1b6360ad8a652";
+  "7cf7965edb3de6421c79d9c08f0781cabb78ea675bad354847b56ec8f19306cc";
+const baselinePublicationCommit = "d29ddbfe76ff94c726b0786e43e61519c4087aab";
 const baselineReleaseDir = path.join(
   root,
   "artifacts",
@@ -196,20 +196,21 @@ if (hashFile(baselineManifestPath) !== baselineManifestSha256Expected) {
 }
 const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
 if (baselineManifest.artifactId !== baselineArtifactId) {
-  fail("accepted canonical r1 identity drifted");
+  fail("accepted canonical r2 identity drifted");
 }
 
-const migration = readJson(releaseDir, "validation/r1-to-r2-path-v0.5.json");
+const migration = readJson(releaseDir, "validation/r2-to-r3-mono-76-v1-1-0.json");
 if (
-  migration.schema !== "inshell.thought.r1-to-r2-path-v0.5.canonical-portable-release.v1"
+  migration.schema !== "inshell.thought.r2-to-r3-mono-76-v1-1-0.canonical-portable-release.v1"
   || migration.baseline?.artifactId !== baselineArtifactId
   || migration.baseline?.manifestSha256 !== baselineManifestSha256Expected
   || migration.baseline?.publicationCommit !== baselinePublicationCommit
   || migration.current?.artifactId !== artifactId
   || migration.current?.sourceBaseCommit !== manifest.source.baseCommit
-) fail("r1-to-r2 migration identity drifted");
+) fail("r2-to-r3 migration identity drifted");
 for (const key of [
   "allCompiledAbisAndBytecode",
+  "attestedGlyphFaceAndPackedPayload",
   "canonicalExternalUrl",
   "creationAttestation",
   "decodedTokenUriFixtures",
@@ -245,7 +246,7 @@ for (const contract of contractIndex.contracts ?? []) {
     || evidence?.hashes?.abiSha256 !== sha256(JSON.stringify(current.abi))
     || evidence?.hashes?.creationBytecodeSha256 !== hashHexBytes(current.bytecode)
     || evidence?.hashes?.runtimeBytecodeSha256 !== hashHexBytes(current.deployedBytecode)
-  ) fail(`compiled r1 parity drifted: ${contract.contractName}`);
+  ) fail(`compiled r2 parity drifted: ${contract.contractName}`);
 }
 
 for (const evidence of migration.exactFileEvidence ?? []) {
@@ -256,7 +257,18 @@ for (const evidence of migration.exactFileEvidence ?? []) {
     || evidence.baselineSha256 !== hashFile(baseline)
     || evidence.currentSha256 !== hashFile(current)
     || evidence.baselineSha256 !== evidence.currentSha256
-  ) fail(`exact r1 file parity drifted: ${evidence.path}`);
+  ) fail(`exact r2 file parity drifted: ${evidence.path}`);
+}
+
+for (const evidence of migration.changedFileEvidence ?? []) {
+  const current = path.join(releaseDir, evidence.path);
+  const baseline = path.join(baselineReleaseDir, evidence.path);
+  if (
+    evidence.exact !== false
+    || evidence.baselineSha256 !== hashFile(baseline)
+    || evidence.currentSha256 !== hashFile(current)
+    || evidence.baselineSha256 === evidence.currentSha256
+  ) fail(`declared r3 file change is unproven: ${evidence.path}`);
 }
 
 const selectedSpec = manifest.compatibility?.selectedSpec;
@@ -371,7 +383,7 @@ if (expectedTargets.size > 0 || manifest.deploymentPolicy?.authorizedNow !== fal
 const tests = readJson(releaseDir, "validation/producer-tests.json");
 if (
   tests.typescriptTestsPassed !== 184
-  || tests.evmTestsPassed !== 198
+  || tests.evmTestsPassed !== 200
   || tests.focusedRendererEvmTestsPassed !== 17
 ) fail("producer test evidence drifted");
 

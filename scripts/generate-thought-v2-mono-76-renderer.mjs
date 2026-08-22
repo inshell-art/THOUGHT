@@ -25,6 +25,10 @@ const canonicalOrder =
 const checkOnly = process.argv.includes("--check");
 
 const expected = {
+  // Face whose bytes were packed into IM76 and deployed; published by the renderer
+  // and unchanged by shape-approval re-seals that leave the geometry untouched.
+  attestedFaceSha256: "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+  // Face of the currently vendored sealed package.
   faceSha256: "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
   manualEditPayloadSha256: "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
   packedKeccak256: "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081",
@@ -98,7 +102,7 @@ if (
 for (const source of rendererSources) {
   const solidity = read(source).toString("utf8");
   for (const pin of [
-    expected.faceSha256,
+    expected.attestedFaceSha256,
     expected.packedSha256,
     expected.packedKeccak256.slice(2),
   ]) {
@@ -158,6 +162,7 @@ const profile = {
   },
   glyphSource: {
     canonicalOrder,
+    attestedFaceSha256: expected.attestedFaceSha256,
     faceSha256: expected.faceSha256,
     familyId: "inshell.mono-76",
     familyName: "Inshell Mono 76",

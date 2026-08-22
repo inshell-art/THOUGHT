@@ -10,11 +10,11 @@ import { id, keccak256 } from "ethers";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "..");
 const artifactRoot = path.join(root, "artifacts", "thought-v2-contract-release");
-const artifactIdExpected = "thought-v2-canonical-portable-release-20260807-r2";
-const baselineArtifactId = "thought-v2-canonical-portable-release-20260801-r1";
+const artifactIdExpected = "thought-v2-canonical-portable-release-20260822-r3";
+const baselineArtifactId = "thought-v2-canonical-portable-release-20260807-r2";
 const baselineManifestSha256Expected =
-  "4d60feba36165c19a3cf3680078cc6baa7ba066c147ca607e5c82d0306f65b1a";
-const baselinePublicationCommit = "9617892bda9d7f7e880b614f84f1b6360ad8a652";
+  "7cf7965edb3de6421c79d9c08f0781cabb78ea675bad354847b56ec8f19306cc";
+const baselinePublicationCommit = "d29ddbfe76ff94c726b0786e43e61519c4087aab";
 const baselineReleaseDir = path.join(
   root,
   "artifacts",
@@ -107,7 +107,7 @@ if (
   || sha256File(baselineManifestPath) !== baselineManifestSha256Expected
   || run("git", ["rev-parse", `${baselineArtifactId}^{}`]) !== baselinePublicationCommit
 ) {
-  throw new Error("accepted immutable canonical r1 baseline is missing or drifted");
+  throw new Error("accepted immutable canonical r2 baseline is missing or drifted");
 }
 const baselineManifest = JSON.parse(fs.readFileSync(baselineManifestPath, "utf8"));
 
@@ -164,7 +164,7 @@ fs.mkdirSync(releaseDir, { recursive: true });
 copyTree("protocol/current/v2", "protocol/current/v2");
 copyTree("vendor/mono-76", "dependencies/mono-76");
 copy(
-  "docs/agent/IN_SHELL_ART_V2_CANONICAL_PORTABLE_RELEASE_R2_HANDOFF_20260807.md",
+  "docs/agent/IN_SHELL_ART_V2_CANONICAL_PORTABLE_RELEASE_R3_HANDOFF_20260822.md",
   "handoff.md",
 );
 copy(
@@ -219,7 +219,7 @@ for (const [contractName, foundryPath] of compiledContracts) {
     sourceName,
   };
   if (JSON.stringify(current) !== JSON.stringify(baseline)) {
-    throw new Error(`current compiled artifact drifted from accepted canonical r1: ${contractName}`);
+    throw new Error(`current compiled artifact drifted from accepted canonical r2: ${contractName}`);
   }
   writeJson(path.join(releaseDir, baselinePath), current);
   contractIndex.push({
@@ -258,7 +258,7 @@ for (const [contractName, foundryPath] of compiledContracts) {
 }
 if (contractEvidence.some((entry) =>
   !entry.abiEqual || !entry.creationBytecodeEqual || !entry.runtimeBytecodeEqual)) {
-  throw new Error("r1-to-r2 compiled parity failed");
+  throw new Error("r2-to-r3 compiled parity failed");
 }
 
 const targetChains = [
@@ -323,14 +323,13 @@ const selectedSpec = {
   thoughtSpecId: id("THOUGHT.v2.md"),
 };
 if (JSON.stringify(selectedSpec) !== JSON.stringify(baselineManifest.compatibility.selectedSpec)) {
-  throw new Error("selected creative spec drifted from accepted canonical r1");
+  throw new Error("selected creative spec drifted from accepted canonical r2");
 }
 compatibility.selectedSpec = selectedSpec;
 
 const exactPackageFiles = [
   "protocol/current/v2/THOUGHT.v2.md",
   "protocol/current/v2/metadata/thought.metadata.v2.profile.json",
-  "protocol/current/v2/renderer/thought.renderer.v2.profile.json",
   "protocol/current/v2/provenance/thought.provenance.v2.schema.json",
   "fixtures/neutral-agent-model-token-uri-examples.anvil.json",
   "dependencies/mono-76/onchain/packed.bin",
@@ -341,9 +340,21 @@ const exactFileEvidence = exactPackageFiles.map((relativePath) => {
   const baselineSha256 = sha256File(baselinePath);
   const currentSha256 = sha256File(currentPath);
   if (baselineSha256 !== currentSha256) {
-    throw new Error(`release payload drifted from accepted canonical r1: ${relativePath}`);
+    throw new Error(`release payload drifted from accepted canonical r2: ${relativePath}`);
   }
   return { baselineSha256, currentSha256, exact: true, path: relativePath };
+});
+
+const changedPackageFiles = [
+  "protocol/current/v2/renderer/thought.renderer.v2.profile.json",
+];
+const changedFileEvidence = changedPackageFiles.map((relativePath) => {
+  const baselineSha256 = sha256File(path.join(baselineReleaseDir, relativePath));
+  const currentSha256 = sha256File(path.join(releaseDir, relativePath));
+  if (baselineSha256 === currentSha256) {
+    throw new Error(`declared r3 change is absent: ${relativePath}`);
+  }
+  return { baselineSha256, currentSha256, exact: false, path: relativePath };
 });
 
 const fixtures = readReleaseJson(
@@ -355,7 +366,7 @@ if (!attestationStatuses.has("Inshell THOUGHT App") || !attestationStatuses.has(
   throw new Error("canonical release fixtures do not cover both attestation paths");
 }
 
-writeJson(path.join(releaseDir, "validation/r1-to-r2-path-v0.5.json"), {
+writeJson(path.join(releaseDir, "validation/r2-to-r3-mono-76-v1-1-0.json"), {
   baseline: {
     artifactId: baselineArtifactId,
     manifestSha256: baselineManifestSha256Expected,
@@ -364,13 +375,12 @@ writeJson(path.join(releaseDir, "validation/r1-to-r2-path-v0.5.json"), {
   },
   current: { artifactId, sourceBaseCommit },
   declaredChanges: {
-    appContractBoundaryPathDependency: true,
-    pathV050DependencyLock: true,
-    releaseEnvelope: true,
-    releaseInputPathDependency: true,
+    rendererProfileGlyphSourceProvenance: true,
+    vendoredGlyphPackageRelease: true,
   },
   declaredUnchanged: {
     allCompiledAbisAndBytecode: true,
+    attestedGlyphFaceAndPackedPayload: true,
     canonicalExternalUrl: true,
     creationAttestation: true,
     decodedTokenUriFixtures: true,
@@ -380,8 +390,9 @@ writeJson(path.join(releaseDir, "validation/r1-to-r2-path-v0.5.json"), {
     svgAndArtworkBytes: true,
   },
   exactFileEvidence,
+  changedFileEvidence,
   compiledArtifacts: contractEvidence,
-  schema: "inshell.thought.r1-to-r2-path-v0.5.canonical-portable-release.v1",
+  schema: "inshell.thought.r2-to-r3-mono-76-v1-1-0.canonical-portable-release.v1",
 });
 
 writeJson(path.join(releaseDir, "validation/runtime-size-and-target-chains.json"), {
@@ -400,7 +411,7 @@ writeJson(path.join(releaseDir, "validation/producer-tests.json"), {
     "npm test",
     "npm run test:evm",
   ],
-  evmTestsPassed: 198,
+  evmTestsPassed: 200,
   focusedRendererEvmTestsPassed: 17,
   schema: "inshell.thought.producer-test-evidence.v1",
   typescriptTestsPassed: 184,
