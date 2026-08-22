@@ -25,7 +25,7 @@ const canonicalOrder =
 const checkOnly = process.argv.includes("--check");
 
 const expected = {
-  faceSha256: "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+  faceSha256: "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
   manualEditPayloadSha256: "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
   packedKeccak256: "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081",
   packedSha256: "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
@@ -46,11 +46,11 @@ const font = JSON.parse(sourceBytes.toString("utf8"));
 const manifest = JSON.parse(manifestBytes.toString("utf8"));
 
 if (
-  manifest.schema !== "inshell.mono-76.release-manifest.v1"
+  manifest.schema !== "inshell.mono-76.release-manifest.v2"
   || manifest.id !== "inshell.mono-76"
   || manifest.packageName !== "@inshell/mono-76"
-  || manifest.release?.tag !== "v1.0.0"
-  || manifest.release?.version !== "1.0.0"
+  || manifest.release?.tag !== "v1.1.0"
+  || manifest.release?.version !== "1.1.0"
   || manifest.release?.status !== "sealed"
   || manifest.canonicalOrder !== canonicalOrder
   || manifest.recordCount !== 76
@@ -179,9 +179,9 @@ const profile = {
       sha256: sha256(noticeBytes),
     },
     packageName: "@inshell/mono-76",
-    packageVersion: "1.0.0",
-    releaseRevision: "mono-76-centerline-v1-20260731",
-    releaseTag: "v1.0.0",
+    packageVersion: "1.1.0",
+    releaseRevision: "mono-76-centerline-v1-shape-approved-20260822",
+    releaseTag: "v1.1.0",
     sourcePath: sourceRelative,
   },
   id: "inshell.thought.svg.v2.terminal-chat-path-glyphs",
@@ -249,5 +249,5 @@ console.log(JSON.stringify({
   packedKeccak256: expected.packedKeccak256,
   packedSha256: expected.packedSha256,
   profile: profileRelative,
-  releaseTag: "v1.0.0",
+  releaseTag: manifest.release.tag,
 }, null, 2));

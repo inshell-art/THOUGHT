@@ -11,13 +11,13 @@ import {
 
 import { thoughtChatStudyWorks } from "../src/thought-v2-chat-study-corpus";
 
-const PACKAGE_VERSION = "1.0.0";
-const PACKAGE_RELEASE_TAG = "v1.0.0";
-const PACKAGE_RELEASE_REVISION = "mono-76-centerline-v1-20260731";
+const PACKAGE_VERSION = "1.1.0";
+const PACKAGE_RELEASE_TAG = "v1.1.0";
+const PACKAGE_RELEASE_REVISION = "mono-76-centerline-v1-shape-approved-20260822";
 const PACKAGE_MANIFEST_SHA256 =
-  "3506060e6262da142b5d6cc858d03ebe875f3b9a5c52edc30d078b2f4a944c8c";
+  "f58a6f2be75e0e567c919968ddacdd28cb7f25002eaa96c0f865ecc5dbdd9608";
 const GLYPH_JSON_SHA256 =
-  "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f";
+  "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df";
 const PACKED_SHA256 =
   "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926";
 const PACKED_KECCAK256 =
@@ -135,7 +135,7 @@ if (
   || face.renderStyle?.strokeLinejoin !== "round"
   || sha256(vendoredManifestBytes) !== PACKAGE_MANIFEST_SHA256
 ) {
-  throw new Error("Installed Inshell Mono 76 identity does not match the pinned v1.0.0 release");
+  throw new Error("Installed Inshell Mono 76 identity does not match the pinned v1.1.0 release");
 }
 
 const glyphs = new Map(

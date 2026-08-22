@@ -2,10 +2,16 @@
 
 ## Released font
 
-Inshell Mono 76 v1.0.0 contains 76 independently authored centerline SVG
+Inshell Mono 76 v1.1.0 contains 76 independently authored centerline SVG
 records: metrics-only SPACE, 52 letters, ten digits, and 13 punctuation marks.
 The paths originated in the C02 Classic Book study and were manually refined,
 optically aligned, and sealed as Mono 76.
+
+v1.1.0 preserves every v1.0.0 path string and the complete IM76 packed payload
+byte-for-byte. It adds a hash-bound owner approval of all 76 records,
+deterministic all-glyph and per-glyph proof sheets, an exact-bounds shape audit,
+and conformance vectors. Lowercase `w`'s shallow center cue and lowercase `g`'s
+curved descender overshoot are explicitly approved parts of this release.
 
 The authoritative design inputs are:
 
@@ -31,7 +37,7 @@ it is not part of the current font package.
 
 ## Ownership
 
-Inshell owns the v1.0.0 SVG centerline paths, repertoire contract, package
+Inshell owns the v1.1.0 SVG centerline paths, repertoire contract, package
 code, renderer, IM76 packaging, verification system, and documentation,
 subject to any rights that applicable law does not permit a party to claim in
 an abstract typeface style or common typographic convention.

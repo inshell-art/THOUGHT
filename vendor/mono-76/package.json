@@ -5,6 +5,7 @@
   },
   "exports": {
     ".": "./index.mjs",
+    "./changelog": "./CHANGELOG.md",
     "./glyphs": "./glyphs.json",
     "./handoff": "./HANDOFF.md",
     "./manifest": "./manifest.json",
@@ -14,10 +15,17 @@
     "./onchain/packed": "./onchain/packed.bin",
     "./onchain/packed.hex": "./onchain/packed.hex",
     "./package.json": "./package.json",
+    "./proof/approval": "./proof/shape-approval.json",
+    "./proof/audit": "./proof/shape-audit.json",
+    "./proof/geometry": "./proof/geometry-contract.json",
+    "./proof/overview": "./proof/all-glyphs-overview.svg",
+    "./proof/per-glyph": "./proof/per-glyph-review.svg",
     "./provenance": "./PROVENANCE.md"
   },
   "files": [
     "onchain",
+    "proof",
+    "CHANGELOG.md",
     "glyphs.json",
     "HANDOFF.md",
     "LICENSES.md",
@@ -39,5 +47,5 @@
   },
   "sideEffects": false,
   "type": "module",
-  "version": "1.0.0"
+  "version": "1.1.0"
 }

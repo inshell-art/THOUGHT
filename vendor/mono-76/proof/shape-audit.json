@@ -1,0 +1,1236 @@
+{
+  "advanceCell": {
+    "allVisibleGlyphsInside": true,
+    "violations": []
+  },
+  "approvalNotes": {
+    "lowercaseG": "Owner approved the -3.1 curved descender as an optical overshoot beyond the nominal -3 metric.",
+    "lowercaseW": "Owner approved the sealed M0 7.2L2 .2L4 6.6L5.95 .15L8 7.2 path as shown; its shallow center cue and bottom optical asymmetry are intentional for v1.1.0."
+  },
+  "geometryMethod": "exact M/L/Q/Z centerline bounds with quadratic extrema",
+  "globalMetricExceptions": [
+    {
+      "character": "g",
+      "descender": -3,
+      "status": "approved optical overshoot",
+      "yMax": 7.4,
+      "yMin": -3.1
+    }
+  ],
+  "interiorCueRatios": [
+    {
+      "character": "M",
+      "cueDepth": 6.9,
+      "cueDepthRatio": 0.741935,
+      "interior": 3,
+      "lower": 0.6,
+      "outer": 9.9
+    },
+    {
+      "character": "W",
+      "cueDepth": 2.7,
+      "cueDepthRatio": 0.290323,
+      "interior": 7.2,
+      "lower": 0.6,
+      "outer": 9.9
+    },
+    {
+      "character": "w",
+      "cueDepth": 0.6,
+      "cueDepthRatio": 0.085106,
+      "interior": 6.6,
+      "lower": 0.15,
+      "outer": 7.2
+    }
+  ],
+  "metrics": {
+    "ascender": 11.15,
+    "baseline": 0,
+    "capHeight": 10.1,
+    "coordinateSystem": "logical units, y-up",
+    "descender": -3,
+    "fixedAdvanceWidth": 10,
+    "space": {
+      "advanceWidth": 10,
+      "drawsPath": false
+    },
+    "svgBaselineY": 12,
+    "svgViewBoxHeight": 16,
+    "unitsPerEm": 13,
+    "xHeight": 7.4
+  },
+  "recordCount": 76,
+  "records": [
+    {
+      "bounds": null,
+      "character": " ",
+      "codepoint": 32,
+      "drawsPath": false,
+      "insideAdvanceCell": true
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7.65,
+        "xMin": 0.35,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "A",
+      "codepoint": 65,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.265,
+      "strokedXMin": 0.735
+    },
+    {
+      "bounds": {
+        "centerX": 4.275,
+        "xMax": 7.2,
+        "xMin": 1.35,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "B",
+      "codepoint": 66,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.815,
+      "strokedXMin": 1.735
+    },
+    {
+      "bounds": {
+        "centerX": 4.05,
+        "xMax": 7.35,
+        "xMin": 0.75,
+        "yMax": 10.1,
+        "yMin": 0.448214
+      },
+      "character": "C",
+      "codepoint": 67,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.965,
+      "strokedXMin": 1.135
+    },
+    {
+      "bounds": {
+        "centerX": 4.25,
+        "xMax": 7.25,
+        "xMin": 1.25,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "D",
+      "codepoint": 68,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.865,
+      "strokedXMin": 1.635
+    },
+    {
+      "bounds": {
+        "centerX": 4.3,
+        "xMax": 7.15,
+        "xMin": 1.45,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "E",
+      "codepoint": 69,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.765,
+      "strokedXMin": 1.835
+    },
+    {
+      "bounds": {
+        "centerX": 4.55,
+        "xMax": 7.4,
+        "xMin": 1.7,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "F",
+      "codepoint": 70,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.015,
+      "strokedXMin": 2.085
+    },
+    {
+      "bounds": {
+        "centerX": 3.85,
+        "xMax": 7.1,
+        "xMin": 0.6,
+        "yMax": 10.1,
+        "yMin": 0.49798
+      },
+      "character": "G",
+      "codepoint": 71,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.715,
+      "strokedXMin": 0.985
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "H",
+      "codepoint": 72,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.6,
+        "xMin": 1.4,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "I",
+      "codepoint": 73,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.215,
+      "strokedXMin": 1.785
+    },
+    {
+      "bounds": {
+        "centerX": 4.35,
+        "xMax": 7.4,
+        "xMin": 1.3,
+        "yMax": 9.9,
+        "yMin": 0.5
+      },
+      "character": "J",
+      "codepoint": 74,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.015,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 4.4,
+        "xMax": 7.55,
+        "xMin": 1.25,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "K",
+      "codepoint": 75,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.165,
+      "strokedXMin": 1.635
+    },
+    {
+      "bounds": {
+        "centerX": 4.6,
+        "xMax": 7.45,
+        "xMin": 1.75,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "L",
+      "codepoint": 76,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.065,
+      "strokedXMin": 2.135
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "M",
+      "codepoint": 77,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.85,
+        "xMin": 1.15,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "N",
+      "codepoint": 78,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.465,
+      "strokedXMin": 1.535
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7.35,
+        "xMin": 0.65,
+        "yMax": 10,
+        "yMin": 0.495545
+      },
+      "character": "O",
+      "codepoint": 79,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.965,
+      "strokedXMin": 1.035
+    },
+    {
+      "bounds": {
+        "centerX": 4.3,
+        "xMax": 7.3,
+        "xMin": 1.3,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "P",
+      "codepoint": 80,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.915,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7.35,
+        "xMin": 0.65,
+        "yMax": 9.9,
+        "yMin": -1.25
+      },
+      "character": "Q",
+      "codepoint": 81,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.965,
+      "strokedXMin": 1.035
+    },
+    {
+      "bounds": {
+        "centerX": 4.375,
+        "xMax": 7.35,
+        "xMin": 1.4,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "R",
+      "codepoint": 82,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.965,
+      "strokedXMin": 1.785
+    },
+    {
+      "bounds": {
+        "centerX": 3.925385,
+        "xMax": 7.100769,
+        "xMin": 0.75,
+        "yMax": 9.95,
+        "yMin": 0.5
+      },
+      "character": "S",
+      "codepoint": 83,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.715769,
+      "strokedXMin": 1.135
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7.5,
+        "xMin": 0.5,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "T",
+      "codepoint": 84,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.115,
+      "strokedXMin": 0.885
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.499038
+      },
+      "character": "U",
+      "codepoint": 85,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "V",
+      "codepoint": 86,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 8,
+        "xMin": 0,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "W",
+      "codepoint": 87,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.615,
+      "strokedXMin": 0.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "X",
+      "codepoint": 88,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "Y",
+      "codepoint": 89,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4.1,
+        "xMax": 7.1,
+        "xMin": 1.1,
+        "yMax": 9.9,
+        "yMin": 0.6
+      },
+      "character": "Z",
+      "codepoint": 90,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.715,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 4.15,
+        "xMax": 7,
+        "xMin": 1.3,
+        "yMax": 7.601064,
+        "yMin": 0.3
+      },
+      "character": "a",
+      "codepoint": 97,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 4.25,
+        "xMax": 7.2,
+        "xMin": 1.3,
+        "yMax": 10.8,
+        "yMin": 0.4
+      },
+      "character": "b",
+      "codepoint": 98,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.815,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.9,
+        "xMin": 1.1,
+        "yMax": 7.4,
+        "yMin": 0.4
+      },
+      "character": "c",
+      "codepoint": 99,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.515,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 3.75,
+        "xMax": 6.7,
+        "xMin": 0.8,
+        "yMax": 10.8,
+        "yMin": 0.4
+      },
+      "character": "d",
+      "codepoint": 100,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.315,
+      "strokedXMin": 1.185
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.9,
+        "xMin": 1.1,
+        "yMax": 7.4,
+        "yMin": 0.4
+      },
+      "character": "e",
+      "codepoint": 101,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.515,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 4.6,
+        "xMax": 7.8,
+        "xMin": 1.4,
+        "yMax": 10.95,
+        "yMin": 0.3
+      },
+      "character": "f",
+      "codepoint": 102,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.415,
+      "strokedXMin": 1.785
+    },
+    {
+      "bounds": {
+        "centerX": 3.55,
+        "xMax": 6.7,
+        "xMin": 0.4,
+        "yMax": 7.4,
+        "yMin": -3.1
+      },
+      "character": "g",
+      "codepoint": 103,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.315,
+      "strokedXMin": 0.785
+    },
+    {
+      "bounds": {
+        "centerX": 4.225,
+        "xMax": 7.2,
+        "xMin": 1.25,
+        "yMax": 10.8,
+        "yMin": 0.35
+      },
+      "character": "h",
+      "codepoint": 104,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.815,
+      "strokedXMin": 1.635
+    },
+    {
+      "bounds": {
+        "centerX": 3.35,
+        "xMax": 5.4,
+        "xMin": 1.3,
+        "yMax": 11.15,
+        "yMin": 0.35
+      },
+      "character": "i",
+      "codepoint": 105,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 7.015,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 2.9,
+        "xMax": 5.6,
+        "xMin": 0.2,
+        "yMax": 11.15,
+        "yMin": -2.85
+      },
+      "character": "j",
+      "codepoint": 106,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 7.215,
+      "strokedXMin": 0.585
+    },
+    {
+      "bounds": {
+        "centerX": 4.25,
+        "xMax": 7.25,
+        "xMin": 1.25,
+        "yMax": 10.8,
+        "yMin": 0.35
+      },
+      "character": "k",
+      "codepoint": 107,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.865,
+      "strokedXMin": 1.635
+    },
+    {
+      "bounds": {
+        "centerX": 4.3,
+        "xMax": 7.5,
+        "xMin": 1.1,
+        "yMax": 10.8,
+        "yMin": 0.4
+      },
+      "character": "l",
+      "codepoint": 108,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.115,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 4.175,
+        "xMax": 7.6,
+        "xMin": 0.75,
+        "yMax": 7.4,
+        "yMin": 0.2
+      },
+      "character": "m",
+      "codepoint": 109,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.215,
+      "strokedXMin": 1.135
+    },
+    {
+      "bounds": {
+        "centerX": 4.275,
+        "xMax": 7.3,
+        "xMin": 1.25,
+        "yMax": 7.4,
+        "yMin": 0.35
+      },
+      "character": "n",
+      "codepoint": 110,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.915,
+      "strokedXMin": 1.635
+    },
+    {
+      "bounds": {
+        "centerX": 4.05,
+        "xMax": 7,
+        "xMin": 1.1,
+        "yMax": 7.4,
+        "yMin": 0.4
+      },
+      "character": "o",
+      "codepoint": 111,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 4.3,
+        "xMax": 7.3,
+        "xMin": 1.3,
+        "yMax": 7.4,
+        "yMin": -2.7
+      },
+      "character": "p",
+      "codepoint": 112,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.915,
+      "strokedXMin": 1.685
+    },
+    {
+      "bounds": {
+        "centerX": 3.7,
+        "xMax": 6.65,
+        "xMin": 0.75,
+        "yMax": 7.4,
+        "yMin": -2.7
+      },
+      "character": "q",
+      "codepoint": 113,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.265,
+      "strokedXMin": 1.135
+    },
+    {
+      "bounds": {
+        "centerX": 4.575,
+        "xMax": 7.1,
+        "xMin": 2.05,
+        "yMax": 7.4,
+        "yMin": 0.25
+      },
+      "character": "r",
+      "codepoint": 114,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.715,
+      "strokedXMin": 2.435
+    },
+    {
+      "bounds": {
+        "centerX": 4.05,
+        "xMax": 7,
+        "xMin": 1.1,
+        "yMax": 7.4,
+        "yMin": 0.4
+      },
+      "character": "s",
+      "codepoint": 115,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 3.95,
+        "xMax": 7.25,
+        "xMin": 0.65,
+        "yMax": 9.65,
+        "yMin": 0.4
+      },
+      "character": "t",
+      "codepoint": 116,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.865,
+      "strokedXMin": 1.035
+    },
+    {
+      "bounds": {
+        "centerX": 3.75,
+        "xMax": 6.75,
+        "xMin": 0.75,
+        "yMax": 7.2,
+        "yMin": 0.4
+      },
+      "character": "u",
+      "codepoint": 117,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.365,
+      "strokedXMin": 1.135
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 7.2,
+        "yMin": 0.15
+      },
+      "character": "v",
+      "codepoint": 118,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 8,
+        "xMin": 0,
+        "yMax": 7.2,
+        "yMin": 0.15
+      },
+      "character": "w",
+      "codepoint": 119,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.615,
+      "strokedXMin": 0.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 7.2,
+        "yMin": 0.05
+      },
+      "character": "x",
+      "codepoint": 120,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 3.8,
+        "xMax": 6.8,
+        "xMin": 0.8,
+        "yMax": 7.2,
+        "yMin": -2.7
+      },
+      "character": "y",
+      "codepoint": 121,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.415,
+      "strokedXMin": 1.185
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 7,
+        "xMin": 1,
+        "yMax": 7.2,
+        "yMin": 0.4
+      },
+      "character": "z",
+      "codepoint": 122,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.615,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.9,
+        "xMin": 1.1,
+        "yMax": 9.8,
+        "yMin": 0.4
+      },
+      "character": "0",
+      "codepoint": 48,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.515,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 4.25,
+        "xMax": 7.05,
+        "xMin": 1.45,
+        "yMax": 9.6,
+        "yMin": 0.6
+      },
+      "character": "1",
+      "codepoint": 49,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.665,
+      "strokedXMin": 1.835
+    },
+    {
+      "bounds": {
+        "centerX": 3.95,
+        "xMax": 6.9,
+        "xMin": 1,
+        "yMax": 9.8,
+        "yMin": 0.6
+      },
+      "character": "2",
+      "codepoint": 50,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.515,
+      "strokedXMin": 1.385
+    },
+    {
+      "bounds": {
+        "centerX": 4.05,
+        "xMax": 6.95,
+        "xMin": 1.15,
+        "yMax": 9.8,
+        "yMin": 0.4
+      },
+      "character": "3",
+      "codepoint": 51,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.565,
+      "strokedXMin": 1.535
+    },
+    {
+      "bounds": {
+        "centerX": 4.15,
+        "xMax": 7.5,
+        "xMin": 0.8,
+        "yMax": 9.6,
+        "yMin": 0.35
+      },
+      "character": "4",
+      "codepoint": 52,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.115,
+      "strokedXMin": 1.185
+    },
+    {
+      "bounds": {
+        "centerX": 4.05,
+        "xMax": 7.05,
+        "xMin": 1.05,
+        "yMax": 9.6,
+        "yMin": 0.4
+      },
+      "character": "5",
+      "codepoint": 53,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.665,
+      "strokedXMin": 1.435
+    },
+    {
+      "bounds": {
+        "centerX": 4.136842,
+        "xMax": 7.123684,
+        "xMin": 1.15,
+        "yMax": 9.909091,
+        "yMin": 0.3
+      },
+      "character": "6",
+      "codepoint": 54,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.738684,
+      "strokedXMin": 1.535
+    },
+    {
+      "bounds": {
+        "centerX": 3.7,
+        "xMax": 6.7,
+        "xMin": 0.7,
+        "yMax": 9.6,
+        "yMin": 0.25
+      },
+      "character": "7",
+      "codepoint": 55,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.315,
+      "strokedXMin": 1.085
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.9,
+        "xMin": 1.1,
+        "yMax": 9.8,
+        "yMin": 0.4
+      },
+      "character": "8",
+      "codepoint": 56,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.515,
+      "strokedXMin": 1.485
+    },
+    {
+      "bounds": {
+        "centerX": 3.85,
+        "xMax": 6.75,
+        "xMin": 0.95,
+        "yMax": 9.8,
+        "yMin": 0.4
+      },
+      "character": "9",
+      "codepoint": 57,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.365,
+      "strokedXMin": 1.335
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 4,
+        "xMin": 4,
+        "yMax": 1.9,
+        "yMin": 0.15
+      },
+      "character": ".",
+      "codepoint": 46,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 5.615,
+      "strokedXMin": 4.385
+    },
+    {
+      "bounds": {
+        "centerX": 4.15,
+        "xMax": 4.9,
+        "xMin": 3.4,
+        "yMax": 1.9,
+        "yMin": -2.8
+      },
+      "character": ",",
+      "codepoint": 44,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 6.515,
+      "strokedXMin": 3.785
+    },
+    {
+      "bounds": {
+        "centerX": 3.95,
+        "xMax": 6.2,
+        "xMin": 1.7,
+        "yMax": 10.3,
+        "yMin": 0.15
+      },
+      "character": "?",
+      "codepoint": 63,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 7.815,
+      "strokedXMin": 2.085
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 4,
+        "xMin": 4,
+        "yMax": 10.1,
+        "yMin": 0.2
+      },
+      "character": "!",
+      "codepoint": 33,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 5.615,
+      "strokedXMin": 4.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 4,
+        "xMin": 4,
+        "yMax": 7.65,
+        "yMin": 0.2
+      },
+      "character": ":",
+      "codepoint": 58,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 5.615,
+      "strokedXMin": 4.385
+    },
+    {
+      "bounds": {
+        "centerX": 3.95,
+        "xMax": 4.7,
+        "xMin": 3.2,
+        "yMax": 7.65,
+        "yMin": -2.8
+      },
+      "character": ";",
+      "codepoint": 59,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 6.315,
+      "strokedXMin": 3.585
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 4,
+        "xMin": 4,
+        "yMax": 10.4,
+        "yMin": 5.9
+      },
+      "character": "'",
+      "codepoint": 39,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 5.615,
+      "strokedXMin": 4.385
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 5.8,
+        "xMin": 2.2,
+        "yMax": 10.4,
+        "yMin": 5.9
+      },
+      "character": "\"",
+      "codepoint": 34,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 7.415,
+      "strokedXMin": 2.585
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.8,
+        "xMin": 1.2,
+        "yMax": 5.3,
+        "yMin": 5.3
+      },
+      "character": "-",
+      "codepoint": 45,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.415,
+      "strokedXMin": 1.585
+    },
+    {
+      "bounds": {
+        "centerX": 4.6,
+        "xMax": 6.15,
+        "xMin": 3.05,
+        "yMax": 11.1,
+        "yMin": -2.2
+      },
+      "character": "(",
+      "codepoint": 40,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 7.765,
+      "strokedXMin": 3.435
+    },
+    {
+      "bounds": {
+        "centerX": 3.4,
+        "xMax": 4.95,
+        "xMin": 1.85,
+        "yMax": 11.1,
+        "yMin": -2.2
+      },
+      "character": ")",
+      "codepoint": 41,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 6.565,
+      "strokedXMin": 2.235
+    },
+    {
+      "bounds": {
+        "centerX": 4,
+        "xMax": 6.6,
+        "xMin": 1.4,
+        "yMax": 10.7,
+        "yMin": -1.9
+      },
+      "character": "/",
+      "codepoint": 47,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 8.215,
+      "strokedXMin": 1.785
+    },
+    {
+      "bounds": {
+        "centerX": 4.103093,
+        "xMax": 7.8,
+        "xMin": 0.406186,
+        "yMax": 10.3,
+        "yMin": 0.25
+      },
+      "character": "&",
+      "codepoint": 38,
+      "drawsPath": true,
+      "insideAdvanceCell": true,
+      "strokedXMax": 9.415,
+      "strokedXMin": 0.791186
+    }
+  ],
+  "schema": "inshell.mono-76.shape-audit.v1",
+  "symmetryChecks": [
+    {
+      "character": "V",
+      "status": "exact",
+      "verticalAxisX": 4
+    },
+    {
+      "character": "W",
+      "status": "exact",
+      "verticalAxisX": 4
+    },
+    {
+      "apexDeviationX": -0.1,
+      "character": "v",
+      "status": "approved optical asymmetry",
+      "verticalAxisX": 4
+    },
+    {
+      "bottomMirrorErrorX": 0.05,
+      "bottomMirrorErrorY": 0.05,
+      "character": "w",
+      "status": "approved optical asymmetry",
+      "verticalAxisX": 4
+    },
+    {
+      "character": "X",
+      "status": "exact",
+      "verticalAxisX": 4
+    },
+    {
+      "character": "x",
+      "endpointErrorX": 0.2,
+      "endpointErrorY": 0.05,
+      "status": "approved optical asymmetry",
+      "verticalAxisX": 4
+    }
+  ],
+  "visibleGlyphCount": 75
+}

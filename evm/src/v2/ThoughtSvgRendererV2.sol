@@ -14,7 +14,7 @@ contract ThoughtSvgRendererV2 is IThoughtSvgRendererV2 {
         "inshell.thought.renderer.v2.mono-76-v1-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom";
     bytes32 public constant IMPLEMENTATION_ID_HASH = keccak256(bytes(IMPLEMENTATION_ID));
     string public constant GLYPH_LIBRARY_MEMBER_ID = "inshell.mono-76";
-    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f;
+    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df;
     bytes32 public constant GLYPH_PACKED_SHA256 = 0x3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926;
     bytes32 public constant GLYPH_PACKED_KECCAK256 =
         0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081;

@@ -27,8 +27,8 @@ const escapeXml = (value) =>
     .replaceAll("'", "&apos;");
 
 export const MONO_76_REPERTOIRE = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&";
-export const MONO_76_VERSION = "1.0.0";
-export const MONO_76_RELEASE_TAG = "v1.0.0";
+export const MONO_76_VERSION = "1.1.0";
+export const MONO_76_RELEASE_TAG = "v1.1.0";
 export const MONO_76_DEFAULT_ORIGIN_SHIFT_X = 1;
 let fontPromise;
 

@@ -42,7 +42,7 @@ contract ThoughtRendererV2 is IThoughtRendererV2 {
     string public constant GLYPH_LICENSE = "UNLICENSED";
     string public constant GLYPH_COLOR = "#00ff00";
     string public constant FRAME_COLOR = "#006100";
-    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f;
+    bytes32 public constant GLYPH_SOURCE_SHA256 = 0x2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df;
     bytes32 public constant GLYPH_PACKED_SHA256 = 0x3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926;
     bytes32 public constant GLYPH_PACKED_KECCAK256 =
         0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081;

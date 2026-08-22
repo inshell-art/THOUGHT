@@ -17,14 +17,17 @@ import {
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const REPERTOIRE = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&";
-const EXPECTED_FACE_SHA256 = "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f";
+const EXPECTED_FACE_SHA256 = "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df";
 const EXPECTED_PACKED_SHA256 = "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926";
 const EXPECTED_PACKED_KECCAK256 = "0xba37d00bb395b84f0487791300a29cdd2b1712b078fa218c6ed74fa11d74a081";
 const EXPECTED_PACKED_BYTES = 4600;
 const EXPECTED_PATH_BYTES = 4438;
 const EXPECTED_MANUAL_EDIT_SHA256 = "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56";
-const EXPECTED_VERSION = "1.0.0";
-const EXPECTED_TAG = "v1.0.0";
+const EXPECTED_VERSION = "1.1.0";
+const EXPECTED_TAG = "v1.1.0";
+const EXPECTED_GEOMETRY_SHA256 = "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df";
+const EXPECTED_SHAPE_APPROVAL_SHA256 = "559fc02ed1a6a828649aa57075b99bdd5f747a75ada7b05156c18830dfa56a15";
+const PREVIOUS_PACKED_SHA256 = "3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926";
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const canonicalJson = (value) => {
   const normalize = (item) => {
@@ -66,6 +69,8 @@ assert.equal(face.family.shortName, "Mono 76");
 assert.equal(face.release.version, EXPECTED_VERSION);
 assert.equal(face.release.tag, EXPECTED_TAG);
 assert.equal(face.release.status, "sealed");
+assert.equal(face.release.geometrySha256, EXPECTED_GEOMETRY_SHA256);
+assert.equal(face.release.shapeApprovalSha256, EXPECTED_SHAPE_APPROVAL_SHA256);
 assert.equal(face.release.manualEditPayloadSha256, EXPECTED_MANUAL_EDIT_SHA256);
 assert.equal(face.provenance.owner, "Inshell");
 assert.equal(face.provenance.importedFontOutlines, false);
@@ -82,11 +87,44 @@ assert.equal(packageJson.name, "@inshell/mono-76");
 assert.equal(packageJson.version, EXPECTED_VERSION);
 assert.equal(packageJson.private, true);
 assert.equal(manifest.integrity.faceSha256, EXPECTED_FACE_SHA256);
+assert.equal(manifest.integrity.geometrySha256, EXPECTED_GEOMETRY_SHA256);
 assert.equal(manifest.integrity.packedSha256, EXPECTED_PACKED_SHA256);
 assert.equal(manifest.integrity.packedKeccak256, EXPECTED_PACKED_KECCAK256);
+assert.equal(manifest.integrity.shapeApprovalSha256, EXPECTED_SHAPE_APPROVAL_SHA256);
 assert.equal(metadata.faceSha256, EXPECTED_FACE_SHA256);
+assert.equal(metadata.geometrySha256, EXPECTED_GEOMETRY_SHA256);
 assert.equal(metadata.sha256, EXPECTED_PACKED_SHA256);
 assert.equal(metadata.keccak256, EXPECTED_PACKED_KECCAK256);
+assert.equal(metadata.shapeApprovalSha256, EXPECTED_SHAPE_APPROVAL_SHA256);
+assert.equal(EXPECTED_PACKED_SHA256, PREVIOUS_PACKED_SHA256);
+
+const approvalText = await readFile(
+  path.join(ROOT, "proof/shape-approval.json"),
+  "utf8"
+);
+const approval = JSON.parse(approvalText);
+assert.equal(approvalText, canonicalJson(approval), "shape approval is not canonical");
+assert.equal(sha256(approvalText), EXPECTED_SHAPE_APPROVAL_SHA256);
+assert.equal(approval.decision, "approved");
+assert.equal(approval.approvedBy, "font owner");
+assert.equal(approval.geometrySha256, EXPECTED_GEOMETRY_SHA256);
+assert.deepEqual(approval.glyphPathChangesFromPreviousRelease, []);
+for (const proof of Object.values(approval.proof)) {
+  assert.equal(sha256(await readFile(path.join(ROOT, proof.file))), proof.sha256);
+}
+for (const vector of approval.conformanceVectors) {
+  assert.equal(sha256(await readFile(path.join(ROOT, vector.file))), vector.sha256);
+}
+const audit = JSON.parse(
+  await readFile(path.join(ROOT, "proof/shape-audit.json"), "utf8")
+);
+assert.equal(audit.recordCount, 76);
+assert.equal(audit.visibleGlyphCount, 75);
+assert.equal(audit.advanceCell.allVisibleGlyphsInside, true);
+assert.equal(
+  audit.globalMetricExceptions.find(({ character }) => character === "g")?.status,
+  "approved optical overshoot"
+);
 
 const inspected = inspectMono76Packed(packed);
 assert.equal(inspected.bytes.length, EXPECTED_PACKED_BYTES);
@@ -123,5 +161,5 @@ for (const line of checksumsText.trimEnd().split("\n")) {
 }
 
 console.log(
-  `Inshell Mono 76 v1.0.0 verified: 76 records, ${EXPECTED_PATH_BYTES} path bytes, ${EXPECTED_PACKED_BYTES} packed bytes, SHA-256 ${EXPECTED_PACKED_SHA256}`
+  `Inshell Mono 76 ${EXPECTED_TAG} verified: 76 records, ${EXPECTED_PATH_BYTES} path bytes, ${EXPECTED_PACKED_BYTES} packed bytes, SHA-256 ${EXPECTED_PACKED_SHA256}`
 );

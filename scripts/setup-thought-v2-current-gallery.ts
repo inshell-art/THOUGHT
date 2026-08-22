@@ -350,7 +350,7 @@ const main = async (): Promise<void> => {
   const thoughtSpecHash = keccak256(specBytes) as `0x${string}`;
   const mono76PackedHash = keccak256(mono76Packed) as `0x${string}`;
   if (mono76Packed.length !== 4_600 || mono76PackedHash !== mono76PackedKeccak256) {
-    throw new Error("sealed Mono 76 v1.0.0 IM76 payload drifted");
+    throw new Error("sealed Mono 76 v1.1.0 IM76 payload drifted");
   }
   const set5PackedHash = keccak256(set5Packed) as `0x${string}`;
   if (
@@ -484,14 +484,14 @@ const main = async (): Promise<void> => {
       }
       : {
         family: "Inshell Mono 76",
-        faceSha256: "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+        faceSha256: "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
         libraryMemberId: "inshell.mono-76",
         librarySetId: "inshell.mono-76",
         manualEditPayloadSha256: "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
         packedBytes: mono76Packed.length,
         packedKeccak256: mono76PackedHash,
         packedSha256: "0x3acc0a9cf60c00aa2d512356386d1e2a999499896e25661e8e631d53d5e10926",
-        releaseTag: "v1.0.0",
+        releaseTag: "v1.1.0",
         releaseReady: true,
         role: "canonical-native-svg-paths",
       },

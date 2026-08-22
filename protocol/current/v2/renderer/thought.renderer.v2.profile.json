@@ -51,30 +51,30 @@
   },
   "glyphSource": {
     "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
-    "faceSha256": "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+    "faceSha256": "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
     "familyId": "inshell.mono-76",
     "familyName": "Inshell Mono 76",
-    "fileKeccak256": "0xbbcce71b2e32ec9ce5a62f3fd0857015022941ba72bce9b1953ab56d7c7d4851",
-    "fileSha256": "7ed61ed6335fce2c1e58184916f5d344b8384fc05d4c616e83c35ad4fa9ed47f",
+    "fileKeccak256": "0x745a6a454ec6424649b0b16988b6d12ea01094d828b87b65ea7f8caef09d0741",
+    "fileSha256": "2db30b08e7378c06b3aa5804999ba32a895244d62a8b78fa4456b21a47b595df",
     "license": "UNLICENSED",
     "licenseArtifact": {
       "path": "vendor/mono-76/UNLICENSED.md",
-      "sha256": "0c474524707e464dfe534342e091babfc283a1f0c39395c4e141a92353ef773f"
+      "sha256": "8c665627175a40c25680e8d810a853b0eb31ca2a56d7ec2f3ab8f702428aa6e9"
     },
     "libraryMemberId": "inshell.mono-76",
     "manualEditPayloadSha256": "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
     "manifestArtifact": {
       "path": "vendor/mono-76/manifest.json",
-      "sha256": "3506060e6262da142b5d6cc858d03ebe875f3b9a5c52edc30d078b2f4a944c8c"
+      "sha256": "f58a6f2be75e0e567c919968ddacdd28cb7f25002eaa96c0f865ecc5dbdd9608"
     },
     "noticeArtifact": {
       "path": "vendor/mono-76/NOTICE.md",
-      "sha256": "b3710d851a323736371369a68281d5c27b0c7c84a8e67f457f8cacce0825d064"
+      "sha256": "a7fdf574056141d84dd2954604bdc6f5cd76243a5df5ce0c2fa210fc3467293c"
     },
     "packageName": "@inshell/mono-76",
-    "packageVersion": "1.0.0",
-    "releaseRevision": "mono-76-centerline-v1-20260731",
-    "releaseTag": "v1.0.0",
+    "packageVersion": "1.1.0",
+    "releaseRevision": "mono-76-centerline-v1-shape-approved-20260822",
+    "releaseTag": "v1.1.0",
     "sourcePath": "vendor/mono-76/glyphs.json"
   },
   "id": "inshell.thought.svg.v2.terminal-chat-path-glyphs",

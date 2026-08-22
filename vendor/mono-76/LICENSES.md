@@ -1,6 +1,6 @@
 # License
 
-Inshell Mono 76 v1.0.0 is private font software distributed without a public
+Inshell Mono 76 v1.1.0 is private font software distributed without a public
 license. Copyright © 2026 Inshell. All rights reserved. See `UNLICENSED.md`.
 
 This installable release contains no Source Code Pro outline data. The

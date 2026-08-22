@@ -629,13 +629,16 @@
     "visualReference": "Source Code Pro was used as a visual comparison reference; no Source Code Pro outlines were imported or traced."
   },
   "release": {
-    "date": "2026-07-31",
+    "date": "2026-08-22",
+    "geometrySha256": "c79172729df118405802f84266971ecdcca4aa678ac19bb97c7de41034cb54df",
     "manualEditPayloadSha256": "755f16a8f70d9141a8b2175bc1bafeaef93ead366179d85f3597bc3dfc9ddc56",
-    "revision": "mono-76-centerline-v1-20260731",
+    "previousTag": "v1.0.0",
+    "revision": "mono-76-centerline-v1-shape-approved-20260822",
+    "shapeApprovalSha256": "559fc02ed1a6a828649aa57075b99bdd5f747a75ada7b05156c18830dfa56a15",
     "sourceCandidateRevision": "c02-manual-control-point-tuning-v21-20260731",
     "status": "sealed",
-    "tag": "v1.0.0",
-    "version": "1.0.0"
+    "tag": "v1.1.0",
+    "version": "1.1.0"
   },
   "renderStyle": {
     "fill": "none",
