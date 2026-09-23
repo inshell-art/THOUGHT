@@ -1,0 +1,465 @@
+{
+  "canonicalEmptyProof": {
+    "authorityEpoch": 0,
+    "deadline": "0",
+    "runIdHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "signature": "0x"
+  },
+  "domainName": "Inshell THOUGHT Creation Attestation",
+  "domainVersion": "1",
+  "invalid": [
+    {
+      "id": "partial-empty-run",
+      "mutate": {
+        "path": "proof.runIdHash",
+        "value": "0xc1186909547af7742b623561661b20e80abe7be89d312e61242992110b63275c"
+      }
+    },
+    {
+      "id": "partial-empty-deadline",
+      "mutate": {
+        "path": "proof.deadline",
+        "value": "1"
+      }
+    },
+    {
+      "id": "partial-empty-epoch",
+      "mutate": {
+        "path": "proof.authorityEpoch",
+        "value": 1
+      }
+    },
+    {
+      "id": "wrong-profile",
+      "mutate": {
+        "path": "claim.profileId",
+        "value": "0xde6eddc6b3f27a3a235a1d4426391b416f81544f25dab0472f35677995ec8685"
+      }
+    },
+    {
+      "id": "wrong-chain",
+      "mutate": {
+        "path": "domain.chainId",
+        "value": "31338"
+      }
+    },
+    {
+      "id": "wrong-verifier",
+      "mutate": {
+        "path": "domain.verifyingContract",
+        "value": "0x5555555555555555555555555555555555555555"
+      }
+    },
+    {
+      "id": "wrong-thought-nft",
+      "mutate": {
+        "path": "claim.thoughtNft",
+        "value": "0x6666666666666666666666666666666666666666"
+      }
+    },
+    {
+      "id": "wrong-release",
+      "mutate": {
+        "path": "claim.protocolReleaseId",
+        "value": "0xafcc9f4469edb5f2e0f9846e90489cc883db93e8b18a9bb26cb2993061cd553f"
+      }
+    },
+    {
+      "id": "wrong-spec-id",
+      "mutate": {
+        "path": "claim.thoughtSpecId",
+        "value": "0xa53ba8d26865b480328517e1d6e8b963550d8348dd7009e3827acf2c66fd1a0d"
+      }
+    },
+    {
+      "id": "wrong-spec-hash",
+      "mutate": {
+        "path": "claim.thoughtSpecHash",
+        "value": "0xedede9b5ed94ac218828b7bc854db0d2c8579c413a04116e6afe925903d34067"
+      }
+    },
+    {
+      "id": "wrong-spec-pair",
+      "mutate": {
+        "path": "claim.thoughtSpecId+thoughtSpecHash",
+        "value": "0xd2a0889e3063cd1bc14ea17c8af8aefaf583118537acfd1234ab285622596a9f+0xede859e68d811854a387b195bc37684d55b08874fbca0fe9ab865769f1f4c5a5"
+      }
+    },
+    {
+      "id": "wrong-work",
+      "mutate": {
+        "path": "claim.workHash",
+        "value": "0x485a06706acce516daa068786260a9f7aa823ca540afe238779af0d61d94a5d6"
+      }
+    },
+    {
+      "id": "wrong-provenance",
+      "mutate": {
+        "path": "claim.provenanceHash",
+        "value": "0x68fc376b7b4e770b8c5c91e78d9c8a39a47824a300be57543b7692fba3ca59f0"
+      }
+    },
+    {
+      "id": "wrong-declared-agent",
+      "mutate": {
+        "path": "claim.declaredAgentHash",
+        "value": "0x9b514b54cb47fd4c950eaa6c3c303399cd126d3f25a9065e863be072ab854f46"
+      }
+    },
+    {
+      "id": "wrong-declared-model",
+      "mutate": {
+        "path": "claim.declaredModelHash",
+        "value": "0xa666ea7591406d91ea06c62d5228d05efe6f22c774482de1fcfdc228ba316817"
+      }
+    },
+    {
+      "id": "zero-run",
+      "mutate": {
+        "path": "claim.runIdHash",
+        "value": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    {
+      "id": "wrong-run",
+      "mutate": {
+        "path": "claim.runIdHash",
+        "value": "0x946123cefab508ba807cb82fca6b71efeec274b4eda4b5a6267e36bb1d35f590"
+      }
+    },
+    {
+      "id": "wrong-minter",
+      "mutate": {
+        "path": "claim.intendedMinter",
+        "value": "0x7777777777777777777777777777777777777777"
+      }
+    },
+    {
+      "id": "wrong-deadline",
+      "mutate": {
+        "path": "claim.deadline",
+        "value": "1900000002"
+      }
+    },
+    {
+      "id": "wrong-epoch",
+      "mutate": {
+        "path": "claim.authorityEpoch",
+        "value": 3
+      }
+    },
+    {
+      "id": "malformed-signature",
+      "mutate": {
+        "path": "proof.signature",
+        "value": "0x01"
+      }
+    },
+    {
+      "id": "previous-draft-type",
+      "typeHash": "0xb25f59a2cb340b2abb47a7640de7f553023098e131ad0dba2da0d4e1d88b199c",
+      "typeString": "CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)"
+    }
+  ],
+  "oneByteProvenanceMutation": {
+    "mutatedDigest": "0x1b43ac059d950b875c60e60808429c2ceeea31474bf51f14d8c2fcad4eb7a0f4",
+    "mutatedProvenanceHash": "0xb3fb62c2365666525a5016ae625e74f34a063843d047e67b21c9aaeddc50ae29",
+    "originalDigest": "0xcce58efd9eff056fdd961887d19bf13cd309ab8207bf81ba2c8eb5d8c0a4ae7c",
+    "originalProvenanceHash": "0xd830fbe2ab908d55f2cb5fc0153e115effc8c5bd1472a8adfa70c0874d272f07"
+  },
+  "previousDraftProof": {
+    "claim": {
+      "authorityEpoch": 1,
+      "deadline": "1900000000",
+      "declaredAgentHash": "0xc22b20ee4fb5318b4915f096594a51f31b920764e8dfbe3ebf751484be8201eb",
+      "declaredModelHash": "0xfc52514a38c41457b11d6bf8f0158c577d55770aa622353347483fc1cdbb9f1f",
+      "intendedMinter": "0x3333333333333333333333333333333333333333",
+      "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+      "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+      "provenanceHash": "0xd830fbe2ab908d55f2cb5fc0153e115effc8c5bd1472a8adfa70c0874d272f07",
+      "runIdHash": "0x6c5831e7a188d49dfae2e28135e9accdc7fea28a0b15a96e0088948f8a1da35d",
+      "thoughtNft": "0x1111111111111111111111111111111111111111",
+      "workHash": "0xd4e816b4af3344204c7b8af8cef0ad4cf06b3baa09093db26e553427ccb31426"
+    },
+    "digest": "0x48fa94868bf95bbfabd8e2eefc56e7c26190eed3622e3226a4284d9e9e9cecf8",
+    "recoveredAuthority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+    "signature": "0x2b56b05c3c088aa9ba268b9e60db96d22d2076b328e8d2e72ec3647381c32312366c460de59ed5e00842647cb267dce1225102b49456f055a5159bff7d9b524c1b",
+    "typeHash": "0xb25f59a2cb340b2abb47a7640de7f553023098e131ad0dba2da0d4e1d88b199c",
+    "typeString": "CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)"
+  },
+  "primaryType": "CreationAttestation",
+  "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+  "profileName": "inshell.thought.creation-workflow-attestation.v1",
+  "schema": "inshell.thought.creation-attestation-vectors.v1",
+  "selectedPairSubstitution": {
+    "originalDigest": "0xcce58efd9eff056fdd961887d19bf13cd309ab8207bf81ba2c8eb5d8c0a4ae7c",
+    "originalSignature": "0xdeeac375a4d8be60d3c3aca9dd3dab8df4b93807270b73a0fe1dc10f1f88d93a47ad3cf5611c0fd3bcf84f6c91b2f228d9ab744ab48bb69c8269131d94310c941b",
+    "recoveredFromReusedSignature": "0x86c4c4fb8e148a80e75756a77d327ae590fb31e7",
+    "substitutedClaim": {
+      "authorityEpoch": 1,
+      "deadline": "1900000000",
+      "declaredAgentHash": "0xc22b20ee4fb5318b4915f096594a51f31b920764e8dfbe3ebf751484be8201eb",
+      "declaredModelHash": "0xfc52514a38c41457b11d6bf8f0158c577d55770aa622353347483fc1cdbb9f1f",
+      "intendedMinter": "0x3333333333333333333333333333333333333333",
+      "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+      "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+      "provenanceHash": "0xd830fbe2ab908d55f2cb5fc0153e115effc8c5bd1472a8adfa70c0874d272f07",
+      "runIdHash": "0x6c5831e7a188d49dfae2e28135e9accdc7fea28a0b15a96e0088948f8a1da35d",
+      "thoughtNft": "0x1111111111111111111111111111111111111111",
+      "thoughtSpecHash": "0xede859e68d811854a387b195bc37684d55b08874fbca0fe9ab865769f1f4c5a5",
+      "thoughtSpecId": "0xd2a0889e3063cd1bc14ea17c8af8aefaf583118537acfd1234ab285622596a9f",
+      "workHash": "0xd4e816b4af3344204c7b8af8cef0ad4cf06b3baa09093db26e553427ccb31426"
+    },
+    "substitutedDigest": "0x0027f2123208ab2db1a1f18243f7262476e0f17438596fa9962aa80c2b727ebc"
+  },
+  "typeHash": "0xeecd612de9b9a9e57fef929280526389a3cca5e7c791342ddc7216412d8a7590",
+  "typeString": "CreationAttestation(bytes32 profileId,address thoughtNft,bytes32 protocolReleaseId,bytes32 thoughtSpecId,bytes32 thoughtSpecHash,bytes32 workHash,bytes32 provenanceHash,bytes32 declaredAgentHash,bytes32 declaredModelHash,bytes32 runIdHash,address intendedMinter,uint64 deadline,uint32 authorityEpoch)",
+  "types": {
+    "CreationAttestation": [
+      {
+        "name": "profileId",
+        "type": "bytes32"
+      },
+      {
+        "name": "thoughtNft",
+        "type": "address"
+      },
+      {
+        "name": "protocolReleaseId",
+        "type": "bytes32"
+      },
+      {
+        "name": "thoughtSpecId",
+        "type": "bytes32"
+      },
+      {
+        "name": "thoughtSpecHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "workHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "provenanceHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "declaredAgentHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "declaredModelHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "runIdHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "intendedMinter",
+        "type": "address"
+      },
+      {
+        "name": "deadline",
+        "type": "uint64"
+      },
+      {
+        "name": "authorityEpoch",
+        "type": "uint32"
+      }
+    ]
+  },
+  "vectors": [
+    {
+      "agentLine": "b",
+      "authority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+      "claim": {
+        "authorityEpoch": 1,
+        "deadline": "1900000000",
+        "declaredAgentHash": "0xc22b20ee4fb5318b4915f096594a51f31b920764e8dfbe3ebf751484be8201eb",
+        "declaredModelHash": "0xfc52514a38c41457b11d6bf8f0158c577d55770aa622353347483fc1cdbb9f1f",
+        "intendedMinter": "0x3333333333333333333333333333333333333333",
+        "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+        "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+        "provenanceHash": "0xd830fbe2ab908d55f2cb5fc0153e115effc8c5bd1472a8adfa70c0874d272f07",
+        "runIdHash": "0x6c5831e7a188d49dfae2e28135e9accdc7fea28a0b15a96e0088948f8a1da35d",
+        "thoughtNft": "0x1111111111111111111111111111111111111111",
+        "thoughtSpecHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+        "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+        "workHash": "0xd4e816b4af3344204c7b8af8cef0ad4cf06b3baa09093db26e553427ccb31426"
+      },
+      "declaredAgent": "Codex",
+      "declaredModel": "Model A",
+      "digest": "0xcce58efd9eff056fdd961887d19bf13cd309ab8207bf81ba2c8eb5d8c0a4ae7c",
+      "domain": {
+        "chainId": "31337",
+        "name": "Inshell THOUGHT Creation Attestation",
+        "verifyingContract": "0x4444444444444444444444444444444444444444",
+        "version": "1"
+      },
+      "domainSeparator": "0xe8f46ccefdc8999c23551f7b793ea867dc675ce0e092c6ab8c1f2796423a18fc",
+      "id": "ascii",
+      "promptLine": "a",
+      "provenance": {
+        "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"intendedMinter\":\"0x3333333333333333333333333333333333333333\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"label\":\"Codex\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"modelDeclaration\":{\"label\":\"Model A\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"transport\":{\"adapter\":\"fixture\",\"resultEnvelopeKeccak256\":\"0x3887fd2a7bfafc30a9a0583e7eec4efe4d45798076c1f012828987128ab85da8\",\"runIdHash\":\"0x6c5831e7a188d49dfae2e28135e9accdc7fea28a0b15a96e0088948f8a1da35d\"}},\"protocol\":{\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"thoughtSpecHash\":\"0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76\",\"thoughtSpecId\":\"0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410\"},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0x60bd64e4171f7897298c9cc6c0bb92856dd74f7f2871accd2acf64be6f09cbde\",\"agentLine\":\"b\",\"agentLineKeccak256\":\"0xb5553de315e0edf504d9150af82dafa5c4667fa618ed0a6f19c69b41166c5510\",\"binaryFieldKeccak256\":\"0x0ebcd533370f6c3205fbd0dddbdfb5beebefae4484d3d4aa4ac5b2dc66719ded\",\"binaryFieldPacked\":\"0x28022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab280228021401140128022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab2802280214011401\",\"promptLine\":\"a\",\"promptLineKeccak256\":\"0x3ac225168df54212a25c1c01fd35bebfea408fdac2e31ddd6f80a4bbf9a5f1cb\",\"workHash\":\"0xd4e816b4af3344204c7b8af8cef0ad4cf06b3baa09093db26e553427ccb31426\"}}",
+        "keccak256": "0xd830fbe2ab908d55f2cb5fc0153e115effc8c5bd1472a8adfa70c0874d272f07",
+        "processKind": "agent-run"
+      },
+      "signature": "0xdeeac375a4d8be60d3c3aca9dd3dab8df4b93807270b73a0fe1dc10f1f88d93a47ad3cf5611c0fd3bcf84f6c91b2f228d9ab744ab48bb69c8269131d94310c941b",
+      "structHash": "0xe5682e3a5532d41b302efccef00d357cc9fbce33d1bd4e4f00dddd49ce115f86"
+    },
+    {
+      "agentLine": "مرحبا",
+      "authority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+      "claim": {
+        "authorityEpoch": 2,
+        "deadline": "1900000001",
+        "declaredAgentHash": "0xa26ae416726b7f226ffaa0d0a4faed8ed912561db8c4b10bddcf4287224344f4",
+        "declaredModelHash": "0xfa1f7232970e8e3e749f67df13741d4e421c69e890ee9b1cd4e75efb10f160b4",
+        "intendedMinter": "0x3333333333333333333333333333333333333333",
+        "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+        "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+        "provenanceHash": "0x22a90f9c8c3c86174741d6e9dcd2d1d9f126997fa4c9bf3c0226b35a2a138e6d",
+        "runIdHash": "0x56ac95bc41c27c2391057ff4c5a706db4d73e555ff15ef2fb77d6d62a286c07f",
+        "thoughtNft": "0x1111111111111111111111111111111111111111",
+        "thoughtSpecHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+        "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+        "workHash": "0xbdc30cbed335f1d28f71dcef28b2ab139d0ae6f03944ebada7ce8087e874753f"
+      },
+      "declaredAgent": "代理 Γ",
+      "declaredModel": "模型 Γ",
+      "digest": "0x5350637e89d702029217df80fe8059129d5364f29c3f6366c66de38f0e8e4dd7",
+      "domain": {
+        "chainId": "31337",
+        "name": "Inshell THOUGHT Creation Attestation",
+        "verifyingContract": "0x4444444444444444444444444444444444444444",
+        "version": "1"
+      },
+      "domainSeparator": "0xe8f46ccefdc8999c23551f7b793ea867dc675ce0e092c6ab8c1f2796423a18fc",
+      "id": "safe-non-ascii",
+      "promptLine": "你好",
+      "provenance": {
+        "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"intendedMinter\":\"0x3333333333333333333333333333333333333333\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"label\":\"代理 Γ\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"modelDeclaration\":{\"label\":\"模型 Γ\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"transport\":{\"adapter\":\"fixture\",\"resultEnvelopeKeccak256\":\"0xaf55d7f17d619b63cff297a9d8c46c660fece953164d39c37b340d97dd7ccedc\",\"runIdHash\":\"0x56ac95bc41c27c2391057ff4c5a706db4d73e555ff15ef2fb77d6d62a286c07f\"}},\"protocol\":{\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"thoughtSpecHash\":\"0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76\",\"thoughtSpecId\":\"0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410\"},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0xc94caaa0c6466542c222166cddf75614258308a7c17aa82dc47c7e85d409072a\",\"agentLine\":\"مرحبا\",\"agentLineKeccak256\":\"0x2eb10497faaf462082bab0c77471fd0fd43c3e5f9c62610adc3f364e600d34ea\",\"binaryFieldKeccak256\":\"0xa9e172f6006ad047d3ba59cccefa8e12af647b57ca74a45964283441c4b34ac4\",\"binaryFieldPacked\":\"0xfd75dff7eeaafebbdd77dff7febaeffb8800a82244114551fd75dff7eeaafebbdd77dff7febaeffb8800a82244114551a8208aa2440054118c238ae2d4304d53dd55fd77eebbeffba8208aa244005411d976dfb77e9ae7f9c810ac234611c571b924cbb2648876198d63daf6fc3a4fd38840b8264c1345d1ed71def7ee2adeb3\",\"promptLine\":\"你好\",\"promptLineKeccak256\":\"0x258ad79cb77e8b4964e7d7b2f962c2570978b5cf8993437233947c50889f9284\",\"workHash\":\"0xbdc30cbed335f1d28f71dcef28b2ab139d0ae6f03944ebada7ce8087e874753f\"}}",
+        "keccak256": "0x22a90f9c8c3c86174741d6e9dcd2d1d9f126997fa4c9bf3c0226b35a2a138e6d",
+        "processKind": "agent-run"
+      },
+      "signature": "0x3c628548fbe7ed55142e5a30c8295486a9d95733d40bffa42703bb262ddb9310590598095d956115b2ff7cbba06879b931eddafbf3f8e9e88df74d63d7075d2e1c",
+      "structHash": "0x13b3dd5664470e08c74bee25e4fce2d349aa6415921b377d73690c8805d6d32d"
+    },
+    {
+      "agentLine": "r",
+      "authority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+      "claim": {
+        "authorityEpoch": 1,
+        "deadline": "1",
+        "declaredAgentHash": "0x03783fac2efed8fbc9ad443e592ee30e61d65f471140c10ca155e937b435b760",
+        "declaredModelHash": "0x7d61fdc86cb928ea48fbf22d28ed5341c2e6a2599c550270b824b71dfa078d06",
+        "intendedMinter": "0x3333333333333333333333333333333333333333",
+        "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+        "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+        "provenanceHash": "0x8f02d5fed135705fca6f2a6dc0d4bb55bd1ab8a14caf3d302ca0856c5b1c0209",
+        "runIdHash": "0x93a8ee18d9602f8a338e31fab00bfe3e8aeef42370d44af53229d64944f41050",
+        "thoughtNft": "0x1111111111111111111111111111111111111111",
+        "thoughtSpecHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+        "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+        "workHash": "0xc7e795b3a802384b4efaa25d75aaddc7072f87a0782a24b3f8391dc8ffb770db"
+      },
+      "declaredAgent": "A",
+      "declaredModel": "M",
+      "digest": "0x6e09a552547b805d25dc46a59f5fa59c93341f93ce0721f048c64d46e4f2d253",
+      "domain": {
+        "chainId": "31337",
+        "name": "Inshell THOUGHT Creation Attestation",
+        "verifyingContract": "0x4444444444444444444444444444444444444444",
+        "version": "1"
+      },
+      "domainSeparator": "0xe8f46ccefdc8999c23551f7b793ea867dc675ce0e092c6ab8c1f2796423a18fc",
+      "id": "one-byte-declarations",
+      "promptLine": "p",
+      "provenance": {
+        "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"intendedMinter\":\"0x3333333333333333333333333333333333333333\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"label\":\"A\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"modelDeclaration\":{\"label\":\"M\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"transport\":{\"adapter\":\"fixture\",\"resultEnvelopeKeccak256\":\"0x71ca4bb84a1bd542537dc2d65892f977d3b771bf6d8158df96dd10144c77cd9b\",\"runIdHash\":\"0x93a8ee18d9602f8a338e31fab00bfe3e8aeef42370d44af53229d64944f41050\"}},\"protocol\":{\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"thoughtSpecHash\":\"0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76\",\"thoughtSpecId\":\"0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410\"},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0x9111585d0f499a29bfecc5205383c1631c9354a0289b6f2dd5f81c11bf98eae3\",\"agentLine\":\"r\",\"agentLineKeccak256\":\"0x414f72a4d550cad29f17d9d99a4af64b3776ec5538cd440cef0f03fef2e9e010\",\"binaryFieldKeccak256\":\"0xace9088f785fad0910867fb7cca4e57441087b00846f5887e83a295ca938474d\",\"binaryFieldPacked\":\"0x2a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa2a002a0015001500\",\"promptLine\":\"p\",\"promptLineKeccak256\":\"0x2304e88f144ae9318c71b0fb9e0f44bd9e0c6c58fb1b5315a35fd8b4b2a444ab\",\"workHash\":\"0xc7e795b3a802384b4efaa25d75aaddc7072f87a0782a24b3f8391dc8ffb770db\"}}",
+        "keccak256": "0x8f02d5fed135705fca6f2a6dc0d4bb55bd1ab8a14caf3d302ca0856c5b1c0209",
+        "processKind": "agent-run"
+      },
+      "signature": "0x8a7a8c6cb3535d2c697130eda2139e8b13aee1eca624016710c5a727eec5971d61063741fe4a6eab74723b3e980bc3c700160d3c8d3007050e861ab34538690e1b",
+      "structHash": "0xc5743dd8e36f609be808ddc6319153204235744f126c8777cecf4e94917af099"
+    },
+    {
+      "agentLine": "rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr",
+      "authority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+      "claim": {
+        "authorityEpoch": 4294967295,
+        "deadline": "18446744073709551615",
+        "declaredAgentHash": "0x5ab08aef833c4bacf716f44e5807bb1c48a27aa7addc150bbc5876449eee0423",
+        "declaredModelHash": "0x053ea8dfceb88f7e2715e6cc21b0d98ab1ecc160780d8bd20812f097acc8cb76",
+        "intendedMinter": "0x3333333333333333333333333333333333333333",
+        "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+        "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+        "provenanceHash": "0xf670ef9d1720891941695d59f61b2f8a523ef9509899044b3f12002937949ca5",
+        "runIdHash": "0x535d98ffc69460b764aae5d8b5f0c26fd558d65a48d81538dc94bdaae74a78c6",
+        "thoughtNft": "0x1111111111111111111111111111111111111111",
+        "thoughtSpecHash": "0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76",
+        "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+        "workHash": "0x0ce141da3527defa276bcabee9009b343c496b9542e9effb4921b0ec275f168e"
+      },
+      "declaredAgent": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "declaredModel": "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+      "digest": "0x9b91af134cbb1140b60d2dfcf0f06bd9a7bb517e5b9bec870a20289b0eeeaffb",
+      "domain": {
+        "chainId": "31337",
+        "name": "Inshell THOUGHT Creation Attestation",
+        "verifyingContract": "0x4444444444444444444444444444444444444444",
+        "version": "1"
+      },
+      "domainSeparator": "0xe8f46ccefdc8999c23551f7b793ea867dc675ce0e092c6ab8c1f2796423a18fc",
+      "id": "sixty-four-byte-boundaries",
+      "promptLine": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "provenance": {
+        "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"intendedMinter\":\"0x3333333333333333333333333333333333333333\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"label\":\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"modelDeclaration\":{\"label\":\"MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"transport\":{\"adapter\":\"fixture\",\"resultEnvelopeKeccak256\":\"0xd1958182c1225dd14c885ea34bf5e2abf0a8d95d3460225c55053b2d4708abf7\",\"runIdHash\":\"0x535d98ffc69460b764aae5d8b5f0c26fd558d65a48d81538dc94bdaae74a78c6\"}},\"protocol\":{\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"thoughtSpecHash\":\"0x8f78c9727cd40f9f7a4548c6e32a22832ce5101b69cf9d60d4e300f4f8cb4a76\",\"thoughtSpecId\":\"0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410\"},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0x253fd03ad7a359a7a7edacfe93044e4710730b04bffc98bc56c8ff85f8b04247\",\"agentLine\":\"rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\",\"agentLineKeccak256\":\"0xe99f2586fe21fa5f50974034903dfc2cfebeb2622d14d2481a6a542395de458a\",\"binaryFieldKeccak256\":\"0xace9088f785fad0910867fb7cca4e57441087b00846f5887e83a295ca938474d\",\"binaryFieldPacked\":\"0x2a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015007f557f55bfaabfaa2a002a0015001500\",\"promptLine\":\"pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp\",\"promptLineKeccak256\":\"0x869430a638b0879de0fd8eea3b75da5f6b099eff994cf58002b3dc1703391383\",\"workHash\":\"0x0ce141da3527defa276bcabee9009b343c496b9542e9effb4921b0ec275f168e\"}}",
+        "keccak256": "0xf670ef9d1720891941695d59f61b2f8a523ef9509899044b3f12002937949ca5",
+        "processKind": "agent-run"
+      },
+      "signature": "0x2c335cd3aaea553f8dfe9e2a79f2715662b5138e7d9b9b61c245bd9db97ab6ff2810164e710a2b8667a53e544cfe9a3baa2f4c1e6180060181f7b5b2307f3ce61b",
+      "structHash": "0xa1e175ac1e7eb678b576e188caf1828823971a1bf97c269488eb583ee3585eff"
+    },
+    {
+      "agentLine": "مرحبا",
+      "authority": "0x7f5ab4ece92edfddfc00515385ce291778dc00e9",
+      "claim": {
+        "authorityEpoch": 2,
+        "deadline": "1900000005",
+        "declaredAgentHash": "0xa26ae416726b7f226ffaa0d0a4faed8ed912561db8c4b10bddcf4287224344f4",
+        "declaredModelHash": "0xfa1f7232970e8e3e749f67df13741d4e421c69e890ee9b1cd4e75efb10f160b4",
+        "intendedMinter": "0x3333333333333333333333333333333333333333",
+        "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+        "protocolReleaseId": "0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815",
+        "provenanceHash": "0x49b07d79e6d25bc3f0047ad5ad30e5b992d8eb8221840c588a7fca756b198472",
+        "runIdHash": "0x836268bd68d70279569364187bb9265ac9e63582b5578a7700a187e1d4bf9a59",
+        "thoughtNft": "0x1111111111111111111111111111111111111111",
+        "thoughtSpecHash": "0xede859e68d811854a387b195bc37684d55b08874fbca0fe9ab865769f1f4c5a5",
+        "thoughtSpecId": "0xd2a0889e3063cd1bc14ea17c8af8aefaf583118537acfd1234ab285622596a9f",
+        "workHash": "0xbdc30cbed335f1d28f71dcef28b2ab139d0ae6f03944ebada7ce8087e874753f"
+      },
+      "declaredAgent": "代理 Γ",
+      "declaredModel": "模型 Γ",
+      "digest": "0xa9c33feec12268b8b731c30a6b33a018685bfcf4cf2ee3f6868a843f9dc8444b",
+      "domain": {
+        "chainId": "31337",
+        "name": "Inshell THOUGHT Creation Attestation",
+        "verifyingContract": "0x4444444444444444444444444444444444444444",
+        "version": "1"
+      },
+      "domainSeparator": "0xe8f46ccefdc8999c23551f7b793ea867dc675ce0e092c6ab8c1f2796423a18fc",
+      "id": "safe-non-ascii-alternate-spec",
+      "promptLine": "你好",
+      "provenance": {
+        "canonicalJson": "{\"mintContext\":{\"chainId\":\"31337\",\"intendedMinter\":\"0x3333333333333333333333333333333333333333\",\"thoughtNft\":\"0x1111111111111111111111111111111111111111\"},\"process\":{\"agentDeclaration\":{\"label\":\"代理 Γ\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"kind\":\"agent-run\",\"modelDeclaration\":{\"label\":\"模型 Γ\",\"source\":\"runtime_configured\",\"status\":\"declared-unverified\"},\"transport\":{\"adapter\":\"fixture\",\"resultEnvelopeKeccak256\":\"0xaf55d7f17d619b63cff297a9d8c46c660fece953164d39c37b340d97dd7ccedc\",\"runIdHash\":\"0x836268bd68d70279569364187bb9265ac9e63582b5578a7700a187e1d4bf9a59\"}},\"protocol\":{\"manifestKeccak256\":\"0x1111111111111111111111111111111111111111111111111111111111111111\",\"protocolReleaseId\":\"0xf333ec9668d39a5ed5a75dfcbc625e10c255e068bd4041c05f625570fffa2815\",\"thoughtSpecHash\":\"0xede859e68d811854a387b195bc37684d55b08874fbca0fe9ab865769f1f4c5a5\",\"thoughtSpecId\":\"0xd2a0889e3063cd1bc14ea17c8af8aefaf583118537acfd1234ab285622596a9f\"},\"schema\":\"inshell.thought.provenance.v2\",\"work\":{\"agentIdentityHash\":\"0xc94caaa0c6466542c222166cddf75614258308a7c17aa82dc47c7e85d409072a\",\"agentLine\":\"مرحبا\",\"agentLineKeccak256\":\"0x2eb10497faaf462082bab0c77471fd0fd43c3e5f9c62610adc3f364e600d34ea\",\"binaryFieldKeccak256\":\"0xa9e172f6006ad047d3ba59cccefa8e12af647b57ca74a45964283441c4b34ac4\",\"binaryFieldPacked\":\"0xfd75dff7eeaafebbdd77dff7febaeffb8800a82244114551fd75dff7eeaafebbdd77dff7febaeffb8800a82244114551a8208aa2440054118c238ae2d4304d53dd55fd77eebbeffba8208aa244005411d976dfb77e9ae7f9c810ac234611c571b924cbb2648876198d63daf6fc3a4fd38840b8264c1345d1ed71def7ee2adeb3\",\"promptLine\":\"你好\",\"promptLineKeccak256\":\"0x258ad79cb77e8b4964e7d7b2f962c2570978b5cf8993437233947c50889f9284\",\"workHash\":\"0xbdc30cbed335f1d28f71dcef28b2ab139d0ae6f03944ebada7ce8087e874753f\"}}",
+        "keccak256": "0x49b07d79e6d25bc3f0047ad5ad30e5b992d8eb8221840c588a7fca756b198472",
+        "processKind": "agent-run"
+      },
+      "signature": "0x12d5bbcc1f33239f34e75b12d7790935b080abdae1e534f2cb2396ee389e97496c5aa912682761940940d0e93e4bd1617b585d5be808fc0a98564133188e7b921b",
+      "structHash": "0x534a150ca2dd315b59f98468f787ae9a60f7b334875ac34a796d209feab3e01d"
+    }
+  ]
+}

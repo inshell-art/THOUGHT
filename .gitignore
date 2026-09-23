@@ -16,6 +16,11 @@ evm/cache
 evm/out
 evm/broadcast
 evm/devnode-state
+/public/thought-v2-gallery.anvil.json
+
+# Local agent task notes; keep out of immutable release commits.
+INBOX.md
+MEMO.md
 
 # Editor directories and files
 .vscode/*

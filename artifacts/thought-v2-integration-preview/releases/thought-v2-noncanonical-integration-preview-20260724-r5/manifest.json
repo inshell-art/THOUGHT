@@ -1,0 +1,334 @@
+{
+  "artifactId": "thought-v2-noncanonical-integration-preview-20260724-r5",
+  "artifactKind": "thought-v2-contract-integration-preview",
+  "channel": "experimental",
+  "classification": "noncanonical-integration-preview",
+  "compatibility": {
+    "creationAttestation": {
+      "id": "inshell.thought.creation-workflow-attestation.v1",
+      "idKeccak256": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669"
+    },
+    "contextProfile": {
+      "id": "inshell.thought.context.v2.visible-utf8-64",
+      "idKeccak256": "0x9894359f9294f4b3a871442b19d851203138fad4a648c16f62fc04f55dff02b8"
+    },
+    "metadataProfile": {
+      "id": "inshell.thought.metadata.v2.terminal-chat",
+      "idKeccak256": "0x4cefae9cf44cc61bc8ec16e266ecb31f53e634834fe5975cc564ae9dfc51858b"
+    },
+    "protocol": {
+      "id": "inshell.thought.protocol.v2",
+      "release": "v2",
+      "status": "implementation-candidate"
+    },
+    "provenance": {
+      "id": "inshell.thought.provenance.v2"
+    },
+    "renderer": {
+      "canonicalId": "inshell.thought.svg.v2.terminal-chat-path-glyphs",
+      "canonicalIdKeccak256": "0x01982604c90acf1ca63020e0c3761b25d8dc8fc3c267d27ace14cb0d2c813d73",
+      "finalImplementationIncluded": true,
+      "geometry": {
+        "artboard": "1024x1024",
+        "canvas": "960x960@32,32",
+        "canvasScale": 1,
+        "fields": {
+          "agent": {
+            "bottom": 832,
+            "height": 256,
+            "horizontalAlign": "left",
+            "verticalAlign": "bottom",
+            "width": 844.8,
+            "x": 57.6,
+            "y": 576
+          },
+          "prompt": {
+            "bottom": 384,
+            "height": 256,
+            "horizontalAlign": "right",
+            "verticalAlign": "bottom",
+            "width": 844.8,
+            "x": 57.6,
+            "y": 128
+          }
+        },
+        "frameColor": "#006100",
+        "frameUnitsPerSide": 32,
+        "glyphColor": "#00ff00"
+      },
+      "packagedImplementation": "inshell.thought.renderer.v2.humanist-smooth-native-paths-frame-32-006100-green-00ff00-fixed-bottom-fields"
+    },
+    "selectedSpec": {
+      "byteLength": 3993,
+      "name": "THOUGHT.v2.md",
+      "sha256": "c9fed4be70cda0ac4469b8ab955bfcd9070becfa0d2235ac4d4954af50444240",
+      "thoughtSpecHash": "0xdd1992e3e601d10df5a7a30e7ba37f713f71979e9cc56b16717f8210b0831a4d",
+      "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410"
+    },
+    "workProfile": {
+      "id": "inshell.thought.work.v2.terminal-english-64",
+      "idKeccak256": "0x2bf311e6034eb35e6d1f7bd92894012ee7e528609830cb3b28df1ce5dd82f85a"
+    }
+  },
+  "createdAt": "2026-07-24T13:30:00Z",
+  "files": [
+    {
+      "byteLength": 36143,
+      "mediaType": "application/json",
+      "path": "contract/compiled/CreationAttestationVerifier.json",
+      "sha256": "e4b1747ddea5d282b6fac7aadb638da6ef3f2c65423930076b5adc7c81a2e905"
+    },
+    {
+      "byteLength": 4336,
+      "mediaType": "application/json",
+      "path": "contract/compiled/IThoughtRendererV2.json",
+      "sha256": "fbf2b741e8265109fecdbc85fe31e8705e0dd63ab524f6fa9f185950973a2179"
+    },
+    {
+      "byteLength": 116440,
+      "mediaType": "application/json",
+      "path": "contract/compiled/ThoughtNFTV2.json",
+      "sha256": "57dbf0791f4936a5852ca0152b87dddba54ff6f48a679e18f9c40fac21c3f62f"
+    },
+    {
+      "byteLength": 103873,
+      "mediaType": "application/json",
+      "path": "contract/compiled/ThoughtRendererV2.json",
+      "sha256": "6db7c2edf0bd277fa3477f763b83239f546e66570c6a04dc4ea576960a35519f"
+    },
+    {
+      "byteLength": 31310,
+      "mediaType": "application/json",
+      "path": "contract/compiled/ThoughtSpecRegistry.json",
+      "sha256": "461a0a54f6ab7a07c66491ea28697184b51abee2042d2b0b06837378495c532d"
+    },
+    {
+      "byteLength": 13916,
+      "mediaType": "application/json",
+      "path": "contract/compiled/ThoughtSpecRegistryV2.json",
+      "sha256": "a4dd41ea531cfed129fdaffa9be49a5f277564571a976549521d0d0e8502cb9d"
+    },
+    {
+      "byteLength": 1739,
+      "mediaType": "application/json",
+      "path": "contract/index.json",
+      "sha256": "35e08f803dae1f1502b546bc86014427eaa54db4efef72bb2f6021fbe2f254ee"
+    },
+    {
+      "byteLength": 7088,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "handoff.md",
+      "sha256": "bcabfaf2bbd5d91cc4d2d34d9e1b3e2c8a0dbbeb19a24a1519bc7ebbfa110080"
+    },
+    {
+      "byteLength": 564,
+      "mediaType": "application/json",
+      "path": "limitations.json",
+      "sha256": "128fa80d0517cc6648ccdac4e98e2f26c8b3dff730f28c650b8f6632e176b1c7"
+    },
+    {
+      "byteLength": 710,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/agent/thought.agent-declaration.v1.schema.json",
+      "sha256": "d9564d994763e643c77d853d9200f39a31677f718c715dce3b4c3ec29f406afd"
+    },
+    {
+      "byteLength": 4015,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/attestation/thought.creation-workflow-attestation.v1.md",
+      "sha256": "0993695c287f2a3397003a966ae268ae42c4b7a611e432cebe706342670b61cf"
+    },
+    {
+      "byteLength": 1090,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/conformance/work-hash-vectors.json",
+      "sha256": "2fc13425cee5da853ac0f9b658857c5cf89c0bbdf6e6c55583ded6bf0e5ab6fb"
+    },
+    {
+      "byteLength": 1233,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/context/thought.context.v2.profile.json",
+      "sha256": "7e6356b141745027a0d3aed531d70d176713e19f7fc00a3ff974485b8030f38a"
+    },
+    {
+      "byteLength": 2379,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/contract/thought.mint-input.v2.schema.json",
+      "sha256": "71ef0f27e6a51e9b51705948fda21c16b614c8a281bd745e7f9c522ef4c2ba16"
+    },
+    {
+      "byteLength": 6359,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/integration/thought.app-contract-boundary.v1.json",
+      "sha256": "8d8ba9af8ab3bf0b9155d4cc7c5b88399508170030b096df4d222fe8bba43717"
+    },
+    {
+      "byteLength": 7616,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/integration/thought.app-contract-boundary.v1.md",
+      "sha256": "96bb0c3ca137a894e53d0cfefa92fde8927bd4731039e53740a24ababda4f857"
+    },
+    {
+      "byteLength": 1875,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/metadata/thought.metadata.v2.profile.json",
+      "sha256": "c61d1b323677188ca2c338e7d738f2b0be29cd1b432c09daf2b68e0f125f14e7"
+    },
+    {
+      "byteLength": 3302,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/provenance/thought.provenance.v2.md",
+      "sha256": "b1a61354d6c5e248af26d7ea61b1401e95c18fec58e64d7475ff4ab442a7fa44"
+    },
+    {
+      "byteLength": 6272,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/provenance/thought.provenance.v2.schema.json",
+      "sha256": "0a353167ea460f7fb24c52d0cce106c9bedaa348e561bab1c683beb43fa59398"
+    },
+    {
+      "byteLength": 3404,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/README.md",
+      "sha256": "055118200c59f109b7c2f82970c86c1ab8480840bfadeb1f513022e22ee97384"
+    },
+    {
+      "byteLength": 3727,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/release-input.json",
+      "sha256": "c61ba0e42b34ef35b51e0098540e12f688b740335acef99ec747b2c155a126d1"
+    },
+    {
+      "byteLength": 15557,
+      "mediaType": "application/octet-stream",
+      "path": "protocol/current/v2/renderer/humanist-smooth-defs-1.svgfrag",
+      "sha256": "e344b7b8af8b9b11094594cf1e8d7efb05572e6d81b99d60c9afd313cc7a42bd"
+    },
+    {
+      "byteLength": 12779,
+      "mediaType": "application/octet-stream",
+      "path": "protocol/current/v2/renderer/humanist-smooth-defs-2.svgfrag",
+      "sha256": "95e5e25a99f3cc176e80d3aebe42be3230b50d489d1788aa1d22e58350030962"
+    },
+    {
+      "byteLength": 375,
+      "mediaType": "application/octet-stream",
+      "path": "protocol/current/v2/renderer/humanist-smooth-index.bin",
+      "sha256": "daa5c1b21eba07ab39712bc560faaf4156d137ee3575c5323cf98539c9ca8102"
+    },
+    {
+      "byteLength": 4473,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/renderer/LICENSE-HUMANIST-SMOOTH-OFL-1.1.md",
+      "sha256": "6234e3f17f21084f690e3adae017a32f866d5880ed2b5daaae59d8d78f021968"
+    },
+    {
+      "byteLength": 782,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/renderer/NOTICE-HUMANIST-SMOOTH.md",
+      "sha256": "aa70cd4ab472ebaaddbc870e0affd7826b018c1b22d6fb2a423681d24949a0a2"
+    },
+    {
+      "byteLength": 3891,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/renderer/thought.renderer.v2.profile.json",
+      "sha256": "026f6e165d0b9ffdcac0430b55337960438ffbeffea28a57f26f038893121946"
+    },
+    {
+      "byteLength": 3993,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/THOUGHT.v2.md",
+      "sha256": "c9fed4be70cda0ac4469b8ab955bfcd9070becfa0d2235ac4d4954af50444240"
+    },
+    {
+      "byteLength": 5907,
+      "mediaType": "text/markdown; charset=utf-8",
+      "path": "protocol/current/v2/work/thought.work.v2.md",
+      "sha256": "6c0c6d6eb77f3b9a42bca5d51e07c06a4868285a64ef3e2af4e3ea4aba4bb7ac"
+    },
+    {
+      "byteLength": 2436,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/work/thought.work.v2.profile.json",
+      "sha256": "ed81458c6c219aae5a8728b149409cc7860b6e01f67658f492660c4aa59e0c9f"
+    },
+    {
+      "byteLength": 815,
+      "mediaType": "application/json",
+      "path": "protocol/current/v2/work/thought.work.v2.schema.json",
+      "sha256": "47571f007fc4325ceab960be2d41bc286fa0ca71d303d57c3487d7673823e066"
+    },
+    {
+      "byteLength": 331,
+      "mediaType": "application/json",
+      "path": "README.json",
+      "sha256": "d8df0b66a10c10d4e58c4068fe4f3cd35e1d3ae2d690e6a7670999efd12dab39"
+    },
+    {
+      "byteLength": 994,
+      "mediaType": "text/typescript; charset=utf-8",
+      "path": "reference/thought-v2-canonical-json.ts",
+      "sha256": "1392290634e9e6ce93f3fdbc58cf1f3d672f9696fc9e8656e761e8ce2c4f74db"
+    },
+    {
+      "byteLength": 3271,
+      "mediaType": "text/typescript; charset=utf-8",
+      "path": "reference/thought-v2-context-profile.ts",
+      "sha256": "c21263130fb6f6b77d5c7d4993361a855c0b45d1ff5367c01c433c6fb4ce3d95"
+    },
+    {
+      "byteLength": 5366,
+      "mediaType": "text/typescript; charset=utf-8",
+      "path": "reference/thought-v2-creation-attestation.ts",
+      "sha256": "67cd49f22c746711c7288abee49a11054ab28fe01a451a5d48434c966317f4ba"
+    },
+    {
+      "byteLength": 21204,
+      "mediaType": "text/typescript; charset=utf-8",
+      "path": "reference/thought-v2-terminal-provenance.ts",
+      "sha256": "232dd2e1292e56eda7fdfef0e14a51006ac614f5448fa6e7752c99cb0d2b6af6"
+    },
+    {
+      "byteLength": 4872,
+      "mediaType": "text/typescript; charset=utf-8",
+      "path": "reference/thought-v2-terminal-work-profile.ts",
+      "sha256": "345bb3783bb859995b0d109a55f1553c7ac42662c665c58dd57147d033284b22"
+    }
+  ],
+  "flags": {
+    "candidateOrStable": false,
+    "deploymentAuthorized": false,
+    "productionConsumable": false,
+    "registrationAuthorized": false
+  },
+  "schema": "inshell.thought.immutable-artifact-manifest.v1",
+  "source": {
+    "baseCommit": "209977ce539c962a8e464a2834b4efae2d93ae88",
+    "branch": "codex/thought-v2-chat-svg-experiment",
+    "changedPaths": [
+      "M AGENTS.md",
+      " M README.md",
+      " M docs/agent/IN_SHELL_ART_V2_APP_DEV_KICKOFF_HANDOFF.md",
+      " M docs/agent/IN_SHELL_ART_V2_NONCANONICAL_INTEGRATION_PREVIEW_HANDOFF.md",
+      " M docs/agent/THOUGHT_ENGLISH_CHAT_REFACTOR_DECISIONS.md",
+      " M docs/agent/THOUGHT_V2_CANVAS_FRAME_STUDY.md",
+      " M evm/src/v2/ThoughtRendererV2.sol",
+      " M evm/test/v2/ThoughtRendererV2.t.sol",
+      " M protocol/current/v2/README.md",
+      " M protocol/current/v2/THOUGHT.v2.md",
+      " M protocol/current/v2/release-input.json",
+      " M protocol/current/v2/renderer/thought.renderer.v2.profile.json",
+      " M protocol/current/v2/work/thought.work.v2.md",
+      " M scripts/build-thought-v2-integration-preview.mjs",
+      " M scripts/check-thought-v2-integration-preview.mjs",
+      " M scripts/generate-thought-v2-humanist-renderer.mjs",
+      " M scripts/setup-thought-v2-current-gallery.ts",
+      " M src/thought-v2-candidate-artifacts.test.ts",
+      " M src/thought-v2-glyph-library-frame-study.test.ts",
+      " M src/thought-v2-glyph-library-frame-study.ts"
+    ],
+    "dirty": true,
+    "remote": "https://github.com/inshell-art/THOUGHT.git",
+    "tag": "thought-v2-noncanonical-integration-preview-20260724-r5"
+  }
+}

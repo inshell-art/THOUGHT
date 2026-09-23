@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        const storageKey = "thought-inshell-mono-76-study-theme";
+        let mode = "auto";
+        try {
+          const stored = window.localStorage.getItem(storageKey);
+          if (stored === "auto" || stored === "light" || stored === "dark") mode = stored;
+        } catch {
+          // Storage can be unavailable in privacy-restricted contexts.
+        }
+        const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const theme = mode === "auto" ? systemTheme : mode;
+        document.documentElement.dataset.themeMode = mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+    <link rel="icon" href="data:," />
+    <title>THOUGHT V2 — Inshell Mono 76 Native-Path Study</title>
+  </head>
+  <body>
+    <main
+      id="source-code-pro-weight-lab"
+      class="source-study"
+      aria-label="THOUGHT Inshell Mono 76 native SVG path study"
+    ></main>
+    <script type="module" src="/src/thought-v2-source-code-pro-weight-lab.ts"></script>
+  </body>
+</html>

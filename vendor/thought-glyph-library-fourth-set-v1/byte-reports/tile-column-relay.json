@@ -1,0 +1,46 @@
+{
+  "canonicalManifestBytes": 72348,
+  "colorStorage": {
+    "blackRgb24Bytes": 3,
+    "compactSharedPaintDataFloorBytes": 88,
+    "foregroundMaskBytes": 4,
+    "paletteRgb24DataFloorBytes": 78,
+    "perGlyphColorDuplication": false,
+    "sharedCanonicalTextBytes": 510,
+    "whiteRgb24Bytes": 3
+  },
+  "construction": "segment-mask",
+  "exclusions": [
+    "SVG path decoder and renderer runtime",
+    "package metadata, documentation, and validation",
+    "hashes, aliases, and developer-facing audit mirrors",
+    "deployed bytecode and gas"
+  ],
+  "familyId": "S402",
+  "geometry": {
+    "gzipBytesInformational": 2456,
+    "numericOperands": 12078,
+    "pathCommands": 5490,
+    "pathSha256": "188adc7d1d47e71a573ea73b843f4f4f05e9dc613d087ab0a651e85760011f62",
+    "rawPathBits": 475552,
+    "rawPathBytes": 59444,
+    "sourceFamilyId": "S202",
+    "sourceFamilySlug": "column-relay",
+    "sourceFileSha256": "4276dc130fece04b9c12bb2112ee4205a706a9ff9f2361384ff1acc008698254",
+    "sourceMemberId": "inshell.thought.glyph-library.set-02.column-relay",
+    "sourceSetId": "inshell.thought.glyph-library.set-02"
+  },
+  "glyphCount": 76,
+  "memberId": "inshell.thought.glyph-library.set-04.tile-column-relay",
+  "schema": "inshell.thought.glyph-library.byte-report.study.v1",
+  "setId": "inshell.thought.glyph-library.set-04",
+  "slug": "tile-column-relay",
+  "tilePresentation": {
+    "monospaced": true,
+    "normalizationBytes": 213,
+    "normalizationSha256": "283fef1da0b24007fd94b87607522ba47d9467b0586ea005ab6254e9d32676da",
+    "profileId": "tight-v1",
+    "renderedAdvanceWidth": 6.5,
+    "sourceFixedAdvanceWidth": 6
+  }
+}

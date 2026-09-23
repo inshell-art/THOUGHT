@@ -1,5 +1,7 @@
 # inshell.art Handoff: THOUGHT Formal Agent Flow
 
+> Superseded. Use [`IN_SHELL_ART_V2_PROTOCOL_REFINEMENT_HANDOFF.md`](IN_SHELL_ART_V2_PROTOCOL_REFINEMENT_HANDOFF.md) and verify [`protocol/CURRENT.json`](../../protocol/CURRENT.json).
+
 This repository now defines the active formal contract as unversioned `ThoughtNFT` and `ThoughtSpecRegistry`, while keeping V1 as an archive. Update `inshell.art` against the contract artifacts from this repository; do not carry forward `ThoughtNFTV2`, `ThoughtSpecRegistryV2`, Color Font, or preview-contract dependencies.
 
 ## Required Integration Changes
@@ -30,7 +32,7 @@ struct MintThoughtInput {
 function mint(MintThoughtInput calldata input) external returns (uint256 tokenId);
 ```
 
-The active constructor is `new ThoughtNFT(pathNft, thoughtSpecRegistry)`. New integration code must not pass a Color Font address.
+The active constructor pins PATH, registry, and `protocolReleaseKeccak256`; see the replacement handoff. Each mint supplies its exact registered spec pair. New integration code must not pass a Color Font address.
 
 ## Identity Rule
 

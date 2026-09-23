@@ -1,0 +1,75 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "declaredOn": "2026-07-24",
+  "fixtureText": "Il1 O0 S5 THOUGHT 03? &",
+  "fontCount": 2,
+  "fonts": [
+    {
+      "byteReport": "byte-reports/humanist-smooth.json",
+      "byteReportSha256": "86a38e6bea59d10cbd51c1f8b748b4a78d7e4bd9a9af1c7a8fb71d4c474b9790",
+      "classification": "conventional-outline",
+      "compactDataFloorBits": 54706,
+      "compactDataFloorBytes": 6839,
+      "familyId": "S301",
+      "file": "fonts/humanist-smooth/glyphs.json",
+      "fixture": "fixtures/humanist-smooth/canonical-line.svg",
+      "fixtureSha256": "ad22e75210ff30c3fc79192890a8d446c12879dd1dfd80076eb263bca928b8da",
+      "glyphCount": 76,
+      "gzipBytesInformational": 7986,
+      "memberId": "inshell.thought.glyph-library.set-03.humanist-smooth",
+      "name": "Humanist Smooth",
+      "quantizationStep": null,
+      "rawPathBits": 191288,
+      "rawPathBytes": 23911,
+      "review": {
+        "metricContract": "hold",
+        "visual": "pass"
+      },
+      "sha256": "66ddd9d4fca7fc07dded2c3295e5562c8cfcf966e4ef8bf4843646616899b7f8",
+      "slug": "humanist-smooth",
+      "studyContractBaseline": 7,
+      "visualBaseline": 5.58
+    },
+    {
+      "byteReport": "byte-reports/humanist-quantized.json",
+      "byteReportSha256": "6efda6f33b4f8a738aea843ab3c84125e9c8fa1a2ff9abfacc32c991ee815fce",
+      "classification": "conventional-outline",
+      "compactDataFloorBits": 33763,
+      "compactDataFloorBytes": 4221,
+      "familyId": "S302",
+      "file": "fonts/humanist-quantized/glyphs.json",
+      "fixture": "fixtures/humanist-quantized/canonical-line.svg",
+      "fixtureSha256": "c80b48e6c1a3015b5db9704328be7595cef32ca89cdfa69444d9656e33f3d420",
+      "glyphCount": 76,
+      "gzipBytesInformational": 3756,
+      "memberId": "inshell.thought.glyph-library.set-03.humanist-quantized",
+      "name": "Humanist Quantized",
+      "quantizationStep": 0.25,
+      "rawPathBits": 145880,
+      "rawPathBytes": 18235,
+      "review": {
+        "metricContract": "hold",
+        "visual": "pass"
+      },
+      "sha256": "64534abe37e3e820061ccc2c54481453ffd79052100c241a104c34edbb03d269",
+      "slug": "humanist-quantized",
+      "studyContractBaseline": 7,
+      "visualBaseline": 5.63
+    }
+  ],
+  "id": "inshell.thought.glyph-library.set-03",
+  "license": "OFL-1.1",
+  "name": "THOUGHT Glyph Library — Third Set",
+  "ordinal": 3,
+  "ordinalLabel": "3rd Set",
+  "qualificationStatus": "declared-with-metric-exception",
+  "reviewSummary": {
+    "metricContractHold": 2,
+    "metricExceptionRequired": true,
+    "setMembershipDecision": "declared by the library owner with the baseline exception preserved",
+    "visualPass": 2
+  },
+  "schema": "inshell.thought.glyph-library-set.v1",
+  "slug": "third-set",
+  "version": 1
+}

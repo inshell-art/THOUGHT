@@ -1,0 +1,14 @@
+{
+  "candidateRevision": "c02-current-study-v19-20260731",
+  "glyphCount": 76,
+  "headerAndOffsetsBytes": 162,
+  "keccak256": "0x4ea6450fce37dc4079370ee798f5bb29f7ed677dcd1300c7fd9b3e27bb4b273e",
+  "magic": "IM76",
+  "pathBytes": 4101,
+  "rawPathByteDeltaFromReleasedV8": 1723,
+  "schema": "inshell.mono-76.packed-metadata.v1",
+  "sha256": "7ccb7fc26c0f7d8a25a70b85acea02ef270f7c10f1bb851eb68301dfadb24567",
+  "totalBytes": 4263,
+  "version": 1,
+  "weight": 400
+}

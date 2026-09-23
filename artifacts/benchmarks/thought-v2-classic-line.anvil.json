@@ -1,0 +1,582 @@
+{
+  "attestation": {
+    "authority": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "authorityEpoch": 1,
+    "profileId": "0x0dc216b0e8f18cabaa4afee047e80f349ed3c2de67ace911157300279f74c669",
+    "status": "mock-valid-eip712",
+    "verifier": "0x202CCe504e04bEd6fC0521238dDf04Bc9E8E15aB"
+  },
+  "chainId": 31337,
+  "contracts": {
+    "creationAttestationVerifier": "0x202CCe504e04bEd6fC0521238dDf04Bc9E8E15aB",
+    "pathNft": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "protocolRegistry": "0xDC11f7E700A4c898AE5CAddB1082cFfa76512aDD",
+    "thoughtNft": "0xf4B146FbA71F41E0592668ffbF264F1D186b2Ca8",
+    "thoughtRenderer": "0x8198f5d8F8CfFE8f9C413d98a0A55aEB8ab9FbB7",
+    "thoughtSpecRegistry": "0x2E2Ed0Cfd3AD2f1d34481277b3204d807Ca2F8c2"
+  },
+  "gallery": {
+    "attested": 6,
+    "mintedSupply": 68,
+    "source": "ThoughtNFTV2.tokenURI()",
+    "unattested": 62
+  },
+  "generatedAt": "2026-07-29T13:05:14.454Z",
+  "protocolRelease": {
+    "id": "0x998f506f5241c2adf7b6794a0a99b7def61a5faa3c4770fad9014cb88c82cf39",
+    "manifest": {
+      "artifacts": [
+        {
+          "keccak256": "0x0b60ad27f8f82aea214ae6950ca9b029dc202ca355eb57e3c75aeb03c5da3652",
+          "path": "protocol/current/v2/THOUGHT.v2.md",
+          "role": "creative-spec"
+        },
+        {
+          "keccak256": "0xc2b5db118c8a84ae32b03b25c5dff30e6997c6792396f3d6c8e3c22db36a53fe",
+          "path": "protocol/current/v2/work/thought.work.v2.profile.json",
+          "role": "work-profile"
+        },
+        {
+          "keccak256": "0xea2c5e7be4b20f212eee62a8d005d5af3d22dfbadc7d142ca434ba70f5aca7b3",
+          "path": "protocol/current/v2/context/thought.context.v2.profile.json",
+          "role": "context-profile"
+        },
+        {
+          "keccak256": "0x9c7d133821638acc74b90aa6311734c3c8b91adc4772ead546890ed037aee0bd",
+          "path": "protocol/current/v2/metadata/thought.metadata.v2.profile.json",
+          "role": "metadata-profile"
+        },
+        {
+          "keccak256": "0x245dc29490f3ea21b5d3d9c6859cd7c8b717917af624626bb6006ed15761ac37",
+          "path": "protocol/current/v2/provenance/thought.provenance.v2.schema.json",
+          "role": "provenance-schema"
+        },
+        {
+          "keccak256": "0x893abf6c70d6c81d8b71f9c97f1acffeef26ecde152e001e5bf870356cd7cd5e",
+          "path": "protocol/current/v2/attestation/thought.creation-workflow-attestation.v1.md",
+          "role": "creation-attestation-profile"
+        },
+        {
+          "keccak256": "0x0515dd9f3dea248523935cbdb156c752607b1b9203bee6c5846c8615e3487326",
+          "path": "protocol/current/v2/renderer/experiments/classic-line/thought.renderer.v2.classic-line.experiment.json",
+          "role": "renderer-profile"
+        },
+        {
+          "keccak256": "0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77",
+          "path": "protocol/current/v2/renderer/experiments/classic-line/classic-line.im76.bin",
+          "role": "renderer-glyph-packed-im76"
+        },
+        {
+          "keccak256": "0x4c294e796d2723970fc224940f8c9cf29cf049d4bacf6640659327a06fe17311",
+          "path": "vendor/thought-glyph-library-fifth-set-v8/manifest.json",
+          "role": "renderer-glyph-package-manifest"
+        },
+        {
+          "keccak256": "0x78999e86f9d119f9d8a6d905140ee424250bcf1d7075d7277a3dc1fcfccd5db4",
+          "path": "vendor/thought-glyph-library-fifth-set-v8/UNLICENSED.md",
+          "role": "renderer-glyph-license"
+        },
+        {
+          "keccak256": "0x2ce3b67552939e64f30ad40e16918431745d374780487fdbe530ccef5e3e88a6",
+          "path": "vendor/thought-glyph-library-fifth-set-v8/NOTICE.md",
+          "role": "renderer-glyph-notice"
+        }
+      ],
+      "chainId": "31337",
+      "glyphLibrary": {
+        "family": "Classic Line 76",
+        "libraryMemberId": "inshell.thought.glyph-library.set-05.classic-line",
+        "librarySetId": "inshell.thought.glyph-library.set-05",
+        "librarySetVersion": 8,
+        "packageReleaseCommit": "715487e6a2549f980284cdf7a0c0edca575defa6",
+        "packageVersion": "1.7.0",
+        "packedBytes": 2514,
+        "packedKeccak256": "0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77",
+        "packedSha256": "0xd06f7403b4963d8f46e6e8559c7ab0e4a21a65aa3681b210bfe433d74ea56b42",
+        "releaseReady": false,
+        "role": "noncanonical-solidity-gas-experiment",
+        "sourceRepositoryCommit": "a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c"
+      },
+      "identifiers": {
+        "contextProfile": "inshell.thought.context.v2.visible-utf8-64",
+        "contextProfileHash": "0x9894359f9294f4b3a871442b19d851203138fad4a648c16f62fc04f55dff02b8",
+        "metadataProfile": "inshell.thought.metadata.v2.terminal-chat",
+        "metadataProfileHash": "0x4cefae9cf44cc61bc8ec16e266ecb31f53e634834fe5975cc564ae9dfc51858b",
+        "provenance": "inshell.thought.provenance.v2",
+        "renderer": "inshell.thought.svg.v2.terminal-chat-path-glyphs",
+        "rendererHash": "0x01982604c90acf1ca63020e0c3761b25d8dc8fc3c267d27ace14cb0d2c813d73",
+        "workProfile": "inshell.thought.work.v2.terminal-english-64",
+        "workProfileHash": "0x2bf311e6034eb35e6d1f7bd92894012ee7e528609830cb3b28df1ce5dd82f85a"
+      },
+      "productionRegistrationAuthorized": false,
+      "rendererImplementation": {
+        "id": "inshell.thought.renderer.v2.classic-line-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+        "releaseReady": false,
+        "svgRendererAddress": "0x36b58F5C1969B7b6591D752ea6F5486D069010AB",
+        "usesForeignObject": false,
+        "usesSvgText": false
+      },
+      "schema": "inshell.thought.protocol.v2.disposable-anvil-set5-benchmark-manifest.v1",
+      "selectedSpec": {
+        "name": "THOUGHT.v2.md",
+        "thoughtSpecHash": "0x0b60ad27f8f82aea214ae6950ca9b029dc202ca355eb57e3c75aeb03c5da3652",
+        "thoughtSpecId": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410"
+      },
+      "status": "registered-disposable-anvil-noncanonical-experiment"
+    },
+    "manifestHash": "0x9bf5fb0dace6dfabb222016f7ea977759ea1710033496e6f6bc7e359768b729a",
+    "manifestJson": "{\"artifacts\":[{\"keccak256\":\"0x0b60ad27f8f82aea214ae6950ca9b029dc202ca355eb57e3c75aeb03c5da3652\",\"path\":\"protocol/current/v2/THOUGHT.v2.md\",\"role\":\"creative-spec\"},{\"keccak256\":\"0xc2b5db118c8a84ae32b03b25c5dff30e6997c6792396f3d6c8e3c22db36a53fe\",\"path\":\"protocol/current/v2/work/thought.work.v2.profile.json\",\"role\":\"work-profile\"},{\"keccak256\":\"0xea2c5e7be4b20f212eee62a8d005d5af3d22dfbadc7d142ca434ba70f5aca7b3\",\"path\":\"protocol/current/v2/context/thought.context.v2.profile.json\",\"role\":\"context-profile\"},{\"keccak256\":\"0x9c7d133821638acc74b90aa6311734c3c8b91adc4772ead546890ed037aee0bd\",\"path\":\"protocol/current/v2/metadata/thought.metadata.v2.profile.json\",\"role\":\"metadata-profile\"},{\"keccak256\":\"0x245dc29490f3ea21b5d3d9c6859cd7c8b717917af624626bb6006ed15761ac37\",\"path\":\"protocol/current/v2/provenance/thought.provenance.v2.schema.json\",\"role\":\"provenance-schema\"},{\"keccak256\":\"0x893abf6c70d6c81d8b71f9c97f1acffeef26ecde152e001e5bf870356cd7cd5e\",\"path\":\"protocol/current/v2/attestation/thought.creation-workflow-attestation.v1.md\",\"role\":\"creation-attestation-profile\"},{\"keccak256\":\"0x0515dd9f3dea248523935cbdb156c752607b1b9203bee6c5846c8615e3487326\",\"path\":\"protocol/current/v2/renderer/experiments/classic-line/thought.renderer.v2.classic-line.experiment.json\",\"role\":\"renderer-profile\"},{\"keccak256\":\"0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77\",\"path\":\"protocol/current/v2/renderer/experiments/classic-line/classic-line.im76.bin\",\"role\":\"renderer-glyph-packed-im76\"},{\"keccak256\":\"0x4c294e796d2723970fc224940f8c9cf29cf049d4bacf6640659327a06fe17311\",\"path\":\"vendor/thought-glyph-library-fifth-set-v8/manifest.json\",\"role\":\"renderer-glyph-package-manifest\"},{\"keccak256\":\"0x78999e86f9d119f9d8a6d905140ee424250bcf1d7075d7277a3dc1fcfccd5db4\",\"path\":\"vendor/thought-glyph-library-fifth-set-v8/UNLICENSED.md\",\"role\":\"renderer-glyph-license\"},{\"keccak256\":\"0x2ce3b67552939e64f30ad40e16918431745d374780487fdbe530ccef5e3e88a6\",\"path\":\"vendor/thought-glyph-library-fifth-set-v8/NOTICE.md\",\"role\":\"renderer-glyph-notice\"}],\"chainId\":\"31337\",\"glyphLibrary\":{\"family\":\"Classic Line 76\",\"libraryMemberId\":\"inshell.thought.glyph-library.set-05.classic-line\",\"librarySetId\":\"inshell.thought.glyph-library.set-05\",\"librarySetVersion\":8,\"packageReleaseCommit\":\"715487e6a2549f980284cdf7a0c0edca575defa6\",\"packageVersion\":\"1.7.0\",\"packedBytes\":2514,\"packedKeccak256\":\"0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77\",\"packedSha256\":\"0xd06f7403b4963d8f46e6e8559c7ab0e4a21a65aa3681b210bfe433d74ea56b42\",\"releaseReady\":false,\"role\":\"noncanonical-solidity-gas-experiment\",\"sourceRepositoryCommit\":\"a0ac1dafd2bc73ad023fc0e32e9b95b5385f608c\"},\"identifiers\":{\"contextProfile\":\"inshell.thought.context.v2.visible-utf8-64\",\"contextProfileHash\":\"0x9894359f9294f4b3a871442b19d851203138fad4a648c16f62fc04f55dff02b8\",\"metadataProfile\":\"inshell.thought.metadata.v2.terminal-chat\",\"metadataProfileHash\":\"0x4cefae9cf44cc61bc8ec16e266ecb31f53e634834fe5975cc564ae9dfc51858b\",\"provenance\":\"inshell.thought.provenance.v2\",\"renderer\":\"inshell.thought.svg.v2.terminal-chat-path-glyphs\",\"rendererHash\":\"0x01982604c90acf1ca63020e0c3761b25d8dc8fc3c267d27ace14cb0d2c813d73\",\"workProfile\":\"inshell.thought.work.v2.terminal-english-64\",\"workProfileHash\":\"0x2bf311e6034eb35e6d1f7bd92894012ee7e528609830cb3b28df1ce5dd82f85a\"},\"productionRegistrationAuthorized\":false,\"rendererImplementation\":{\"id\":\"inshell.thought.renderer.v2.classic-line-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom\",\"releaseReady\":false,\"svgRendererAddress\":\"0x36b58F5C1969B7b6591D752ea6F5486D069010AB\",\"usesForeignObject\":false,\"usesSvgText\":false},\"schema\":\"inshell.thought.protocol.v2.disposable-anvil-set5-benchmark-manifest.v1\",\"selectedSpec\":{\"name\":\"THOUGHT.v2.md\",\"thoughtSpecHash\":\"0x0b60ad27f8f82aea214ae6950ca9b029dc202ca355eb57e3c75aeb03c5da3652\",\"thoughtSpecId\":\"0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410\"},\"status\":\"registered-disposable-anvil-noncanonical-experiment\"}",
+    "manifestUri": "dev://thought/v2/anvil/0x9bf5fb0dace6dfabb222016f7ea977759ea1710033496e6f6bc7e359768b729a",
+    "status": "registered-disposable-anvil-noncanonical-experiment"
+  },
+  "renderer": {
+    "canonicalRendererId": "inshell.thought.svg.v2.terminal-chat-path-glyphs",
+    "glyphDefinitionsHash": "0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77",
+    "glyphPackedBytes": 2514,
+    "glyphPackedHash": "0x139753d435a99bff61fd410929e57f9038ab5772ccc7a35a26a76ee03545fb77",
+    "glyphDefinitionsIndexPointer": "0x0000000000000000000000000000000000000000",
+    "glyphDefinitionsPointer1": "0x51A1ceB83B83F1985a81C295d1fF28Afef186E02",
+    "glyphDefinitionsPointer2": "0x0000000000000000000000000000000000000000",
+    "glyphLibraryMemberId": "inshell.thought.glyph-library.set-05.classic-line",
+    "implementationId": "inshell.thought.renderer.v2.classic-line-76-im76-native-paths-frame-32-006100-green-00ff00-prompt-top-agent-bottom",
+    "releaseReady": false,
+    "svgRendererAddress": "0x36b58F5C1969B7b6591D752ea6F5486D069010AB"
+  },
+  "rpcUrl": "http://127.0.0.1:8551",
+  "schema": "inshell.thought.v2.anvil-set5-benchmark-runtime.v1",
+  "selectedSpec": {
+    "hash": "0x0b60ad27f8f82aea214ae6950ca9b029dc202ca355eb57e3c75aeb03c5da3652",
+    "id": "0x0a33583e39050834eb77372ea8b41ceded8fe4bb47c31fe1a72ebb880351b410",
+    "name": "THOUGHT.v2.md",
+    "ref": "dev://thought/v2/current/THOUGHT.v2.md"
+  },
+  "status": "ready-noncanonical-benchmark",
+  "telemetry": {
+    "averageMintGas": "1377254",
+    "tokenUriGas": {
+      "acceptance": {
+        "hardBelow": 10000000,
+        "hardPass": true,
+        "preferredBelow": 8000000,
+        "preferredPass": true
+      },
+      "average": 4774865,
+      "maximum": 6720794,
+      "measurements": [
+        {
+          "agentBytes": 26,
+          "gas": 5103754,
+          "promptBytes": 16,
+          "tokenNumber": 1
+        },
+        {
+          "agentBytes": 11,
+          "gas": 4358279,
+          "promptBytes": 26,
+          "tokenNumber": 2
+        },
+        {
+          "agentBytes": 10,
+          "gas": 3970343,
+          "promptBytes": 13,
+          "tokenNumber": 3
+        },
+        {
+          "agentBytes": 35,
+          "gas": 4776694,
+          "promptBytes": 24,
+          "tokenNumber": 4
+        },
+        {
+          "agentBytes": 17,
+          "gas": 4486279,
+          "promptBytes": 27,
+          "tokenNumber": 5
+        },
+        {
+          "agentBytes": 3,
+          "gas": 3555688,
+          "promptBytes": 3,
+          "tokenNumber": 6
+        },
+        {
+          "agentBytes": 1,
+          "gas": 3570773,
+          "promptBytes": 1,
+          "tokenNumber": 7
+        },
+        {
+          "agentBytes": 3,
+          "gas": 3594060,
+          "promptBytes": 3,
+          "tokenNumber": 8
+        },
+        {
+          "agentBytes": 2,
+          "gas": 3504497,
+          "promptBytes": 1,
+          "tokenNumber": 9
+        },
+        {
+          "agentBytes": 2,
+          "gas": 3603763,
+          "promptBytes": 2,
+          "tokenNumber": 10
+        },
+        {
+          "agentBytes": 3,
+          "gas": 3651718,
+          "promptBytes": 5,
+          "tokenNumber": 11
+        },
+        {
+          "agentBytes": 3,
+          "gas": 3593897,
+          "promptBytes": 3,
+          "tokenNumber": 12
+        },
+        {
+          "agentBytes": 3,
+          "gas": 3626502,
+          "promptBytes": 3,
+          "tokenNumber": 13
+        },
+        {
+          "agentBytes": 1,
+          "gas": 4104579,
+          "promptBytes": 1,
+          "tokenNumber": 14
+        },
+        {
+          "agentBytes": 64,
+          "gas": 5629440,
+          "promptBytes": 64,
+          "tokenNumber": 15
+        },
+        {
+          "agentBytes": 64,
+          "gas": 5839792,
+          "promptBytes": 64,
+          "tokenNumber": 16
+        },
+        {
+          "agentBytes": 64,
+          "gas": 5833350,
+          "promptBytes": 64,
+          "tokenNumber": 17
+        },
+        {
+          "agentBytes": 64,
+          "gas": 6326429,
+          "promptBytes": 64,
+          "tokenNumber": 18
+        },
+        {
+          "agentBytes": 28,
+          "gas": 4349476,
+          "promptBytes": 14,
+          "tokenNumber": 19
+        },
+        {
+          "agentBytes": 25,
+          "gas": 4421453,
+          "promptBytes": 22,
+          "tokenNumber": 20
+        },
+        {
+          "agentBytes": 28,
+          "gas": 4397251,
+          "promptBytes": 21,
+          "tokenNumber": 21
+        },
+        {
+          "agentBytes": 35,
+          "gas": 4592232,
+          "promptBytes": 15,
+          "tokenNumber": 22
+        },
+        {
+          "agentBytes": 28,
+          "gas": 4589325,
+          "promptBytes": 28,
+          "tokenNumber": 23
+        },
+        {
+          "agentBytes": 34,
+          "gas": 4506438,
+          "promptBytes": 19,
+          "tokenNumber": 24
+        },
+        {
+          "agentBytes": 26,
+          "gas": 4695803,
+          "promptBytes": 32,
+          "tokenNumber": 25
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4739197,
+          "promptBytes": 28,
+          "tokenNumber": 26
+        },
+        {
+          "agentBytes": 26,
+          "gas": 5109605,
+          "promptBytes": 29,
+          "tokenNumber": 27
+        },
+        {
+          "agentBytes": 39,
+          "gas": 4779250,
+          "promptBytes": 23,
+          "tokenNumber": 28
+        },
+        {
+          "agentBytes": 37,
+          "gas": 4653109,
+          "promptBytes": 18,
+          "tokenNumber": 29
+        },
+        {
+          "agentBytes": 40,
+          "gas": 4719256,
+          "promptBytes": 25,
+          "tokenNumber": 30
+        },
+        {
+          "agentBytes": 35,
+          "gas": 4875634,
+          "promptBytes": 33,
+          "tokenNumber": 31
+        },
+        {
+          "agentBytes": 34,
+          "gas": 4806863,
+          "promptBytes": 33,
+          "tokenNumber": 32
+        },
+        {
+          "agentBytes": 41,
+          "gas": 4718236,
+          "promptBytes": 25,
+          "tokenNumber": 33
+        },
+        {
+          "agentBytes": 35,
+          "gas": 4861153,
+          "promptBytes": 33,
+          "tokenNumber": 34
+        },
+        {
+          "agentBytes": 27,
+          "gas": 4723303,
+          "promptBytes": 35,
+          "tokenNumber": 35
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4827758,
+          "promptBytes": 33,
+          "tokenNumber": 36
+        },
+        {
+          "agentBytes": 39,
+          "gas": 4971315,
+          "promptBytes": 37,
+          "tokenNumber": 37
+        },
+        {
+          "agentBytes": 31,
+          "gas": 4783155,
+          "promptBytes": 34,
+          "tokenNumber": 38
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4850460,
+          "promptBytes": 35,
+          "tokenNumber": 39
+        },
+        {
+          "agentBytes": 41,
+          "gas": 5483916,
+          "promptBytes": 29,
+          "tokenNumber": 40
+        },
+        {
+          "agentBytes": 36,
+          "gas": 4694063,
+          "promptBytes": 23,
+          "tokenNumber": 41
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4859357,
+          "promptBytes": 33,
+          "tokenNumber": 42
+        },
+        {
+          "agentBytes": 39,
+          "gas": 4898895,
+          "promptBytes": 32,
+          "tokenNumber": 43
+        },
+        {
+          "agentBytes": 41,
+          "gas": 4985949,
+          "promptBytes": 36,
+          "tokenNumber": 44
+        },
+        {
+          "agentBytes": 42,
+          "gas": 4829617,
+          "promptBytes": 31,
+          "tokenNumber": 45
+        },
+        {
+          "agentBytes": 46,
+          "gas": 5021563,
+          "promptBytes": 29,
+          "tokenNumber": 46
+        },
+        {
+          "agentBytes": 41,
+          "gas": 4955213,
+          "promptBytes": 34,
+          "tokenNumber": 47
+        },
+        {
+          "agentBytes": 42,
+          "gas": 4838061,
+          "promptBytes": 29,
+          "tokenNumber": 48
+        },
+        {
+          "agentBytes": 38,
+          "gas": 5024292,
+          "promptBytes": 38,
+          "tokenNumber": 49
+        },
+        {
+          "agentBytes": 36,
+          "gas": 4687897,
+          "promptBytes": 24,
+          "tokenNumber": 50
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4687410,
+          "promptBytes": 25,
+          "tokenNumber": 51
+        },
+        {
+          "agentBytes": 36,
+          "gas": 4948434,
+          "promptBytes": 36,
+          "tokenNumber": 52
+        },
+        {
+          "agentBytes": 35,
+          "gas": 5340281,
+          "promptBytes": 29,
+          "tokenNumber": 53
+        },
+        {
+          "agentBytes": 34,
+          "gas": 4821479,
+          "promptBytes": 35,
+          "tokenNumber": 54
+        },
+        {
+          "agentBytes": 41,
+          "gas": 4838142,
+          "promptBytes": 25,
+          "tokenNumber": 55
+        },
+        {
+          "agentBytes": 37,
+          "gas": 4842667,
+          "promptBytes": 31,
+          "tokenNumber": 56
+        },
+        {
+          "agentBytes": 37,
+          "gas": 4726289,
+          "promptBytes": 27,
+          "tokenNumber": 57
+        },
+        {
+          "agentBytes": 36,
+          "gas": 4750553,
+          "promptBytes": 27,
+          "tokenNumber": 58
+        },
+        {
+          "agentBytes": 45,
+          "gas": 5015107,
+          "promptBytes": 33,
+          "tokenNumber": 59
+        },
+        {
+          "agentBytes": 42,
+          "gas": 4912945,
+          "promptBytes": 33,
+          "tokenNumber": 60
+        },
+        {
+          "agentBytes": 39,
+          "gas": 5043514,
+          "promptBytes": 38,
+          "tokenNumber": 61
+        },
+        {
+          "agentBytes": 38,
+          "gas": 4936383,
+          "promptBytes": 36,
+          "tokenNumber": 62
+        },
+        {
+          "agentBytes": 40,
+          "gas": 4650200,
+          "promptBytes": 17,
+          "tokenNumber": 63
+        },
+        {
+          "agentBytes": 42,
+          "gas": 5072609,
+          "promptBytes": 36,
+          "tokenNumber": 64
+        },
+        {
+          "agentBytes": 40,
+          "gas": 4972805,
+          "promptBytes": 34,
+          "tokenNumber": 65
+        },
+        {
+          "agentBytes": 39,
+          "gas": 5438223,
+          "promptBytes": 34,
+          "tokenNumber": 66
+        },
+        {
+          "agentBytes": 64,
+          "gas": 6594066,
+          "promptBytes": 64,
+          "tokenNumber": 67
+        },
+        {
+          "agentBytes": 64,
+          "gas": 6720794,
+          "promptBytes": 64,
+          "tokenNumber": 68
+        }
+      ],
+      "minimum": 3504497,
+      "preferredMissTokenNumbers": []
+    },
+    "maxProvenanceBytes": 1527,
+    "minProvenanceBytes": 1168,
+    "totalMintGas": "93653325"
+  }
+}

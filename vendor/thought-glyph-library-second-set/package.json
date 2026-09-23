@@ -1,0 +1,17 @@
+{
+  "description": "THOUGHT Glyph Library — Second Set",
+  "exports": {
+    ".": "./index.mjs",
+    "./fonts/*": "./fonts/*/glyphs.json",
+    "./manifest": "./manifest.json",
+    "./storage-model": "./storage-model.json"
+  },
+  "license": "UNLICENSED",
+  "name": "@inshell/thought-glyph-library-second-set",
+  "private": true,
+  "scripts": {
+    "verify": "node ./verify.mjs"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}

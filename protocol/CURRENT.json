@@ -1,0 +1,9 @@
+{
+  "candidate": "current/v2/README.md",
+  "historicalAttempt": "releases/v2/README.md",
+  "id": "inshell.thought.protocol.v2",
+  "published": false,
+  "registered": false,
+  "status": "implementation-candidate",
+  "version": "v2"
+}

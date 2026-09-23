@@ -34,11 +34,11 @@ export type ThoughtRunPayload = {
   };
   input: {
     thoughtSpec: ThoughtRunSpec;
-    prompt: string;
+    promptLine: string;
   };
   outputContract: {
     oneRoundOnly: true;
-    normalize: true;
+    normalize: false;
     validate: true;
   };
 };
@@ -85,7 +85,7 @@ export const buildThoughtRunPayload = (input: {
   route: ThoughtRunRoute;
   provider: ThoughtRunProvider;
   model: string;
-  prompt: string;
+  promptLine: string;
   thoughtSpec: ThoughtRunSpec;
 }): ThoughtRunPayload => {
   return {
@@ -98,11 +98,11 @@ export const buildThoughtRunPayload = (input: {
     },
     input: {
       thoughtSpec: input.thoughtSpec,
-      prompt: input.prompt,
+      promptLine: input.promptLine,
     },
     outputContract: {
       oneRoundOnly: true,
-      normalize: true,
+      normalize: false,
       validate: true,
     },
   };
@@ -129,27 +129,13 @@ export const thoughtRunProvenanceConfig = (payload: ThoughtRunPayload) => ({
   thoughtSpec: thoughtRunSpecAnchor(payload),
 });
 
-export const buildThoughtRuntimePrompt = (prompt: string) => [
-  "Return one THOUGHT candidate only.",
-  "",
-  "Hard output rules:",
-  "- one line only",
-  "- 128 characters max after normalization",
-  "- letters and spaces only",
-  "- no punctuation",
-  "- no markdown",
-  "- no explanation",
-  "- no alternatives",
-  "",
-  "Prompt:",
-  prompt,
-].join("\n");
+export const buildThoughtRuntimePrompt = (promptLine: string) => promptLine;
 
 export const toOpenRouterChatPayload = (payload: ThoughtRunPayload) => ({
   model: payload.config.model,
   messages: [
     { role: "system", content: payload.input.thoughtSpec.text },
-    { role: "user", content: buildThoughtRuntimePrompt(payload.input.prompt) },
+    { role: "user", content: payload.input.promptLine },
   ],
   ...(payload.config.request.maxOutputTokens === null
     ? {}
@@ -171,7 +157,7 @@ export const toOpenAIResponsesPayload = (payload: ThoughtRunPayload) => ({
       content: [
         {
           type: "input_text",
-          text: buildThoughtRuntimePrompt(payload.input.prompt),
+          text: payload.input.promptLine,
         },
       ],
     },
@@ -192,7 +178,7 @@ export const toAnthropicMessagesPayload = (payload: ThoughtRunPayload) => ({
   ...(payload.config.request.maxOutputTokens === null
     ? {}
     : { max_tokens: payload.config.request.maxOutputTokens }),
-  messages: [{ role: "user", content: buildThoughtRuntimePrompt(payload.input.prompt) }],
+  messages: [{ role: "user", content: payload.input.promptLine }],
   ...(payload.config.request.stop
     ? { stop_sequences: [payload.config.request.stop] }
     : {}),
@@ -211,7 +197,7 @@ export const toAnthropicMessagesPayload = (payload: ThoughtRunPayload) => ({
 export const toOllamaGeneratePayload = (payload: ThoughtRunPayload) => ({
   model: payload.config.model.replace(/^ollama:/, "").trim(),
   system: payload.input.thoughtSpec.text,
-  prompt: buildThoughtRuntimePrompt(payload.input.prompt),
+  prompt: payload.input.promptLine,
   stream: false,
   options: {
     ...(payload.config.request.maxOutputTokens === null

@@ -1,0 +1,35 @@
+{
+  "description": "Installable snapshot of the current Classic Book 76 comparison candidate",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./glyphs": "./glyphs.json",
+    "./handoff": "./HANDOFF.md",
+    "./onchain/decoder": "./onchain/decoder.mjs",
+    "./onchain/packed": "./onchain/packed.bin",
+    "./onchain/packed.hex": "./onchain/packed.hex",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "onchain",
+    "glyphs.json",
+    "HANDOFF.md",
+    "index.mjs",
+    "NOTICE.md",
+    "SHA256SUMS",
+    "UNLICENSED.md",
+    "verify.mjs"
+  ],
+  "license": "UNLICENSED",
+  "name": "@inshell/classic-book-76-current-candidate",
+  "private": true,
+  "scripts": {
+    "prepack": "npm run verify",
+    "verify": "node ./verify.mjs"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "0.19.0-candidate.20260731"
+}

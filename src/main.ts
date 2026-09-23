@@ -1861,7 +1861,7 @@ const sameRejectedRunContext = (
   payload: ThoughtRunPayload,
   reasonCode: number,
 ) =>
-  previous.prompt === payload.input.prompt &&
+  previous.prompt === payload.input.promptLine &&
   previous.route === payload.config.route &&
   previous.provider === payload.config.provider &&
   previous.model === payload.config.model &&
@@ -1881,7 +1881,7 @@ const rememberRejectedRun = (
     kind: "rejected-run",
     reasonCode: preview.reasonCode,
     reasonLabel: previewWorkReasonLabel(preview.reasonCode),
-    prompt: payload.input.prompt,
+    prompt: payload.input.promptLine,
     modelReturn,
     normalizedCandidate,
     normalizedLength: normalizedCandidate ? normalizedCandidate.length : undefined,
@@ -2572,7 +2572,7 @@ const buildCurrentThoughtRunPayload = (prompt: string, model: string) => {
     route: sessionState.mode,
     provider: getCurrentProviderForProvenance(),
     model,
-    prompt,
+    promptLine: prompt,
     thoughtSpec: {
       id: spec.specId,
       ref: spec.ref,
@@ -2592,7 +2592,7 @@ const buildThoughtRunPayloadFromContext = (context: ThoughtRunContext) => {
     route: context.mode,
     provider: isThoughtRunProvider(context.provider) ? context.provider : getCurrentProviderForProvenance(),
     model: context.model,
-    prompt: context.prompt,
+    promptLine: context.prompt,
     thoughtSpec: {
       id: spec.specId,
       ref: spec.ref,
@@ -5620,7 +5620,7 @@ const recordThoughtRun = (
     mode: payload.config.route,
     provider: payload.config.provider,
     model: payload.config.model,
-    prompt: payload.input.prompt,
+    prompt: payload.input.promptLine,
     returnedText: rawOutput,
     clientGeneratedAt,
     request: provenanceConfig.request,
@@ -5632,7 +5632,7 @@ const recordThoughtRun = (
     route: payload.config.route,
     provider: payload.config.provider,
     model: payload.config.model,
-    prompt: payload.input.prompt,
+    prompt: payload.input.promptLine,
     request: provenanceConfig.request,
     web: provenanceConfig.web,
     thoughtSpec: provenanceConfig.thoughtSpec,

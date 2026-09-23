@@ -1,5 +1,10 @@
 # THOUGHT V2 Render Release Notification
 
+> Historical release notification for the superseded
+> `thought.svg.v2.fixed-a-32` renderer. It remains release evidence, not current
+> protocol authority. Resolve the active release through
+> [`protocol/CURRENT.json`](../../protocol/CURRENT.json).
+
 Date: 2026-07-12
 Audience: DEV and downstream THOUGHT render consumers
 Status: stable render-component release

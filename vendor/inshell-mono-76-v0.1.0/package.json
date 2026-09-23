@@ -1,0 +1,60 @@
+{
+  "bugs": {
+    "url": "https://github.com/inshell-art/inshell-mono-76/issues"
+  },
+  "description": "Inshell Mono 76: exact native SVG paths for a restricted 76-character Source Code Pro Regular 400 subset",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./index.mjs",
+    "./license": "./LICENSE-OFL.md",
+    "./manifest": "./manifest.json",
+    "./notice": "./NOTICE.md",
+    "./onchain/decoder": "./onchain/decoder.mjs",
+    "./package.json": "./package.json",
+    "./storage-model": "./storage-model.json",
+    "./weights/*": "./fonts/*/glyphs.json"
+  },
+  "files": [
+    "byte-reports",
+    "fonts",
+    "fixtures",
+    "onchain",
+    "reference",
+    "src",
+    "gallery.html",
+    "HANDOFF.md",
+    "index.mjs",
+    "LICENSE-OFL.md",
+    "LICENSES.md",
+    "manifest.json",
+    "NOTICE.md",
+    "ONCHAIN.md",
+    "PROVENANCE.md",
+    "README.md",
+    "REVIEW.md",
+    "SHA256SUMS",
+    "storage-model.json",
+    "UNLICENSED.md",
+    "upstream.json",
+    "verify.mjs"
+  ],
+  "homepage": "https://github.com/inshell-art/inshell-mono-76#readme",
+  "license": "SEE LICENSE IN LICENSES.md",
+  "name": "@inshell/mono-76",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/inshell-art/inshell-mono-76.git"
+  },
+  "scripts": {
+    "build": "node ./src/build.mjs",
+    "prepack": "npm run verify",
+    "refresh:source": "node ./src/refresh-sources.mjs",
+    "verify": "node ./verify.mjs"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "0.1.0"
+}

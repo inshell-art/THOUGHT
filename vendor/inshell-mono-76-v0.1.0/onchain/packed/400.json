@@ -1,0 +1,16 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "format": "IM76 uint16-offset UTF-8 SVG-path stream v1",
+  "glyphCount": 76,
+  "magic": "IM76",
+  "offsetWidthBits": 16,
+  "pathBytes": 20053,
+  "pathOffset": 162,
+  "schema": "inshell.mono-76.packed-artifact.v1",
+  "sha256": "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6",
+  "sourcePathStreamSha256": "e90b269f15f3c5f6ac6e71244f2120198d4b7196010b158a51b43a1ea4409d05",
+  "style": "Regular",
+  "totalBytes": 20215,
+  "version": 1,
+  "weight": 400
+}

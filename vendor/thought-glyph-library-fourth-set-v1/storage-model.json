@@ -1,0 +1,60 @@
+{
+  "conclusion": "Set 4 shares one background palette and one Tight tile profile across three color-neutral geometries. Expanded SVG geometry remains the dominant cost; this is not a deployed-bytecode claim.",
+  "exclusions": [
+    "geometry decoder and executable renderer",
+    "glyph placement, lookup, wrapping, and retrieval",
+    "SVG serialization and XML attributes",
+    "package metadata, hashes, aliases, and validation",
+    "deployed bytecode and gas"
+  ],
+  "expandedNativeSvgGeometry": {
+    "fonts": [
+      {
+        "gzipBytesInformational": 1030,
+        "rawPathBytes": 14013,
+        "slug": "tile-vertical-ledger",
+        "sourceSlug": "vertical-ledger"
+      },
+      {
+        "gzipBytesInformational": 2456,
+        "rawPathBytes": 59444,
+        "slug": "tile-column-relay",
+        "sourceSlug": "column-relay"
+      },
+      {
+        "gzipBytesInformational": 7986,
+        "rawPathBytes": 23911,
+        "slug": "tile-humanist-smooth",
+        "sourceSlug": "humanist-smooth"
+      }
+    ],
+    "gzipBytesInformational": 11472,
+    "totalPathBits": 778944,
+    "totalPathBytes": 97368
+  },
+  "fontCount": 3,
+  "packageAuditMirrors": {
+    "canonicalTextBytes": 510,
+    "paletteJsonBytes": 3278,
+    "tilePolicyJsonBytes": 2183,
+    "tileProfilesJsonBytes": 867
+  },
+  "schema": "inshell.thought.glyph-library.storage-model.study.v1",
+  "setId": "inshell.thought.glyph-library.set-04",
+  "sharedPaintData": {
+    "blackRgb24Bytes": 3,
+    "bytesPerFontAtThreeFonts": 29.333333333333332,
+    "compactSharedPaintDataFloorBytes": 88,
+    "foregroundMaskBytes": 4,
+    "inlineBackgroundAndForegroundHexFloorAvoided": 3150,
+    "note": "The 88-byte floor is shared data only: 26 RGB24 backgrounds, one 26-bit foreground mask rounded to four bytes, and shared black/white RGB24 values. White is also the nonletter background.",
+    "paletteRgb24DataFloorBytes": 78,
+    "whiteRgb24Bytes": 3
+  },
+  "tileLayoutData": {
+    "normalizationJsonBytesAcrossFonts": 560,
+    "note": "Layout/profile and per-font normalization are reported separately from the shared paint floor.",
+    "profileCount": 1,
+    "profileJsonBytes": 867
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "familyId": "S502",
+  "glyphRecords": 76,
+  "gzipPathBytesInformational": 661,
+  "measuredAnvilPragueCreationGas": 602572,
+  "measuredGasScope": "Independent immutable glyph-data contract only; excludes renderer, retrieval, minting, and repeated renders.",
+  "packedBytes": 2540,
+  "packedHeaderAndOffsetsBytes": 162,
+  "packedPathBytes": 2378,
+  "packedSha256": "3ab51d7dcdce7e358e7c76002b8f78ddaa448a99de2116a238f7e22209f2bd60",
+  "pathCommands": {
+    "L": 143,
+    "M": 120,
+    "Q": 147,
+    "Z": 7
+  },
+  "punctuationGlyphs": 13,
+  "rawPathBits": 19024,
+  "rawPathBytes": 2378,
+  "schema": "inshell.thought.glyph-library.set-05.byte-report.v1",
+  "slug": "classic-book",
+  "sourceCandidate": "C02",
+  "visibleGlyphs": 75
+}

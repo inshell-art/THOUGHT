@@ -1,0 +1,14 @@
+{
+  "familyId": "S502",
+  "glyphCount": 76,
+  "headerBytes": 162,
+  "magic": "IM76",
+  "pathBytes": 2378,
+  "schema": "inshell.thought.glyph-library.set-05.im76-payload.v1",
+  "sha256": "3ab51d7dcdce7e358e7c76002b8f78ddaa448a99de2116a238f7e22209f2bd60",
+  "slug": "classic-book",
+  "sourceCandidate": "C02",
+  "totalBytes": 2540,
+  "version": 1,
+  "weight": 400
+}

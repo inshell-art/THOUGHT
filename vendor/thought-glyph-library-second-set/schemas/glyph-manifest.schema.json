@@ -1,0 +1,158 @@
+{
+  "$id": "inshell.thought.glyph-manifest.set-02.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonicalOrder": {
+      "const": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&"
+    },
+    "family": {
+      "additionalProperties": false,
+      "properties": {
+        "construction": {
+          "additionalProperties": false,
+          "properties": {
+            "approach": {
+              "enum": [
+                "segment-mask",
+                "stroke-graph",
+                "routed-path"
+              ]
+            },
+            "approachNumber": {
+              "enum": [
+                2,
+                3,
+                4
+              ]
+            },
+            "grammar": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "approach",
+            "approachNumber",
+            "grammar"
+          ],
+          "type": "object"
+        },
+        "id": {
+          "pattern": "^S2[0-9]{2}$",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "slug": {
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "thesis": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "slug",
+        "name",
+        "thesis",
+        "construction"
+      ],
+      "type": "object"
+    },
+    "glyphs": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "advanceWidth": {
+            "const": 6
+          },
+          "character": {
+            "maxLength": 1,
+            "minLength": 1,
+            "type": "string"
+          },
+          "codepoint": {
+            "maximum": 126,
+            "minimum": 32,
+            "type": "integer"
+          },
+          "d": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "character",
+          "codepoint",
+          "advanceWidth",
+          "d"
+        ],
+        "type": "object"
+      },
+      "maxItems": 76,
+      "minItems": 76,
+      "type": "array"
+    },
+    "librarySet": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "inshell.thought.glyph-library.set-02"
+        },
+        "memberId": {
+          "pattern": "^inshell\\.thought\\.glyph-library\\.set-02\\.[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "type": "string"
+        },
+        "name": {
+          "const": "THOUGHT Glyph Library — Second Set"
+        },
+        "ordinal": {
+          "const": 2
+        },
+        "ordinalLabel": {
+          "const": "2nd Set"
+        },
+        "qualificationStatus": {
+          "const": "exploratory-complete"
+        },
+        "slug": {
+          "const": "second-set"
+        },
+        "version": {
+          "const": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ordinal",
+        "ordinalLabel",
+        "slug",
+        "version",
+        "qualificationStatus",
+        "memberId"
+      ],
+      "type": "object"
+    },
+    "metrics": {
+      "$ref": "glyph-metrics.schema.json"
+    },
+    "schema": {
+      "const": "inshell.thought.glyph-manifest.study.v1"
+    }
+  },
+  "required": [
+    "schema",
+    "librarySet",
+    "family",
+    "canonicalOrder",
+    "metrics",
+    "glyphs"
+  ],
+  "title": "THOUGHT Second Set glyph manifest",
+  "type": "object"
+}

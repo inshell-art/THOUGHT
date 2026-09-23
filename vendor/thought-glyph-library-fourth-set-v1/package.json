@@ -1,0 +1,25 @@
+{
+  "description": "THOUGHT Glyph Library — Fourth Set",
+  "exports": {
+    ".": "./index.mjs",
+    "./fonts/*": "./fonts/*/glyphs.json",
+    "./license": "./UNLICENSED.md",
+    "./manifest": "./manifest.json",
+    "./palette": "./palette.json",
+    "./palette-runtime": "./color-font-v1.mjs",
+    "./palette-text": "./COLOR_FONT.v1.txt",
+    "./storage-model": "./storage-model.json",
+    "./third-party-license": "./LICENSE-OFL.md",
+    "./tile-policy": "./tile-policy.json",
+    "./tile-profiles": "./tile-profiles.json"
+  },
+  "license": "SEE LICENSE IN UNLICENSED.md",
+  "name": "@inshell/thought-glyph-library-fourth-set",
+  "private": true,
+  "scripts": {
+    "verify": "node ./verify.mjs"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "1.0.0"
+}

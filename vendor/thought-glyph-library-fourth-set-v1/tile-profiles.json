@@ -1,0 +1,31 @@
+{
+  "defaultProfile": "tight-v1",
+  "profiles": [
+    {
+      "advanceWidth": 6.5,
+      "blackForegroundLetters": "ADEFHJKLOPQRSVWXYZ",
+      "blackLuminanceCutoff": 0.1791287847,
+      "cornerRadius": 0.15,
+      "edgeStyle": "square",
+      "effectiveCornerRadius": 0,
+      "foregroundCandidates": [
+        "#000000",
+        "#ffffff"
+      ],
+      "foregroundRule": "higher WCAG 2.x contrast; exact ties choose black",
+      "glyphScale": 0.96,
+      "id": "tight-v1",
+      "label": "Tight",
+      "minimumChosenContrast": 4.7734,
+      "monospaced": true,
+      "outlineRequired": false,
+      "spaceAdvanceWidth": 6.5,
+      "tileGap": 0.2,
+      "tileHeight": 8,
+      "tileWidth": 6.5,
+      "whiteForegroundLetters": "BCGIMNTU"
+    }
+  ],
+  "schema": "inshell.thought.glyph-library.tile-profiles.v1",
+  "setId": "inshell.thought.glyph-library.set-04"
+}

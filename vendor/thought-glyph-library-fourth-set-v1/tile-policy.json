@@ -1,0 +1,64 @@
+{
+  "colorBinding": {
+    "authoritativeMapRepertoire": "uppercase A-Z only",
+    "canonicalKeccak256": "0x5d16e42e857c3d93524b679426a87d59ec414466b581a904a72992d64c21a12f",
+    "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+    "currentProtocolDependency": false,
+    "foreground": {
+      "blackLetters": "ADEFHJKLOPQRSVWXYZ",
+      "candidates": [
+        "#000000",
+        "#ffffff"
+      ],
+      "minimumChosenContrast": 4.7734,
+      "mode": "maximum-wcag-contrast",
+      "outlineRequired": false,
+      "tieBreak": "#000000",
+      "whiteLetters": "BCGIMNTU"
+    },
+    "lowercase": {
+      "authority": "Set 4 extension",
+      "mode": "uppercase-alias-background",
+      "range": "a-z"
+    },
+    "nonletters": {
+      "authority": "Set 4 extension",
+      "color": "#ffffff",
+      "mode": "neutral-white-background",
+      "range": "digits and restricted punctuation"
+    },
+    "paletteId": "inshell.colorfont.v1",
+    "paletteRole": "tile-background",
+    "paletteVersion": "1",
+    "perGlyphColorDuplication": false,
+    "setRepertoire": "76 restricted characters",
+    "sourceStatus": "archived-v1-palette-source",
+    "space": {
+      "drawsBackground": false,
+      "drawsGlyph": false,
+      "key": "SPACE",
+      "mode": "metrics-only"
+    },
+    "uppercase": {
+      "mode": "direct-authoritative-background",
+      "range": "A-Z"
+    }
+  },
+  "colorPolicy": {
+    "authoritativeMapExtension": true,
+    "foreground": "black or white, whichever has the higher WCAG 2.x contrast ratio",
+    "id": "inshell.thought.glyph-library.set-04.tile-color-policy.v1",
+    "lowercase": "uppercase-alias tile background",
+    "nonletterBackground": "#ffffff",
+    "nonletters": "neutral white tile background",
+    "paletteRole": "tile-background",
+    "space": "metrics-only; advances without tile or glyph paint",
+    "uppercase": "direct Color Font v1 tile background"
+  },
+  "palette": {
+    "canonicalSha256": "640800ed78bee95fa828d7219ab1711a8fc8177f0af18fa590af85602e297107",
+    "id": "inshell.colorfont.v1"
+  },
+  "schema": "inshell.thought.glyph-library.tile-policy.v1",
+  "setId": "inshell.thought.glyph-library.set-04"
+}

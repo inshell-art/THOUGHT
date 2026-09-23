@@ -1,0 +1,314 @@
+{
+  "$id": "inshell.thought.glyph-library-set-02.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonicalOrder": {
+      "const": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&"
+    },
+    "declaredOn": {
+      "format": "date",
+      "type": "string"
+    },
+    "fontCount": {
+      "const": 36
+    },
+    "fonts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "approachNumber": {
+            "enum": [
+              2,
+              3,
+              4
+            ]
+          },
+          "byteReport": {
+            "pattern": "^byte-reports/[a-z0-9-]+\\.json$",
+            "type": "string"
+          },
+          "familyId": {
+            "pattern": "^S2[0-9]{2}$",
+            "type": "string"
+          },
+          "file": {
+            "pattern": "^fonts/[a-z0-9-]+/glyphs\\.json$",
+            "type": "string"
+          },
+          "fixture": {
+            "pattern": "^fixtures/[a-z0-9-]+/canonical-line\\.svg$",
+            "type": "string"
+          },
+          "fixtureSha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "glyphCount": {
+            "const": 76
+          },
+          "memberId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "normalizedPathBytes": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "pathCommands": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "review": {
+            "additionalProperties": false,
+            "properties": {
+              "combined": {
+                "enum": [
+                  "dual-pass-candidate",
+                  "hold"
+                ]
+              },
+              "compactStorage": {
+                "const": "unmeasured-hold"
+              },
+              "expandedProtocol": {
+                "const": "pass"
+              },
+              "identity": {
+                "enum": [
+                  "pass",
+                  "hold"
+                ]
+              },
+              "legibility": {
+                "enum": [
+                  "pass",
+                  "hold"
+                ]
+              }
+            },
+            "required": [
+              "legibility",
+              "identity",
+              "expandedProtocol",
+              "compactStorage",
+              "combined"
+            ],
+            "type": "object"
+          },
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "slug": {
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "segment-mask",
+              "stroke-graph",
+              "routed-path"
+            ]
+          }
+        },
+        "required": [
+          "memberId",
+          "familyId",
+          "slug",
+          "name",
+          "type",
+          "approachNumber",
+          "file",
+          "sha256",
+          "fixture",
+          "fixtureSha256",
+          "byteReport",
+          "glyphCount",
+          "normalizedPathBytes",
+          "pathCommands",
+          "review"
+        ],
+        "type": "object"
+      },
+      "maxItems": 36,
+      "minItems": 36,
+      "type": "array"
+    },
+    "format": {
+      "const": "native-svg-path-json"
+    },
+    "id": {
+      "const": "inshell.thought.glyph-library.set-02"
+    },
+    "memberCount": {
+      "const": 36
+    },
+    "membershipPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "excluded": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "included": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "included",
+        "excluded"
+      ],
+      "type": "object"
+    },
+    "name": {
+      "const": "THOUGHT Glyph Library — Second Set"
+    },
+    "ordinal": {
+      "const": 2
+    },
+    "ordinalLabel": {
+      "const": "2nd Set"
+    },
+    "qualificationStatus": {
+      "const": "exploratory-complete"
+    },
+    "reviewSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "combinedHoldCount": {
+          "const": 27
+        },
+        "compactStorageHoldCount": {
+          "const": 36
+        },
+        "dualPassCandidateCount": {
+          "const": 9
+        },
+        "expandedProtocolPassCount": {
+          "const": 36
+        },
+        "identityHoldCount": {
+          "const": 16
+        },
+        "identityPassCount": {
+          "const": 20
+        },
+        "legibilityHoldCount": {
+          "const": 15
+        },
+        "legibilityPassCount": {
+          "const": 21
+        }
+      },
+      "required": [
+        "legibilityPassCount",
+        "legibilityHoldCount",
+        "identityPassCount",
+        "identityHoldCount",
+        "dualPassCandidateCount",
+        "combinedHoldCount",
+        "expandedProtocolPassCount",
+        "compactStorageHoldCount"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "inshell.thought.glyph-library-set.v1"
+    },
+    "schemas": {
+      "additionalProperties": false,
+      "properties": {
+        "fontManifest": {
+          "const": "schemas/glyph-manifest.schema.json"
+        },
+        "metrics": {
+          "const": "schemas/glyph-metrics.schema.json"
+        }
+      },
+      "required": [
+        "fontManifest",
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "slug": {
+      "const": "second-set"
+    },
+    "storageModel": {
+      "const": "storage-model.json"
+    },
+    "types": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "approachLabel": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "approachNumber": {
+            "enum": [
+              2,
+              3,
+              4
+            ]
+          },
+          "id": {
+            "enum": [
+              "segment-mask",
+              "stroke-graph",
+              "routed-path"
+            ]
+          },
+          "memberCount": {
+            "const": 12
+          }
+        },
+        "required": [
+          "id",
+          "approachNumber",
+          "approachLabel",
+          "memberCount"
+        ],
+        "type": "object"
+      },
+      "maxItems": 3,
+      "minItems": 3,
+      "type": "array"
+    },
+    "version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "name",
+    "ordinal",
+    "ordinalLabel",
+    "slug",
+    "version",
+    "qualificationStatus",
+    "declaredOn",
+    "format",
+    "canonicalOrder",
+    "memberCount",
+    "fontCount",
+    "membershipPolicy",
+    "types",
+    "schemas",
+    "storageModel",
+    "reviewSummary",
+    "fonts"
+  ],
+  "title": "THOUGHT Glyph Library Second Set manifest",
+  "type": "object"
+}

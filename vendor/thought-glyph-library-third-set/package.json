@@ -1,0 +1,19 @@
+{
+  "description": "THOUGHT Glyph Library — Third Set",
+  "exports": {
+    ".": "./index.mjs",
+    "./fonts/*": "./fonts/*/glyphs.json",
+    "./license": "./LICENSE-OFL.md",
+    "./manifest": "./manifest.json",
+    "./storage-model": "./storage-model.json"
+  },
+  "license": "OFL-1.1",
+  "name": "@inshell/thought-glyph-library-third-set",
+  "private": true,
+  "scripts": {
+    "verify": "node ./verify.mjs"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "1.0.0"
+}

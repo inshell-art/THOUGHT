@@ -1,0 +1,128 @@
+{
+  "$id": "inshell.thought.glyph-metrics.study.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "ascenderBound": {
+      "type": "number"
+    },
+    "baseline": {
+      "const": 7
+    },
+    "capHeight": {
+      "type": "number"
+    },
+    "descenderBound": {
+      "type": "number"
+    },
+    "emSquare": {
+      "const": 8
+    },
+    "fillRule": {
+      "const": "evenodd"
+    },
+    "fixedAdvanceWidth": {
+      "const": 6
+    },
+    "maximumGlyphBounds": {
+      "properties": {
+        "xMax": {
+          "type": "number"
+        },
+        "xMin": {
+          "type": "number"
+        },
+        "yMax": {
+          "type": "number"
+        },
+        "yMin": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "xMin",
+        "yMin",
+        "xMax",
+        "yMax"
+      ],
+      "type": "object"
+    },
+    "numericPrecision": {
+      "const": 2
+    },
+    "pathCommands": {
+      "const": [
+        "M",
+        "L",
+        "H",
+        "V",
+        "Q",
+        "C",
+        "Z"
+      ]
+    },
+    "pathCoordinateMode": {
+      "const": "absolute"
+    },
+    "safeBearings": {
+      "properties": {
+        "left": {
+          "minimum": 0,
+          "type": "number"
+        },
+        "right": {
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "inshell.thought.glyph-metrics.study.v1"
+    },
+    "space": {
+      "properties": {
+        "advanceWidth": {
+          "const": 6
+        },
+        "drawsPath": {
+          "const": false
+        }
+      },
+      "required": [
+        "advanceWidth",
+        "drawsPath"
+      ],
+      "type": "object"
+    },
+    "transformsInSource": {
+      "const": false
+    },
+    "xHeight": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema",
+    "emSquare",
+    "baseline",
+    "fixedAdvanceWidth",
+    "capHeight",
+    "xHeight",
+    "ascenderBound",
+    "descenderBound",
+    "safeBearings",
+    "maximumGlyphBounds",
+    "numericPrecision",
+    "pathCommands",
+    "pathCoordinateMode",
+    "fillRule",
+    "transformsInSource",
+    "space"
+  ],
+  "title": "THOUGHT glyph study metrics",
+  "type": "object"
+}

@@ -1,0 +1,80 @@
+{
+  "canonicalOrder": " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,?!:;'\"-()/&",
+  "glyphRecordsPerWeight": 76,
+  "handoff": "HANDOFF.md",
+  "id": "inshell.mono-76",
+  "identity": "A renamed restricted SVG-path Modified Version of Adobe Source Code Pro v2.042. Every packaged glyph path is byte-identical to its declared source extraction.",
+  "license": {
+    "file": "LICENSE-OFL.md",
+    "fontSoftware": "OFL-1.1",
+    "notice": "NOTICE.md",
+    "reservedFontName": "Source"
+  },
+  "metrics": {
+    "baseline": 0,
+    "coordinateSystem": "native font units, y-up",
+    "fillRule": "nonzero",
+    "fixedAdvanceWidth": 600,
+    "lineBox": {
+      "bottom": -240,
+      "height": 1000,
+      "top": 760
+    },
+    "unitsPerEm": 1000
+  },
+  "name": "Inshell Mono 76",
+  "naming": "Inshell Mono 76 is the primary family name. Source Code Pro is used only for required provenance and factual attribution.",
+  "onchainGuide": "ONCHAIN.md",
+  "packageName": "@inshell/mono-76",
+  "punctuationCount": 13,
+  "schema": "inshell.mono-76.package.v1",
+  "status": "exact-regular-400",
+  "storageModel": "storage-model.json",
+  "totalGlyphRecords": 76,
+  "upstream": {
+    "manifest": "upstream.json",
+    "packageVersion": "2.42.0",
+    "releaseCommit": "803b7e23ec97ae58b6232ea76519a76d428ba268",
+    "repository": "https://github.com/adobe-fonts/source-code-pro"
+  },
+  "version": "0.1.0",
+  "visibleGlyphsPerWeight": 75,
+  "weightCount": 1,
+  "weights": [
+    {
+      "byteReport": "byte-reports/400.json",
+      "byteReportSha256": "12ed8d330e3d2e3b4eceab047b89f9a143d6d8b0e92663ee0444d6c547118efa",
+      "faceName": "Inshell Mono 76 Regular",
+      "file": "fonts/400/glyphs.json",
+      "fileSha256": "2cf76834f82050853bdcc9d25bc4f040bd7cc2a6a310206e166f6d162e4f0c2e",
+      "fixtures": {
+        "lowercase": "fixtures/400/lowercase.svg",
+        "numbersPunctuation": "fixtures/400/numbers-punctuation.svg",
+        "pathNft": "fixtures/400/path-nft.svg",
+        "uppercase": "fixtures/400/uppercase.svg",
+        "website": "fixtures/400/website-slogan.svg"
+      },
+      "gzipPathBytesInformational": 7994,
+      "packed": {
+        "binary": "onchain/packed/400.bin",
+        "hex": "onchain/packed/400.hex",
+        "metadata": "onchain/packed/400.json"
+      },
+      "packedBytes": 20215,
+      "packedSha256": "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6",
+      "rawPathBytes": 20053,
+      "slug": "400",
+      "source": {
+        "family": "Source Code Pro",
+        "fileName": "SourceCodePro-Regular.ttf",
+        "fileSha256": "74bd80d3e42a08517cd7e1108ba3d86f2da29ac0f3065be95e0357956ab9db37",
+        "pathStreamSha256": "e90b269f15f3c5f6ac6e71244f2120198d4b7196010b158a51b43a1ea4409d05",
+        "postScriptName": "SourceCodePro-Regular",
+        "releaseCommit": "803b7e23ec97ae58b6232ea76519a76d428ba268",
+        "version": "Version 2.042;hotconv 1.1.0;makeotfexe 2.6.0"
+      },
+      "style": "Regular",
+      "weight": 400
+    }
+  ]
+}

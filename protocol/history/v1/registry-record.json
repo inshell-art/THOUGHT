@@ -1,0 +1,14 @@
+{
+  "schema": "inshell.thought.history.registry-record.v1",
+  "network": "sepolia",
+  "chainId": 11155111,
+  "registry": "0xBB8FD738b01b4a14F5E9bCFE408239a05d84621D",
+  "specName": "THOUGHT.v1.md",
+  "specRef": "THOUGHT.v1.md",
+  "specId": "0xe201170ae183f114064f4492cbc4942f7d3d68b74a08d3dc4b4f61edec213d78",
+  "specKeccak256": "0x1abb9da7ba36102726375510e66afe255f8c6e0d771b4c3b90c5d22a9b8eb909",
+  "specSha256": "9f3ad3361862a491abed833a5d50a722c4a89de531fd523416d74b6041a099ec",
+  "byteLength": 8549,
+  "registrationTransaction": "0x4a7051af9147189b62bbd284133a009ff1f14b9925270063f72e8ec3b877571a",
+  "registrationBlock": 10872878
+}

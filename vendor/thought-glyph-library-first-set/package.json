@@ -1,0 +1,16 @@
+{
+  "description": "THOUGHT Glyph Library — First Set",
+  "exports": {
+    ".": "./index.mjs",
+    "./fonts/*": "./fonts/*/glyphs.json",
+    "./manifest": "./manifest.json"
+  },
+  "license": "UNLICENSED",
+  "name": "@inshell/thought-glyph-library-first-set",
+  "private": true,
+  "scripts": {
+    "verify": "node ./verify.mjs"
+  },
+  "type": "module",
+  "version": "1.0.0"
+}

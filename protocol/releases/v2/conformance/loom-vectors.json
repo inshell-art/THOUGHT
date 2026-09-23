@@ -1,0 +1,1443 @@
+{
+  "collisions": [
+    {
+      "binaryFieldKeccak256": "0x8d1e13946d63afdbf2dc9683ae4b67beac94605ce39216eadefb3c7266bb4cdb",
+      "binaryFieldPacked": "0x200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab",
+      "first": {
+        "agentIdentityHash": "0x256a856df8770f40bc387737ba14bc3c091e143209a12fa47e173c7741256edf",
+        "agentLine": "A",
+        "agentLineKeccak256": "0x03783fac2efed8fbc9ad443e592ee30e61d65f471140c10ca155e937b435b760",
+        "binaryFieldKeccak256": "0x8d1e13946d63afdbf2dc9683ae4b67beac94605ce39216eadefb3c7266bb4cdb",
+        "binaryFieldPacked": "0x200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab",
+        "promptLine": "A",
+        "promptLineKeccak256": "0x03783fac2efed8fbc9ad443e592ee30e61d65f471140c10ca155e937b435b760",
+        "workHash": "0x854c6e0cd4cebcf0f999451a3200514d614feeb5e007664bc26fde6cde05311c"
+      },
+      "id": "a-aa",
+      "second": {
+        "agentIdentityHash": "0x7ad98ad539f65b4ed8904df61488ddd427ecfc14089d13687dd7747d706113f8",
+        "agentLine": "AA",
+        "agentLineKeccak256": "0xa1ea619b558c5cb84a7a0977bb4030bb902114450b4fce7fe2d3be6dbe481f0e",
+        "binaryFieldKeccak256": "0x8d1e13946d63afdbf2dc9683ae4b67beac94605ce39216eadefb3c7266bb4cdb",
+        "binaryFieldPacked": "0x200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab200220021001100175577557baabbaab2002200210011001200220021001100120022002100110012002200210011001200220021001100175577557baabbaab",
+        "promptLine": "AA",
+        "promptLineKeccak256": "0xa1ea619b558c5cb84a7a0977bb4030bb902114450b4fce7fe2d3be6dbe481f0e",
+        "workHash": "0x36e3302b112541f2b7ae05a44c5153167388fa5c985a11fa4764ef2822537d32"
+      }
+    },
+    {
+      "binaryFieldKeccak256": "0x2b589cb95b2aace9ab7600b2d609ed97acca0e0c73c29479b26a4dcf20fc2f89",
+      "binaryFieldPacked": "0x20022008100110047557755dbaabbaae200220081001100420022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae20022008100110047557755dbaabbaae20022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae2002200810011004",
+      "first": {
+        "agentIdentityHash": "0x66a32a0b2b609b81b6a19fb81245c7663c04c939693f6b70ed873c29ae13199a",
+        "agentLine": "AB",
+        "agentLineKeccak256": "0x21faab852d29e39c56dc14d20d71ba15c1ea83a26f45b658b5e8d0f8d61f3bbd",
+        "binaryFieldKeccak256": "0x2b589cb95b2aace9ab7600b2d609ed97acca0e0c73c29479b26a4dcf20fc2f89",
+        "binaryFieldPacked": "0x20022008100110047557755dbaabbaae200220081001100420022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae20022008100110047557755dbaabbaae20022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae2002200810011004",
+        "promptLine": "AB",
+        "promptLineKeccak256": "0x21faab852d29e39c56dc14d20d71ba15c1ea83a26f45b658b5e8d0f8d61f3bbd",
+        "workHash": "0x2fb5891f0c7767699498d6fc58bec65a02ba1bcf900793dfeb0e6aeef23fe011"
+      },
+      "id": "ab-abab",
+      "second": {
+        "agentIdentityHash": "0x6ec01cb23e05c839bbda6cebb39f2f15bcb9f53508a54e66d9da64c00a5faa68",
+        "agentLine": "ABAB",
+        "agentLineKeccak256": "0xac3798e66d2462cced570c05077dfb107e510784bf3cae7ba8703ef4402d1ff1",
+        "binaryFieldKeccak256": "0x2b589cb95b2aace9ab7600b2d609ed97acca0e0c73c29479b26a4dcf20fc2f89",
+        "binaryFieldPacked": "0x20022008100110047557755dbaabbaae200220081001100420022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae20022008100110047557755dbaabbaae20022008100110042002200810011004200220081001100420022008100110047557755dbaabbaae2002200810011004",
+        "promptLine": "ABAB",
+        "promptLineKeccak256": "0xac3798e66d2462cced570c05077dfb107e510784bf3cae7ba8703ef4402d1ff1",
+        "workHash": "0xc224e7ad18cccdb552bf452d52366b6053bf35b81f5df33af5cd90059260217c"
+      }
+    }
+  ],
+  "schema": "inshell.thought.loom-vectors.v1",
+  "vectors": [
+    {
+      "agent64": "0x62626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262626262",
+      "agentIdentityHash": "0x60bd64e4171f7897298c9cc6c0bb92856dd74f7f2871accd2acf64be6f09cbde",
+      "agentLine": "b",
+      "agentLineKeccak256": "0xb5553de315e0edf504d9150af82dafa5c4667fa618ed0a6f19c69b41166c5510",
+      "binaryFieldKeccak256": "0x0ebcd533370f6c3205fbd0dddbdfb5beebefae4484d3d4aa4ac5b2dc66719ded",
+      "binaryFieldPacked": "0x28022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab280228021401140128022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab2802280214011401",
+      "id": "one-byte-cycle",
+      "prompt64": "0x61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
+      "promptLine": "a",
+      "promptLineKeccak256": "0x3ac225168df54212a25c1c01fd35bebfea408fdac2e31ddd6f80a4bbf9a5f1cb",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xd4e816b4af3344204c7b8af8cef0ad4cf06b3baa09093db26e553427ccb31426"
+    },
+    {
+      "agent64": "0x61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
+      "agentIdentityHash": "0x3a4333c88f8e31434b013805ff4b5cda36df74493985fc0006831cf0dbd21ae4",
+      "agentLine": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "agentLineKeccak256": "0x665d33bbec07cf132a7ac9b1724f4027d12fcba1e506332fa68b247329ed6de4",
+      "binaryFieldKeccak256": "0xf51f94652b8f5007507c626af5543f36f687c568dc6148a365d4fa5faa1837a2",
+      "binaryFieldPacked": "0x2a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015002a002a00150015002a002a00150015007f557f55bfaabfaa2a002a00150015007f557f55bfaabfaa7f557f55bfaabfaa2a002a00150015002a002a00150015002a002a00150015002a002a00150015007f557f55bfaabfaa",
+      "id": "source-63-bytes",
+      "prompt64": "0x70707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070",
+      "promptLine": "ppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "promptLineKeccak256": "0x9ca0e2d31ac151bda2e5f230040d73d4e1c4883e09233330ba5027083860587b",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xe762f9f481bdf92a35e0cde529fb60a18f875c009196503851e3af5e32cf5f0e"
+    },
+    {
+      "agent64": "0x3f214142434445464748494a4b4c4d4e4f505152535455565758595a6162636465666768696a6b6c6d6e6f707172737475767778797a30313233343536373839",
+      "agentIdentityHash": "0xf9a1af8ef6578eb1040041bba8f79137123645677b4e9932d703b3621c5b770b",
+      "agentLine": "?!ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+      "agentLineKeccak256": "0xddcdd61ea1d8284355e01713b2bcf8febf6e781d806a34f10a601334d0afe937",
+      "binaryFieldKeccak256": "0x9125c8f916e4612939afb1055eaa2bb7a847aa63d2fd7fe9bb5645c4efb83e20",
+      "binaryFieldPacked": "0x0a000a02050405055f755f622fbeafb50a815fd79403beae285e2975943916be2d2e3c8196c13c64399a6ce49cd99cd628ab7f40bfa9150e7f5f7f60bfbbbfb42a2a2a8015411544755775483aafbab02023757d9017baea20d625dd10ed12fa25a670e91a5d39203313330c33259992777622281117bbea2282229d8401055f",
+      "id": "source-64-bytes",
+      "prompt64": "0x303132333435363738396162636465666768696a6b6c6d6e6f707172737475767778797a4142434445464748494a4b4c4d4e4f505152535455565758595a213f",
+      "promptLine": "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!?",
+      "promptLineKeccak256": "0x9747d792b35c60d9150715f67633c47f784d42ff01a65ccbc9cf0872c3b6f500",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x6cb37bca0e677ea54281b0a0c49b497752a6bade67ab9490624a3073ddcd6376"
+    },
+    {
+      "agent64": "0x2f2b393837363534333231307a797877767574737271706f6e6d6c6b6a6968676665646362615a595857565554535251504f4e4d4c4b4a494847464544434241",
+      "agentIdentityHash": "0xc44f30375d7a0b615aedc37c91710b02a87200d346f169face3c61c2b9b805d3",
+      "agentLine": "/+9876543210zyxwvutsrqponmlkjihgfedcbaZYXWVUTSRQPONMLKJIHGFEDCBA",
+      "agentLineKeccak256": "0xf58ca3655f232c0eac26bcc2cc44184a69c2bda23d73eef8938f5c6e95874219",
+      "binaryFieldKeccak256": "0x4d93c30effd46629ffa92070d1a16533e6438dea159a5a8ab2171d3f013beb7e",
+      "binaryFieldPacked": "0x20022008100510102177757d12bfbaea75d76088baefb05075f235a83af51b8063073258930f19383266666cb19d9362228237ddbeabb4047c0a2820bc111414282a28801441144429df7df516fbbefe7dff6a00bfabb5047f4a3f203fb11f146a3e3ad0974b15e41b110e46258c8d8d0b754a22ad140fbf0bd55fd786efaeff",
+      "id": "direction-diagnostic-64-bytes",
+      "prompt64": "0x4142434445464748494a4b4c4d4e4f505152535455565758595a6162636465666768696a6b6c6d6e6f707172737475767778797a303132333435363738392b2f",
+      "promptLine": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+      "promptLineKeccak256": "0x84d8a590de33e00cbdc16e1f28c3506f5ec15c599fab9a6a4bcd575cc2f110ce",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x58a53f777cd997a2db924c94e34d3d01283da51edcafcd7f0cec8e2971d5b674"
+    },
+    {
+      "agent64": "0x71756965742072657475726e71756965742072657475726e71756965742072657475726e71756965742072657475726e71756965742072657475726e71756965",
+      "agentIdentityHash": "0x83ce8f509901a42deac7d89e5cd9ee34bdd3d803721b8328add12afb93bc1bb2",
+      "agentLine": "quiet return",
+      "agentLineKeccak256": "0x3bd62ecd3709d1aba103bf23e7bb3887d093e136884fc6d2e0c1cba02a05a13b",
+      "binaryFieldKeccak256": "0xfb9556fa589f490e95dd165a0625c4788713dbc792e51c5f37ce419d974354a0",
+      "binaryFieldPacked": "0x2a022a22144114117f755d55bfafbeeb7d7f7dfdbeabbefa3e536f36beebbebb6b24184115051441282a28a83ca39e783e536f36144114116b241841970d34c3282a28a8140114507f577f779e69b69b7f755d55bfafbeeb282a28a89e29b6da2e126b26144114117f755d559f2db6cb2c3a69ac140114507b473e739e69b69b",
+      "id": "ascii",
+      "prompt64": "0x7175696574207369676e616c7175696574207369676e616c7175696574207369676e616c7175696574207369676e616c7175696574207369676e616c71756965",
+      "promptLine": "quiet signal",
+      "promptLineKeccak256": "0x7217d54527306121b40b95c81b96dac2b6b1ecc6bac04a16e1d862ee87a0ffce",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x8ddbfe81712ba14e9755fa01d69c210ce6af77a8b8b70a4f4c9b63bb9ba75808"
+    },
+    {
+      "agent64": "0x7e7c7b7d605f5e5d5b403f3d3b3a2f2e2d2c2b2a29282423217e7c7b7d605f5e5d5b403f3d3b3a2f2e2d2c2b2a29282423217e7c7b7d605f5e5d5b403f3d3b3a",
+      "agentIdentityHash": "0xd94e26178f37371335d2ff8e15bc31cad461ed089afdc8beb7fc27a05e287fd5",
+      "agentLine": "~|{}`_^][@?=;:/.-,+*)($#!",
+      "agentLineKeccak256": "0xdb2e47640cc60e2d37ab192732f36593bd013d6896e7043809082c748d9e3ba6",
+      "binaryFieldKeccak256": "0xdc1cc16d8b6ef0bd0bb6343b957c080ea3c1bb9d6b278ea7a1e51a21df870602",
+      "binaryFieldPacked": "0x0802080a04100411588548d6ac46846d4df41df3a6fe2ef75e8d1acf8f53a57f754537cf9bf3bb7e37bf2c4095c7bd5a7fe33aed8e010eaf4d6108270eeaa4e30888088a0450045158ad08fead4e856d4ff65feb92aa3be776a762f9b35db42a7fcf7ef1b7f9bf7e5d03595aa4980c3b09d55c93264ca4455cb45cb22454aeff",
+      "id": "ascii-punctuation",
+      "prompt64": "0x2123242528292a2b2c2d2e2f3a3b3d3f405b5d5e5f607b7c7d7e2123242528292a2b2c2d2e2f3a3b3d3f405b5d5e5f607b7c7d7e2123242528292a2b2c2d2e2f",
+      "promptLine": "!#$%()*+,-./:;=?@[]^_`{|}~",
+      "promptLineKeccak256": "0x70c59d760229da7928394ed1141264cbd214603c825705b49f4ee9fda33b867c",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x87868fcc81cd0cb1b311b525a970c9ef990dddac0c7cc2b23f796505fdd8fce2"
+    },
+    {
+      "agent64": "0x47414d4d4120202044454c544147414d4d4120202044454c544147414d4d4120202044454c544147414d4d4120202044454c544147414d4d4120202044454c54",
+      "agentIdentityHash": "0xc2e4f890a2f9f861c8fa4fbe7d73e236f560080bf719944571918cc2c06d8a5b",
+      "agentLine": "GAMMA   DELTA",
+      "agentLineKeccak256": "0xe00b93e40f50bc9e9070c8e4ddef6379fd8837eb921fbf0e2186501262e588a2",
+      "binaryFieldKeccak256": "0xba53f82c5c57e7fa86a0200704169ebd1e0cb7171e3dad18d2ce94244920c14f",
+      "binaryFieldPacked": "0x280228a0150014406d175c51ae8a3cae38622b241421960128a02a40144814014c000c11148634116e346c539c8b34f22a0428809401042049153c18b6931db828022802145015006d947d538eaa2ca238492826351096092c0228a1150034406912081004021c846d327b311e233c8328a03a001640140149045c509e8e1c33",
+      "id": "internal-repeated-spaces",
+      "prompt64": "0x616c706861202062657461616c706861202062657461616c706861202062657461616c706861202062657461616c706861202062657461616c70686120206265",
+      "promptLine": "alpha  beta",
+      "promptLineKeccak256": "0x7e1e23e37291e92d62675804516ba4bd51adbb447065da1bb3dd24ae4096e1d4",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x2283040e8702e79ec19c9ab9e7a0e9068c0936ebcacec8ef77191fcf6ea5aeab"
+    },
+    {
+      "agent64": "0xe5ae89e99d9920e59b9ee5a3b0e5ae89e99d9920e59b9ee5a3b0e5ae89e99d9920e59b9ee5a3b0e5ae89e99d9920e59b9ee5a3b0e5ae89e99d9920e59b9ee5a3",
+      "agentIdentityHash": "0xe2af3d1419c3b2ca3fdda6656f6e8842fd46c6941d07dd99c52e0b93286484a0",
+      "agentLine": "安静 回声",
+      "agentLineKeccak256": "0xa81eb340729fd82f1c491161eeeb9bc8a9f76d60abeff54b63ef0773c1f19f81",
+      "binaryFieldKeccak256": "0xb0af887a2e7cd2e82079ee5e342a5ca395235f5045ea7db80c7157da84d67862",
+      "binaryFieldPacked": "0xed75dff3eeaa7ebb8c268fa384a074309f84976dd6bde93180f1f8206f51468ae973cc326dd30e8aad358b81e1347cbd8332c0e05c184dd3cc45ed73ecbb677b5d15fd75efeae9bef83a92364252d490def69855d61be6b18aa34d407cb8454ac32ded3ae9b3487ab834dea6ce80d4b38c26cba38c207432df91973d76b7e999",
+      "id": "cjk",
+      "prompt64": "0xe4bda0e5a5bd20e4b896e7958ce4bda0e5a5bd20e4b896e7958ce4bda0e5a5bd20e4b896e7958ce4bda0e5a5bd20e4b896e7958ce4bda0e5a5bd20e4b896e795",
+      "promptLine": "你好 世界",
+      "promptLineKeccak256": "0x7b2187469a04a6f0e770efcf2ebd56695400c3777f67eff396c4f5eb60b083b3",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xc0401ddcdf16726a853072cfaf8b2b34b29c1d935ba5c0ba767f0948c4eeb4c8"
+    },
+    {
+      "agent64": "0xe0b8aae0b8b1e0b88de0b88de0b8b2e0b893e0b984e0b897e0b8a2e0b8aae0b8b1e0b88de0b88de0b8b2e0b893e0b984e0b897e0b8a2e0b8aae0b8b1e0b88de0",
+      "agentIdentityHash": "0xfea0ff47bd3b90c41407f35f756baf29167058abefdd643fcca99e56a902c484",
+      "agentLine": "สัญญาณไทย",
+      "agentLineKeccak256": "0xf0f08b1cbd7b42d73cab1632c0e67b2a1befb2be807fefb482e945c0040106ed",
+      "binaryFieldKeccak256": "0x0793770ef57c6fb767c48981e2d2f70fe5da674c2aca2b3eaaf0c5ac6a524b56",
+      "binaryFieldPacked": "0xfd55dfd5eeaafeaa9ac18e18d60865c2ddd7ed14e7caedaead10cbc66092de20ce90d32f7c824d688808b8414d614041e9048ac0440056088a809b495c00c740ddd7fd55efeaefaee9049ac34830d608dbc5967ffe2aefea9859ac14e7c968c3bc41ce90c60a74828e90cb08540045408892a80045c24d24ac50ca8660905400",
+      "id": "thai-combining",
+      "prompt64": "0xe0b8a0e0b8b2e0b8a9e0b8b2e0b984e0b897e0b8a2e0b989e0b8a0e0b8b2e0b8a9e0b8b2e0b984e0b897e0b8a2e0b989e0b8a0e0b8b2e0b8a9e0b8b2e0b984e0",
+      "promptLine": "ภาษาไทย้",
+      "promptLineKeccak256": "0xa77ec907f99780c297683005019511f654aee6de682da0c55414f47e5dec8b75",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xe97255c8155e652b1d964ce2ebf45db7b0c9e1229068c3de1369c3cdc0b9bd7b"
+    },
+    {
+      "agent64": "0xd8b6d988d8a120d982d8b1d98ad8a8d8b6d988d8a120d982d8b1d98ad8a8d8b6d988d8a120d982d8b1d98ad8a8d8b6d988d8a120d982d8b1d98ad8a8d8b6d988",
+      "agentIdentityHash": "0xce70647bf33ea25f6bea9baa724a97b94d4a92aa39a1a5f1abdc8b7d4308c6b5",
+      "agentLine": "ضوء قريب",
+      "agentLineKeccak256": "0xc9802a034d32f4f21f59b3837ef287f71b7f037955fc8632036163d70c9e59ab",
+      "binaryFieldKeccak256": "0xad36f0c311e9d0836740fb0b92704491828c2d11d53b13679d45a1af168e0525",
+      "binaryFieldPacked": "0xe7d5df77fbebcaeae295c89da40ad16b952aa3c044b57b40ccbfe395e49ed96acb77e697e24ad3ea8888090051c14015a2809d2a5bc04455e69488695160cd39f7d7d595fbcaeeee1d40b7824a957bc0882be2d4e47f51429d69b790cf997bc3d5c4b7854ec6ae88a283802ad1404417a29588aad140443eb680cb3271c96840",
+      "id": "arabic",
+      "prompt64": "0xd8b5d988d8aa20d987d8a7d8afd8a6d8b5d988d8aa20d987d8a7d8afd8a6d8b5d988d8aa20d987d8a7d8afd8a6d8b5d988d8aa20d987d8a7d8afd8a6d8b5d988",
+      "promptLine": "صوت هادئ",
+      "promptLineKeccak256": "0x42fd85ac8cb5fee9955d2969eb22e5a769d05585d30ec195ff953bbb622b2c64",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x82ad2bbf38ea73ba921bd89decf63e120b29ae57e0faae6ae28725fc4d4958ed"
+    },
+    {
+      "agent64": "0xd8b5d98ed988d992d8aad98c20d8b9d98ed8b1d98ed8a8d990d98ad991d8b5d98ed988d992d8aad98c20d8b9d98ed8b1d98ed8a8d990d98ad991d8b5d98ed988",
+      "agentIdentityHash": "0xc466ba1cca95da48a60125f54dee29dd936e7532c1f9f9901e879e374aa76fb1",
+      "agentLine": "صَوْتٌ عَرَبِيّ",
+      "agentLineKeccak256": "0x07ad3d17e69ddfb72ec0443031311aad78a27de0334b48e6c9d309a267f83f87",
+      "binaryFieldKeccak256": "0x86885d516267337d7fca93551bb41b9eae940389439fce8f280e856e50918372",
+      "binaryFieldPacked": "0xf7d7d577f9ebeafef6808f57f94143aea3d198a253414054f7c18dd5f94b62eff794dd7ff9e1cabba28380a851e0cd01a286920851e0e451f7c380b9714246eaf7d7d5dffbeae6bfa3d7d02253ebe054a2808f46d9414904b3d5dda6d3ebe07ce7d5dcd17bebe2c7e680882ed1414293f28280b859404783a3d7d70cd148c459",
+      "id": "arabic-vowel-marks",
+      "prompt64": "0xd985d98ed8b1d992d8add98ed8a8d98bd8a7d985d98ed8b1d992d8add98ed8a8d98bd8a7d985d98ed8b1d992d8add98ed8a8d98bd8a7d985d98ed8b1d992d8ad",
+      "promptLine": "مَرْحَبًا",
+      "promptLineKeccak256": "0x45c131fe4cada5c70a3e87c68bfda30f154606a1713f4921ec372616142c3f5b",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x73df9c4ab643778e4d38f5a2d98c57fff67c218dbe1bcc3a25b94a1deed8292b"
+    },
+    {
+      "agent64": "0x63616c6d20d8a8d8add8b1207369676e616c63616c6d20d8a8d8add8b1207369676e616c63616c6d20d8a8d8add8b1207369676e616c63616c6d20d8a8d8add8",
+      "agentIdentityHash": "0x9a3ca9889cb0de0be5e9190605eee6cb65e651d9352f96adecd5e238b0915512",
+      "agentLine": "calm بحر signal",
+      "agentLineKeccak256": "0x34689e10ff9a331d272a2ee40133de3b4769981ed3632262bce34a2b8018908d",
+      "binaryFieldKeccak256": "0x26f4767b801ea2860f9dfab6ddd97283269df93b7cd44ec687e9f27741de52fe",
+      "binaryFieldPacked": "0x3e062f231c4b16136b615850d6b1e5a9df575d55bfaebeeb2e292922170615817a263c831c39171a4904b8634d21c70909412a589641b5942d676b599f83b7b138962c273d180e02f977de57efa9aeaa6f4979d297b6b4b93a1c2e073d191e4379377e652ea8debbcb02da4204a0952c29822a68141195046a433a3296613499",
+      "id": "mixed-scripts",
+      "prompt64": "0x717569657420e5b1b1207269766572717569657420e5b1b1207269766572717569657420e5b1b1207269766572717569657420e5b1b120726976657271756965",
+      "promptLine": "quiet 山 river",
+      "promptLineKeccak256": "0x3825648089ec30d2ee8d244467a6dee2b80c2a2b291a02e5b0dbb7895bfee158",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x697c254ff098ed655f34f4b8339ad761f290307afdd4832b42a568c8132298b0"
+    },
+    {
+      "agent64": "0xc3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8c3b8",
+      "agentIdentityHash": "0x11e7f0c02c4dd951f2a03ebc2761ec504b05f14e164af47701f3711c5e95b8a3",
+      "agentLine": "ø",
+      "agentLineKeccak256": "0x900f1a4ad1e92fa7dd5be6cfa719c14e4230ef42b596e0c4194113fc753bce66",
+      "binaryFieldKeccak256": "0xc16649fe6f85650e040fd13514421d2944c3515fc7e3e82c74b556c1922885b9",
+      "binaryFieldPacked": "0xf55fddd7faafeeebf55fddd7faafeeeba00a888250054441a00a888250054441a00a888250054441a00a888250054441f55fddd7faafeeebf55fddd7faafeeebf55fddd7faafeeeba00a888250054441f55fddd7faafeeebf55fddd7faafeeebf55fddd7faafeeeba00a888250054441a00a888250054441a00a888250054441",
+      "id": "utf8-two-byte",
+      "prompt64": "0xc3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9",
+      "promptLine": "é",
+      "promptLineKeccak256": "0xe9076b2429006c3cfc23780a3ab7db373ff2200f3ee9a6c58ef84bd1c9118372",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xdedaab839eb21b1faebc82fd6e0bf65d834ccb63caa6f50097da0c23f23d9885"
+    },
+    {
+      "agent64": "0xe7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7958ce7",
+      "agentIdentityHash": "0xde227ca6f0f0542cc8354a785a5b05e581d31f1d668a76019c4b0181e2854b3a",
+      "agentLine": "界",
+      "agentLineKeccak256": "0x833978626359b46370e35b907a85b0e9152f8dd666c4dfcd4e8b8995f5de0e1e",
+      "binaryFieldKeccak256": "0xae37f6c4d185c1a79121501669c3630061e5db26c3caacebf95af4a15873e154",
+      "binaryFieldPacked": "0xfd75dff7eeaafeba9ae38c10d61865d39841ac30c7596482ac30cba664825c30cba698415c30c759dd55fd75effbeeaab8618eb2c60874929ef3cd14f69a6df3dd55fd75effbeeaae9249ae34c20d618cba698415c30c7599841ac30c7596482ac30cba664825c30dff7dd55febaeffbc904b8614d71c608f9659ef3ce28f69a",
+      "id": "utf8-three-byte",
+      "prompt64": "0xe4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4bda0e4",
+      "promptLine": "你",
+      "promptLineKeccak256": "0x4e74a316134504a4c72e38bc46d73d82df3778efddb7f92a877f39f81c5e99a5",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x8827d24fcad6e85d9e071c0dd48262502eec3b9b51255fae09788782090599e4"
+    },
+    {
+      "agent64": "0xf09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80f09f9a80",
+      "agentIdentityHash": "0x7f8285cd405b5ef317f812ea97db9679ebc31b88db4b4be4e4142eb2c8b36a5c",
+      "agentLine": "🚀",
+      "agentLineKeccak256": "0x851577984373f401afae5507b06dac74c2dd05ef8f0dcb46d4ee8738507078d4",
+      "binaryFieldKeccak256": "0x4442e33e61ce68ca9a5a43376514d7a885717686ec8f4db5b98d9be899c861d5",
+      "binaryFieldPacked": "0xff55d7ffebeaeaaaaa0082aaebeaeaaaaa0082aaebeaeaaaff55d7ffebeaeaaaff55d7ff41404000aa0082aa41404000ff55d7ff41404000aa0082aa41404000ff55d7ffebeaeaaaaa0082aa41404000aa0082aa41404000aa0082aaebeaeaaaaa0082aaebeaeaaaaa0082aaebeaeaaaaa0082aaebeaeaaaaa0082aaebeaeaaa",
+      "id": "utf8-four-byte",
+      "prompt64": "0xf09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880",
+      "promptLine": "😀",
+      "promptLineKeccak256": "0x367c272ea502ac6e9f085c1baddc52d0ac0224f1b7d1e8621202620efa3ba084",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x73be1a052fe0ea77d16b200fa54bdae524085f1c9380d86ac7771fcd5d9d804e"
+    },
+    {
+      "agent64": "0xf09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbef09f918bf09f8fbe",
+      "agentIdentityHash": "0xf1fd43a8ffba0245542caeacf5ca2e0323141050d901c09ffbf8ba8d43234093",
+      "agentLine": "👋🏾",
+      "agentLineKeccak256": "0x8e0e20ad14e5e020285875ce1977112ae47ad2f75e19d1becfdccdd33015eca5",
+      "binaryFieldKeccak256": "0x444b181f615510611b58a3d65113b1e7b8edfc8df3125239baf7e0a43864b710",
+      "binaryFieldPacked": "0xff55d7ffebabeafbaa0082aaeaffeffbaa0082aaebabeafbee44c6eeeaffeffbbb1193bb41014051bb1193bb40554551bb1193bb41014051ff55d7ff40554551ff55d7ffebabeafbaa0082aa40554551bb1193bb41014051bb1193bbeaffeffbff55d7ffebabeafbbb1193bbeaffeffbff55d7ffebabeafbee44c6eeeaffeffb",
+      "id": "emoji-skin-tone",
+      "prompt64": "0xf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbdf09f918df09f8fbd",
+      "promptLine": "👍🏽",
+      "promptLineKeccak256": "0x5082dc02753f5c83c67925c7a738ff8209c41f06d117c4f60de7a97b9f095c06",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x701ab5f4b6fde7be8317f448bd659a084d32aa5499e2e19df1103c0215071417"
+    },
+    {
+      "agent64": "0xf09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5f09f87aff09f87b5",
+      "agentIdentityHash": "0xd39122d463920a81830dba4469286f6f90beb1d0a8f9e852465e992324fc31d5",
+      "agentLine": "🇯🇵",
+      "agentLineKeccak256": "0x2c85277fe1b2a2abb06af4546c1046f33dd44363dc7fe9116c81ae7062056eca",
+      "binaryFieldKeccak256": "0xa922777943980419093e9495e86906658b3111dd4f151fe1b9cd0479e52da697",
+      "binaryFieldPacked": "0xff55d7ffeabfefeaaa0082aaeabfeefaaa0082aaeabfefeaaa0082aaeabfeefaaa0082aa40154540ff55d7ff40154450ff55d7ff40154540ff55d7ff40154450ff55d7ffeabfefeaaa0082aa40154450ff55d7ff40154540bb1193bbeabfeefaee44c6eeeabfefeaff55d7ffeabfeefaee44c6eeeabfefeaff55d7ffeabfeefa",
+      "id": "regional-indicator-flag",
+      "prompt64": "0xf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87acf09f87b8f09f87ac",
+      "promptLine": "🇸🇬",
+      "promptLineKeccak256": "0x38d451f29160f7fcb1e5dbf9c083ba21cf3eb9874b2cfab0407006374ce0475d",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x3e54bbb6bdf76ea02e17d0c95b29de5f303edea219c08da4f27a22c6f2dc9888"
+    },
+    {
+      "agent64": "0x61cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861cc8861",
+      "agentIdentityHash": "0x98b8490c30abbcdabfb9d7bdd9b9b815b12f8bb8ccc82354837fb20ae60a32e2",
+      "agentLine": "ä",
+      "agentLineKeccak256": "0x270ea90fae2f76058b22afffc5eb9b28aff1310917101f8f7c61f4661444a874",
+      "binaryFieldKeccak256": "0x218f9924db21208a8cbd409e8716012f9077e3702c98d0d4d1fec79689cc3d86",
+      "binaryFieldPacked": "0x6d36f1e568a39e39b4f1c516b69b78f290432c32d25860832822a0a040011411e5b4d1473cb3da788412692670d248212822a0a040011411b0e18412961970d294536d36f2da68a37967b4f1ca29b69be1a490431c31d25880022822505040013c73e5b4e28b3cb3b0e18412961970d280022822505040016926b0e148219619",
+      "id": "combining-sequence",
+      "prompt64": "0x65cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165cc8165",
+      "promptLine": "é",
+      "promptLineKeccak256": "0xa06e9f5487b3aaae3568df886912a848c792a24dab3e3d42eb0077671680f132",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xb7baccf9efd9ecea234a98cc9a12291c1b44b8da0cc916bb541f1fed91873456"
+    },
+    {
+      "agent64": "0xc3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1c3a1",
+      "agentIdentityHash": "0xcb130a705fc1d9ba811d5d6ea990532624ea57ab5b018f61d17d12071b4983e4",
+      "agentLine": "á",
+      "agentLineKeccak256": "0x3ede55431aad8845539bc95260c2f9fa049693abd2a0ffd60eef2d14d5a6c60d",
+      "binaryFieldKeccak256": "0x7f302331c8ba653253acc9bdaad364b58175e82a7e82184702cfd5402855c6fb",
+      "binaryFieldPacked": "0xf55fddd7faafeeebf55fddd7faafeeeba00a888250054441a00a888250054441a00a888250054441a00a888250054441f55fddd7faafeeebf55fddd7faafeeebf55fddd7faafeeeba00a888250054441f55fddd7faafeeeba00a888250054441a00a888250054441a00a888250054441a00a888250054441f55fddd7faafeeeb",
+      "id": "unicode-precomposed",
+      "prompt64": "0xc3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9c3a9",
+      "promptLine": "é",
+      "promptLineKeccak256": "0xe9076b2429006c3cfc23780a3ab7db373ff2200f3ee9a6c58ef84bd1c9118372",
+      "sampledGridPositions": [
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 1,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0xa1acd9210e6abffd34983a540f3d25c37836da9fabc3547e8dc9692eb62eed0d"
+    },
+    {
+      "agent64": "0x4126423c433e22274126423c433e22274126423c433e22274126423c433e22274126423c433e22274126423c433e22274126423c433e22274126423c433e2227",
+      "agentIdentityHash": "0xe79ebe3d18d39ef505cc4e9b4e61735bdbcdf7b142b02084222a93581a2e7509",
+      "agentLine": "A&B<C>\"'",
+      "agentLineKeccak256": "0xa2d80924284ac14a00e513b8d5ee352ade215136cf86cd57e31d809f8ec27576",
+      "binaryFieldKeccak256": "0x7cfa6eb6138d974be9ae8257255676db8eb32e24d74c18054f8c8af552644341",
+      "binaryFieldPacked": "0x28020828140405506c4e4eecaeaeaebf3913193914040550280a0aa8040404152802082814040550280a0aa8040404157d575d7d36262772280a0aa8aeaeaebf2802082814040550280a0aa8040404157d575d7dbeaeaffa6c4e4eec262626376c464c6c362627727d5f5ffdaeaeaebf39131939beaeaffa391b1bb904040415",
+      "id": "xml-escaping",
+      "prompt64": "0x6126623c633e22276126623c633e22276126623c633e22276126623c633e22276126623c633e22276126623c633e22276126623c633e22276126623c633e2227",
+      "promptLine": "a&b<c>\"'",
+      "promptLineKeccak256": "0x15a44a04850be6fb908eb154227ee8e406e60140abe05683f4324247a96b3aba",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x8a0b313a760d49f0fe17e41d5297d21b9e12822c0beeeb70863bf63e32323763"
+    },
+    {
+      "agent64": "0x63636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363636363",
+      "agentIdentityHash": "0xa166ccc20ad143aa719ce9ee2f233f9b529b2046e2f60c6e72c28fb381815291",
+      "agentLine": "c",
+      "agentLineKeccak256": "0x0b42b6393c1f53060fe3ddbfcd7aadcca894465a5a438f69c87d790b2299b9b2",
+      "binaryFieldKeccak256": "0x11655f6a4bf21f4ddd09ef30abf0e93b63f925bf897ed6745bf5c82bb2a04df6",
+      "binaryFieldPacked": "0x28022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab7d577d57beabbeab28022802140114017d577d57beabbeab7d577d57beabbeab2802280214011401280228021401140128022802140114017d577d57beabbeab7d577d57beabbeab",
+      "id": "shortest",
+      "prompt64": "0x61616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161",
+      "promptLine": "a",
+      "promptLineKeccak256": "0x3ac225168df54212a25c1c01fd35bebfea408fdac2e31ddd6f80a4bbf9a5f1cb",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x209cc2a142512526bb3af1a43d0ec1181e1a06fd231ae588e24267c17a1786bb"
+    },
+    {
+      "agent64": "0x41414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141",
+      "agentIdentityHash": "0x29ff019882383f26055844782a5826a96959f7d96f0bc7c2d6ad16f9be1f03da",
+      "agentLine": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "agentLineKeccak256": "0x5ab08aef833c4bacf716f44e5807bb1c48a27aa7addc150bbc5876449eee0423",
+      "binaryFieldKeccak256": "0xacb258aec7f0546aecd005bf64fce9b21f5edc6ebbf02050bde2f74a4dbbc3fe",
+      "binaryFieldPacked": "0x2a002a00150015007f557f55bfaabfaa2a002a00150015002a002a00150015002a002a00150015002a002a00150015002a002a00150015007f557f55bfaabfaa2a002a00150015007f557f55bfaabfaa2a002a00150015002a002a00150015002a002a00150015002a002a00150015002a002a00150015007f557f55bfaabfaa",
+      "id": "maximum-valid-ascii",
+      "prompt64": "0x70707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070707070",
+      "promptLine": "pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppp",
+      "promptLineKeccak256": "0x869430a638b0879de0fd8eea3b75da5f6b099eff994cf58002b3dc1703391383",
+      "sampledGridPositions": [
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 0,
+          "owner": "prompt",
+          "row": 0,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 1,
+          "owner": "agent",
+          "row": 0,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 0,
+          "column": 0,
+          "fieldIndex": 32,
+          "owner": "agent",
+          "row": 1,
+          "sourceIndex": 0
+        },
+        {
+          "bit": 0,
+          "column": 1,
+          "fieldIndex": 33,
+          "owner": "prompt",
+          "row": 1,
+          "sourceIndex": 16
+        },
+        {
+          "bit": 1,
+          "column": 31,
+          "fieldIndex": 991,
+          "owner": "agent",
+          "row": 30,
+          "sourceIndex": 511
+        },
+        {
+          "bit": 0,
+          "column": 31,
+          "fieldIndex": 1023,
+          "owner": "prompt",
+          "row": 31,
+          "sourceIndex": 511
+        }
+      ],
+      "workHash": "0x1a016daf06606a0bf04104d5c49b6c748a570d543ecdd98020424f7d3e9bc989"
+    }
+  ]
+}

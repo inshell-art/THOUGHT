@@ -1,0 +1,18 @@
+{
+  "caveat": "Packed bytes are immutable geometry data only. They exclude storage/deployment framing, a renderer, SVG serialization, lookup integration, and executable bytecode.",
+  "expandedFaceJsonBytes": 59991,
+  "glyphRecords": 76,
+  "gzipPathBytesInformational": 7994,
+  "packedBytes": 20215,
+  "packedFormat": "IM76 uint16-offset UTF-8 SVG-path stream v1",
+  "packedHeaderAndOffsetsBytes": 162,
+  "packedPathBytes": 20053,
+  "packedSha256": "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6",
+  "rawPathBits": 160424,
+  "rawPathBytes": 20053,
+  "schema": "inshell.mono-76.byte-report.v1",
+  "sourcePathStreamSha256": "e90b269f15f3c5f6ac6e71244f2120198d4b7196010b158a51b43a1ea4409d05",
+  "style": "Regular",
+  "visibleGlyphs": 75,
+  "weight": 400
+}

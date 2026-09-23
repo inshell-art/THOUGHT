@@ -4,37 +4,42 @@
 - THOUGHT contains the frontend and EVM contracts for minting one THOUGHT from one PATH movement unit.
 - Contract code lives in `evm/`.
 - Do not change PATH or Pulse contracts from this repo. Coordinate those changes in `path/` and `pulse/`.
+- The current protocol is THOUGHT V2: Terminal English, ordered prompt-plus-Agent identity, and a deterministic terminal-chat path-glyph renderer. Its portable contract package is release-qualified for immutable canonical publication, but no persistent-chain deployment or protocol registration is authorized by that qualification alone.
+- The binary-weave/visible-Unicode implementation was never published. Treat the old unversioned contract, `protocol/releases/v2`, and `artifacts/thought-v2` trees as a historical attempt only. It does not consume a public version and must not be released as current V2. No THOUGHT V3 exists.
 
 ## Commands
 - Frontend tests: `npm test`.
 - EVM build: `npm run build:evm`.
 - EVM tests: `npm run test:evm`.
-- Local EVM deploy: `npm run deploy:evm-local`.
+- `npm run attempt:deploy:evm-local` targets the archived binary-weave attempt; do not use it for current V2.
 
 ## Artifact Publication and Consumption
 - `docs/agent/THOUGHT_ARTIFACT_CONSUMPTION_BOOK.md` is authoritative for cross-repo artifact ownership, publication channels, integrity checks, consumer pinning, rollout, and rollback.
 - Do not publish or consume candidate/stable artifacts from a dirty worktree. `latest` is discovery-only; production consumers must pin an immutable artifact ID and manifest hash.
 
 ## Publish-Ready Contract Invariants
-- `ThoughtNFT.pathNft` and `ThoughtNFT.thoughtSpecRegistry` are immutable constructor dependencies.
-- `ThoughtNFT.mint` consumes exactly one PATH `THOUGHT` movement unit atomically before minting a THOUGHT.
+- `ThoughtNFTV2.pathNft` and `ThoughtNFTV2.thoughtSpecRegistry` are immutable constructor dependencies.
+- `ThoughtNFTV2.mint` consumes exactly one PATH `THOUGHT` movement unit atomically before minting a THOUGHT.
 - Failed THOUGHT mints must not consume PATH, reserve text hashes, or increment supply.
-- `promptLine` and `agentLine` are non-empty visible UTF-8 lines with ordinary single-space rules. Preserve case and visible Unicode exactly; reject controls, invisible characters, newlines, outer spaces, repeated spaces, byte-limit, and display-unit violations before PATH consumption. Limits are prompt: 320 UTF-8 bytes / 433 units; Agent: 180 UTF-8 bytes / 162 units.
-- Agent-line work hashes are globally unique. The same exact `agentLine` cannot mint twice even with a different prompt or provenance; a changed Agent line is a different work.
+- `promptLine` and `agentLine` are exact 1-through-64-byte Terminal English lines under the closed 76-character US-ASCII repertoire. Reject outer spaces, repeated internal spaces, unsupported bytes, controls, and non-ASCII before PATH consumption. Never trim, collapse, normalize, case-fold, translate, or repair accepted input. Punctuation-only lines are valid. The candidate normative profile is `protocol/current/v2/work/thought.work.v2.md`.
+- The exact ordered `(promptLine, agentLine)` pair is globally unique. Reusing either line with a different counterpart remains valid; reversing the pair is distinct.
+- `agent` and `model` are neutral exact 1-through-64-byte records under `inshell.thought.context.v2.visible-utf8-64`. Preserve them in typed state and bind their hashes in Creation Attestation claims. Every token publishes them as `Agent` / `Model` metadata traits regardless of attestation status. They do not affect conversation identity, work hash, or SVG artwork. Provenance remains an opaque App-owned wire payload to Solidity.
 - `ThoughtSpecRegistry` is the append-only source of truth for valid registered `THOUGHT.vN.md` spec names, ids, hashes, refs, and exact bytes.
 - `ThoughtSpecRegistry.owner` is immutable and must be passed explicitly at deploy time. For Sepolia/mainnet, it must be the Ledger-backed ADMIN address, not a software deployer.
-- There is no active/frozen/pinned THOUGHT spec at contract level. Do not reintroduce `activeSpecId`, `freezeActiveSpec`, `specAdmin`, or a required/latest spec gate in `ThoughtNFT`.
-- `ThoughtNFT.mint` must require and store both `thoughtSpecId` and `thoughtSpecHash`; mint validates the exact registered pair before PATH consumption.
+- There is no active/frozen/latest THOUGHT spec at contract level. Do not introduce a required-latest spec gate in `ThoughtNFTV2`.
+- `ThoughtNFTV2.mint` must require and store both `thoughtSpecId` and `thoughtSpecHash`; mint validates the exact registered pair before PATH consumption.
 - Multiple registered THOUGHT spec versions may coexist and remain mintable in one collection.
 - Deploy scripts must read `THOUGHT.vN.md` as raw bytes, reject BOM/CRLF/name/header mismatches, hash the exact bytes, register with `registerThoughtSpec`, verify registry metadata/readback, and write `recommendedThoughtSpec*` release fields.
-- Color Font v1 is an archived V1 dependency only. Do not add it to the active `ThoughtNFT` constructor or mint flow.
-- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, PATH id/serial, visible line hashes, work hash, provenance hash/payload, exact spec pair, renderer id, and binary field.
+- Color Font v1 is an archived V1 dependency only. Do not add it to the current V2 constructor or mint flow.
+- `tokenURI` must remain marketplace-compatible: ERC721 metadata interface, data URL JSON, embedded SVG image, canonical top-level `external_url` equal to `https://inshell.art/thought/<tokenId>`, PATH id/serial, exact visible lines and line hashes, conversation identity hash, work hash, provenance hash/payload, exact spec pair, renderer id, and creation-attestation state. Current V2 has no binary field.
+- `ThoughtNFTV2` and its renderer must agree on `inshell.thought.metadata.v2.terminal-chat`; constructor compatibility must fail closed on metadata-profile drift.
 - `tokenURI` must not embed full spec text. Use compact spec ID/hash metadata and `thoughtSpecOf(tokenId)` / registry readback for name/ref/full bytes.
 - PATH movement setup must be frozen by deployment scripts after configuring `THOUGHT` movement quota.
 
-## SVG text rendering
-- The formal renderer is `thought.svg.v2.fixed-a-32`: a 960x960 SVG with a deterministic 32x32 binary field derived from UTF-8 prompt bytes followed by Agent bytes.
-- Text is emitted as centered SVG `<text>` elements using the contract font stack. Output rendering depends on the viewer environment fonts.
+## SVG rendering
+- The current V2 renderer ID is `inshell.thought.svg.v2.terminal-chat-path-glyphs`.
+- The V2 SVG artboard is 1024x1024: a 960x960 black canvas translated to `(32,32)` inside a 32-unit `#006100` outer frame. The canvas is not scaled. It uses the sealed Inshell Mono 76 v1.0.0 centerline SVG paths with `#00ff00` stroke, no fill, `1.23` stroke width, round caps/joins, fixed 10-unit advance, and a global +1 glyph-origin shift. Prompt is at the upper right and Agent response is at the lower left. Both text fields are fixed at 844.8 by 256 units: the prompt field `(57.6,128)` is top-aligned and its first glyph-row baseline remains `171.52`; the Agent field `(57.6,576)` is bottom-aligned and its final glyph-row baseline remains `811.52`. Additional prompt rows grow downward; additional Agent rows grow upward.
+- Canonical glyphs must be reviewed native SVG paths with deterministic metrics and wrapping. Do not use SVG `<text>`, `foreignObject`, browser font lookup, fallback fonts, or an embedded WOFF/TTF in the final onchain renderer. Source Code Pro remains a study reference only.
 
 ## Security
 - Do not add secrets, live RPC keys, private keys, mnemonics, or real operator material.

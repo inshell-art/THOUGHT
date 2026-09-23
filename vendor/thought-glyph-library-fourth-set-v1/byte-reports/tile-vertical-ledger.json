@@ -1,0 +1,46 @@
+{
+  "canonicalManifestBytes": 26874,
+  "colorStorage": {
+    "blackRgb24Bytes": 3,
+    "compactSharedPaintDataFloorBytes": 88,
+    "foregroundMaskBytes": 4,
+    "paletteRgb24DataFloorBytes": 78,
+    "perGlyphColorDuplication": false,
+    "sharedCanonicalTextBytes": 510,
+    "whiteRgb24Bytes": 3
+  },
+  "construction": "block-run",
+  "exclusions": [
+    "SVG path decoder and renderer runtime",
+    "package metadata, documentation, and validation",
+    "hashes, aliases, and developer-facing audit mirrors",
+    "deployed bytecode and gas"
+  ],
+  "familyId": "S401",
+  "geometry": {
+    "gzipBytesInformational": 1030,
+    "numericOperands": 2745,
+    "pathCommands": 2745,
+    "pathSha256": "2413c845b6025f02e708224a2418b3a39e2f6714d1a979079b6869a0c16d7d1d",
+    "rawPathBits": 112104,
+    "rawPathBytes": 14013,
+    "sourceFamilyId": "S11",
+    "sourceFamilySlug": "vertical-ledger",
+    "sourceFileSha256": "1bf0c3ef11c91821c8fe76778bd5ccd308b8efd579d2cb427b9cc6864b9278bb",
+    "sourceMemberId": "inshell.thought.glyph-library.set-01.vertical-ledger",
+    "sourceSetId": "inshell.thought.glyph-library.set-01"
+  },
+  "glyphCount": 76,
+  "memberId": "inshell.thought.glyph-library.set-04.tile-vertical-ledger",
+  "schema": "inshell.thought.glyph-library.byte-report.study.v1",
+  "setId": "inshell.thought.glyph-library.set-04",
+  "slug": "tile-vertical-ledger",
+  "tilePresentation": {
+    "monospaced": true,
+    "normalizationBytes": 163,
+    "normalizationSha256": "843d3df01091e4065c21d23f8bcdef90750addc3060535c3b6852a5491945bb6",
+    "profileId": "tight-v1",
+    "renderedAdvanceWidth": 6.5,
+    "sourceFixedAdvanceWidth": 6
+  }
+}

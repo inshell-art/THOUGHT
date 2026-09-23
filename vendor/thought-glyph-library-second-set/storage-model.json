@@ -1,0 +1,47 @@
+{
+  "compactGrammarDataFloor": {
+    "bitPackedBitmapPlusSelectorsBytes": 365,
+    "byteAlignedBitmapPlusSelectorsBytes": 411,
+    "familyVariantCount": 36,
+    "oneByteVariantSelectorBytes": 36,
+    "sharedBitPackedBitmapBytes": 329,
+    "sharedBitmapBits": 2625,
+    "sharedBitmapDimensions": "5x7",
+    "sharedByteAlignedBitmapBytes": 375,
+    "sharedVisibleAlphabetGlyphs": 75
+  },
+  "conclusion": "Expanded path JSON is a review and downstream interchange format, not an Ethereum runtime encoding. The compact numbers are a data floor only; no deployable runtime-size claim is made.",
+  "exclusions": [
+    "shared segment, graph, and routing decoder runtime",
+    "per-variant numeric parameters when not compiled into decoder branches",
+    "SVG path emission, placement, wrapping, validation, and contract retrieval logic"
+  ],
+  "expandedNativeSvg": {
+    "byType": {
+      "routed-path": {
+        "fontCount": 12,
+        "maximumExpandedPathBytes": 241116,
+        "minimumExpandedPathBytes": 71623,
+        "totalExpandedPathBytes": 1624993
+      },
+      "segment-mask": {
+        "fontCount": 12,
+        "maximumExpandedPathBytes": 304709,
+        "minimumExpandedPathBytes": 29047,
+        "totalExpandedPathBytes": 1405811
+      },
+      "stroke-graph": {
+        "fontCount": 12,
+        "maximumExpandedPathBytes": 293535,
+        "minimumExpandedPathBytes": 48151,
+        "totalExpandedPathBytes": 1763309
+      }
+    },
+    "fontCount": 36,
+    "maximumPathBytesPerFont": 304709,
+    "minimumPathBytesPerFont": 29047,
+    "totalPathBytes": 4794113
+  },
+  "schema": "inshell.thought.glyph-library.storage-model.study.v1",
+  "setId": "inshell.thought.glyph-library.set-02"
+}

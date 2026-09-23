@@ -1,0 +1,24 @@
+{
+  "familyId": "S504",
+  "glyphRecords": 76,
+  "gzipPathBytesInformational": 659,
+  "measuredAnvilPragueCreationGas": 622265,
+  "measuredGasScope": "Independent immutable glyph-data contract only; excludes renderer, retrieval, minting, and repeated renders.",
+  "packedBytes": 2631,
+  "packedHeaderAndOffsetsBytes": 162,
+  "packedPathBytes": 2469,
+  "packedSha256": "204bf9e84103b57175e1dc0be06b3f42e91a4d0f8fb5b8b7457b52ff63c79393",
+  "pathCommands": {
+    "L": 164,
+    "M": 122,
+    "Q": 148,
+    "Z": 7
+  },
+  "punctuationGlyphs": 13,
+  "rawPathBits": 19752,
+  "rawPathBytes": 2469,
+  "schema": "inshell.thought.glyph-library.set-05.byte-report.v1",
+  "slug": "classic-compact",
+  "sourceCandidate": "C06",
+  "visibleGlyphs": 75
+}

@@ -25,7 +25,7 @@ describe("thought run payload", () => {
       route: "connect",
       provider: "openrouter",
       model: "meta-llama/llama-3.3-70b-instruct:free",
-      prompt: "when will we be done?",
+      promptLine: "when will we be done?",
       thoughtSpec,
     });
 
@@ -44,7 +44,7 @@ describe("thought run payload", () => {
     });
     expect(payload.input).toEqual({
       thoughtSpec,
-      prompt: "when will we be done?",
+      promptLine: "when will we be done?",
     });
   });
 
@@ -53,7 +53,7 @@ describe("thought run payload", () => {
       route: "connect",
       provider: "openrouter",
       model: "model-a",
-      prompt: "user prompt",
+      promptLine: "user prompt",
       thoughtSpec,
     });
 
@@ -86,8 +86,8 @@ describe("thought run payload", () => {
       tools: [{ type: "web_search_20250305", name: "web_search" }],
     });
 
-    expect(buildThoughtRuntimePrompt("user prompt")).toContain("Return one THOUGHT candidate only.");
-    expect(buildThoughtRuntimePrompt("user prompt")).toContain("128 characters max after normalization");
+    expect(buildThoughtRuntimePrompt("user prompt")).toBe("user prompt");
+    expect(payload.outputContract.normalize).toBe(false);
   });
 
   it("keeps local Ollama honest about web search and maps options", () => {
@@ -95,7 +95,7 @@ describe("thought run payload", () => {
       route: "local",
       provider: "ollama",
       model: "ollama:llama3.2:1b",
-      prompt: "local prompt",
+      promptLine: "local prompt",
       thoughtSpec,
     });
 
@@ -117,7 +117,7 @@ describe("thought run payload", () => {
       route: "my-brain",
       provider: "me",
       model: "my-brain",
-      prompt: "manual prompt",
+      promptLine: "manual prompt",
       thoughtSpec,
     });
 
@@ -141,7 +141,7 @@ describe("thought run payload", () => {
       route: "direct",
       provider: "openai",
       model: "gpt-5-mini",
-      prompt: "red",
+      promptLine: "red",
       thoughtSpec,
     });
 

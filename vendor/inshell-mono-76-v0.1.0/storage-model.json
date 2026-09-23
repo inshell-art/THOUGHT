@@ -1,0 +1,20 @@
+{
+  "deploymentCaveat": "These figures measure geometry payloads only. One packed face is near the EIP-170 runtime-code ceiling before renderer or retrieval code, so no single-contract deployment claim is made. Downstream must measure its complete compiled architecture.",
+  "schema": "inshell.mono-76.storage-model.v1",
+  "totals": {
+    "glyphRecords": 76,
+    "packedBytes": 20215,
+    "rawPathBytes": 20053,
+    "weightCount": 1
+  },
+  "weights": [
+    {
+      "gzipPathBytesInformational": 7994,
+      "packedBytes": 20215,
+      "packedSha256": "be74b2e518490c37498f726f3d82ca346241cd9f0df9697b0b15d0578fb5aab6",
+      "rawPathBytes": 20053,
+      "style": "Regular",
+      "weight": 400
+    }
+  ]
+}
