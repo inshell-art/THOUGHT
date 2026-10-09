@@ -447,7 +447,7 @@ test("checked-in PATH and OPS schema mirrors are byte-identical to their owners"
   );
   assert.deepEqual(
     fs.readFileSync(path.join(root, "ops/integrated-campaign/schemas/protocol-receipt-envelope.v1.schema.json")),
-    fs.readFileSync("/Users/bigu/Projects/inshell-feed-ops/deployment-campaign/schemas/protocol-receipt-envelope.v1.schema.json"),
+    fs.readFileSync("/Users/bigu/Projects/inshell-ops/deployment-campaign/schemas/protocol-receipt-envelope.v1.schema.json"),
   );
   assert.deepEqual(pathEnvelope().protocol_payload.payload.pathRelease, PINNED_PATH_RELEASE);
 });
